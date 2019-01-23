@@ -8,15 +8,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.math.BigInteger;
-import java.security.DigestOutputStream;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -35,8 +30,6 @@ public class RdfGraph {
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private Long id;
-	@Column(columnDefinition = "BINARY(32) NOT NULL")
-	private byte[] hash;
 	@Lob
 	private byte[] compressedGraph;
 
@@ -107,9 +100,8 @@ public class RdfGraph {
 	private void consumeGraph(Graph graph) {
 		try {
 			// prepare hashing and compression
-			MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
 			ByteArrayOutputStream compressedOut = new ByteArrayOutputStream();
-			OutputStream out = new DigestOutputStream(new GZIPOutputStream(compressedOut), messageDigest);
+			OutputStream out = new GZIPOutputStream(compressedOut);
 
 			// write graph to stream
 			Model tempModel = ModelFactory.createModelForGraph(graph);
@@ -119,9 +111,6 @@ public class RdfGraph {
 
 			// store compressed graph and hash
 			this.compressedGraph = compressedOut.toByteArray();
-			this.hash = messageDigest.digest();
-		} catch (NoSuchAlgorithmException e) {
-			throw new RuntimeException("Hash algorithm not supported.", e);
 		} catch (IOException e) {
 			throw new RuntimeException("Failed to compress RDF.", e);
 		}
@@ -151,12 +140,8 @@ public class RdfGraph {
 		return this.getModel().getGraph();
 	}
 
-	public byte[] getHash() {
-		return this.hash;
-	}
-
 	@Override
 	public String toString() {
-		return String.format("RdfGraph[id=%d, hash='%064X']", id, new BigInteger(1, this.hash));
+		return String.format("RdfGraph[id=%d]", id);
 	}
 }
