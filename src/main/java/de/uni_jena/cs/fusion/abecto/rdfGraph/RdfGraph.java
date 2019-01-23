@@ -3,8 +3,6 @@ package de.uni_jena.cs.fusion.abecto.rdfGraph;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -34,26 +32,6 @@ public class RdfGraph {
 	private byte[] compressedGraph;
 
 	protected RdfGraph() {
-	}
-
-	@Deprecated
-	public RdfGraph(String file) throws FileNotFoundException, IOException {
-		this(file, null, null);
-	}
-
-	@Deprecated
-	public RdfGraph(String file, RdfSerializationLanguage lang) throws FileNotFoundException, IOException {
-		this(file, null, lang);
-	}
-
-	@Deprecated
-	public RdfGraph(String file, String base) throws FileNotFoundException, IOException {
-		this(file, base, null);
-	}
-
-	@Deprecated
-	public RdfGraph(String file, String base, RdfSerializationLanguage lang) throws IOException {
-		this(new FileInputStream(file), base, lang);
 	}
 
 	public RdfGraph(InputStream in) throws IOException {
@@ -90,22 +68,21 @@ public class RdfGraph {
 		// Read Model
 		Model model = ModelFactory.createDefaultModel();
 		model.read(in, base, lang.apacheJenaKey());
-		consumeGraph(model.getGraph());
+		consumeModel(model);
 	}
 
-	public RdfGraph(Graph graph) {
-		consumeGraph(graph);
+	public RdfGraph(Model model) {
+		consumeModel(model);
 	}
 
-	private void consumeGraph(Graph graph) {
+	private void consumeModel(Model model) {
 		try {
 			// prepare hashing and compression
 			ByteArrayOutputStream compressedOut = new ByteArrayOutputStream();
 			OutputStream out = new GZIPOutputStream(compressedOut);
 
-			// write graph to stream
-			Model tempModel = ModelFactory.createModelForGraph(graph);
-			tempModel.write(out, DB_SERIALIZATION_LANG.apacheJenaKey(), null);
+			// write model to stream
+			model.write(out, DB_SERIALIZATION_LANG.apacheJenaKey(), null);
 			out.flush();
 			out.close();
 

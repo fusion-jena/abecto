@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-import org.apache.jena.graph.Factory;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.compose.MultiUnion;
 import org.apache.jena.query.Query;
@@ -20,11 +19,6 @@ import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraph;
 public class SparqlConstructProcessor extends AbstractProcessor implements SubsequentProcessor {
 
 	private Graph graph;
-	private final Graph writableGraph;
-
-	public SparqlConstructProcessor() {
-		this.writableGraph = Factory.createGraphMem();
-	}
 
 	@Override
 	public RdfGraph call() {
@@ -39,7 +33,7 @@ public class SparqlConstructProcessor extends AbstractProcessor implements Subse
 			
 			// execute and process result
 			Model constructedModel = queryExecution.execConstruct();
-			return new RdfGraph(constructedModel.getGraph());
+			return new RdfGraph(constructedModel);
 		} catch (QueryException e) {
 			this.listener.onFailure(e);
 			throw e;
@@ -56,10 +50,6 @@ public class SparqlConstructProcessor extends AbstractProcessor implements Subse
 		// create new graph union
 		MultiUnion graphUnion = new MultiUnion();
 		this.graph = graphUnion;
-
-		// add the writable graph
-		graphUnion.addGraph(this.writableGraph);
-		graphUnion.setBaseGraph(this.writableGraph);
 
 		// add read only source graphs
 		for (RdfGraph source : sources) {
