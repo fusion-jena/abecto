@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.KonwledgeBaseVersionPart;
+package de.uni_jena.cs.fusion.abecto.konwledgeBaseVersionPart;
 
 import java.io.InputStream;
 
@@ -12,8 +12,8 @@ import javax.persistence.Lob;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 
-import de.uni_jena.cs.fusion.abecto.KonwledgeBasePart.KnowledgeBasePart;
-import de.uni_jena.cs.fusion.abecto.RdfModel.ModelConverter;
+import de.uni_jena.cs.fusion.abecto.konwledgeBasePart.KnowledgeBasePart;
+import de.uni_jena.cs.fusion.abecto.rdfGraph.GraphConverter;
 
 @Entity
 public class KnowledgeBasePartVersion {
@@ -24,7 +24,7 @@ public class KnowledgeBasePartVersion {
 	private Long knowledgeBasePartId;
 	private Long knowledgeBaseVersionId;
 	@Lob
-	@Convert(converter = ModelConverter.class)
+	@Convert(converter = GraphConverter.class)
 	private Model model;
 
 	protected KnowledgeBasePartVersion() {

@@ -1,5 +1,14 @@
 package de.uni_jena.cs.fusion.abecto;
 
+import java.util.Collections;
+
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.query.QueryFactory;
+import org.apache.jena.query.QuerySolution;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.rdf.model.Model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -7,8 +16,12 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
-import de.uni_jena.cs.fusion.abecto.RdfModel.RdfModel;
-import de.uni_jena.cs.fusion.abecto.RdfModel.RdfModelRepository;
+import de.uni_jena.cs.fusion.abecto.processor.PathSource;
+import de.uni_jena.cs.fusion.abecto.processor.SourceProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.SparqlConstructProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.SubsequentProcessor;
+import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraph;
+import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfModelRepository;
 
 @SpringBootApplication
 public class Abecto {
@@ -45,13 +58,37 @@ public class Abecto {
 	public CommandLineRunner modelDemo(RdfModelRepository repository) {
 		return (args) -> {
 			// save a couple
-			repository.save(new RdfModel("C:\\Users\\admin\\Documents\\Workspace\\unit-ontologies\\qu\\qu-rec20.owl"));
+			SourceProcessor source = new PathSource();
+			source.setProperties(Collections.singletonMap("path",
+					"C:\\Users\\admin\\Documents\\Workspace\\unit-ontologies\\qu\\qu-rec20.owl"));
+			RdfGraph sourceModel = source.call();
+			sourceModel = repository.save(sourceModel);
+
+			SubsequentProcessor construct = new SparqlConstructProcessor();
+			construct.setProperties(Collections.singletonMap("query",
+					"CONSTRUCT {?s <http://example.org/p> <http://example.org/o>} WHERE {?s ?p ?o. Filter(!isBLANK(?s))}"));
+			construct.setSources(Collections.singleton(sourceModel));
+			RdfGraph constructModel = construct.call();
+			constructModel = repository.save(constructModel);
 
 			// fetch all
 			log.info("Models found with findAll():");
 			log.info("-------------------------------");
-			for (RdfModel model : repository.findAll()) {
-				log.info(model.toString());
+			for (RdfGraph graph : repository.findAll()) {
+				log.info(graph.toString());
+
+				log.info("Content Examples:");
+				// prepare query
+				Query query = QueryFactory.create("SELECT * WHERE {?s ?p ?o. Filter(!isBLANK(?s) && !isBLANK(?o))} LIMIT 10");
+				// prepare execution
+				Model model = graph.getModel();
+				QueryExecution queryExecution = QueryExecutionFactory.create(query, model);
+				// execute and process result
+				ResultSet result = queryExecution.execSelect();
+				while (result.hasNext()) {
+					QuerySolution solution = result.next();
+					log.info("  " + solution.toString());
+				}
 			}
 
 			/*

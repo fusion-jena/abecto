@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.Project;
+package de.uni_jena.cs.fusion.abecto.project;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;

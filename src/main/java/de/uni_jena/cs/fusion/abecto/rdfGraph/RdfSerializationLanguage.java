@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.RdfModel;
+package de.uni_jena.cs.fusion.abecto.rdfGraph;
 
 import java.util.EnumSet;
 import java.util.Objects;

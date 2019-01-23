@@ -4,6 +4,8 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
+import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfSerializationLanguage;
+
 public class RdfSerializationLanguageTest {
 
 	@Test
