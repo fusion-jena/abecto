@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.konwledgeBaseVersionPart;
+package de.uni_jena.cs.fusion.abecto.knowledgeBaseVersionPart;
 
 import org.springframework.data.repository.CrudRepository;
 
