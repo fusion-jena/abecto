@@ -3,8 +3,6 @@ package de.uni_jena.cs.fusion.abecto.rdfGraph;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -133,18 +131,10 @@ public class RdfGraph {
 		// Read Model
 		Model model = ModelFactory.createDefaultModel();
 		model.read(in, base, lang.jenaKey());
-		File tempFile = File.createTempFile("abecto-", ".tmp");
-		try {
-			try (OutputStream out = new FileOutputStream(tempFile)) {
-				model.write(out, RdfSerializationLanguage.TURTLE.jenaKey());
-			}
-			HDT hdt = generateHdt(tempFile.getAbsolutePath(), base, RdfSerializationLanguage.TURTLE);
-			this.graph = new HDTGraph(hdt);
-			this.index = generateIndex(hdt);
-			this.hash = generateHash(hdt);
-		} finally {
-			tempFile.delete();
-		}
+		HDT hdt = generateHdt(model.getGraph(), base);
+		this.graph = new HDTGraph(hdt);
+		this.index = generateIndex(hdt);
+		this.hash = generateHash(hdt);
 	}
 
 	public RdfGraph(Graph graph, String base) throws IOException, ParserException {
@@ -175,6 +165,7 @@ public class RdfGraph {
 			indexableTriples.generateIndex(null);
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			// TODO remove ControlInformation parameter after solving
+			// https://github.com/rdfhdt/hdt-java/issues/89
 			indexableTriples.saveIndex(out, new ControlInformation(), null);
 			return out.toByteArray();
 		} else {
