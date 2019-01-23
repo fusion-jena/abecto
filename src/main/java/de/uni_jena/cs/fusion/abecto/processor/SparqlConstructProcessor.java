@@ -1,6 +1,5 @@
 package de.uni_jena.cs.fusion.abecto.processor;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -15,7 +14,6 @@ import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
-import org.rdfhdt.hdt.exceptions.ParserException;
 
 import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraph;
 
@@ -41,10 +39,7 @@ public class SparqlConstructProcessor extends AbstractProcessor implements Subse
 			
 			// execute and process result
 			Model constructedModel = queryExecution.execConstruct();
-			return new RdfGraph(constructedModel.getGraph(), "http://example.org/");
-		} catch (IOException | ParserException e) {
-			this.listener.onFailure(e);
-			throw new RuntimeException(e);
+			return new RdfGraph(constructedModel.getGraph());
 		} catch (QueryException e) {
 			this.listener.onFailure(e);
 			throw e;

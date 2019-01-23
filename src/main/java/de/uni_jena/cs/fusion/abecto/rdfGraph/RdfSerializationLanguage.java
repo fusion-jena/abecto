@@ -5,17 +5,25 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.rdfhdt.hdt.enums.RDFNotation;
-
 public enum RdfSerializationLanguage {
-	JSONLD("JSON-LD", RDFNotation.JSONLD, Pattern.compile("^\\s*\\{", Pattern.MULTILINE)),
-	N3("N3", RDFNotation.N3, null),
-	NQUAD(null, RDFNotation.NQUAD, Pattern.compile("^\\s*\\S.*\\s+\\S.*\\s+\\S.*\\s+\\S.*\\s+\\.", Pattern.MULTILINE)),
-	NTRIPLES("NT", RDFNotation.NTRIPLES, Pattern.compile("^[ \\t]*\\S.*[ \\t]s+\\S.*[ \\t]+\\S.*[ \\t]*\\.$")),
-	OWLXML(null, null, Pattern.compile("<Ontology\\sxmlns=\"http://www.w3.org/2002/07/owl#\"", Pattern.MULTILINE)),
-	RDFJSON("RDF/JSON", null, null),
-	RDFXML("RDF/XML", RDFNotation.RDFXML, Pattern.compile("<rdf:RDF")),
-	TURTLE("TTL", RDFNotation.TURTLE,
+	// https://www.w3.org/TR/json-ld/
+	JSONLD("application/ld+json", "jsonld", "JSON-LD", Pattern.compile("^\\s*\\{", Pattern.MULTILINE)),
+	// https://www.w3.org/TeamSubmission/n3/
+	N3("text/n3", "n3", "N3", null),
+	// https://www.w3.org/TR/n-quads/
+	NQUAD("application/n-quads", "nq", null, Pattern.compile("^\\s*\\S.*\\s+\\S.*\\s+\\S.*\\s+\\S.*\\s+\\.", Pattern.MULTILINE)),
+	// https://www.w3.org/TR/n-triples/
+	NTRIPLES("application/n-triples", "nt", "NT", Pattern.compile("^[ \\t]*\\S.*[ \\t]s+\\S.*[ \\t]+\\S.*[ \\t]*\\.$")),
+	// https://www.w3.org/TR/owl2-xml-serialization/
+	// https://www.w3.org/TR/owl-ref/
+	OWLXML("application/owl+xml", "owl", null,
+			Pattern.compile("<Ontology\\sxmlns=\"http://www.w3.org/2002/07/owl#\"", Pattern.MULTILINE)),
+	// https://www.w3.org/TR/rdf-json/
+	RDFJSON("application/rdf+json", "rj", "RDF/JSON", null),
+	// https://www.w3.org/TR/rdf-syntax-grammar/
+	RDFXML("application/rdf+xml", "rdf", "RDF/XML", Pattern.compile("<rdf:RDF")),
+	// https://www.w3.org/TR/2014/REC-turtle-20140225/
+	TURTLE("text/turtle", "ttl", "TTL",
 			Pattern.compile("^\\s*((\\@prefix)|(\\@base)|(BASE)|(PREFIX)|(base)|(prefix))", Pattern.MULTILINE));
 
 	public static RdfSerializationLanguage determine(String documentStart) {
@@ -27,14 +35,12 @@ public enum RdfSerializationLanguage {
 		throw new IllegalArgumentException("Unable to determine serialization language.");
 	}
 
-	private final RDFNotation hdt;
 	private final String jena;
 	private final Pattern magicPattern;
 
-	RdfSerializationLanguage(String jena, RDFNotation hdt, Pattern magicPattern) {
+	RdfSerializationLanguage(String mimeType, String fileExtension, String jena, Pattern magicPattern) {
 		this.magicPattern = magicPattern;
 		this.jena = jena;
-		this.hdt = hdt;
 	}
 
 	public String determineBase(String documentStart) {
@@ -78,11 +84,7 @@ public enum RdfSerializationLanguage {
 		return this.magicPattern;
 	}
 
-	public RDFNotation hdtKey() {
-		return this.hdt;
-	}
-
-	public String jenaKey() {
+	public String apacheJenaKey() {
 		return this.jena;
 	}
 
