@@ -67,7 +67,7 @@ public class RdfGraph {
 		}
 		// Read Model
 		Model model = ModelFactory.createDefaultModel();
-		model.read(in, base, lang.apacheJenaKey());
+		model.read(in, base, lang.getApacheJenaKey());
 		consumeModel(model);
 	}
 
@@ -82,7 +82,7 @@ public class RdfGraph {
 			OutputStream out = new GZIPOutputStream(compressedOut);
 
 			// write model to stream
-			model.write(out, DB_SERIALIZATION_LANG.apacheJenaKey(), null);
+			model.write(out, DB_SERIALIZATION_LANG.getApacheJenaKey(), null);
 			out.flush();
 			out.close();
 
@@ -103,7 +103,7 @@ public class RdfGraph {
 					new GZIPInputStream(new ByteArrayInputStream(this.compressedGraph)));
 
 			Model model = ModelFactory.createDefaultModel();
-			model.read(in, null, DB_SERIALIZATION_LANG.apacheJenaKey());
+			model.read(in, null, DB_SERIALIZATION_LANG.getApacheJenaKey());
 
 			return model;
 		} catch (
