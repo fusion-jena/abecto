@@ -1,7 +1,6 @@
 package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 
@@ -10,15 +9,10 @@ import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraph;
 public class PathSourceProcessor extends AbstractSourceProcessor {
 
 	@Override
-	public RdfGraph call() {
-		try {
-			String path = this.getProperty("path", String.class);
-			RdfGraph graph = new RdfGraph(new FileInputStream(path));
-			return graph;
-		} catch (IOException e) {
-			this.listener.onFailure(e);
-			throw new RuntimeException(e);
-		}
+	public RdfGraph computeResultGraph() throws Exception {
+		String path = this.getProperty("path", String.class);
+		RdfGraph graph = new RdfGraph(new FileInputStream(path));
+		return graph;
 	}
 
 	@Override
