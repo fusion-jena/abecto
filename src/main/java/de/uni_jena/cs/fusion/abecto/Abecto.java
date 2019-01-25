@@ -17,7 +17,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
 import de.uni_jena.cs.fusion.abecto.processor.OpenlletReasoningProcessor;
-import de.uni_jena.cs.fusion.abecto.processor.PathSource;
+import de.uni_jena.cs.fusion.abecto.processor.PathSourceProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.SourceProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.SparqlConstructProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.SubsequentProcessor;
@@ -37,7 +37,7 @@ public class Abecto {
 	public CommandLineRunner modelDemo(RdfGraphRepository repository) {
 		return (args) -> {
 			// save a couple
-			SourceProcessor source = new PathSource();
+			SourceProcessor source = new PathSourceProcessor();
 			source.setProperties(Collections.singletonMap("path",
 					"C:\\Users\\admin\\Documents\\Workspace\\unit-ontologies\\qu\\qu-rec20.owl"));
 			RdfGraph sourceModel = source.call();

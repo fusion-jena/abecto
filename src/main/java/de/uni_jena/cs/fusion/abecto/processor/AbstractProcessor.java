@@ -2,6 +2,7 @@ package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 import de.uni_jena.cs.fusion.abecto.progress.ProgressListener;
 
@@ -19,6 +20,18 @@ public abstract class AbstractProcessor implements Processor {
 		Objects.requireNonNull(value, "Missing value of property \"" + key + "\".");
 		if (type.isAssignableFrom(value.getClass())) {
 			return type.cast(value);
+		} else {
+			throw new ClassCastException(
+					"Failed to cast value of property \"" + key + "\" to \"" + type.getName() + "\".");
+		}
+	}
+
+	protected <T> Optional<T> getOptionalProperty(String key, Class<T> type) {
+		Object value = this.properties.get(key);
+		if (Objects.isNull(value)) {
+			return Optional.empty();
+		} else if (type.isAssignableFrom(value.getClass())) {
+			return Optional.of(type.cast(value));
 		} else {
 			throw new ClassCastException(
 					"Failed to cast value of property \"" + key + "\" to \"" + type.getName() + "\".");

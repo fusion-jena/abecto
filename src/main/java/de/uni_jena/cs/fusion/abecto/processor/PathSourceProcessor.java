@@ -7,7 +7,7 @@ import java.util.Map;
 
 import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraph;
 
-public class PathSource extends AbstractProcessor implements SourceProcessor {
+public class PathSourceProcessor extends AbstractSourceProcessor {
 
 	@Override
 	public RdfGraph call() {
