@@ -16,6 +16,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
+import de.uni_jena.cs.fusion.abecto.processor.OpenlletReasoningProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.PathSource;
 import de.uni_jena.cs.fusion.abecto.processor.SourceProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.SparqlConstructProcessor;
@@ -31,7 +32,7 @@ public class Abecto {
 	public static void main(String[] args) {
 		SpringApplication.exit(SpringApplication.run(Abecto.class, args));
 	}
-	
+
 	@Bean
 	public CommandLineRunner modelDemo(RdfGraphRepository repository) {
 		return (args) -> {
@@ -49,6 +50,11 @@ public class Abecto {
 			RdfGraph constructModel = construct.call();
 			constructModel = repository.save(constructModel);
 
+			SubsequentProcessor reasoner = new OpenlletReasoningProcessor();
+			reasoner.setSources(Collections.singleton(sourceModel));
+			RdfGraph inferenceModel = reasoner.call();
+			constructModel = repository.save(inferenceModel);
+
 			// fetch all
 			log.info("Models found with findAll():");
 			log.info("-------------------------------");
@@ -57,7 +63,8 @@ public class Abecto {
 
 				log.info("Content Examples:");
 				// prepare query
-				Query query = QueryFactory.create("SELECT * WHERE {?s ?p ?o. Filter(!isBLANK(?s) && !isBLANK(?o))} LIMIT 10");
+				Query query = QueryFactory
+						.create("SELECT * WHERE {?s ?p ?o. Filter(!isBLANK(?s) && !isBLANK(?o))} LIMIT 10");
 				// prepare execution
 				Model model = graph.getModel();
 				QueryExecution queryExecution = QueryExecutionFactory.create(query, model);
