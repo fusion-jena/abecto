@@ -20,7 +20,7 @@ import de.uni_jena.cs.fusion.abecto.processor.OpenlletReasoningProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.PathSourceProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.SourceProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.SparqlConstructProcessor;
-import de.uni_jena.cs.fusion.abecto.processor.SubsequentProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.TransformationProcessor;
 import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraph;
 import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraphRepository;
 
@@ -43,14 +43,14 @@ public class Abecto {
 			RdfGraph sourceModel = source.call();
 			sourceModel = repository.save(sourceModel);
 
-			SubsequentProcessor construct = new SparqlConstructProcessor();
+			TransformationProcessor construct = new SparqlConstructProcessor();
 			construct.setProperties(Collections.singletonMap("query",
 					"CONSTRUCT {?s <http://example.org/p> <http://example.org/o>} WHERE {?s ?p ?o. Filter(!isBLANK(?s))}"));
 			construct.setSources(Collections.singleton(sourceModel));
 			RdfGraph constructModel = construct.call();
 			constructModel = repository.save(constructModel);
 
-			SubsequentProcessor reasoner = new OpenlletReasoningProcessor();
+			TransformationProcessor reasoner = new OpenlletReasoningProcessor();
 			reasoner.setSources(Collections.singleton(sourceModel));
 			RdfGraph inferenceModel = reasoner.call();
 			constructModel = repository.save(inferenceModel);

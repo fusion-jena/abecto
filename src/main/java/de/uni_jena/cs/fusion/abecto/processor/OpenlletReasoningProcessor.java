@@ -10,12 +10,12 @@ import org.apache.jena.rdf.model.ModelFactory;
 import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraph;
 import openllet.jena.PelletReasoner;
 
-public class OpenlletReasoningProcessor extends AbstractSubsequentProcessor {
+public class OpenlletReasoningProcessor extends AbstractTransformationProcessor {
 
 	@Override
 	public RdfGraph computeResultGraph() {
 		// reasoning
-		Model model = ModelFactory.createModelForGraph(this.graph);
+		Model model = ModelFactory.createModelForGraph(this.sourceGraph);
 		// TODO suppress progress logging
 		// TODO listen progress
 		InfModel inferenceModel = ModelFactory.createInfModel(new PelletReasoner(), model);

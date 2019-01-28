@@ -75,6 +75,10 @@ public class RdfGraph {
 		consumeModel(model);
 	}
 
+	public RdfGraph(Graph graph) {
+		consumeModel(ModelFactory.createModelForGraph(graph));
+	}
+
 	private void consumeModel(Model model) {
 		try {
 			// prepare hashing and compression

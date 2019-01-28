@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.progress;
+package de.uni_jena.cs.fusion.abecto.processor.progress;
 
 public interface ProgressListener {
 	

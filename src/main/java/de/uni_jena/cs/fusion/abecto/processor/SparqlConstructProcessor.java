@@ -12,7 +12,7 @@ import org.apache.jena.rdf.model.ModelFactory;
 
 import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraph;
 
-public class SparqlConstructProcessor extends AbstractSubsequentProcessor {
+public class SparqlConstructProcessor extends AbstractTransformationProcessor {
 
 	@Override
 	public RdfGraph computeResultGraph() {
@@ -21,7 +21,7 @@ public class SparqlConstructProcessor extends AbstractSubsequentProcessor {
 		Query query = QueryFactory.create(queryString);
 
 		// prepare execution
-		Model model = ModelFactory.createModelForGraph(this.graph);
+		Model model = ModelFactory.createModelForGraph(this.sourceGraph);
 		QueryExecution queryExecution = QueryExecutionFactory.create(query, model);
 
 		// execute and process result

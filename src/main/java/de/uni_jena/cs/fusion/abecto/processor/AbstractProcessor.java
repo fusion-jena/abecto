@@ -4,12 +4,26 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-import de.uni_jena.cs.fusion.abecto.progress.ProgressListener;
+import de.uni_jena.cs.fusion.abecto.processor.progress.ProgressListener;
 import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraph;
 
 public abstract class AbstractProcessor implements Processor {
 
+	/**
+	 * <p>
+	 * The current configuration properties of this processor.
+	 * </p>
+	 * 
+	 * <p>
+	 * Use {@link #getProperty(String, Class)} or
+	 * {@link #getOptionalProperty(String, Class)} for type safe access without need
+	 * of missing error exception handling.
+	 * </p>
+	 */
 	private Map<String, Object> properties;
+	/**
+	 * The {@link ProgressListener} of this processor.
+	 */
 	protected ProgressListener listener;
 
 	@Override
@@ -24,12 +38,41 @@ public abstract class AbstractProcessor implements Processor {
 		}
 	}
 
+	/**
+	 * <p>
+	 * Computes a {@link RdfGraph}, or throws an exception if unable to do so.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method should be implemented instead of overwriting {@link call}. It
+	 * will be called by {@link call}. Calling {@link ProgressListener#onSuccess()}
+	 * or {@link ProgressListener#onFailure(Throwable)} is done by {@link call}.
+	 * Therefore, only {@link ProgressListener#onProgress(long, long)} needs to be
+	 * called here.
+	 * </p>
+	 * 
+	 * @return computed {@link RdfGraph}
+	 * @throws Exception
+	 */
 	protected abstract RdfGraph computeResultGraph() throws Exception;
 
+	@Override
 	public void setProperties(Map<String, Object> properties) {
 		this.properties = properties;
 	}
 
+	/**
+	 * 
+	 * Get an optional property value.
+	 * 
+	 * @param key  property name
+	 * @param type expected type of the property value
+	 * @return property value
+	 * 
+	 * @throws ClassCastException   if the property can not be casted to the
+	 *                              specified type.
+	 * @throws NullPointerException if the property has not been set.
+	 */
 	protected <T> T getProperty(String key, Class<T> type) {
 		Object value = this.properties.get(key);
 		Objects.requireNonNull(value, "Missing value of property \"" + key + "\".");
@@ -41,6 +84,16 @@ public abstract class AbstractProcessor implements Processor {
 		}
 	}
 
+	/**
+	 * Get an optional property value as {@link Optional}.
+	 * 
+	 * @param key  property name
+	 * @param type expected type of the property value
+	 * @return property value
+	 * 
+	 * @throws ClassCastException if the property can not be casted to the specified
+	 *                            type.
+	 */
 	protected <T> Optional<T> getOptionalProperty(String key, Class<T> type) {
 		Object value = this.properties.get(key);
 		if (Objects.isNull(value)) {
