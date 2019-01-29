@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.processor;
+package de.uni_jena.cs.fusion.abecto.processor.source;
 
 import java.io.InputStream;
 import java.util.Collections;

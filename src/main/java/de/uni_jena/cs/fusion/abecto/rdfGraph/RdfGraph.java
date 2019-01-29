@@ -17,6 +17,7 @@ import javax.persistence.Id;
 import javax.persistence.Lob;
 
 import org.apache.jena.graph.Graph;
+import org.apache.jena.ontology.OntModel;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 
@@ -101,24 +102,30 @@ public class RdfGraph {
 		return this.id;
 	}
 
+	public Graph getGraph() {
+		return this.getModel().getGraph();
+	}
+
 	public Model getModel() {
+		Model model = ModelFactory.createDefaultModel();
+		populateModel(model);
+		return model;
+	}
+
+	public OntModel getOntologyModel() {
+		OntModel model = ModelFactory.createOntologyModel();
+		populateModel(model);
+		return model;
+	}
+
+	private void populateModel(Model model) {
 		try {
 			InputStream in = new BufferedInputStream(
 					new GZIPInputStream(new ByteArrayInputStream(this.compressedGraph)));
-
-			Model model = ModelFactory.createDefaultModel();
 			model.read(in, null, DB_SERIALIZATION_LANG.getApacheJenaKey());
-
-			return model;
-		} catch (
-
-		IOException e) {
+		} catch (IOException e) {
 			throw new RuntimeException("Failed to uncompress RDF.", e);
 		}
-	}
-
-	public Graph getGraph() {
-		return this.getModel().getGraph();
 	}
 
 	@Override

@@ -16,11 +16,11 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
-import de.uni_jena.cs.fusion.abecto.processor.OpenlletReasoningProcessor;
-import de.uni_jena.cs.fusion.abecto.processor.PathSourceProcessor;
-import de.uni_jena.cs.fusion.abecto.processor.SourceProcessor;
-import de.uni_jena.cs.fusion.abecto.processor.SparqlConstructProcessor;
-import de.uni_jena.cs.fusion.abecto.processor.TransformationProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.source.PathSourceProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.source.SourceProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.transformation.OpenlletReasoningProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.transformation.SparqlConstructProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.transformation.TransformationProcessor;
 import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraph;
 import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraphRepository;
 

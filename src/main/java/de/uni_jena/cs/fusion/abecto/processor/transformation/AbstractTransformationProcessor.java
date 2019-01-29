@@ -1,10 +1,11 @@
-package de.uni_jena.cs.fusion.abecto.processor;
+package de.uni_jena.cs.fusion.abecto.processor.transformation;
 
 import java.util.Collection;
 
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.compose.MultiUnion;
 
+import de.uni_jena.cs.fusion.abecto.processor.AbstractProcessor;
 import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraph;
 
 public abstract class AbstractTransformationProcessor extends AbstractProcessor implements TransformationProcessor {

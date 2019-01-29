@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.knowledgeBase;
+package de.uni_jena.cs.fusion.abecto.knowledgebase;
 
 import org.springframework.data.repository.CrudRepository;
 

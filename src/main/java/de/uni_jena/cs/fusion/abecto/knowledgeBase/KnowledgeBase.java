@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.knowledgeBase;
+package de.uni_jena.cs.fusion.abecto.knowledgebase;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;

@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.processor;
+package de.uni_jena.cs.fusion.abecto.processor.mapping;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -11,6 +11,7 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.graph.compose.MultiUnion;
 import org.apache.jena.util.iterator.ExtendedIterator;
 
+import de.uni_jena.cs.fusion.abecto.processor.AbstractProcessor;
 import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraph;
 
 public abstract class AbstractMappingProcessor extends AbstractProcessor implements MappingProcessor {

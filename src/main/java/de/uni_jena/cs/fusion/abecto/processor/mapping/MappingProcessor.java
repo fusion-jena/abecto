@@ -1,10 +1,11 @@
-package de.uni_jena.cs.fusion.abecto.processor;
+package de.uni_jena.cs.fusion.abecto.processor.mapping;
 
 import java.util.Collection;
 
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 
+import de.uni_jena.cs.fusion.abecto.processor.Processor;
 import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraph;
 
 public interface MappingProcessor extends Processor {

@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.knowledgeBaseVersionPart;
+package de.uni_jena.cs.fusion.abecto.knowledgebase.part.version;
 
 import java.io.InputStream;
 
@@ -7,7 +7,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
-import de.uni_jena.cs.fusion.abecto.knowledgeBasePart.KnowledgeBasePart;
+import de.uni_jena.cs.fusion.abecto.knowledgebase.part.KnowledgeBasePart;
 
 @Entity
 public class KnowledgeBasePartVersion {
@@ -16,7 +16,6 @@ public class KnowledgeBasePartVersion {
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private Long id;
 	private Long knowledgeBasePartId;
-	private Long knowledgeBaseVersionId;
 
 	protected KnowledgeBasePartVersion() {
 	}
