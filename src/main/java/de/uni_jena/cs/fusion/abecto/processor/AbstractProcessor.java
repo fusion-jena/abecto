@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.reflect.TypeLiteral;
 
+import de.uni_jena.cs.fusion.abecto.processor.progress.NullProgressListener;
 import de.uni_jena.cs.fusion.abecto.processor.progress.ProgressListener;
 import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraph;
 
@@ -26,7 +27,7 @@ public abstract class AbstractProcessor implements Processor {
 	/**
 	 * The {@link ProgressListener} of this processor.
 	 */
-	protected ProgressListener listener;
+	protected ProgressListener listener = NullProgressListener.get();
 
 	@Override
 	public RdfGraph call() throws Exception {
