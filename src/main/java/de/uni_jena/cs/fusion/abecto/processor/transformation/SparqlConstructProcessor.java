@@ -3,6 +3,7 @@ package de.uni_jena.cs.fusion.abecto.processor.transformation;
 import java.util.Collections;
 import java.util.Map;
 
+import org.apache.commons.lang3.reflect.TypeLiteral;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
@@ -17,7 +18,8 @@ public class SparqlConstructProcessor extends AbstractTransformationProcessor {
 	@Override
 	public RdfGraph computeResultGraph() {
 		// prepare query
-		String queryString = this.getProperty("query", String.class);
+		String queryString = this.getProperty("query", new TypeLiteral<String>() {
+		});
 		Query query = QueryFactory.create(queryString);
 
 		// prepare execution
@@ -30,8 +32,9 @@ public class SparqlConstructProcessor extends AbstractTransformationProcessor {
 	}
 
 	@Override
-	public Map<String, Class<?>> getPropertyTypes() {
-		return Collections.singletonMap("query", String.class);
+	public Map<String, TypeLiteral<?>> getPropertyTypes() {
+		return Collections.singletonMap("query", new TypeLiteral<String>() {
+		});
 	}
 
 }

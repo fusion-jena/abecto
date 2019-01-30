@@ -4,6 +4,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.apache.commons.lang3.reflect.TypeLiteral;
+
 import de.uni_jena.cs.fusion.abecto.processor.progress.ProgressListener;
 import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraph;
 
@@ -73,15 +75,11 @@ public abstract class AbstractProcessor implements Processor {
 	 *                              specified type.
 	 * @throws NullPointerException if the property has not been set.
 	 */
-	protected <T> T getProperty(String key, Class<T> type) {
+	@SuppressWarnings("unchecked")
+	protected <T> T getProperty(String key, TypeLiteral<T> type) {
 		Object value = this.properties.get(key);
 		Objects.requireNonNull(value, "Missing value of property \"" + key + "\".");
-		if (type.isAssignableFrom(value.getClass())) {
-			return type.cast(value);
-		} else {
-			throw new ClassCastException(
-					"Failed to cast value of property \"" + key + "\" to \"" + type.getName() + "\".");
-		}
+		return (T) value;
 	}
 
 	/**
@@ -94,15 +92,13 @@ public abstract class AbstractProcessor implements Processor {
 	 * @throws ClassCastException if the property can not be casted to the specified
 	 *                            type.
 	 */
-	protected <T> Optional<T> getOptionalProperty(String key, Class<T> type) {
+	@SuppressWarnings("unchecked")
+	protected <T> Optional<T> getOptionalProperty(String key, TypeLiteral<T> type) {
 		Object value = this.properties.get(key);
 		if (Objects.isNull(value)) {
 			return Optional.empty();
-		} else if (type.isAssignableFrom(value.getClass())) {
-			return Optional.of(type.cast(value));
 		} else {
-			throw new ClassCastException(
-					"Failed to cast value of property \"" + key + "\" to \"" + type.getName() + "\".");
+			return Optional.of((T) value);
 		}
 	}
 

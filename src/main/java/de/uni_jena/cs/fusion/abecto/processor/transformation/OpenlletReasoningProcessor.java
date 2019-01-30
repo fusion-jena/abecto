@@ -3,6 +3,7 @@ package de.uni_jena.cs.fusion.abecto.processor.transformation;
 import java.util.Collections;
 import java.util.Map;
 
+import org.apache.commons.lang3.reflect.TypeLiteral;
 import org.apache.jena.rdf.model.InfModel;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -26,7 +27,7 @@ public class OpenlletReasoningProcessor extends AbstractTransformationProcessor 
 	}
 
 	@Override
-	public Map<String, Class<?>> getPropertyTypes() {
+	public Map<String, TypeLiteral<?>> getPropertyTypes() {
 		return Collections.emptyMap();
 	}
 
