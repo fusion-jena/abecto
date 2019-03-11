@@ -11,12 +11,12 @@ public interface MetaProcessor extends Processor {
 	 * 
 	 * @param mappingGraph Previous meta {@link RdfGraph}.
 	 */
-	public void setMetaGroup(Collection<RdfGraph> metaGraphs);
+	public void setMetaGraphsGroup(Collection<RdfGraph> metaGraphs);
 
 	/**
 	 * Add a group of {@link RdfGraph}s to process by this processor.
 	 * 
-	 * @param sources {@link RdfGraph}s to process.
+	 * @param inputGraphs {@link RdfGraph}s to process.
 	 */
-	public void addSourcesGroup(Collection<RdfGraph> sources);
+	public void addInputGraphsGroup(Collection<RdfGraph> inputGraphs);
 }

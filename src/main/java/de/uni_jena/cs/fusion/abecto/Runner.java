@@ -16,8 +16,12 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.uni_jena.cs.fusion.abecto.processing.Processing;
+import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfiguration;
+import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameter;
+import de.uni_jena.cs.fusion.abecto.processing.runner.ProcessorRunner;
+import de.uni_jena.cs.fusion.abecto.processor.progress.NullProgressListener;
 import de.uni_jena.cs.fusion.abecto.processor.source.PathSourceProcessor;
-import de.uni_jena.cs.fusion.abecto.processor.source.SourceProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.transformation.OpenlletReasoningProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.transformation.SparqlConstructProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.transformation.TransformationProcessor;
@@ -42,17 +46,22 @@ public class Runner implements CommandLineRunner {
 	KnowledgeBaseModuleRepository knowledgeBaseModules;
 	@Autowired
 	RdfGraphRepository rdfGraphs;
+	@Autowired
+	ProcessorRunner runner;
 
 	@Override
 	@Transactional
 	public void run(String... args) throws Exception {
-		// TODO Auto-generated method stub
+
+		// create a Project
 		Project project = new Project("a");
 		project = projects.save(project);
 
+		// create a KnowledgeBase
 		KnowledgeBase knowledgeBase = new KnowledgeBase(project, "b");
 		knowledgeBase = knowledgeBases.save(knowledgeBase);
 
+		// create a KnowledgeBaseModule
 		KnowledgeBaseModule knowledgeBaseModule = new KnowledgeBaseModule(knowledgeBase, "c");
 		knowledgeBaseModule = knowledgeBaseModules.save(knowledgeBaseModule);
 
@@ -63,22 +72,34 @@ public class Runner implements CommandLineRunner {
 			log.info(x.toString());
 		}
 
+		// create a ProcessingParameter instance
+		ProcessingParameter parameter = new ProcessingParameter();
+		parameter.set("path", "C:\\Users\\admin\\Documents\\Workspace\\unit-ontologies\\qu\\qu-rec20.owl");
+
+		// create a ProcessingConfiguration
+		ProcessingConfiguration configuration = new ProcessingConfiguration(parameter, PathSourceProcessor.class,
+				knowledgeBaseModule);
+
+		// execute configuration
+		Processing processing = runner.executeProcessingConfiguration(configuration, NullProgressListener.get());
+		RdfGraph sourceGraph = processing.getRdfGraph();
+
 		// save some RdfGraphs
-		SourceProcessor source = new PathSourceProcessor();
-		source.setProperties(Collections.singletonMap("path",
-				"C:\\Users\\admin\\Documents\\Workspace\\unit-ontologies\\qu\\qu-rec20.owl"));
-		RdfGraph sourceGraph = source.call();
-		sourceGraph = rdfGraphs.save(sourceGraph);
+//		SourceProcessor source = new PathSourceProcessor();
+//		source.setProperties(Collections.singletonMap("path",
+//				"C:\\Users\\admin\\Documents\\Workspace\\unit-ontologies\\qu\\qu-rec20.owl"));
+//		RdfGraph sourceGraph = source.call();
+//		sourceGraph = rdfGraphs.save(sourceGraph);
 
 		TransformationProcessor construct = new SparqlConstructProcessor();
 		construct.setProperties(Collections.singletonMap("query",
 				"CONSTRUCT {?s <http://example.org/p> <http://example.org/o>} WHERE {?s ?p ?o. Filter(!isBLANK(?s))}"));
-		construct.setSources(Collections.singleton(sourceGraph));
+		construct.setInputGraphs(Collections.singleton(sourceGraph));
 		RdfGraph constructedGraph = construct.call();
 		constructedGraph = rdfGraphs.save(constructedGraph);
 
 		TransformationProcessor reasoner = new OpenlletReasoningProcessor();
-		reasoner.setSources(Collections.singleton(sourceGraph));
+		reasoner.setInputGraphs(Collections.singleton(sourceGraph));
 		RdfGraph inferredGraph = reasoner.call();
 		inferredGraph = rdfGraphs.save(inferredGraph);
 

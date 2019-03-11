@@ -10,7 +10,7 @@ public interface TransformationProcessor extends Processor {
 	/**
 	 * Set the {@link RdfGraph}s to process by this processor.
 	 * 
-	 * @param sources {@link RdfGraph}s to process.
+	 * @param inputGraphs {@link RdfGraph}s to process.
 	 */
-	public void setSources(Collection<RdfGraph> sources);
+	public void setInputGraphs(Collection<RdfGraph> inputGraphs);
 }

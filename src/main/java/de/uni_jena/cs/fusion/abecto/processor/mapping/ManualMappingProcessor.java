@@ -22,7 +22,7 @@ public class ManualMappingProcessor extends AbstractMappingProcessor {
 	}
 
 	@Override
-	public void addSourcesGroup(Collection<RdfGraph> sources) {
+	public void addInputGraphsGroup(Collection<RdfGraph> sources) {
 		// do nothing as it is not needed
 	}
 

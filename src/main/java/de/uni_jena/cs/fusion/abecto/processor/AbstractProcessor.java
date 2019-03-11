@@ -66,7 +66,7 @@ public abstract class AbstractProcessor implements Processor {
 
 	/**
 	 * 
-	 * Get an optional property value.
+	 * Get an property value.
 	 * 
 	 * @param key  property name
 	 * @param type expected type of the property value

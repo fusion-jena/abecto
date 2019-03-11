@@ -16,7 +16,7 @@ public abstract class AbstractTransformationProcessor extends AbstractProcessor 
 	protected Graph sourceGraph;
 
 	@Override
-	public void setSources(Collection<RdfGraph> sources) {
+	public void setInputGraphs(Collection<RdfGraph> sources) {
 		// create new graph union
 		MultiUnion graphUnion = new MultiUnion();
 		this.sourceGraph = graphUnion;

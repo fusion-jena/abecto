@@ -17,11 +17,11 @@ public class OpenlletReasoningProcessor extends AbstractTransformationProcessor 
 	public RdfGraph computeResultGraph() {
 		// reasoning
 		Model model = ModelFactory.createModelForGraph(this.sourceGraph);
-		// TODO suppress progress logging
 		// TODO listen progress
 		InfModel inferenceModel = ModelFactory.createInfModel(new PelletReasoner(), model);
 
 		// execute and process result
+		// TODO suppress progress logging
 		Model inferences = inferenceModel.difference(model);
 		return new RdfGraph(inferences);
 	}

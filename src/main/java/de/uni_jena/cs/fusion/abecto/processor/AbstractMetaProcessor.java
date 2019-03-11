@@ -21,7 +21,7 @@ public abstract class AbstractMetaProcessor extends AbstractProcessor implements
 	protected Graph metaGraph;
 
 	@Override
-	public void addSourcesGroup(Collection<RdfGraph> sources) {
+	public void addInputGraphsGroup(Collection<RdfGraph> sources) {
 		// create new graph union
 		MultiUnion graphUnion = new MultiUnion();
 		this.sourceGraphs.add(graphUnion);
@@ -34,7 +34,7 @@ public abstract class AbstractMetaProcessor extends AbstractProcessor implements
 	}
 
 	@Override
-	public void setMetaGroup(Collection<RdfGraph> metaGraphs) {
+	public void setMetaGraphsGroup(Collection<RdfGraph> metaGraphs) {
 		// create new graph union
 		MultiUnion metaGraphUnion = new MultiUnion();
 		this.metaGraph = metaGraphUnion;
