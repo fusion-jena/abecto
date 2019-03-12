@@ -16,15 +16,15 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.uni_jena.cs.fusion.abecto.processing.Processing;
 import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfiguration;
+import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfigurationRepository;
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameter;
+import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameterRepository;
 import de.uni_jena.cs.fusion.abecto.processing.runner.ProcessorRunner;
 import de.uni_jena.cs.fusion.abecto.processor.progress.NullProgressListener;
 import de.uni_jena.cs.fusion.abecto.processor.source.PathSourceProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.transformation.OpenlletReasoningProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.transformation.SparqlConstructProcessor;
-import de.uni_jena.cs.fusion.abecto.processor.transformation.TransformationProcessor;
 import de.uni_jena.cs.fusion.abecto.project.Project;
 import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
 import de.uni_jena.cs.fusion.abecto.project.knowledgebase.KnowledgeBase;
@@ -47,64 +47,60 @@ public class Runner implements CommandLineRunner {
 	@Autowired
 	RdfGraphRepository rdfGraphs;
 	@Autowired
+	ProcessingParameterRepository processingParameters;
+	@Autowired
+	ProcessingConfigurationRepository configurations;
+	@Autowired
 	ProcessorRunner runner;
 
 	@Override
 	@Transactional
 	public void run(String... args) throws Exception {
-
+		
 		// create a Project
-		Project project = new Project("a");
-		project = projects.save(project);
+		Project project = projects.save(new Project("a"));
 
-		// create a KnowledgeBase
-		KnowledgeBase knowledgeBase = new KnowledgeBase(project, "b");
-		knowledgeBase = knowledgeBases.save(knowledgeBase);
+		// create some KnowledgeBase
+		KnowledgeBase knowledgeBase = knowledgeBases.save(new KnowledgeBase(project, "b"));
+		knowledgeBases.save(new KnowledgeBase(project, "d"));
 
-		// create a KnowledgeBaseModule
-		KnowledgeBaseModule knowledgeBaseModule = new KnowledgeBaseModule(knowledgeBase, "c");
-		knowledgeBaseModule = knowledgeBaseModules.save(knowledgeBaseModule);
-
-		knowledgeBaseModules.save(new KnowledgeBaseModule(
-				knowledgeBases.save(new KnowledgeBase(projects.save(new Project("d")), "e")), "f"));
+		// create some KnowledgeBaseModule
+		KnowledgeBaseModule knowledgeBaseModule = knowledgeBaseModules
+				.save(new KnowledgeBaseModule(knowledgeBase, "c"));
+		knowledgeBaseModules.save(new KnowledgeBaseModule(knowledgeBase, "e"));
 
 		for (KnowledgeBaseModule x : knowledgeBaseModules.findAll()) {
 			log.info(x.toString());
 		}
 
-		// create a ProcessingParameter instance
-		ProcessingParameter parameter = new ProcessingParameter();
-		parameter.set("path", "C:\\Users\\admin\\Documents\\Workspace\\unit-ontologies\\qu\\qu-rec20.owl");
+		// execute PathSourceProcessor
+		ProcessingParameter parameterPathSource = new ProcessingParameter();
+		parameterPathSource.set("path", "C:\\Users\\admin\\Documents\\Workspace\\unit-ontologies\\qu\\qu-rec20.owl");
+		parameterPathSource = processingParameters.save(parameterPathSource);
+		ProcessingConfiguration configurationPathSource = configurations
+				.save(new ProcessingConfiguration(parameterPathSource, PathSourceProcessor.class, knowledgeBaseModule));
+		runner.executeProcessingConfiguration(configurationPathSource, NullProgressListener.get());
 
-		// create a ProcessingConfiguration
-		ProcessingConfiguration configuration = new ProcessingConfiguration(parameter, PathSourceProcessor.class,
-				knowledgeBaseModule);
+		// execute SparqlConstructProcessor
+		ProcessingParameter parameterSparqlConstruct = new ProcessingParameter();
+		parameterSparqlConstruct.set("query",
+				"CONSTRUCT {?s <http://example.org/p> <http://example.org/o>} WHERE {?s ?p ?o. Filter(!isBLANK(?s))}");
+		parameterSparqlConstruct = processingParameters.save(parameterSparqlConstruct);
+		ProcessingConfiguration configurationSparqlConstruct = configurations
+				.save(new ProcessingConfiguration(parameterSparqlConstruct, SparqlConstructProcessor.class,
+						Collections.singleton(configurationPathSource)));
+		runner.executeProcessingConfiguration(configurationSparqlConstruct, NullProgressListener.get());
 
-		// execute configuration
-		Processing processing = runner.executeProcessingConfiguration(configuration, NullProgressListener.get());
-		RdfGraph sourceGraph = processing.getRdfGraph();
-
-		// save some RdfGraphs
-//		SourceProcessor source = new PathSourceProcessor();
-//		source.setProperties(Collections.singletonMap("path",
-//				"C:\\Users\\admin\\Documents\\Workspace\\unit-ontologies\\qu\\qu-rec20.owl"));
-//		RdfGraph sourceGraph = source.call();
-//		sourceGraph = rdfGraphs.save(sourceGraph);
-
-		TransformationProcessor construct = new SparqlConstructProcessor();
-		construct.setProperties(Collections.singletonMap("query",
-				"CONSTRUCT {?s <http://example.org/p> <http://example.org/o>} WHERE {?s ?p ?o. Filter(!isBLANK(?s))}"));
-		construct.setInputGraphs(Collections.singleton(sourceGraph));
-		RdfGraph constructedGraph = construct.call();
-		constructedGraph = rdfGraphs.save(constructedGraph);
-
-		TransformationProcessor reasoner = new OpenlletReasoningProcessor();
-		reasoner.setInputGraphs(Collections.singleton(sourceGraph));
-		RdfGraph inferredGraph = reasoner.call();
-		inferredGraph = rdfGraphs.save(inferredGraph);
+		// execute OpenlletReasoningProcessor
+		ProcessingParameter parameterOpenlletReasoning = new ProcessingParameter();
+		parameterSparqlConstruct = processingParameters.save(parameterOpenlletReasoning);
+		ProcessingConfiguration configurationOpenlletReasoning = configurations
+				.save(new ProcessingConfiguration(parameterOpenlletReasoning, OpenlletReasoningProcessor.class,
+						Collections.singleton(configurationPathSource)));
+		runner.executeProcessingConfiguration(configurationOpenlletReasoning, NullProgressListener.get());
 
 		// fetch all
-		log.info("Models found with findAll():");
+		log.info("RdfGraphs found with findAll():");
 		log.info("-------------------------------");
 		for (RdfGraph graph : rdfGraphs.findAll()) {
 			log.info(graph.toString());

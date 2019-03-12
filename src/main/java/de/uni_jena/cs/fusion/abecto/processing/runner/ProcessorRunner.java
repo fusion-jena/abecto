@@ -1,6 +1,5 @@
 package de.uni_jena.cs.fusion.abecto.processing.runner;
 
-import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.HashSet;
 
@@ -10,24 +9,24 @@ import org.springframework.stereotype.Component;
 import de.uni_jena.cs.fusion.abecto.processing.Processing;
 import de.uni_jena.cs.fusion.abecto.processing.ProcessingRepository;
 import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfiguration;
-import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameterRepository;
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
 import de.uni_jena.cs.fusion.abecto.processor.progress.ProgressListener;
-import de.uni_jena.cs.fusion.abecto.processor.transformation.TransformationProcessor;
 import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraph;
+import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraphRepository;
 
 @Component
 public class ProcessorRunner {
 
 	@Autowired
-	ProcessingParameterRepository processingParameters;
-	@Autowired
 	ProcessingRepository processings;
+	@Autowired
+	RdfGraphRepository rdfGraphs;
 
 	public Processing executeProcessingConfiguration(ProcessingConfiguration configuration, ProgressListener listener) {
 		Collection<Processing> inputProcessings = new HashSet<>();
 		for (ProcessingConfiguration inputProcessingConfiguration : configuration.getInputProcessingConfigurations()) {
-			inputProcessings.add(processings.findTopByConfigurationOrderByStartDateTimeDesc(inputProcessingConfiguration));
+			inputProcessings
+					.add(processings.findTopByConfigurationOrderByStartDateTimeDesc(inputProcessingConfiguration));
 		}
 
 		return this.executeProcessingConfiguration(configuration, listener, inputProcessings);
@@ -35,35 +34,20 @@ public class ProcessorRunner {
 
 	public Processing executeProcessingConfiguration(ProcessingConfiguration configuration, ProgressListener listener,
 			Collection<Processing> inputProcessings) {
-		Processing processing = new Processing();
+		
+		// initialize processing
+		Processing processing = processings.save(new Processing(configuration, inputProcessings));
+		
 		try {
-			// get processor
-			Processor processor = configuration.getProcessor();
-			processor.setListener(listener);
-
-			// set processor parameters
-			processing.setParameter(configuration.getParameter());
-			processor.setProperties(configuration.getParameter().getAll());
-			Collection<RdfGraph> inputGraphs = new HashSet<>();
-			for (Processing inputProcessing : inputProcessings) {
-				inputGraphs.add(inputProcessing.getRdfGraph());
-			}
-			if (processor instanceof TransformationProcessor) {
-				((TransformationProcessor) processor).setInputGraphs(inputGraphs);
-			}
-
-			// set start date time
-			processing.setStartTime(LocalDateTime.now());
-
-			processing.setRdfGraph(processor.call());
-
+			// execute processor
+			processing = processings.save(processing.setStateStart());
+			Processor processor = processing.getConfiguredProcessor(listener);
+			RdfGraph resultGraph = rdfGraphs.save(processor.call());
+			processing = processings.save(processing.setStateSuccess(resultGraph));
 		} catch (Throwable t) {
-			// set StackTrace
-			processing.setStackTrace(t);
+			processing = processings.save(processing.setStateFail(t));
 		}
-		// set end date time
-		processing.setEndTime(LocalDateTime.now());
 
-		return processings.save(processing);
+		return processing;
 	}
 }

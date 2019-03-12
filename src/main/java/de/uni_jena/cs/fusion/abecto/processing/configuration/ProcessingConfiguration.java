@@ -73,6 +73,10 @@ public class ProcessingConfiguration {
 		return this.processor.getDeclaredConstructor().newInstance();
 	}
 
+	public Class<? extends Processor> getProcessorClass() {
+		return this.processor;
+	}
+
 	public Collection<ProcessingConfiguration> getSubsequentProcessingConfigurations() {
 		return subsequentProcessingConfigurations;
 	}
