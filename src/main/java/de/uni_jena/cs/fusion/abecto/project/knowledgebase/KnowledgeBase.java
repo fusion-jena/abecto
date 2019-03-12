@@ -18,7 +18,7 @@ public class KnowledgeBase {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
-	private Long knowledgeBaseId;
+	public Long knowledgeBaseId;
 	public String label;
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	public Project project;
