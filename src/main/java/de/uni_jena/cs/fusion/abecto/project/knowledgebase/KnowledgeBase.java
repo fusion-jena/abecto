@@ -4,21 +4,16 @@ import java.util.Collection;
 
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 
+import de.uni_jena.cs.fusion.abecto.AbstractEntityWithUUID;
 import de.uni_jena.cs.fusion.abecto.project.Project;
 import de.uni_jena.cs.fusion.abecto.project.knowledgebase.module.KnowledgeBaseModule;
 
 @Entity
-public class KnowledgeBase {
+public class KnowledgeBase extends AbstractEntityWithUUID {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
-	public Long knowledgeBaseId;
 	public String label;
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	public Project project;
@@ -35,7 +30,7 @@ public class KnowledgeBase {
 
 	@Override
 	public String toString() {
-		return String.format("KnowledgeBase[id=%d, label='%s', project='%s']", this.knowledgeBaseId, this.label,
+		return String.format("KnowledgeBase[id=%s, label='%s', project='%s']", this.id, this.label,
 				this.project);
 	}
 }

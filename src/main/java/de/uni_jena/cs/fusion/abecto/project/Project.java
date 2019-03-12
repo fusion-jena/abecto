@@ -3,19 +3,14 @@ package de.uni_jena.cs.fusion.abecto.project;
 import java.util.Collection;
 
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
 import javax.persistence.OneToMany;
 
+import de.uni_jena.cs.fusion.abecto.AbstractEntityWithUUID;
 import de.uni_jena.cs.fusion.abecto.project.knowledgebase.KnowledgeBase;
 
 @Entity
-public class Project {
+public class Project extends AbstractEntityWithUUID {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
-	private Long projectId;
 	public String label;
 	@OneToMany(mappedBy = "project")
 	public Collection<KnowledgeBase> knowledgeBases;
@@ -29,6 +24,6 @@ public class Project {
 
 	@Override
 	public String toString() {
-		return String.format("Project[id=%d, label='%s']", this.projectId, this.label);
+		return String.format("Project[id=%s, label='%s']", this.id, this.label);
 	}
 }

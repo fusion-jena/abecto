@@ -107,10 +107,12 @@ public class ProcessingConfiguration {
 			inputProcessingConfiguration.subsequentProcessingConfigurations.add(this);
 		}
 		
+		// TODO improve using #hashCode and # equals
+		
 		if (this.isTransformationProcessingConfiguration()) {
 			this.knowledgeBase = this.inputProcessingConfigurations.stream()
 					.map(configurations -> configurations.knowledgeBase).reduce((a, b) -> {
-						if (Objects.nonNull(a) && Objects.nonNull(b) && a.knowledgeBaseId == b.knowledgeBaseId) {
+						if (Objects.nonNull(a) && a.equals(b)) {
 							return a;
 						} else {
 							throw new IllegalStateException(
@@ -122,7 +124,7 @@ public class ProcessingConfiguration {
 			this.knowledgeBase = this.inputProcessingConfigurations.stream()
 					.map(configurations -> Optional.ofNullable(configurations.knowledgeBase)).reduce((a, b) -> {
 						if (a.isPresent() && b.isPresent()
-								&& a.orElseThrow().knowledgeBaseId == b.orElseThrow().knowledgeBaseId) {
+								&& a.orElseThrow().equals(b.orElseThrow())) {
 							return a;
 						} else {
 							return Optional.empty();
