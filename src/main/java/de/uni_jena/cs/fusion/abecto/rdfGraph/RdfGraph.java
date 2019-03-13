@@ -11,9 +11,6 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
 import javax.persistence.Lob;
 
 import org.apache.jena.graph.Graph;
@@ -21,14 +18,13 @@ import org.apache.jena.ontology.OntModel;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 
+import de.uni_jena.cs.fusion.abecto.AbstractEntityWithUUID;
+
 @Entity
-public class RdfGraph {
+public class RdfGraph extends AbstractEntityWithUUID {
 
 	private final static RdfSerializationLanguage DB_SERIALIZATION_LANG = RdfSerializationLanguage.NTRIPLES;
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
-	private Long id;
 	@Lob
 	private byte[] compressedGraph;
 
@@ -98,10 +94,6 @@ public class RdfGraph {
 		}
 	}
 
-	public Long getId() {
-		return this.id;
-	}
-
 	public Graph getGraph() {
 		return this.getModel().getGraph();
 	}
@@ -130,6 +122,6 @@ public class RdfGraph {
 
 	@Override
 	public String toString() {
-		return String.format("RdfGraph[id=%d]", id);
+		return String.format("RdfGraph[id=%s]", this.id);
 	}
 }

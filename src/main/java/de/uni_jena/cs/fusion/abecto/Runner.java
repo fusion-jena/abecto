@@ -56,7 +56,7 @@ public class Runner implements CommandLineRunner {
 	@Override
 	@Transactional
 	public void run(String... args) throws Exception {
-		
+
 		// create a Project
 		Project project = projects.save(new Project("a"));
 
@@ -78,7 +78,7 @@ public class Runner implements CommandLineRunner {
 		parameterPathSource.set("path", "C:\\Users\\admin\\Documents\\Workspace\\unit-ontologies\\qu\\qu-rec20.owl");
 		parameterPathSource = processingParameters.save(parameterPathSource);
 		ProcessingConfiguration configurationPathSource = configurations
-				.save(new ProcessingConfiguration(parameterPathSource, PathSourceProcessor.class, knowledgeBaseModule));
+				.save(new ProcessingConfiguration(PathSourceProcessor.class, parameterPathSource, knowledgeBaseModule));
 		runner.executeProcessingConfiguration(configurationPathSource, NullProgressListener.get());
 
 		// execute SparqlConstructProcessor
@@ -87,7 +87,7 @@ public class Runner implements CommandLineRunner {
 				"CONSTRUCT {?s <http://example.org/p> <http://example.org/o>} WHERE {?s ?p ?o. Filter(!isBLANK(?s))}");
 		parameterSparqlConstruct = processingParameters.save(parameterSparqlConstruct);
 		ProcessingConfiguration configurationSparqlConstruct = configurations
-				.save(new ProcessingConfiguration(parameterSparqlConstruct, SparqlConstructProcessor.class,
+				.save(new ProcessingConfiguration(SparqlConstructProcessor.class, parameterSparqlConstruct,
 						Collections.singleton(configurationPathSource)));
 		runner.executeProcessingConfiguration(configurationSparqlConstruct, NullProgressListener.get());
 
@@ -95,7 +95,7 @@ public class Runner implements CommandLineRunner {
 		ProcessingParameter parameterOpenlletReasoning = new ProcessingParameter();
 		parameterSparqlConstruct = processingParameters.save(parameterOpenlletReasoning);
 		ProcessingConfiguration configurationOpenlletReasoning = configurations
-				.save(new ProcessingConfiguration(parameterOpenlletReasoning, OpenlletReasoningProcessor.class,
+				.save(new ProcessingConfiguration(OpenlletReasoningProcessor.class, parameterOpenlletReasoning,
 						Collections.singleton(configurationPathSource)));
 		runner.executeProcessingConfiguration(configurationOpenlletReasoning, NullProgressListener.get());
 

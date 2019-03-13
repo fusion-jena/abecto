@@ -13,14 +13,12 @@ import java.util.stream.Collectors;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
 import javax.persistence.Lob;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 
+import de.uni_jena.cs.fusion.abecto.AbstractEntityWithUUID;
 import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfiguration;
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameter;
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
@@ -33,15 +31,11 @@ import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraph;
  *
  */
 @Entity
-public class Processing {
+public class Processing extends AbstractEntityWithUUID {
 
 	private enum ProcessingStatus {
 		NOT_STARTED, RUNNING, SUCCEEDED, FAILED
 	}
-
-	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
-	private Long id;
 
 	// configuration
 	/**

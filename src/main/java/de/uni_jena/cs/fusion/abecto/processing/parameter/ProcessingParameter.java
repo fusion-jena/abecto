@@ -5,18 +5,13 @@ import java.util.Map;
 
 import javax.persistence.Convert;
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
 
 import org.apache.commons.lang3.reflect.TypeLiteral;
 
-@Entity
-public class ProcessingParameter {
+import de.uni_jena.cs.fusion.abecto.AbstractEntityWithUUID;
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
-	private Long processingParameterId;
+@Entity
+public class ProcessingParameter extends AbstractEntityWithUUID {
 
 	@Convert(converter = ProcessingParameterConverter.class)
 	private Map<String, Object> parameter = new HashMap<String, Object>();
