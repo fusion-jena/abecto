@@ -15,7 +15,9 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.MappedSuperclass;
 
+import de.uni_jena.cs.fusion.abecto.AbstractEntityWithUUID;
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameter;
 import de.uni_jena.cs.fusion.abecto.processor.MetaProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
@@ -106,30 +108,44 @@ public class ProcessingConfiguration {
 		for (ProcessingConfiguration inputProcessingConfiguration : inputProcessingConfigurations) {
 			inputProcessingConfiguration.subsequentProcessingConfigurations.add(this);
 		}
-		
+
 		// TODO improve using #hashCode and # equals
-		
-		if (this.isTransformationProcessingConfiguration()) {
-			this.knowledgeBase = this.inputProcessingConfigurations.stream()
-					.map(configurations -> configurations.knowledgeBase).reduce((a, b) -> {
-						if (Objects.nonNull(a) && a.equals(b)) {
-							return a;
-						} else {
+		for (ProcessingConfiguration configuration : this.inputProcessingConfigurations) {
+			if (configuration.knowledgeBase == null) {
+				// configuration belongs to multiple knowledge bases
+				if (this.isTransformationProcessingConfiguration()) {
+					throw new IllegalStateException(
+							"Configuration for transformation processore is assigned to multiple knowledge bases.");
+				} else {
+					this.knowledgeBase = null; // this belongs to multiple knowledge bases
+					break;
+				}
+			} else {
+				// configuration belongs to one knowledge bases
+				if (this.knowledgeBase != null) {
+					// earlier configuration has been visited
+					if (!configuration.knowledgeBase.equals(configuration.knowledgeBase)) {
+						// earlier configuration belongs to another knowledge bases
+
+						if (this.isTransformationProcessingConfiguration()) {
 							throw new IllegalStateException(
-									"Configuration for transformation processore is assigned to mutliple knowledge bases.");
-						}
-					}).orElseThrow(() -> new NoSuchElementException(
-							"Configuration for transformation processore is not assigned to a knowledge base."));
-		} else {
-			this.knowledgeBase = this.inputProcessingConfigurations.stream()
-					.map(configurations -> Optional.ofNullable(configurations.knowledgeBase)).reduce((a, b) -> {
-						if (a.isPresent() && b.isPresent()
-								&& a.orElseThrow().equals(b.orElseThrow())) {
-							return a;
+									"Configuration for transformation processore is assigned to multiple knowledge bases.");
 						} else {
-							return Optional.empty();
+							this.knowledgeBase = null; // this belongs to multiple knowledge bases
+							break;
 						}
-					}).orElse(Optional.empty()).orElse(null);
+					}
+				} else {
+					// no earlier configuration has been visited
+					this.knowledgeBase = configuration.knowledgeBase; // this belongs to the knowledge bases of
+																		// configuration
+				}
+			}
+		}
+		if (this.knowledgeBase == null && this.isTransformationProcessingConfiguration()) {
+			// this is a TransformationProcessing Configuration and 
+			throw new NoSuchElementException(
+					"Configuration for transformation processore is not assigned to a knowledge base.");
 		}
 	}
 
@@ -162,10 +178,6 @@ public class ProcessingConfiguration {
 
 	public ProcessingParameter getParameter() {
 		return this.parameter;
-	}
-
-	public Long getProcessingConfigurationId() {
-		return this.processingConfigurationId;
 	}
 
 	public Processor getProcessor() throws InstantiationException, IllegalAccessException, IllegalArgumentException,
@@ -207,6 +219,6 @@ public class ProcessingConfiguration {
 
 	@Override
 	public String toString() {
-		return String.format("ProcessingConfiguration[id=%d]", this.processingConfigurationId);
+		return String.format("ProcessingConfiguration[id=%s]", this.id);
 	}
 }
