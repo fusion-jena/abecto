@@ -3,6 +3,7 @@ package de.uni_jena.cs.fusion.abecto.processor;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 
 import org.apache.commons.lang3.reflect.TypeLiteral;
 
@@ -84,6 +85,26 @@ public abstract class AbstractProcessor implements Processor {
 	}
 
 	/**
+	 * 
+	 * Get an property value.
+	 * 
+	 * @param key  property name
+	 * @param type expected type of the property value
+	 * @param converter 
+	 * @return property value
+	 * 
+	 * @throws ClassCastException   if the property can not be casted to the
+	 *                              specified type.
+	 * @throws NullPointerException if the property has not been set.
+	 */
+	@SuppressWarnings("unchecked")
+	protected <T, R> R getProperty(String key, TypeLiteral<T> type, Function<T, R> converter) {
+		Object value = this.properties.get(key);
+		Objects.requireNonNull(value, "Missing value of property \"" + key + "\".");
+		return converter.apply((T) value);
+	}
+
+	/**
 	 * Get an optional property value as {@link Optional}.
 	 * 
 	 * @param key  property name
@@ -100,6 +121,27 @@ public abstract class AbstractProcessor implements Processor {
 			return Optional.empty();
 		} else {
 			return Optional.of((T) value);
+		}
+	}
+
+	/**
+	 * Get an optional property value as {@link Optional}.
+	 * 
+	 * @param key  property name
+	 * @param type expected type of the property value
+	 * @param converter 
+	 * @return property value
+	 * 
+	 * @throws ClassCastException if the property can not be casted to the specified
+	 *                            type.
+	 */
+	@SuppressWarnings("unchecked")
+	protected <T, R> Optional<R> getOptionalProperty(String key, TypeLiteral<T> type, Function<T, R> converter) {
+		Object value = this.properties.get(key);
+		if (Objects.isNull(value)) {
+			return Optional.empty();
+		} else {
+			return Optional.of(converter.apply((T) value));
 		}
 	}
 
