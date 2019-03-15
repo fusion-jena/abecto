@@ -23,9 +23,9 @@ import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameterRepo
 import de.uni_jena.cs.fusion.abecto.processing.runner.ProcessorRunner;
 import de.uni_jena.cs.fusion.abecto.processor.progress.NullProgressListener;
 import de.uni_jena.cs.fusion.abecto.processor.progress.PrintStreamProgressListener;
+import de.uni_jena.cs.fusion.abecto.processor.refinement.transformation.OpenlletReasoningProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.refinement.transformation.SparqlConstructProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.source.PathSourceProcessor;
-import de.uni_jena.cs.fusion.abecto.processor.transformation.OpenlletReasoningProcessor;
-import de.uni_jena.cs.fusion.abecto.processor.transformation.SparqlConstructProcessor;
 import de.uni_jena.cs.fusion.abecto.project.Project;
 import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
 import de.uni_jena.cs.fusion.abecto.project.knowledgebase.KnowledgeBase;

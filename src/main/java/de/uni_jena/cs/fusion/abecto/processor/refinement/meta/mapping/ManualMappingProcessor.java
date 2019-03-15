@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.processor.mapping;
+package de.uni_jena.cs.fusion.abecto.processor.refinement.meta.mapping;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -22,7 +22,7 @@ public class ManualMappingProcessor extends AbstractMappingProcessor {
 	}
 
 	@Override
-	public void addInputGraphsGroup(Collection<RdfGraph> sources) {
+	public void addInputGraphGroup(Collection<RdfGraph> sources) {
 		// do nothing as it is not needed
 	}
 

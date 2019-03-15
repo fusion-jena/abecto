@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.processor.transformation;
+package de.uni_jena.cs.fusion.abecto.processor.refinement.transformation;
 
 import java.util.Collections;
 import java.util.Map;
@@ -23,7 +23,7 @@ public class SparqlConstructProcessor extends AbstractTransformationProcessor {
 		Query query = QueryFactory.create(queryString);
 
 		// prepare execution
-		Model model = ModelFactory.createModelForGraph(this.sourceGraph);
+		Model model = ModelFactory.createModelForGraph(this.inputGraph);
 		QueryExecution queryExecution = QueryExecutionFactory.create(query, model);
 
 		// execute and process result

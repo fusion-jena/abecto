@@ -3,6 +3,7 @@ package de.uni_jena.cs.fusion.abecto.processing.configuration;
 import java.lang.reflect.InvocationTargetException;
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -13,12 +14,13 @@ import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 
 import de.uni_jena.cs.fusion.abecto.AbstractEntityWithUUID;
-import de.uni_jena.cs.fusion.abecto.UnexpectedStateException;
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameter;
-import de.uni_jena.cs.fusion.abecto.processor.MetaProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
+import de.uni_jena.cs.fusion.abecto.processor.refinement.RefinementProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.refinement.meta.MetaProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.refinement.meta.mapping.MappingProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.refinement.transformation.TransformationProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.source.SourceProcessor;
-import de.uni_jena.cs.fusion.abecto.processor.transformation.TransformationProcessor;
 import de.uni_jena.cs.fusion.abecto.project.Project;
 import de.uni_jena.cs.fusion.abecto.project.knowledgebase.KnowledgeBase;
 import de.uni_jena.cs.fusion.abecto.project.knowledgebase.module.KnowledgeBaseModule;
@@ -36,8 +38,8 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 	 * The {@link KnowledgeBase} this {@link ProcessingConfiguration} belongs to.
 	 * {@code null}, if it belongs to multiple {@link KnowledgeBase}s.
 	 */
-	@ManyToOne(fetch = FetchType.LAZY, optional = true)
-	protected KnowledgeBase knowledgeBase;
+	@ManyToMany(fetch = FetchType.LAZY)
+	protected Collection<KnowledgeBase> knowledgeBases = new HashSet<>();
 	/**
 	 * The {@link Project} this {@link ProcessingConfiguration} belongs to.
 	 */
@@ -59,6 +61,26 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 	}
 
 	/**
+	 * @param parameter                     The {@link ProcessingParameter} to use.
+	 * @param processor                     The {@link Processor} to use.
+	 *                                      {@link SourceProcessor} are not allowed.
+	 * @param inputProcessingConfigurations The {@link ProcessingConfiguration}s
+	 *                                      whose result to use as input.
+	 */
+	public ProcessingConfiguration(Class<? extends RefinementProcessor> processor, ProcessingParameter parameter,
+			Collection<ProcessingConfiguration> inputProcessingConfigurations)
+			throws NoSuchElementException, IllegalArgumentException, IllegalStateException {
+		this(parameter, processor);
+
+		// add associations between ProcessingConfigurations
+		for (ProcessingConfiguration inputProcessingConfiguration : inputProcessingConfigurations) {
+			this.addInputProcessingConfiguration(inputProcessingConfiguration);
+		}
+
+		this.updateAssociations();
+	}
+
+	/**
 	 * Creates a {@link ProcessingConfiguration} for a {@link SourceProcessor}.
 	 * 
 	 * @param parameter           The {@link ProcessingParameter} to use.
@@ -70,48 +92,8 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 			KnowledgeBaseModule knowledgeBaseModule) {
 		this(parameter, processor);
 		this.knowledgeBaseModule = knowledgeBaseModule;
-		this.knowledgeBase = knowledgeBaseModule.knowledgeBase;
+		this.knowledgeBases.add(knowledgeBaseModule.knowledgeBase);
 		this.project = knowledgeBaseModule.knowledgeBase.project;
-	}
-
-	/**
-	 * 
-	 * @param parameter                     The {@link ProcessingParameter} to use.
-	 * @param processor                     The {@link Processor} to use.
-	 *                                      {@link SourceProcessor} are not allowed.
-	 * @param inputProcessingConfigurations The {@link ProcessingConfiguration}s
-	 *                                      whose result to use as input.
-	 * 
-	 * @throws IllegalArgumentException if {@code processor} is not a
-	 *                                  {@link MetaProcessor} or a
-	 *                                  {@link TransformationProcessor}
-	 * @throws IllegalStateException    if {@code processor} is a
-	 *                                  {@link TransformationProcessor} and the
-	 *                                  {@code inputProcessingConfiguration}s belong
-	 *                                  to multiple {@link KnowledgeBase}
-	 * @throws NoSuchElementException   if {@code processor} is a
-	 *                                  {@link TransformationProcessor} and Fnone of
-	 *                                  the {@code inputProcessingConfiguration}s
-	 *                                  belongs to exactly {@link KnowledgeBase}
-	 */
-	public ProcessingConfiguration(Class<? extends TransformationProcessor> processor, ProcessingParameter parameter,
-			Collection<ProcessingConfiguration> inputProcessingConfigurations)
-			throws NoSuchElementException, IllegalArgumentException, IllegalStateException {
-		this(parameter, processor);
-
-		if (this.isMetaProcessingConfiguration() || this.isTransformationProcessingConfiguration()) {
-			// add associations between ProcessingConfigurations
-			for (ProcessingConfiguration inputProcessingConfiguration : inputProcessingConfigurations) {
-				this.addInputProcessingConfiguration(inputProcessingConfiguration);
-			}
-
-			this.updateProjectAssociation();
-			this.updateKnowledgeBaseAssociation();
-		} else {
-			throw new IllegalArgumentException(
-					"Argument processor needs to be a MetaProcess or a TransformationProcessor.");
-		}
-
 	}
 
 	/**
@@ -136,12 +118,12 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 		return this.inputProcessingConfigurations;
 	}
 
-	public KnowledgeBase getKnowledgeBase() {
-		return this.knowledgeBase;
-	}
-
 	public KnowledgeBaseModule getKnowledgeBaseModule() {
 		return this.knowledgeBaseModule;
+	}
+
+	public Collection<KnowledgeBase> getKnowledgeBases() {
+		return Collections.unmodifiableCollection(this.knowledgeBases);
 	}
 
 	public LocalDateTime getLastChange() {
@@ -170,11 +152,27 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 	}
 
 	/**
+	 * @return {@code true} if this is the configuration of a
+	 *         {@link MappingProcessor}, otherwise {@code false}
+	 */
+	public boolean isMappingProcessingConfiguration() {
+		return MappingProcessor.class.isAssignableFrom(this.processor);
+	}
+
+	/**
 	 * @return {@code true} if this is the configuration of a {@link MetaProcessor},
 	 *         otherwise {@code false}
 	 */
 	public boolean isMetaProcessingConfiguration() {
 		return MetaProcessor.class.isAssignableFrom(this.processor);
+	}
+
+	/**
+	 * @return {@code true} if this is the configuration of a
+	 *         {@link RefinementProcessor}, otherwise {@code false}
+	 */
+	public boolean isRefinementProcessingConfiguration() {
+		return RefinementProcessor.class.isAssignableFrom(this.processor);
 	}
 
 	/**
@@ -199,85 +197,36 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 	}
 
 	/**
-	 * Updates the {@link KnowledgeBase} association based on the input
-	 * {@link ProcessingConfiguration}s.
+	 * Updates the {@link KnowledgeBase}s and {@link Project} associations based on
+	 * the input {@link ProcessingConfiguration}s.
 	 * 
-	 * @return {@code true} if the {@link KnowledgeBase} association has changed,
-	 *         otherwise {@code false}
+	 * @throws IllegalStateException if this {@link ProcessingConfiguration} belongs
+	 *                               to multiple projects
 	 */
-	public boolean updateKnowledgeBaseAssociation() {
-		boolean changed = false;
-
-		// collect all knowledgeBase values (Note: container required to accept null)
-		Set<KnowledgeBase> inputKnowledgeBases = this.inputProcessingConfigurations.stream()
-				.map((configuration) -> configuration.knowledgeBase)
+	public void updateAssociations() throws IllegalStateException {
+		// update knowledgeBaseModule ((Note: container required to accept null)
+		Set<KnowledgeBaseModule> inputKnowledgeBaseModules = this.inputProcessingConfigurations.stream()
+				.map((configuration) -> configuration.knowledgeBaseModule)
 				.collect(HashSet::new, Set::add, (a, b) -> a.addAll(b));
-		if (this.isTransformationProcessingConfiguration()) {
-			if (inputKnowledgeBases.contains(null)) {
-				// one inputKnowledgeBase belongs to multiple knowledge bases
-				throw new IllegalStateException("Input ProcessingConfigurations belong to multiple knowledge bases.");
-			} else if (inputKnowledgeBases.size() > 1) {
-				// two inputKnowledgeBases belongs to different knowledge bases
-				throw new IllegalStateException("Input ProcessingConfigurations belong to multiple knowledge bases.");
-			} else if (inputKnowledgeBases.size() == 1) {
-				// all inputKnowledgeBases belongs to one knowledge bases
-				KnowledgeBase newValue = inputKnowledgeBases.iterator().next();
-				changed = !newValue.equals(this.knowledgeBase);
-				this.knowledgeBase = newValue;
-			} else if (inputKnowledgeBases.isEmpty()) {
-				throw new IllegalStateException("Input ProcessingConfigurations belong to no knowledge base.");
-			} else {
-				throw new UnexpectedStateException();
-			}
-		} else if (this.isMetaProcessingConfiguration()) {
-			if (inputKnowledgeBases.contains(null)) {
-				// one inputKnowledgeBase belongs to multiple knowledge bases
-				changed = this.knowledgeBase != null;
-				this.knowledgeBase = null;
-			} else if (inputKnowledgeBases.size() > 1) {
-				// two inputKnowledgeBases belongs to different knowledge bases
-				changed = this.knowledgeBase != null;
-				this.knowledgeBase = null;
-			} else if (inputKnowledgeBases.size() == 1) {
-				// all inputKnowledgeBases belongs to one knowledge bases
-				KnowledgeBase newValue = inputKnowledgeBases.iterator().next();
-				changed = !newValue.equals(this.knowledgeBase);
-				this.knowledgeBase = newValue;
-			} else if (inputKnowledgeBases.isEmpty()) {
-				throw new IllegalStateException("Input ProcessingConfigurations belong to no knowledge base.");
-			} else {
-				throw new UnexpectedStateException();
-			}
-		} else if (this.isSourceProcessingConfiguration()) {
-			// do nothing
+		if (inputKnowledgeBaseModules.size() == 1) {
+			this.knowledgeBaseModule = inputKnowledgeBaseModules.iterator().next();
 		} else {
-			throw new UnexpectedStateException();
+			inputKnowledgeBaseModules = null;
 		}
-		return changed;
-	}
 
-	/**
-	 * Updates the {@link Project} association based on the input
-	 * {@link ProcessingConfiguration}s.
-	 * 
-	 * @return {@code true} if the {@link Project} association has changed,
-	 *         otherwise {@code false}
-	 */
-	public boolean updateProjectAssociation() {
-		boolean changed = false;
+		// update knowledgeBases
+		this.knowledgeBases = this.inputProcessingConfigurations.stream()
+				.map((configuration) -> configuration.knowledgeBases)
+				.collect(HashSet::new, Set::addAll, (a, b) -> a.addAll(b));
 
-		// collect all project values
+		// update project
 		Set<Project> inputProjects = this.inputProcessingConfigurations.stream()
 				.map((configuration) -> configuration.project).collect(HashSet::new, Set::add, (a, b) -> a.addAll(b));
 		if (inputProjects.size() == 1) {
-			Project newValue = inputProjects.iterator().next();
-			changed = !newValue.equals(this.project);
-			this.project = newValue;
+			this.project = inputProjects.iterator().next();
 		} else {
-			throw new IllegalStateException("Input ProcessingConfigurations belong to different project.");
+			throw new IllegalStateException(String.format("%s belongs to multiple project.", this));
 		}
-
-		return changed;
 	}
 
 }

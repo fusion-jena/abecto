@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.processor.mapping;
+package de.uni_jena.cs.fusion.abecto.processor.refinement.meta.mapping;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -11,14 +11,14 @@ import org.apache.jena.graph.Node_URI;
 import org.apache.jena.graph.Triple;
 
 import de.uni_jena.cs.fusion.abecto.Vocabulary;
-import de.uni_jena.cs.fusion.abecto.processor.AbstractMetaProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.refinement.meta.AbstractMetaProcessor;
 import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraph;
 
 public abstract class AbstractMappingProcessor extends AbstractMetaProcessor implements MappingProcessor {
 
 	@Override
 	protected RdfGraph computeResultGraph() {
-		int graphCount = this.sourceGraphs.size();
+		int graphCount = this.inputGraphs.size();
 		int progressTotal = graphCount * (graphCount - 1) / 2;
 		int progress = 0;
 
@@ -44,7 +44,7 @@ public abstract class AbstractMappingProcessor extends AbstractMetaProcessor imp
 			for (int j = i + 1; j < graphCount; j++) {
 
 				// compute mapping
-				Collection<Mapping> mappings = computeMapping(sourceGraphs.get(i), sourceGraphs.get(j));
+				Collection<Mapping> mappings = computeMapping(inputGraphs.get(i), inputGraphs.get(j));
 
 				for (Mapping mapping : mappings) {
 					// check if mapping is already known or contradicts to previous known mappings

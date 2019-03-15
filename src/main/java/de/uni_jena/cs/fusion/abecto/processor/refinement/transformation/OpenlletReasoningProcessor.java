@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.processor.transformation;
+package de.uni_jena.cs.fusion.abecto.processor.refinement.transformation;
 
 import java.util.Collections;
 import java.util.Map;
@@ -21,7 +21,7 @@ public class OpenlletReasoningProcessor extends AbstractTransformationProcessor 
 	public RdfGraph computeResultGraph() {
 		log.info("Reasoning started.");
 		// reasoning
-		Model model = ModelFactory.createModelForGraph(this.sourceGraph);
+		Model model = ModelFactory.createModelForGraph(this.inputGraph);
 		// TODO listen progress
 		InfModel inferenceModel = ModelFactory.createInfModel(new PelletReasoner(), model);
 
@@ -30,7 +30,7 @@ public class OpenlletReasoningProcessor extends AbstractTransformationProcessor 
 		Model inferences = inferenceModel.difference(model);
 
 		log.info("Reasoning completed.");
-		
+
 		return new RdfGraph(inferences);
 	}
 

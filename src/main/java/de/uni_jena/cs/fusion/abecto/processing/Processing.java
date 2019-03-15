@@ -4,8 +4,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -23,7 +26,8 @@ import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfigura
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameter;
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
 import de.uni_jena.cs.fusion.abecto.processor.progress.ProgressListener;
-import de.uni_jena.cs.fusion.abecto.processor.transformation.TransformationProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.refinement.RefinementProcessor;
+import de.uni_jena.cs.fusion.abecto.project.knowledgebase.KnowledgeBase;
 import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraph;
 
 /**
@@ -92,10 +96,39 @@ public class Processing extends AbstractEntityWithUUID {
 
 		processor.setListener(listener);
 		processor.setProperties(this.parameter.getAll());
-		if (processor instanceof TransformationProcessor) {
-			Collection<RdfGraph> inputGraphs = this.inputProcessings.stream().map(Processing::getRdfGraph)
-					.collect(Collectors.toSet());
-			((TransformationProcessor) processor).setInputGraphs(inputGraphs);
+		// add input graphs and meta graphs
+		if (processor instanceof RefinementProcessor) {
+			RefinementProcessor refinementProcessor = (RefinementProcessor) processor;
+			// gather input meta graphs
+			refinementProcessor.addMetaGraphs(this.inputProcessings.stream()
+					.filter((processing) -> processing.configuration.isMetaProcessingConfiguration())
+					.map(Processing::getRdfGraph).collect(Collectors.toList()));
+
+			// gather input graph groups
+			Map<Set<KnowledgeBase>, Collection<RdfGraph>> inputProcessingGroups = new HashMap<>();
+			inputProcessings: for (Processing inputProcessing : this.inputProcessings) {
+				if (!inputProcessing.configuration.isMetaProcessingConfiguration()) {
+					Set<KnowledgeBase> knowledgeBases = new HashSet<>(inputProcessing.configuration.getKnowledgeBases());
+					// add to entry of superset or equal set of the knowledge bases
+					for (Set<KnowledgeBase> keyKnowledgeBases : inputProcessingGroups.keySet()) {
+						if (keyKnowledgeBases.containsAll(knowledgeBases)) {
+							inputProcessingGroups.get(keyKnowledgeBases).add(inputProcessing.getRdfGraph());
+							continue inputProcessings;
+						}
+					}
+					// no entry for superset of the knowledge bases exists, therefore add new entry
+					Collection<RdfGraph> rdfGraphs = new ArrayList<>();
+					rdfGraphs.add(inputProcessing.getRdfGraph());
+					inputProcessingGroups.put(knowledgeBases, rdfGraphs);
+					// remove entries of subsets of the knowledge bases to the new entry
+					for (Set<KnowledgeBase> keyKnowledgeBases : inputProcessingGroups.keySet()) {
+						if (knowledgeBases.containsAll(keyKnowledgeBases) && !keyKnowledgeBases.containsAll(knowledgeBases)) {
+							rdfGraphs.addAll(inputProcessingGroups.remove(keyKnowledgeBases));
+						}
+					}
+				}
+			}
+			refinementProcessor.addInputGraphsGroups(inputProcessingGroups.values());
 		}
 
 		return processor;
