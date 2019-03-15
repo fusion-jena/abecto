@@ -81,7 +81,7 @@ public class Processing extends AbstractEntityWithUUID {
 	}
 
 	public ProcessingConfiguration getConfiguration() {
-		return configuration;
+		return this.configuration;
 	}
 
 	public Processor getConfiguredProcessor(ProgressListener listener)
@@ -102,19 +102,19 @@ public class Processing extends AbstractEntityWithUUID {
 	}
 
 	public LocalDateTime getEndDateTime() {
-		return endDateTime;
+		return this.endDateTime;
 	}
 
-	public Collection<Processing> getInputProcessing() {
-		return inputProcessings;
+	public Collection<Processing> getInputProcessings() {
+		return this.inputProcessings;
 	}
 
 	public ProcessingParameter getParameter() {
-		return parameter;
+		return this.parameter;
 	}
 
 	public Class<? extends Processor> getProcessorClass() {
-		return processor;
+		return this.processor;
 	}
 
 	public RdfGraph getRdfGraph() {

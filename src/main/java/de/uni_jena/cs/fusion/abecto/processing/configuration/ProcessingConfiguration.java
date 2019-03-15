@@ -19,6 +19,7 @@ import de.uni_jena.cs.fusion.abecto.processor.MetaProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
 import de.uni_jena.cs.fusion.abecto.processor.source.SourceProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.transformation.TransformationProcessor;
+import de.uni_jena.cs.fusion.abecto.project.Project;
 import de.uni_jena.cs.fusion.abecto.project.knowledgebase.KnowledgeBase;
 import de.uni_jena.cs.fusion.abecto.project.knowledgebase.module.KnowledgeBaseModule;
 
@@ -31,21 +32,25 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 	 */
 	@ManyToOne(fetch = FetchType.LAZY, optional = true)
 	protected KnowledgeBaseModule knowledgeBaseModule;
-
 	/**
 	 * The {@link KnowledgeBase} this {@link ProcessingConfiguration} belongs to.
 	 * {@code null}, if it belongs to multiple {@link KnowledgeBase}s.
 	 */
 	@ManyToOne(fetch = FetchType.LAZY, optional = true)
 	protected KnowledgeBase knowledgeBase;
+	/**
+	 * The {@link Project} this {@link ProcessingConfiguration} belongs to.
+	 */
+	@ManyToOne(fetch = FetchType.LAZY, optional = false)
+	protected Project project;
 
 	@ManyToMany(fetch = FetchType.LAZY, mappedBy = "inputProcessingConfigurations")
 	protected Collection<ProcessingConfiguration> subsequentProcessingConfigurations = new HashSet<>();
+
 	@ManyToMany(fetch = FetchType.LAZY)
 	protected Collection<ProcessingConfiguration> inputProcessingConfigurations = new HashSet<>();
 	@ManyToOne(fetch = FetchType.LAZY)
 	protected ProcessingParameter parameter;
-
 	protected Class<? extends Processor> processor;
 
 	protected LocalDateTime lastChange;
@@ -66,6 +71,7 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 		this(parameter, processor);
 		this.knowledgeBaseModule = knowledgeBaseModule;
 		this.knowledgeBase = knowledgeBaseModule.knowledgeBase;
+		this.project = knowledgeBaseModule.knowledgeBase.project;
 	}
 
 	/**
@@ -99,6 +105,7 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 				this.addInputProcessingConfiguration(inputProcessingConfiguration);
 			}
 
+			this.updateProjectAssociation();
 			this.updateKnowledgeBaseAssociation();
 		} else {
 			throw new IllegalArgumentException(
@@ -152,6 +159,10 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 
 	public Class<? extends Processor> getProcessorClass() {
 		return this.processor;
+	}
+
+	public Project getProject() {
+		return this.project;
 	}
 
 	public Collection<ProcessingConfiguration> getSubsequentProcessingConfigurations() {
@@ -242,6 +253,30 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 		} else {
 			throw new UnexpectedStateException();
 		}
+		return changed;
+	}
+
+	/**
+	 * Updates the {@link Project} association based on the input
+	 * {@link ProcessingConfiguration}s.
+	 * 
+	 * @return {@code true} if the {@link Project} association has changed,
+	 *         otherwise {@code false}
+	 */
+	public boolean updateProjectAssociation() {
+		boolean changed = false;
+
+		// collect all project values
+		Set<Project> inputProjects = this.inputProcessingConfigurations.stream()
+				.map((configuration) -> configuration.project).collect(HashSet::new, Set::add, (a, b) -> a.addAll(b));
+		if (inputProjects.size() == 1) {
+			Project newValue = inputProjects.iterator().next();
+			changed = !newValue.equals(this.project);
+			this.project = newValue;
+		} else {
+			throw new IllegalStateException("Input ProcessingConfigurations belong to different project.");
+		}
+
 		return changed;
 	}
 

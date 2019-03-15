@@ -22,6 +22,7 @@ import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameter;
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameterRepository;
 import de.uni_jena.cs.fusion.abecto.processing.runner.ProcessorRunner;
 import de.uni_jena.cs.fusion.abecto.processor.progress.NullProgressListener;
+import de.uni_jena.cs.fusion.abecto.processor.progress.PrintStreamProgressListener;
 import de.uni_jena.cs.fusion.abecto.processor.source.PathSourceProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.transformation.OpenlletReasoningProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.transformation.SparqlConstructProcessor;
@@ -79,7 +80,7 @@ public class Runner implements CommandLineRunner {
 		parameterPathSource = processingParameters.save(parameterPathSource);
 		ProcessingConfiguration configurationPathSource = configurations
 				.save(new ProcessingConfiguration(PathSourceProcessor.class, parameterPathSource, knowledgeBaseModule));
-		runner.executeProcessingConfiguration(configurationPathSource, NullProgressListener.get());
+//		runner.execute(configurationPathSource, NullProgressListener.get());
 
 		// execute SparqlConstructProcessor
 		ProcessingParameter parameterSparqlConstruct = new ProcessingParameter();
@@ -89,7 +90,7 @@ public class Runner implements CommandLineRunner {
 		ProcessingConfiguration configurationSparqlConstruct = configurations
 				.save(new ProcessingConfiguration(SparqlConstructProcessor.class, parameterSparqlConstruct,
 						Collections.singleton(configurationPathSource)));
-		runner.executeProcessingConfiguration(configurationSparqlConstruct, NullProgressListener.get());
+//		runner.execute(configurationSparqlConstruct, NullProgressListener.get());
 
 		// execute OpenlletReasoningProcessor
 		ProcessingParameter parameterOpenlletReasoning = new ProcessingParameter();
@@ -97,7 +98,9 @@ public class Runner implements CommandLineRunner {
 		ProcessingConfiguration configurationOpenlletReasoning = configurations
 				.save(new ProcessingConfiguration(OpenlletReasoningProcessor.class, parameterOpenlletReasoning,
 						Collections.singleton(configurationPathSource)));
-		runner.executeProcessingConfiguration(configurationOpenlletReasoning, NullProgressListener.get());
+//		runner.execute(configurationOpenlletReasoning, NullProgressListener.get());
+		
+		runner.execute(project, Collections.emptyList(), new PrintStreamProgressListener(System.out));
 
 		// fetch all
 		log.info("RdfGraphs found with findAll():");
