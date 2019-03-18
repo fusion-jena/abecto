@@ -1,6 +1,7 @@
 package de.uni_jena.cs.fusion.abecto.rdfGraph;
 
 import java.util.EnumSet;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -13,7 +14,7 @@ public enum RdfSerializationLanguage {
 	N3("text/n3", "n3", "N3", null, Pattern.compile("@base\\s+<([^\"]+)>")),
 	// https://www.w3.org/TR/n-quads/
 	NQUAD("application/n-quads", "nq", null,
-			Pattern.compile("^\\s*\\S.*\\s+\\S.*\\s+\\S.*\\s+\\S.*\\s+\\.", Pattern.MULTILINE), null),
+			Pattern.compile("^\\s*(<\\S+>|_:\\S+)\\s+<\\S+>\\s+(<\\S+>|_:\\S+|\"[^\"]*\")\\s+(<\\S+>|_:\\S+)\\s*\\."), null),
 	// https://www.w3.org/TR/n-triples/
 	NTRIPLES("application/n-triples", "nt", "NT", Pattern.compile("^[ \\t]*\\S.*[ \\t]s+\\S.*[ \\t]+\\S.*[ \\t]*\\.$"),
 			null),
@@ -30,7 +31,7 @@ public enum RdfSerializationLanguage {
 	// https://www.w3.org/TR/2014/REC-turtle-20140225/
 	TURTLE("text/turtle", "ttl", "TTL",
 			Pattern.compile("^\\s*((\\@prefix)|(\\@base)|(BASE)|(PREFIX)|(base)|(prefix))", Pattern.MULTILINE),
-			Pattern.compile("@base\\s+<([^\"]+)>"));
+			Pattern.compile("@base\\s*<([^\"]+)>"));
 
 	private final String mimeType;
 	private final String fileExtension;
@@ -66,20 +67,23 @@ public enum RdfSerializationLanguage {
 		}
 	}
 
-	public String getApacheJenaKey() {
+	public String getApacheJenaKey() throws NoSuchElementException {
+		if (this.apacheJenaKey == null) {
+			throw new NoSuchElementException();
+		}
 		return this.apacheJenaKey;
 	}
 
 	public String getMimeType() {
-		return mimeType;
+		return this.mimeType;
 	}
 
 	public String getFileExtension() {
-		return fileExtension;
+		return this.fileExtension;
 	}
 
 	public Pattern getLanguagePattern() {
-		return languagePattern;
+		return this.languagePattern;
 	}
 
 }
