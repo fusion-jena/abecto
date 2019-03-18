@@ -8,6 +8,9 @@ public final class Vocabulary {
 			.createURI("http://fusion.cs.uni-jena.de/ontology/abecto/equivalent");
 	public final static Node ANTI_MAPPING_PROPERTY = NodeFactory
 			.createURI("http://fusion.cs.uni-jena.de/ontology/abecto/different");
+	
+	public final static Node RDFS_LABEL = NodeFactory
+			.createURI("http://www.w3.org/2000/01/rdf-schema#label");
 
 //	public final static Node EQUIVALENT_CLASS = NodeFactory.createURI("http://www.w3.org/2002/07/owl#equivalentClass");
 //	public final static Node DISJOINT_CLASS = NodeFactory.createURI("http://www.w3.org/2002/07/owl#disjointWith");
