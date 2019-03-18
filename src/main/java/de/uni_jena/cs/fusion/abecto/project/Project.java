@@ -11,9 +11,9 @@ import de.uni_jena.cs.fusion.abecto.project.knowledgebase.KnowledgeBase;
 @Entity
 public class Project extends AbstractEntityWithUUID {
 
-	public String label;
+	protected String label;
 	@OneToMany(mappedBy = "project")
-	public Collection<KnowledgeBase> knowledgeBases;
+	protected Collection<KnowledgeBase> knowledgeBases;
 
 	protected Project() {
 	}

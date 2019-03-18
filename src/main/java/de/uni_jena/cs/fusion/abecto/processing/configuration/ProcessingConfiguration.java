@@ -92,8 +92,8 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 			KnowledgeBaseModule knowledgeBaseModule) {
 		this(parameter, processor);
 		this.knowledgeBaseModule = knowledgeBaseModule;
-		this.knowledgeBases.add(knowledgeBaseModule.knowledgeBase);
-		this.project = knowledgeBaseModule.knowledgeBase.project;
+		this.knowledgeBases.add(knowledgeBaseModule.getKnowledgeBase());
+		this.project = knowledgeBaseModule.getKnowledgeBase().getProject();
 	}
 
 	/**

@@ -14,11 +14,11 @@ import de.uni_jena.cs.fusion.abecto.project.knowledgebase.module.KnowledgeBaseMo
 @Entity
 public class KnowledgeBase extends AbstractEntityWithUUID {
 
-	public String label;
+	protected String label;
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
-	public Project project;
+	protected Project project;
 	@OneToMany(mappedBy = "knowledgeBase")
-	public Collection<KnowledgeBaseModule> knowledgeBaseModules;
+	protected Collection<KnowledgeBaseModule> knowledgeBaseModules;
 
 	protected KnowledgeBase() {
 	}
@@ -32,5 +32,9 @@ public class KnowledgeBase extends AbstractEntityWithUUID {
 	public String toString() {
 		return String.format("KnowledgeBase[id=%s, label='%s', project='%s']", this.id, this.label,
 				this.project);
+	}
+	
+	public Project getProject() {
+		return this.project;
 	}
 }
