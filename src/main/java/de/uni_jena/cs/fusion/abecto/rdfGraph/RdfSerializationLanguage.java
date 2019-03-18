@@ -9,9 +9,9 @@ import java.util.regex.Pattern;
 public enum RdfSerializationLanguage {
 	// https://www.w3.org/TR/json-ld/
 	JSONLD("application/ld+json", "jsonld", "JSON-LD", Pattern.compile("^\\s*\\{", Pattern.MULTILINE),
-			Pattern.compile("\"@base\"\\s*:\\s*\"([^\"]+)\"")),
+			Pattern.compile("\"@base\"\\s*:\\s*\"(?<base>[^\"]+)\"")),
 	// https://www.w3.org/TeamSubmission/n3/
-	N3("text/n3", "n3", "N3", null, Pattern.compile("@base\\s+<([^\"]+)>")),
+	N3("text/n3", "n3", "N3", null, Pattern.compile("@base\\s+<(?<base>[^\"]+)>")),
 	// https://www.w3.org/TR/n-quads/
 	NQUAD("application/n-quads", "nq", null,
 			Pattern.compile("^\\s*(<\\S+>|_:\\S+)\\s+<\\S+>\\s+(<\\S+>|_:\\S+|\"[^\"]*\")\\s+(<\\S+>|_:\\S+)\\s*\\."), null),
@@ -22,16 +22,16 @@ public enum RdfSerializationLanguage {
 	// https://www.w3.org/TR/owl-ref/
 	OWLXML("application/owl+xml", "owl", null,
 			Pattern.compile("<Ontology\\sxmlns=\"http://www.w3.org/2002/07/owl#\"", Pattern.MULTILINE),
-			Pattern.compile("xml:base=\"([^\"]+)\"")),
+			Pattern.compile("xml:base=\"(?<base>[^\"]+)\"")),
 	// https://www.w3.org/TR/rdf-json/
 	RDFJSON("application/rdf+json", "rj", "RDF/JSON", null, null),
 	// https://www.w3.org/TR/rdf-syntax-grammar/
 	RDFXML("application/rdf+xml", "rdf", "RDF/XML", Pattern.compile("<rdf:RDF"),
-			Pattern.compile("(xml:base=\"|<owl:Ontology rdf:about=\")([^\"]+)\"")),
+			Pattern.compile("(xml:base=\"|<owl:Ontology rdf:about=\")(?<base>[^\\\"]+)\"")),
 	// https://www.w3.org/TR/2014/REC-turtle-20140225/
 	TURTLE("text/turtle", "ttl", "TTL",
 			Pattern.compile("^\\s*((\\@prefix)|(\\@base)|(BASE)|(PREFIX)|(base)|(prefix))", Pattern.MULTILINE),
-			Pattern.compile("@base\\s*<([^\"]+)>"));
+			Pattern.compile("@base\\s*<(?<base>[^>]+)>"));
 
 	private final String mimeType;
 	private final String fileExtension;
@@ -61,7 +61,7 @@ public enum RdfSerializationLanguage {
 		if (Objects.nonNull(this.basePattern)) {
 			Matcher matcher = this.basePattern.matcher(documentStart);
 			matcher.find();
-			return matcher.group(2);
+			return matcher.group("base");
 		} else {
 			throw new UnsupportedOperationException("Unable to determine base for this serialization language.");
 		}
