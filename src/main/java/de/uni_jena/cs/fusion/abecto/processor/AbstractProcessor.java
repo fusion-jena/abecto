@@ -6,12 +6,16 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import org.apache.commons.lang3.reflect.TypeLiteral;
+import org.apache.jena.graph.Graph;
+import org.apache.tomcat.util.http.fileupload.ProgressListener;
 
-import de.uni_jena.cs.fusion.abecto.processor.progress.NullProgressListener;
-import de.uni_jena.cs.fusion.abecto.processor.progress.ProgressListener;
 import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraph;
 
 public abstract class AbstractProcessor implements Processor {
+
+	private Graph resultGraph;
+
+	private Status status = Status.NOT_STARTED;
 
 	/**
 	 * <p>
@@ -25,21 +29,24 @@ public abstract class AbstractProcessor implements Processor {
 	 * </p>
 	 */
 	private Map<String, Object> properties;
-	/**
-	 * The {@link ProgressListener} of this processor.
-	 */
-	protected ProgressListener listener = NullProgressListener.get();
 
 	@Override
-	public RdfGraph call() throws Exception {
-		try {
-			RdfGraph resultGraph = computeResultGraph();
-			this.listener.onSuccess();
-			return resultGraph;
-		} catch (Exception e) {
-			this.listener.onFailure(e);
-			throw new Exception("Failed to provide a RdfGraph.", e);
-		}
+	public synchronized void alert() {
+		this.notifyAll();
+	}
+
+	@Override
+	public synchronized void await() throws InterruptedException {
+		this.wait();
+	}
+
+	@Override
+	public Graph call() throws Exception {
+		this.status = Status.RUNNING;
+		this.resultGraph = this.computeResultGraph();
+		this.status = Status.SUCCEEDED;
+		this.alert();
+		return resultGraph;
 	}
 
 	/**
@@ -55,53 +62,15 @@ public abstract class AbstractProcessor implements Processor {
 	 * called here.
 	 * </p>
 	 * 
-	 * @return computed {@link RdfGraph}
+	 * @return computed {@link Graph}
 	 * @throws Exception
 	 */
-	protected abstract RdfGraph computeResultGraph() throws Exception;
+	protected abstract Graph computeResultGraph() throws Exception;
 
 	@Override
-	public void setProperties(Map<String, Object> properties) {
-		this.properties = properties;
-	}
-
-	/**
-	 * 
-	 * Get an property value.
-	 * 
-	 * @param key  property name
-	 * @param type expected type of the property value
-	 * @return property value
-	 * 
-	 * @throws ClassCastException   if the property can not be casted to the
-	 *                              specified type.
-	 * @throws NullPointerException if the property has not been set.
-	 */
-	@SuppressWarnings("unchecked")
-	protected <T> T getProperty(String key, TypeLiteral<T> type) {
-		Object value = this.properties.get(key);
-		Objects.requireNonNull(value, "Missing value of property \"" + key + "\".");
-		return (T) value;
-	}
-
-	/**
-	 * 
-	 * Get an property value.
-	 * 
-	 * @param key  property name
-	 * @param type expected type of the property value
-	 * @param converter 
-	 * @return property value
-	 * 
-	 * @throws ClassCastException   if the property can not be casted to the
-	 *                              specified type.
-	 * @throws NullPointerException if the property has not been set.
-	 */
-	@SuppressWarnings("unchecked")
-	protected <T, R> R getProperty(String key, TypeLiteral<T> type, Function<T, R> converter) {
-		Object value = this.properties.get(key);
-		Objects.requireNonNull(value, "Missing value of property \"" + key + "\".");
-		return converter.apply((T) value);
+	public void fail() {
+		this.status = Status.FAILED;
+		this.alert();
 	}
 
 	/**
@@ -127,9 +96,9 @@ public abstract class AbstractProcessor implements Processor {
 	/**
 	 * Get an optional property value as {@link Optional}.
 	 * 
-	 * @param key  property name
-	 * @param type expected type of the property value
-	 * @param converter 
+	 * @param key       property name
+	 * @param type      expected type of the property value
+	 * @param converter
 	 * @return property value
 	 * 
 	 * @throws ClassCastException if the property can not be casted to the specified
@@ -145,8 +114,85 @@ public abstract class AbstractProcessor implements Processor {
 		}
 	}
 
+	/**
+	 * 
+	 * Get an property value.
+	 * 
+	 * @param key  property name
+	 * @param type expected type of the property value
+	 * @return property value
+	 * 
+	 * @throws ClassCastException   if the property can not be casted to the
+	 *                              specified type.
+	 * @throws NullPointerException if the property has not been set.
+	 */
+	@SuppressWarnings("unchecked")
+	protected <T> T getProperty(String key, TypeLiteral<T> type) {
+		Object value = this.properties.get(key);
+		Objects.requireNonNull(value, "Missing value of property \"" + key + "\".");
+		return (T) value;
+	}
+
+	/**
+	 * 
+	 * Get an property value.
+	 * 
+	 * @param key       property name
+	 * @param type      expected type of the property value
+	 * @param converter
+	 * @return property value
+	 * 
+	 * @throws ClassCastException   if the property can not be casted to the
+	 *                              specified type.
+	 * @throws NullPointerException if the property has not been set.
+	 */
+	@SuppressWarnings("unchecked")
+	protected <T, R> R getProperty(String key, TypeLiteral<T> type, Function<T, R> converter) {
+		Object value = this.properties.get(key);
+		Objects.requireNonNull(value, "Missing value of property \"" + key + "\".");
+		return converter.apply((T) value);
+	}
+
 	@Override
-	public void setListener(ProgressListener listener) {
-		this.listener = listener;
+	public Graph getResultGraph() {
+		return this.resultGraph;
+	}
+
+	@Override
+	public Status getStatus() {
+		return this.status;
+	}
+
+	@Override
+	public boolean isFailed() {
+		return Status.FAILED.equals(this.status);
+	}
+
+	@Override
+	public boolean isNotStarted() {
+		return Status.NOT_STARTED.equals(this.status);
+	}
+
+	@Override
+	public boolean isRunning() {
+		return Status.RUNNING.equals(this.status);
+	}
+
+	@Override
+	public boolean isSucceeded() {
+		return Status.SUCCEEDED.equals(this.status);
+	}
+
+	@Override
+	public abstract void prepare() throws Exception;
+
+	@Override
+	public void setProperties(Map<String, Object> properties) {
+		this.properties = properties;
+	}
+
+	@Override
+	public String toString() {
+		return String.format("%s%s", this.getClass().getSimpleName(), this.properties);
 	}
 }

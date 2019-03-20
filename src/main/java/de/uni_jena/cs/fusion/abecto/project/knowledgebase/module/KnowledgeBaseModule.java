@@ -7,9 +7,9 @@ import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 
-import de.uni_jena.cs.fusion.abecto.AbstractEntityWithUUID;
 import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfiguration;
 import de.uni_jena.cs.fusion.abecto.project.knowledgebase.KnowledgeBase;
+import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
 
 @Entity
 public class KnowledgeBaseModule extends AbstractEntityWithUUID {

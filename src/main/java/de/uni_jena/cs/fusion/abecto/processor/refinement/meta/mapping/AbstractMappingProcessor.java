@@ -10,18 +10,13 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Node_URI;
 import org.apache.jena.graph.Triple;
 
-import de.uni_jena.cs.fusion.abecto.Vocabulary;
 import de.uni_jena.cs.fusion.abecto.processor.refinement.meta.AbstractMetaProcessor;
-import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraph;
+import de.uni_jena.cs.fusion.abecto.util.Vocabulary;
 
 public abstract class AbstractMappingProcessor extends AbstractMetaProcessor implements MappingProcessor {
 
 	@Override
-	protected RdfGraph computeResultGraph() {
-		int graphCount = this.inputGraphs.size();
-		int progressTotal = graphCount * (graphCount - 1) / 2;
-		int progress = 0;
-
+	protected Graph computeResultGraph() {
 		// collect known mappings
 		Collection<Mapping> knownMappings = new HashSet<>();
 		Iterator<Triple> knownMappingsIterator = metaGraph.find(Node.ANY, Vocabulary.MAPPING_PROPERTY, Node.ANY);
@@ -40,8 +35,8 @@ public abstract class AbstractMappingProcessor extends AbstractMetaProcessor imp
 		Graph resultsGraph = Factory.createGraphMem();
 
 		// for each pair of source groups
-		for (int i = 0; i < graphCount; i++) {
-			for (int j = i + 1; j < graphCount; j++) {
+		for (int i = 0; i < this.inputGraphs.size(); i++) {
+			for (int j = i + 1; j < this.inputGraphs.size(); j++) {
 
 				// compute mapping
 				Collection<Mapping> mappings = computeMapping(inputGraphs.get(i), inputGraphs.get(j));
@@ -55,13 +50,10 @@ public abstract class AbstractMappingProcessor extends AbstractMetaProcessor imp
 						resultsGraph.add(mapping.getReverseTriple());
 					}
 				}
-
-				// notify progress
-				this.listener.onProgress(++progress, progressTotal);
 			}
 		}
 
-		return new RdfGraph(resultsGraph);
+		return resultsGraph;
 	}
 
 	/**

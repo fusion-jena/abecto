@@ -23,7 +23,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.sparql.core.Var;
 
-import de.uni_jena.cs.fusion.abecto.Vocabulary;
+import de.uni_jena.cs.fusion.abecto.util.Vocabulary;
 import de.uni_jena.cs.fusion.similarity.jarowinkler.JaroWinklerSimilarity;
 
 public class JaroWinklerMappingProcessor extends AbstractMappingProcessor {

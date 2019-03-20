@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,9 +21,7 @@ import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfigura
 import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfigurationRepository;
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameter;
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameterRepository;
-import de.uni_jena.cs.fusion.abecto.processing.runner.ProcessorRunner;
-import de.uni_jena.cs.fusion.abecto.processor.progress.NullProgressListener;
-import de.uni_jena.cs.fusion.abecto.processor.progress.PrintStreamProgressListener;
+import de.uni_jena.cs.fusion.abecto.processing.runner.ProjectExecutor;
 import de.uni_jena.cs.fusion.abecto.processor.refinement.transformation.OpenlletReasoningProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.refinement.transformation.SparqlConstructProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.source.PathSourceProcessor;
@@ -52,7 +51,7 @@ public class Runner implements CommandLineRunner {
 	@Autowired
 	ProcessingConfigurationRepository configurations;
 	@Autowired
-	ProcessorRunner runner;
+	ProjectExecutor projectExecutor;
 
 	@Override
 	@Transactional
@@ -80,28 +79,26 @@ public class Runner implements CommandLineRunner {
 		parameterPathSource = processingParameters.save(parameterPathSource);
 		ProcessingConfiguration configurationPathSource = configurations
 				.save(new ProcessingConfiguration(PathSourceProcessor.class, parameterPathSource, knowledgeBaseModule));
-//		runner.execute(configurationPathSource, NullProgressListener.get());
 
 		// execute SparqlConstructProcessor
 		ProcessingParameter parameterSparqlConstruct = new ProcessingParameter();
 		parameterSparqlConstruct.set("query",
 				"CONSTRUCT {?s <http://example.org/p> <http://example.org/o>} WHERE {?s ?p ?o. Filter(!isBLANK(?s))}");
 		parameterSparqlConstruct = processingParameters.save(parameterSparqlConstruct);
-		ProcessingConfiguration configurationSparqlConstruct = configurations
-				.save(new ProcessingConfiguration(SparqlConstructProcessor.class, parameterSparqlConstruct,
-						Collections.singleton(configurationPathSource)));
-//		runner.execute(configurationSparqlConstruct, NullProgressListener.get());
+		configurations.save(new ProcessingConfiguration(SparqlConstructProcessor.class, parameterSparqlConstruct,
+				Collections.singleton(configurationPathSource)));
 
 		// execute OpenlletReasoningProcessor
 		ProcessingParameter parameterOpenlletReasoning = new ProcessingParameter();
 		parameterSparqlConstruct = processingParameters.save(parameterOpenlletReasoning);
-		ProcessingConfiguration configurationOpenlletReasoning = configurations
-				.save(new ProcessingConfiguration(OpenlletReasoningProcessor.class, parameterOpenlletReasoning,
-						Collections.singleton(configurationPathSource)));
-//		runner.execute(configurationOpenlletReasoning, NullProgressListener.get());
-		
-		runner.execute(project, Collections.emptyList(), new PrintStreamProgressListener(System.out));
+		configurations.save(new ProcessingConfiguration(OpenlletReasoningProcessor.class, parameterOpenlletReasoning,
+				Collections.singleton(configurationPathSource)));
 
+		projectExecutor.execute(project);
+	}
+
+	@Scheduled(fixedDelay = 5000)
+	public void reportRdfGraphs() {
 		// fetch all
 		log.info("RdfGraphs found with findAll():");
 		log.info("-------------------------------");

@@ -10,8 +10,6 @@ import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Node_URI;
 
-import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraph;
-
 public class ManualMappingProcessor extends AbstractMappingProcessor {
 
 	@Override
@@ -19,11 +17,6 @@ public class ManualMappingProcessor extends AbstractMappingProcessor {
 		return Map.of("mappings", new TypeLiteral<Collection<Collection<String>>>() {
 		}, "anti-mappings", new TypeLiteral<Collection<Collection<String>>>() {
 		});
-	}
-
-	@Override
-	public void addInputGraphGroup(Collection<RdfGraph> sources) {
-		// do nothing as it is not needed
 	}
 
 	@Override

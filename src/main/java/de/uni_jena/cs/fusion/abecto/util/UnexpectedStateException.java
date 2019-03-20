@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto;
+package de.uni_jena.cs.fusion.abecto.util;
 
 public class UnexpectedStateException extends IllegalStateException {
 	/**

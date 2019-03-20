@@ -1,29 +1,57 @@
 package de.uni_jena.cs.fusion.abecto.processor.refinement;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.compose.Dyadic;
 import org.apache.jena.graph.compose.MultiUnion;
+import org.apache.jena.graph.compose.Polyadic;
 
 import de.uni_jena.cs.fusion.abecto.processor.AbstractProcessor;
-import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraph;
+import de.uni_jena.cs.fusion.abecto.processor.Processor;
 
 public abstract class AbstractRefinementProcessor extends AbstractProcessor implements RefinementProcessor {
+
 	/**
-	 * The hidden {@link MultiUnion} of the {@link #metaGraph}.
+	 * {@link Processor}s this {@link Processor} depends on.
 	 */
-	private final MultiUnion metaGraphUnion = new MultiUnion();
+	protected final Collection<Processor> dependetProcessors = new ArrayList<>();
+
 	/**
-	 * The {@link Graph} containing previous meta results.
+	 * The {@link MultiUnion} of previous meta result {@link Graph}s.
 	 */
-	protected final Graph metaGraph = metaGraphUnion;
+	protected final MultiUnion metaGraph = new MultiUnion();
 
 	@Override
-	public void addMetaGraphs(Collection<RdfGraph> metaGraphs) {
-		// add read only source graphs
-		for (RdfGraph source : metaGraphs) {
-			Graph sourcegraph = source.getGraph();
-			this.metaGraphUnion.addGraph(sourcegraph);
+	public void addDependetProcessor(Processor dependedProcessor) {
+		this.dependetProcessors.add(dependedProcessor);
+	}
+
+	@Override
+	public void addMetaGraph(Graph metaGraph) {
+		// merge input graphs to one graph
+		if (metaGraph instanceof Polyadic) {
+			((Polyadic) metaGraph).getSubGraphs().forEach(this.metaGraph::addGraph);
+		} else if (metaGraph instanceof Dyadic) {
+			this.metaGraph.addGraph((Graph) ((Dyadic) metaGraph).getL());
+			this.metaGraph.addGraph((Graph) ((Dyadic) metaGraph).getL());
+		} else {
+			this.metaGraph.addGraph(metaGraph);
+		}
+	}
+
+	@Override
+	public void prepare() throws InterruptedException {
+		for (Processor dependedProcessor : this.dependetProcessors) {
+			while (!dependedProcessor.isSucceeded()) {
+				if (dependedProcessor.isFailed()) {
+					this.fail();
+				}
+				dependedProcessor.await();
+			}
+			this.addMetaGraph(dependedProcessor.getMetaGraph());
+			this.addInputGraph(dependedProcessor.getDataGraphs());
 		}
 	}
 }

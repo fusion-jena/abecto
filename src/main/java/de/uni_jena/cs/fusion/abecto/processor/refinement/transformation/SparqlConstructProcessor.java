@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.Map;
 
 import org.apache.commons.lang3.reflect.TypeLiteral;
+import org.apache.jena.graph.Graph;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
@@ -11,12 +12,10 @@ import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 
-import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraph;
-
 public class SparqlConstructProcessor extends AbstractTransformationProcessor {
 
 	@Override
-	public RdfGraph computeResultGraph() {
+	public Graph computeResultGraph() {
 		// prepare query
 		String queryString = this.getProperty("query", new TypeLiteral<String>() {
 		});
@@ -28,7 +27,7 @@ public class SparqlConstructProcessor extends AbstractTransformationProcessor {
 
 		// execute and process result
 		Model constructedModel = queryExecution.execConstruct();
-		return new RdfGraph(constructedModel);
+		return constructedModel.getGraph();
 	}
 
 	@Override

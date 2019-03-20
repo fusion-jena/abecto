@@ -18,7 +18,8 @@ import org.apache.jena.ontology.OntModel;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 
-import de.uni_jena.cs.fusion.abecto.AbstractEntityWithUUID;
+import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
+import de.uni_jena.cs.fusion.abecto.util.RdfSerializationLanguage;
 
 @Entity
 public class RdfGraph extends AbstractEntityWithUUID {

@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto;
+package de.uni_jena.cs.fusion.abecto.util;
 
 import java.util.UUID;
 
@@ -41,18 +41,18 @@ public abstract class AbstractEntityWithUUID implements Persistable<UUID> {
 
 	@Override
 	public int hashCode() {
-		return id.hashCode();
+		return this.id.hashCode();
 	}
 
 	@Override
 	public boolean isNew() {
-		return !persisted;
+		return !this.persisted;
 	}
 
 	@PostLoad
 	@PostPersist
 	protected void setPersisted() {
-		persisted = true;
+		this.persisted = true;
 	}
 
 }

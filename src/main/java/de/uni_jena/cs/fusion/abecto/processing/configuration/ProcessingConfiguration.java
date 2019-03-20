@@ -13,7 +13,6 @@ import javax.persistence.FetchType;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 
-import de.uni_jena.cs.fusion.abecto.AbstractEntityWithUUID;
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameter;
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
 import de.uni_jena.cs.fusion.abecto.processor.refinement.RefinementProcessor;
@@ -24,6 +23,7 @@ import de.uni_jena.cs.fusion.abecto.processor.source.SourceProcessor;
 import de.uni_jena.cs.fusion.abecto.project.Project;
 import de.uni_jena.cs.fusion.abecto.project.knowledgebase.KnowledgeBase;
 import de.uni_jena.cs.fusion.abecto.project.knowledgebase.module.KnowledgeBaseModule;
+import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
 
 @Entity
 public class ProcessingConfiguration extends AbstractEntityWithUUID {

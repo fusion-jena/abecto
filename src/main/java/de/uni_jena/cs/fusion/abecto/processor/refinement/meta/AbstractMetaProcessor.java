@@ -8,25 +8,31 @@ import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.compose.MultiUnion;
 
 import de.uni_jena.cs.fusion.abecto.processor.refinement.AbstractRefinementProcessor;
-import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraph;
 
 public abstract class AbstractMetaProcessor extends AbstractRefinementProcessor implements MetaProcessor {
 
 	/**
-	 * The {@link Graph}s to process.
+	 * The {@link MultiUnion}s of previous data result {@link Graph}s.
 	 */
-	protected List<Graph> inputGraphs = new ArrayList<>();
+	protected final List<Graph> inputGraphs = new ArrayList<>();
 
 	@Override
-	public void addInputGraphGroup(Collection<RdfGraph> sources) {
-		// create new graph union
-		MultiUnion graphUnion = new MultiUnion();
-		this.inputGraphs.add(graphUnion);
+	public void addInputGraph(Graph inputGraph) {
+		this.inputGraphs.add(inputGraph);
+	}
 
-		// add read only source graphs
-		for (RdfGraph source : sources) {
-			Graph sourceGraph = source.getGraph();
-			graphUnion.addGraph(sourceGraph);
+	@Override
+	public Collection<Graph> getDataGraphs() {
+		return this.inputGraphs;
+	}
+
+	@Override
+	public MultiUnion getMetaGraph() {
+		if (!this.isSucceeded()) {
+			throw new IllegalStateException("Result Graph is not avaliable.");
 		}
+		MultiUnion result = new MultiUnion(this.metaGraph.getSubGraphs().iterator());
+		result.addGraph(this.getResultGraph());
+		return result;
 	}
 }

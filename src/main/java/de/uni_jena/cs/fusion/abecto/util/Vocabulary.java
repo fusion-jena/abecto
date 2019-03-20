@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto;
+package de.uni_jena.cs.fusion.abecto.util;
 
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;

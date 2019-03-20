@@ -5,17 +5,17 @@ import java.util.Collections;
 import java.util.Map;
 
 import org.apache.commons.lang3.reflect.TypeLiteral;
+import org.apache.jena.graph.Graph;
 
-import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraph;
+import de.uni_jena.cs.fusion.abecto.util.GraphFactory;
 
 public class StreamSourceProcessor extends AbstractSourceProcessor {
 
 	@Override
-	public RdfGraph computeResultGraph() throws Exception {
+	public Graph computeResultGraph() throws Exception {
 		InputStream stream = this.getProperty("stream", new TypeLiteral<InputStream>() {
 		});
-		RdfGraph graph = new RdfGraph(stream);
-		return graph;
+		return GraphFactory.getGraph(stream);
 	}
 
 	@Override

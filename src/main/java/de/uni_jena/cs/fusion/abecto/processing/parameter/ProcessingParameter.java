@@ -8,7 +8,7 @@ import javax.persistence.Entity;
 
 import org.apache.commons.lang3.reflect.TypeLiteral;
 
-import de.uni_jena.cs.fusion.abecto.AbstractEntityWithUUID;
+import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
 
 @Entity
 public class ProcessingParameter extends AbstractEntityWithUUID {

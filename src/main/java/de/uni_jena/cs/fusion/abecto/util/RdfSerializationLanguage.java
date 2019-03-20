@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.rdfGraph;
+package de.uni_jena.cs.fusion.abecto.util;
 
 import java.util.EnumSet;
 import java.util.NoSuchElementException;

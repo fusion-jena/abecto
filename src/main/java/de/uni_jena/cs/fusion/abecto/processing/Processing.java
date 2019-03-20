@@ -4,14 +4,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -21,14 +17,15 @@ import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 
-import de.uni_jena.cs.fusion.abecto.AbstractEntityWithUUID;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.compose.MultiUnion;
+
 import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfiguration;
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameter;
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
-import de.uni_jena.cs.fusion.abecto.processor.progress.ProgressListener;
-import de.uni_jena.cs.fusion.abecto.processor.refinement.RefinementProcessor;
-import de.uni_jena.cs.fusion.abecto.project.knowledgebase.KnowledgeBase;
+import de.uni_jena.cs.fusion.abecto.processor.Processor.Status;
 import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraph;
+import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
 
 /**
  * Represents a actual execution of a processor.
@@ -36,10 +33,6 @@ import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraph;
  */
 @Entity
 public class Processing extends AbstractEntityWithUUID {
-
-	private enum ProcessingStatus {
-		NOT_STARTED, RUNNING, SUCCEEDED, FAILED
-	}
 
 	// configuration
 	/**
@@ -69,7 +62,7 @@ public class Processing extends AbstractEntityWithUUID {
 	// status
 	private LocalDateTime startDateTime;
 	private LocalDateTime endDateTime;
-	private ProcessingStatus status = ProcessingStatus.NOT_STARTED;
+	private Status status = Status.NOT_STARTED;
 	@Lob
 	private String stackTrace;
 
@@ -77,7 +70,13 @@ public class Processing extends AbstractEntityWithUUID {
 	@OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
 	private RdfGraph rdfGraph;
 
-	public Processing(ProcessingConfiguration configuration, Collection<Processing> inputProcessings) {
+	public Processing(ProcessingConfiguration configuration) {
+		this.configuration = configuration;
+		this.parameter = configuration.getParameter();
+		this.processor = configuration.getProcessorClass();
+	}
+
+	protected Processing(ProcessingConfiguration configuration, Collection<Processing> inputProcessings) {
 		this.configuration = configuration;
 		this.parameter = configuration.getParameter();
 		this.processor = configuration.getProcessorClass();
@@ -88,50 +87,9 @@ public class Processing extends AbstractEntityWithUUID {
 		return this.configuration;
 	}
 
-	public Processor getConfiguredProcessor(ProgressListener listener)
-			throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
-			NoSuchMethodException, SecurityException {
-
-		Processor processor = this.processor.getDeclaredConstructor().newInstance();
-
-		processor.setListener(listener);
-		processor.setProperties(this.parameter.getAll());
-		// add input graphs and meta graphs
-		if (processor instanceof RefinementProcessor) {
-			RefinementProcessor refinementProcessor = (RefinementProcessor) processor;
-			// gather input meta graphs
-			refinementProcessor.addMetaGraphs(this.inputProcessings.stream()
-					.filter((processing) -> processing.configuration.isMetaProcessingConfiguration())
-					.map(Processing::getRdfGraph).collect(Collectors.toList()));
-
-			// gather input graph groups
-			Map<Set<KnowledgeBase>, Collection<RdfGraph>> inputProcessingGroups = new HashMap<>();
-			inputProcessings: for (Processing inputProcessing : this.inputProcessings) {
-				if (!inputProcessing.configuration.isMetaProcessingConfiguration()) {
-					Set<KnowledgeBase> knowledgeBases = new HashSet<>(inputProcessing.configuration.getKnowledgeBases());
-					// add to entry of superset or equal set of the knowledge bases
-					for (Set<KnowledgeBase> keyKnowledgeBases : inputProcessingGroups.keySet()) {
-						if (keyKnowledgeBases.containsAll(knowledgeBases)) {
-							inputProcessingGroups.get(keyKnowledgeBases).add(inputProcessing.getRdfGraph());
-							continue inputProcessings;
-						}
-					}
-					// no entry for superset of the knowledge bases exists, therefore add new entry
-					Collection<RdfGraph> rdfGraphs = new ArrayList<>();
-					rdfGraphs.add(inputProcessing.getRdfGraph());
-					inputProcessingGroups.put(knowledgeBases, rdfGraphs);
-					// remove entries of subsets of the knowledge bases to the new entry
-					for (Set<KnowledgeBase> keyKnowledgeBases : inputProcessingGroups.keySet()) {
-						if (knowledgeBases.containsAll(keyKnowledgeBases) && !keyKnowledgeBases.containsAll(knowledgeBases)) {
-							rdfGraphs.addAll(inputProcessingGroups.remove(keyKnowledgeBases));
-						}
-					}
-				}
-			}
-			refinementProcessor.addInputGraphsGroups(inputProcessingGroups.values());
-		}
-
-		return processor;
+	public Processor getProcessorInsance() throws InstantiationException, IllegalAccessException,
+			IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
+		return this.processor.getDeclaredConstructor().newInstance();
 	}
 
 	public LocalDateTime getEndDateTime() {
@@ -159,47 +117,106 @@ public class Processing extends AbstractEntityWithUUID {
 	}
 
 	public LocalDateTime getStartDateTime() {
-		return startDateTime;
+		return this.startDateTime;
 	}
 
-	public ProcessingStatus getStatus() {
-		return status;
+	/**
+	 * @return {@link Status} of this {@link Processing}
+	 */
+	public Status getStatus() {
+		return this.status;
+	}
+
+	/**
+	 * 
+	 * @return {@code true} if this {@link Processing} has {@link Status#FAILED},
+	 *         else {@code false}
+	 */
+	public boolean isFailed() {
+		return Status.FAILED.equals(this.status);
+	}
+
+	/**
+	 * 
+	 * @return {@code true} if this {@link Processing} has
+	 *         {@link Status#NOT_STARTED}, else {@code false}
+	 */
+	public boolean isNotStarted() {
+		return Status.NOT_STARTED.equals(this.status);
+	}
+
+	/**
+	 * 
+	 * @return {@code true} if this {@link Processing} has {@link Status#RUNNING},
+	 *         else {@code false}
+	 */
+	public boolean isRunning() {
+		return Status.RUNNING.equals(this.status);
+	}
+
+	/**
+	 * 
+	 * @return {@code true} if this {@link Processing} has {@link Status#SUCCEEDED},
+	 *         else {@code false}
+	 */
+	public boolean isSucceeded() {
+		return Status.SUCCEEDED.equals(this.status);
 	}
 
 	public Processing setStateFail(Throwable t) {
-		if (this.status == ProcessingStatus.RUNNING) {
+		if (this.isRunning() || this.isNotStarted()) {
+			this.status = Status.FAILED;
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			t.printStackTrace(new PrintStream(out));
 			this.stackTrace = out.toString();
 			this.endDateTime = LocalDateTime.now();
-			this.status = ProcessingStatus.FAILED;
 			return this;
 		} else {
 			throw new IllegalStateException(
-					"Failed to set processing state \"failed\". Processing is not in state \"running\".");
+					"Failed to set state FAILED as current state is not NOT_STARTED or RUNNING.");
 		}
 	}
 
 	public Processing setStateStart() {
-		if (this.status == ProcessingStatus.NOT_STARTED) {
-			this.status = ProcessingStatus.RUNNING;
+		if (this.isNotStarted()) {
+			this.status = Status.RUNNING;
 			this.startDateTime = LocalDateTime.now();
 			return this;
 		} else {
-			throw new IllegalStateException(
-					"Failed to set processing state \"running\". Processing is not in state \"not started\".");
+			throw new IllegalStateException("Failed to set state RUNNING as current state is not NOT_STARTED.");
 		}
 	}
 
 	public Processing setStateSuccess(RdfGraph rdfGraph) {
-		if (this.status == ProcessingStatus.RUNNING) {
+		if (this.isRunning() || this.isNotStarted()) {
 			Objects.requireNonNull(rdfGraph);
 			this.rdfGraph = rdfGraph;
-			this.status = ProcessingStatus.SUCCEEDED;
+			this.status = Status.SUCCEEDED;
 			return this;
 		} else {
 			throw new IllegalStateException(
-					"Failed to set processing state \"succeeded\". Processing is not in state \"running\".");
+					"Failed to set state SUCCEEDED as current state is not NOT_STARTED or RUNNING.");
 		}
+	}
+
+	/**
+	 * @return {@link MultiUnion}s of result data {@link Graph}s of this
+	 *         {@link Processing} and its input {@link Processing}s
+	 * 
+	 * @see #getMetaGraph()
+	 * @see #getResultGraph()
+	 */
+	public Collection<Graph> getDataGraphs() {
+		// TODO Processing#getDataGraphs
+		return null;
+	}
+
+	/**
+	 * @return {@link MultiUnion} of result meta {@link Graph}s of this
+	 *         {@link Processing} and its input {@link Processing}s
+	 */
+	public Graph getMetaGraph() {
+		// TODO Processing#getMetaGraph
+		return null;
 	}
 }
