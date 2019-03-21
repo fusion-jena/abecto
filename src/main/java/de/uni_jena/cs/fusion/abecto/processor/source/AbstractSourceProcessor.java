@@ -23,7 +23,7 @@ public abstract class AbstractSourceProcessor extends AbstractProcessor implemen
 	}
 
 	@Override
-	public void prepare() throws InterruptedException {
+	protected void prepare() throws InterruptedException {
 		// do nothing
 	}
 }

@@ -21,7 +21,7 @@ import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfigura
 import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfigurationRepository;
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameter;
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameterRepository;
-import de.uni_jena.cs.fusion.abecto.processing.runner.ProjectExecutor;
+import de.uni_jena.cs.fusion.abecto.processing.runner.ProjectRunner;
 import de.uni_jena.cs.fusion.abecto.processor.refinement.transformation.OpenlletReasoningProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.refinement.transformation.SparqlConstructProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.source.PathSourceProcessor;
@@ -51,7 +51,7 @@ public class Runner implements CommandLineRunner {
 	@Autowired
 	ProcessingConfigurationRepository configurations;
 	@Autowired
-	ProjectExecutor projectExecutor;
+	ProjectRunner projectRunner;
 
 	@Override
 	@Transactional
@@ -94,7 +94,7 @@ public class Runner implements CommandLineRunner {
 		configurations.save(new ProcessingConfiguration(OpenlletReasoningProcessor.class, parameterOpenlletReasoning,
 				Collections.singleton(configurationPathSource)));
 
-		projectExecutor.execute(project);
+		projectRunner.execute(project);
 	}
 
 	@Scheduled(fixedDelay = 5000)

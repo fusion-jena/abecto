@@ -43,6 +43,7 @@ public abstract class AbstractProcessor implements Processor {
 	@Override
 	public Graph call() throws Exception {
 		this.status = Status.RUNNING;
+		this.prepare();
 		this.resultGraph = this.computeResultGraph();
 		this.status = Status.SUCCEEDED;
 		this.alert();
@@ -183,8 +184,13 @@ public abstract class AbstractProcessor implements Processor {
 		return Status.SUCCEEDED.equals(this.status);
 	}
 
-	@Override
-	public abstract void prepare() throws Exception;
+	/**
+	 * Prepares this {@link Processor} for the computation. If dependencies are not
+	 * available so far it will wait for a notification.
+	 * 
+	 * @throws Exception
+	 */
+	protected abstract void prepare() throws Exception;
 
 	@Override
 	public void setProperties(Map<String, Object> properties) {

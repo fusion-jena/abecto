@@ -21,8 +21,8 @@ import de.uni_jena.cs.fusion.abecto.project.Project;
 import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraphRepository;
 
 @Component
-public class ProjectExecutor {
-	private static final Logger log = LoggerFactory.getLogger(ProjectExecutor.class);
+public class ProjectRunner {
+	private static final Logger log = LoggerFactory.getLogger(ProjectRunner.class);
 	@Autowired
 	ProcessingRepository processingRepository;
 	@Autowired
@@ -30,7 +30,7 @@ public class ProjectExecutor {
 	@Autowired
 	ProcessingConfigurationRepository configurationRepository;
 	@Autowired
-	ProcessorExecutor processorExecutor;
+	ProcessorRunner processorRunner;
 	
 	/**
 	 * Executes the processing pipeline of a given {@link Project}.
@@ -129,7 +129,7 @@ public class ProjectExecutor {
 			// execute processors
 			for (ProcessingConfiguration configuration :processorsMap.keySet()) {
 				log.info("Scheduling processor: " + processorsMap.get(configuration));
-				processorExecutor.execute(processingsMap.get(configuration), processorsMap.get(configuration));
+				processorRunner.execute(processingsMap.get(configuration), processorsMap.get(configuration));
 			}
 
 		} catch (Throwable t) {

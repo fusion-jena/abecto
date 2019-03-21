@@ -42,7 +42,7 @@ public abstract class AbstractRefinementProcessor extends AbstractProcessor impl
 	}
 
 	@Override
-	public void prepare() throws InterruptedException {
+	protected void prepare() throws InterruptedException {
 		for (Processor dependedProcessor : this.dependetProcessors) {
 			while (!dependedProcessor.isSucceeded()) {
 				if (dependedProcessor.isFailed()) {

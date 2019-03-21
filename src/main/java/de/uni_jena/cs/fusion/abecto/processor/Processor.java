@@ -8,6 +8,10 @@ import org.apache.commons.lang3.reflect.TypeLiteral;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.compose.MultiUnion;
 
+/**
+ * A task that returns a new {@link Graph} based on given properties using
+ * {@link #setProperties(Map)}.
+ */
 public interface Processor extends Callable<Graph> {
 
 	/**
@@ -102,14 +106,6 @@ public interface Processor extends Callable<Graph> {
 	 *         else {@code false}
 	 */
 	public boolean isSucceeded();
-
-	/**
-	 * Prepares this {@link Processor} for the computation. If dependencies are not
-	 * available so far it will wait for a notification.
-	 * 
-	 * @throws Exception
-	 */
-	public void prepare() throws Exception;
 
 	/**
 	 * Set the properties for this processor. Earlier property configurations will

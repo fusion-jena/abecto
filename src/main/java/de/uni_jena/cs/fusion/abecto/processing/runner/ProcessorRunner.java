@@ -14,7 +14,7 @@ import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraph;
 import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraphRepository;
 
 @Component
-public class ProcessorExecutor {
+public class ProcessorRunner {
 
 	@Autowired
 	ProcessingRepository processingRepository;
@@ -25,8 +25,6 @@ public class ProcessorExecutor {
 	public void execute(Processing processing, Processor processor) {
 		Logger log = LoggerFactory.getLogger(this.getClass());
 		try {
-			log.info("Preparing processor " + processor);
-			processor.prepare();
 			log.info("Running processor " + processor);
 			processing.setStateStart();
 			Graph graph = processor.call();
