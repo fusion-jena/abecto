@@ -2,6 +2,7 @@ package de.uni_jena.cs.fusion.abecto.processor.refinement.meta;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.jena.graph.Graph;
@@ -22,8 +23,8 @@ public abstract class AbstractMetaProcessor extends AbstractRefinementProcessor 
 	}
 
 	@Override
-	public Collection<Graph> getDataGraphs() {
-		return this.inputGraphs;
+	public final Collection<Graph> getDataGraphs() {
+		return Collections.emptyList();
 	}
 
 	@Override
