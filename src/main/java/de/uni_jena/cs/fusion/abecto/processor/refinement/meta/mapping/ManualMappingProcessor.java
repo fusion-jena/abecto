@@ -15,7 +15,7 @@ public class ManualMappingProcessor extends AbstractMappingProcessor {
 	@Override
 	public Map<String, TypeLiteral<?>> getPropertyTypes() {
 		return Map.of("mappings", new TypeLiteral<Collection<Collection<String>>>() {
-		}, "anti-mappings", new TypeLiteral<Collection<Collection<String>>>() {
+		}, "suppressed-mappings", new TypeLiteral<Collection<Collection<String>>>() {
 		});
 	}
 
@@ -36,7 +36,7 @@ public class ManualMappingProcessor extends AbstractMappingProcessor {
 			}
 		}
 		for (Collection<String> allEquivalent : this
-				.getOptionalProperty("anti-mappings", new TypeLiteral<Collection<Collection<String>>>() {
+				.getOptionalProperty("suppressed-mappings", new TypeLiteral<Collection<Collection<String>>>() {
 				}).orElse(Collections.emptyList())) {
 			for (String firstEntity : allEquivalent) {
 				for (String secondEntity : allEquivalent) {
