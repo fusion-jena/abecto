@@ -5,8 +5,10 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
@@ -49,8 +51,8 @@ public class JaroWinklerMappingProcessorTest {
 	public void testComputeResultGraph() throws Exception {
 		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor();
 		processor.setProperties(Map.of("threshold", 0.90D, "case_sensitive", false));
-		processor.addInputGraphGroup(FIRST_GRAPH);
-		processor.addInputGraphGroup(SECOND_GRAPH);
+		processor.addInputGraphGroups(Map.of(UUID.randomUUID(), Collections.singleton(FIRST_GRAPH), UUID.randomUUID(),
+				Collections.singleton(SECOND_GRAPH)));
 		Graph result = processor.computeResultGraph();
 		List<Triple> triples = new ArrayList<>();
 		result.find(Node.ANY, Node.ANY, Node.ANY).forEachRemaining(triples::add);
