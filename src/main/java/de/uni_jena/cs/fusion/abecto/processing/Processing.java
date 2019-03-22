@@ -6,8 +6,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -24,6 +26,7 @@ import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfigura
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameter;
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
 import de.uni_jena.cs.fusion.abecto.processor.Processor.Status;
+import de.uni_jena.cs.fusion.abecto.processor.source.SourceProcessor;
 import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraph;
 import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
 
@@ -89,7 +92,12 @@ public class Processing extends AbstractEntityWithUUID {
 
 	public Processor getProcessorInsance() throws InstantiationException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
-		return this.processor.getDeclaredConstructor().newInstance();
+		Processor processor = this.processor.getDeclaredConstructor().newInstance();
+		if (processor instanceof SourceProcessor) {
+			((SourceProcessor) processor)
+					.setKnowledgBase(this.configuration.getKnowledgeBaseModule().getKnowledgeBase().getId());
+		}
+		return processor;
 	}
 
 	public LocalDateTime getEndDateTime() {
@@ -206,7 +214,7 @@ public class Processing extends AbstractEntityWithUUID {
 	 * @see #getMetaGraph()
 	 * @see #getResultGraph()
 	 */
-	public Collection<Graph> getDataGraphs() {
+	public Map<UUID, Collection<Graph>> getDataGraphs() {
 		// TODO Processing#getDataGraphs
 		return null;
 	}
@@ -215,7 +223,7 @@ public class Processing extends AbstractEntityWithUUID {
 	 * @return {@link MultiUnion} of result meta {@link Graph}s of this
 	 *         {@link Processing} and its input {@link Processing}s
 	 */
-	public Graph getMetaGraph() {
+	public Collection<Graph> getMetaGraphs() {
 		// TODO Processing#getMetaGraph
 		return null;
 	}

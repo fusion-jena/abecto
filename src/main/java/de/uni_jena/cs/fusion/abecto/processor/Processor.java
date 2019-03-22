@@ -2,6 +2,7 @@ package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 
 import org.apache.commons.lang3.reflect.TypeLiteral;
@@ -49,13 +50,13 @@ public interface Processor extends Callable<Graph> {
 	 * @see #getMetaGraph()
 	 * @see #getResultGraph()
 	 */
-	public Collection<Graph> getDataGraphs();
+	public Map<UUID,Collection<Graph>> getDataGraphs();
 
 	/**
 	 * @return {@link MultiUnion} of result meta {@link Graph}s of this
 	 *         {@link Processor} and its input {@link Processor}s
 	 */
-	public Graph getMetaGraph();
+	public Collection<Graph> getMetaGraph();
 
 	/**
 	 * Returns a map of allowed properties for this processor and the required data

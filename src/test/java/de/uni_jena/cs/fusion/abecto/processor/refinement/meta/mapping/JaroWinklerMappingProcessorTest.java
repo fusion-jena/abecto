@@ -49,8 +49,8 @@ public class JaroWinklerMappingProcessorTest {
 	public void testComputeResultGraph() throws Exception {
 		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor();
 		processor.setProperties(Map.of("threshold", 0.90D, "case_sensitive", false));
-		processor.addInputGraph(FIRST_GRAPH);
-		processor.addInputGraph(SECOND_GRAPH);
+		processor.addInputGraphGroup(FIRST_GRAPH);
+		processor.addInputGraphGroup(SECOND_GRAPH);
 		Graph result = processor.computeResultGraph();
 		List<Triple> triples = new ArrayList<>();
 		result.find(Node.ANY, Node.ANY, Node.ANY).forEachRemaining(triples::add);

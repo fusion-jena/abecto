@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.apache.commons.lang3.reflect.TypeLiteral;
 import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.compose.MultiUnion;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
@@ -22,7 +23,9 @@ public class SparqlConstructProcessor extends AbstractTransformationProcessor {
 		Query query = QueryFactory.create(queryString);
 
 		// prepare execution
-		Model model = ModelFactory.createModelForGraph(this.inputGraph);
+		MultiUnion graphUnion = new MultiUnion();
+		this.inputGroupGraphs.values().forEach(graphUnion::addGraph);
+		Model model = ModelFactory.createModelForGraph(graphUnion);
 		QueryExecution queryExecution = QueryExecutionFactory.create(query, model);
 
 		// execute and process result

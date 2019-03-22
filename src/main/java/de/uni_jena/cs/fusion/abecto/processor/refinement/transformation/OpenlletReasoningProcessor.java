@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.apache.commons.lang3.reflect.TypeLiteral;
 import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.compose.MultiUnion;
 import org.apache.jena.rdf.model.InfModel;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -20,8 +21,11 @@ public class OpenlletReasoningProcessor extends AbstractTransformationProcessor 
 	@Override
 	public Graph computeResultGraph() {
 		log.info("Reasoning started.");
+
+		MultiUnion graphUnion = new MultiUnion();
+		this.inputGroupGraphs.values().forEach(graphUnion::addGraph);
 		// reasoning
-		Model model = ModelFactory.createModelForGraph(this.inputGraph);
+		Model model = ModelFactory.createModelForGraph(graphUnion);
 		// TODO listen progress
 		InfModel inferenceModel = ModelFactory.createInfModel(new PelletReasoner(), model);
 

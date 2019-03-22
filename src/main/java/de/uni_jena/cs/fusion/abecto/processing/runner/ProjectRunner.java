@@ -31,7 +31,7 @@ public class ProjectRunner {
 	ProcessingConfigurationRepository configurationRepository;
 	@Autowired
 	ProcessorRunner processorRunner;
-	
+
 	/**
 	 * Executes the processing pipeline of a given {@link Project}.
 	 * 
@@ -83,16 +83,13 @@ public class ProjectRunner {
 			for (ProcessingConfiguration configuration : configurations) {
 				Processing processing = processingsMap.get(configuration);
 				if (processing.isNotStarted()) {
-//					ProgressListener listener = new ProcessingProgressListener(processing);
 					try {
 						Processor processor;
 						processor = processing.getProcessorInsance();
 						processor.setProperties(configuration.getParameter().getAll());
-//						processor.setListener(listener);
 						processorsMap.put(configuration, processor);
 					} catch (Throwable t) {
 						processing.setStateFail(t);
-//						listener.onFailure(t);
 					}
 				}
 			}
@@ -111,23 +108,23 @@ public class ProjectRunner {
 						throw new IllegalStateException("Dependent Processing is failed.");
 					case SUCCEEDED:
 						if (processor instanceof RefinementProcessor) {
-							((RefinementProcessor) processor).addInputGraph(dependentProcessing.getDataGraphs());
-							((RefinementProcessor) processor).addMetaGraph(dependentProcessing.getMetaGraph());
+							((RefinementProcessor) processor).addInputGraphGroups(dependentProcessing.getDataGraphs());
+							((RefinementProcessor) processor).addMetaGraphs(dependentProcessing.getMetaGraphs());
 						}
 						break;
 					case NOT_STARTED:
 						if (processor instanceof RefinementProcessor) {
 							((RefinementProcessor) processor)
-									.addDependetProcessor(processorsMap.get(dependentConfiguration));
+									.addInputProcessor(processorsMap.get(dependentConfiguration));
 						}
 						break;
 					}
 				}
 
 			}
-			
+
 			// execute processors
-			for (ProcessingConfiguration configuration :processorsMap.keySet()) {
+			for (ProcessingConfiguration configuration : processorsMap.keySet()) {
 				log.info("Scheduling processor: " + processorsMap.get(configuration));
 				processorRunner.execute(processingsMap.get(configuration), processorsMap.get(configuration));
 			}

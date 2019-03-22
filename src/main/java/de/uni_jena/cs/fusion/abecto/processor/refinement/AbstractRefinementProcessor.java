@@ -2,11 +2,14 @@ package de.uni_jena.cs.fusion.abecto.processor.refinement;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 import org.apache.jena.graph.Graph;
-import org.apache.jena.graph.compose.Dyadic;
 import org.apache.jena.graph.compose.MultiUnion;
-import org.apache.jena.graph.compose.Polyadic;
 
 import de.uni_jena.cs.fusion.abecto.processor.AbstractProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
@@ -16,42 +19,57 @@ public abstract class AbstractRefinementProcessor extends AbstractProcessor impl
 	/**
 	 * {@link Processor}s this {@link Processor} depends on.
 	 */
-	protected final Collection<Processor> dependetProcessors = new ArrayList<>();
+	protected final Collection<Processor> inputProcessors = new ArrayList<>();
 
 	/**
-	 * The {@link MultiUnion} of previous meta result {@link Graph}s.
+	 * The previous meta result graph that is a {@link MultiUnion} of all
+	 * {@link #metaSubGraphs}.
 	 */
 	protected final MultiUnion metaGraph = new MultiUnion();
+	/**
+	 * The previous meta result subgraphs.
+	 */
+	protected final Set<Graph> metaSubGraphs = new HashSet<>();
+	/**
+	 * The input graphs that as {@link MultiUnion}s of the according
+	 * {@link #inputSubGraphs}.
+	 */
+	protected final Map<UUID, MultiUnion> inputGroupGraphs = new HashMap<>();
+	/**
+	 * The input subgraphs.
+	 */
+	protected final Map<UUID, Collection<Graph>> inputGroupSubGraphs = new HashMap<>();
 
 	@Override
-	public void addDependetProcessor(Processor dependedProcessor) {
-		this.dependetProcessors.add(dependedProcessor);
+	public void addInputGraphGroup(UUID uuid, Collection<Graph> inputGraphGroup) {
+		MultiUnion graphUnion = inputGroupGraphs.computeIfAbsent(uuid, (a) -> new MultiUnion());
+		Collection<Graph> graphCollection = inputGroupSubGraphs.computeIfAbsent(uuid, (a) -> new HashSet<Graph>());
+		inputGraphGroup.forEach(graphUnion::addGraph);
+		graphCollection.addAll(inputGraphGroup);
 	}
 
 	@Override
-	public void addMetaGraph(Graph metaGraph) {
-		// merge input graphs to one graph
-		if (metaGraph instanceof Polyadic) {
-			((Polyadic) metaGraph).getSubGraphs().forEach(this.metaGraph::addGraph);
-		} else if (metaGraph instanceof Dyadic) {
-			this.metaGraph.addGraph((Graph) ((Dyadic) metaGraph).getL());
-			this.metaGraph.addGraph((Graph) ((Dyadic) metaGraph).getL());
-		} else {
-			this.metaGraph.addGraph(metaGraph);
-		}
+	public void addInputProcessor(Processor processor) {
+		this.inputProcessors.add(processor);
+	}
+
+	@Override
+	public void addMetaGraphs(Collection<Graph> graphs) {
+		graphs.forEach(this.metaGraph::addGraph);
+		this.metaSubGraphs.addAll(graphs);
 	}
 
 	@Override
 	protected void prepare() throws InterruptedException {
-		for (Processor dependedProcessor : this.dependetProcessors) {
+		for (Processor dependedProcessor : this.inputProcessors) {
 			while (!dependedProcessor.isSucceeded()) {
 				if (dependedProcessor.isFailed()) {
 					this.fail();
 				}
 				dependedProcessor.await();
 			}
-			this.addMetaGraph(dependedProcessor.getMetaGraph());
-			this.addInputGraph(dependedProcessor.getDataGraphs());
+			this.addMetaGraphs(dependedProcessor.getMetaGraph());
+			this.addInputGraphGroups(dependedProcessor.getDataGraphs());
 		}
 	}
 }

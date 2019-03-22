@@ -1,6 +1,5 @@
 package de.uni_jena.cs.fusion.abecto.processing.configuration;
 
-import java.lang.reflect.InvocationTargetException;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
@@ -57,8 +56,7 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 
 	protected LocalDateTime lastChange;
 
-	protected ProcessingConfiguration() {
-	}
+	protected ProcessingConfiguration() {}
 
 	/**
 	 * @param parameter                     The {@link ProcessingParameter} to use.
@@ -132,11 +130,6 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 
 	public ProcessingParameter getParameter() {
 		return this.parameter;
-	}
-
-	public Processor getProcessor() throws InstantiationException, IllegalAccessException, IllegalArgumentException,
-			InvocationTargetException, NoSuchMethodException, SecurityException {
-		return this.getProcessorClass().getDeclaredConstructor().newInstance();
 	}
 
 	public Class<? extends Processor> getProcessorClass() {

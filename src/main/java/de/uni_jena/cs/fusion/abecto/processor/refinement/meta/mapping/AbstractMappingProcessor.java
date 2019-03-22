@@ -3,12 +3,15 @@ package de.uni_jena.cs.fusion.abecto.processor.refinement.meta.mapping;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map.Entry;
+import java.util.UUID;
 
 import org.apache.jena.graph.Factory;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Node_URI;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.graph.compose.MultiUnion;
 
 import de.uni_jena.cs.fusion.abecto.processor.refinement.meta.AbstractMetaProcessor;
 import de.uni_jena.cs.fusion.abecto.util.Vocabulary;
@@ -34,20 +37,20 @@ public abstract class AbstractMappingProcessor extends AbstractMetaProcessor imp
 		// init result graph
 		Graph resultsGraph = Factory.createGraphMem();
 
-		// for each pair of source groups
-		for (int i = 0; i < this.inputGraphs.size(); i++) {
-			for (int j = i + 1; j < this.inputGraphs.size(); j++) {
+		for (Entry<UUID, MultiUnion> i : this.inputGroupGraphs.entrySet()) {
+			for (Entry<UUID, MultiUnion> j : this.inputGroupGraphs.entrySet()) {
+				if (i.getKey().compareTo(j.getKey()) > 0) {
+					// compute mapping
+					Collection<Mapping> mappings = computeMapping(i.getValue(), j.getValue());
 
-				// compute mapping
-				Collection<Mapping> mappings = computeMapping(inputGraphs.get(i), inputGraphs.get(j));
+					for (Mapping mapping : mappings) {
+						// check if mapping is already known or contradicts to previous known mappings
+						if (!knownMappings.contains(mapping) && !knownMappings.contains(mapping.inverse())) {
 
-				for (Mapping mapping : mappings) {
-					// check if mapping is already known or contradicts to previous known mappings
-					if (!knownMappings.contains(mapping) && !knownMappings.contains(mapping.inverse())) {
-
-						// add mapping to results
-						resultsGraph.add(mapping.getTriple());
-						resultsGraph.add(mapping.getReverseTriple());
+							// add mapping to results
+							resultsGraph.add(mapping.getTriple());
+							resultsGraph.add(mapping.getReverseTriple());
+						}
 					}
 				}
 			}
