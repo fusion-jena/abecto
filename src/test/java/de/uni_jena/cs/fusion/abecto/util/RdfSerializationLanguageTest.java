@@ -33,7 +33,20 @@ public class RdfSerializationLanguageTest {
 
 		// NTRIPLES
 
-		// TODO
+		documentStart = "<http://example.org/s> <http://example.org/p> <http://example.org/o> .";
+		assertEquals(RdfSerializationLanguage.NTRIPLES, RdfSerializationLanguage.determine(documentStart));
+
+		documentStart = "_:123 <http://example.org/p> \"abc\" .";
+		assertEquals(RdfSerializationLanguage.NTRIPLES, RdfSerializationLanguage.determine(documentStart));
+
+		documentStart = "<http://example.org/s> <http://example.org/p> \"\" .";
+		assertEquals(RdfSerializationLanguage.NTRIPLES, RdfSerializationLanguage.determine(documentStart));
+
+		documentStart = "<http://example.org/s> <http://example.org/p> \"abc\"^^<http://example.org/dt> .";
+		assertEquals(RdfSerializationLanguage.NTRIPLES, RdfSerializationLanguage.determine(documentStart));
+
+		documentStart = "<http://example.org/s> <http://example.org/p> \"abc\"@en .";
+		assertEquals(RdfSerializationLanguage.NTRIPLES, RdfSerializationLanguage.determine(documentStart));
 
 		// OWLXML
 

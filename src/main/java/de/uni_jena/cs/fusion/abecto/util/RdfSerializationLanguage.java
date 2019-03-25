@@ -16,7 +16,7 @@ public enum RdfSerializationLanguage {
 	NQUAD("application/n-quads", "nq", null,
 			Pattern.compile("^\\s*(<\\S+>|_:\\S+)\\s+<\\S+>\\s+(<\\S+>|_:\\S+|\"[^\"]*\")\\s+(<\\S+>|_:\\S+)\\s*\\."), null),
 	// https://www.w3.org/TR/n-triples/
-	NTRIPLES("application/n-triples", "nt", "NT", Pattern.compile("^[ \\t]*\\S.*[ \\t]s+\\S.*[ \\t]+\\S.*[ \\t]*\\.$"),
+	NTRIPLES("application/n-triples", "nt", "NT", Pattern.compile("^[ \\t]*(<\\S+>|_:\\S+)[ \\t]+(<\\S+>)[ \\t]+(<\\S+>|_:\\S+|\"\\S*\"(\\^\\^<\\S+>*|@\\S*)?)[ \\t]*\\."),
 			null),
 	// https://www.w3.org/TR/owl2-xml-serialization/
 	// https://www.w3.org/TR/owl-ref/
@@ -63,7 +63,7 @@ public enum RdfSerializationLanguage {
 			matcher.find();
 			return matcher.group("base");
 		} else {
-			throw new UnsupportedOperationException("Unable to determine base for this serialization language.");
+			return null;
 		}
 	}
 

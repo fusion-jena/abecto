@@ -3,6 +3,7 @@ package de.uni_jena.cs.fusion.abecto.processor.refinement.meta.mapping;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -27,10 +28,22 @@ public class JaroWinklerMappingProcessorTest {
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
-		FIRST_GRAPH = ModelLoader.getModel(JaroWinklerMappingProcessorTest.class
-				.getResourceAsStream("JaroWinklerMappingProcessorTest-example1.ttl"));
-		SECOND_GRAPH = ModelLoader.getModel(JaroWinklerMappingProcessorTest.class
-				.getResourceAsStream("JaroWinklerMappingProcessorTest-example2.ttl"));
+		FIRST_GRAPH = ModelLoader.getModel(new ByteArrayInputStream(("" + //
+				"@base <http://example.org/> .\r\n" + //
+				"@prefix : <http://example.org/> .\r\n" + //
+				"@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\r\n" + //
+				"\r\n" + //
+				":entity1 rdfs:label \"abcdabcdabcdabcdabcd\" .\r\n" + //
+				":entity2 rdfs:label \"efghefghefghefghefgh\" .\r\n" + //
+				":entity3 rdfs:label \"ijklijklijklijklijkl\" .").getBytes()));
+		SECOND_GRAPH = ModelLoader.getModel(new ByteArrayInputStream(("" + //
+				"@base <http://example.com/> .\r\n" + //
+				"@prefix : <http://example.org/> .\r\n" + //
+				"@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\r\n" + //
+				"\r\n" + //
+				":entity1 rdfs:label \"abcdabcdabcdabcdabcd\" .\r\n" + //
+				":entity2 rdfs:label \"efghefghefghefghabcd\" .\r\n" + //
+				":entity3 rdfs:label \"mnopmnopmnopmnopmnop\" .").getBytes()));
 	}
 
 	@Test

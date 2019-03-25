@@ -1,7 +1,0 @@
-@base <http://example.org/> .
-@prefix : <http://example.org/> .
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-
-:entity1 rdfs:label "abcdabcdabcdabcdabcd" .
-:entity2 rdfs:label "efghefghefghefghefgh" .
-:entity3 rdfs:label "ijklijklijklijklijkl" .
