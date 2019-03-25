@@ -10,11 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.apache.jena.graph.Graph;
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.NodeFactory;
-import org.apache.jena.graph.Node_URI;
-import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.rdf.model.Statement;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -24,14 +22,14 @@ import de.uni_jena.cs.fusion.abecto.util.Vocabulary;
 
 public class JaroWinklerMappingProcessorTest {
 
-	private static Graph FIRST_GRAPH;
-	private static Graph SECOND_GRAPH;
+	private static Model FIRST_GRAPH;
+	private static Model SECOND_GRAPH;
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
-		FIRST_GRAPH = ModelLoader.getGraph(JaroWinklerMappingProcessorTest.class
+		FIRST_GRAPH = ModelLoader.getModel(JaroWinklerMappingProcessorTest.class
 				.getResourceAsStream("JaroWinklerMappingProcessorTest-example1.ttl"));
-		SECOND_GRAPH = ModelLoader.getGraph(JaroWinklerMappingProcessorTest.class
+		SECOND_GRAPH = ModelLoader.getModel(JaroWinklerMappingProcessorTest.class
 				.getResourceAsStream("JaroWinklerMappingProcessorTest-example2.ttl"));
 	}
 
@@ -41,26 +39,28 @@ public class JaroWinklerMappingProcessorTest {
 		processor.setProperties(Map.of("threshold", 0.90D, "case_sensitive", false));
 		Collection<Mapping> mappings = processor.computeMapping(FIRST_GRAPH, SECOND_GRAPH);
 		assertEquals(2, mappings.size());
-		assertTrue(mappings.contains(Mapping.of((Node_URI) NodeFactory.createURI("http://example.org/entity1"),
-				(Node_URI) NodeFactory.createURI("http://example.org/entity1"))));
-		assertTrue(mappings.contains(Mapping.of((Node_URI) NodeFactory.createURI("http://example.org/entity2"),
-				(Node_URI) NodeFactory.createURI("http://example.org/entity2"))));
+		assertTrue(mappings.contains(Mapping.of(ResourceFactory.createResource("http://example.org/entity1"),
+				ResourceFactory.createResource("http://example.org/entity1"))));
+		assertTrue(mappings.contains(Mapping.of(ResourceFactory.createResource("http://example.org/entity2"),
+				ResourceFactory.createResource("http://example.org/entity2"))));
 	}
 
 	@Test
 	public void testComputeResultGraph() throws Exception {
 		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor();
 		processor.setProperties(Map.of("threshold", 0.90D, "case_sensitive", false));
-		processor.addInputGraphGroups(Map.of(UUID.randomUUID(), Collections.singleton(FIRST_GRAPH), UUID.randomUUID(),
+		processor.addInputModelGroups(Map.of(UUID.randomUUID(), Collections.singleton(FIRST_GRAPH), UUID.randomUUID(),
 				Collections.singleton(SECOND_GRAPH)));
-		Graph result = processor.computeResultModel();
-		List<Triple> triples = new ArrayList<>();
-		result.find(Node.ANY, Node.ANY, Node.ANY).forEachRemaining(triples::add);
-		assertEquals(2, triples.size());
-		assertTrue(triples.contains(new Triple(NodeFactory.createURI("http://example.org/entity1"),
-				Vocabulary.MAPPING_PROPERTY, NodeFactory.createURI("http://example.org/entity1"))));
-		assertTrue(triples.contains(new Triple(NodeFactory.createURI("http://example.org/entity2"),
-				Vocabulary.MAPPING_PROPERTY, NodeFactory.createURI("http://example.org/entity2"))));
+		Model result = processor.computeResultModel();
+		List<Statement> statements = new ArrayList<>();
+		result.listStatements().forEachRemaining(statements::add);
+		assertEquals(2, statements.size());
+		assertTrue(statements
+				.contains(ResourceFactory.createStatement(ResourceFactory.createResource("http://example.org/entity1"),
+						Vocabulary.MAPPING, ResourceFactory.createResource("http://example.org/entity1"))));
+		assertTrue(statements
+				.contains(ResourceFactory.createStatement(ResourceFactory.createResource("http://example.org/entity2"),
+						Vocabulary.MAPPING, ResourceFactory.createResource("http://example.org/entity2"))));
 	}
 
 }

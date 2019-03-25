@@ -4,9 +4,9 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.ResourceFactory;
 
 public final class Vocabulary {
-	public final static Property MAPPING_PROPERTY = ResourceFactory
+	public final static Property MAPPING = ResourceFactory
 			.createProperty("http://fusion.cs.uni-jena.de/ontology/abecto/equivalent");
-	public final static Property ANTI_MAPPING_PROPERTY = ResourceFactory
+	public final static Property ANTI_MAPPING = ResourceFactory
 			.createProperty("http://fusion.cs.uni-jena.de/ontology/abecto/different");
 
 	public final static Property RDFS_LABEL = ResourceFactory

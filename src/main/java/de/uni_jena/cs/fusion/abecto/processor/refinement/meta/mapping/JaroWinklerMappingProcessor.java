@@ -30,7 +30,7 @@ public class JaroWinklerMappingProcessor extends AbstractMappingProcessor {
 	}
 
 	private Map<String, Collection<Resource>> getLabels(Model model, Property property, boolean caseSensitive) {
-		Iterator<Statement> labelStatements = this.metaModel.listStatements(null, property, (String) null);
+		Iterator<Statement> labelStatements = model.listStatements(null, property, (String) null);
 		Map<String, Collection<Resource>> labels = new HashMap<>();
 		while (labelStatements.hasNext()) {
 			Statement statement = labelStatements.next();

@@ -22,10 +22,10 @@ public abstract class AbstractMappingProcessor extends AbstractMetaProcessor imp
 	protected Model computeResultModel() {
 		// collect known mappings
 		Collection<Mapping> knownMappings = new HashSet<>();
-		Iterator<Statement> knownMappingsIterator = this.metaModel.listStatements(null, Vocabulary.MAPPING_PROPERTY,
+		Iterator<Statement> knownMappingsIterator = this.metaModel.listStatements(null, Vocabulary.MAPPING,
 				(RDFNode) null);
 		Iterator<Statement> knownAntiMappingsIterator = this.metaModel.listStatements(null,
-				Vocabulary.ANTI_MAPPING_PROPERTY, (RDFNode) null);
+				Vocabulary.ANTI_MAPPING, (RDFNode) null);
 
 		while (knownMappingsIterator.hasNext()) {
 			Statement statement = knownMappingsIterator.next();
@@ -91,12 +91,12 @@ public abstract class AbstractMappingProcessor extends AbstractMetaProcessor imp
 
 		public Statement getStatement() {
 			return ResourceFactory.createStatement(first,
-					((this.isAntiMapping) ? Vocabulary.ANTI_MAPPING_PROPERTY : Vocabulary.MAPPING_PROPERTY), second);
+					((this.isAntiMapping) ? Vocabulary.ANTI_MAPPING : Vocabulary.MAPPING), second);
 		}
 
 		public Statement getReverseStatement() {
 			return ResourceFactory.createStatement(second,
-					((this.isAntiMapping) ? Vocabulary.ANTI_MAPPING_PROPERTY : Vocabulary.MAPPING_PROPERTY), first);
+					((this.isAntiMapping) ? Vocabulary.ANTI_MAPPING : Vocabulary.MAPPING), first);
 		}
 
 		public Mapping inverse() {
