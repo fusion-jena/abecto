@@ -26,7 +26,7 @@ public abstract class AbstractSourceProcessor extends AbstractProcessor implemen
 		if (this.knowledgBase == null) {
 			throw new IllegalStateException("UUID of knowledg base not set.");
 		}
-		return Collections.singletonMap(knowledgBase, Collections.singleton(this.getResultModel()));
+		return Collections.singletonMap(this.knowledgBase, Collections.singleton(this.getResultModel()));
 	}
 
 	@Override
