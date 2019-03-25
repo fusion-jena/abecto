@@ -2,6 +2,7 @@ package de.uni_jena.cs.fusion.abecto.processing.parameter;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import javax.persistence.Convert;
 import javax.persistence.Entity;
@@ -22,13 +23,9 @@ public class ProcessingParameter extends AbstractEntityWithUUID {
 
 	@SuppressWarnings("unchecked")
 	public <T> T get(String key, TypeLiteral<T> type) {
-		Object value = parameter.get(key);
-		if (type.getType().getClass().isInstance(value)) {
-			return (T) parameter.get(key);
-		} else {
-			throw new IllegalArgumentException(
-					"Value of key \"" + key + "\" has not the type: " + type.getClass().toGenericString());
-		}
+		Object value = this.parameter.get(key);
+		Objects.requireNonNull(value, "Missing value of parameter \"" + key + "\".");
+		return (T) value;
 	}
 
 	public Map<String, Object> getAll() {
