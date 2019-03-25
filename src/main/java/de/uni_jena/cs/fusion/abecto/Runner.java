@@ -31,8 +31,8 @@ import de.uni_jena.cs.fusion.abecto.project.knowledgebase.KnowledgeBase;
 import de.uni_jena.cs.fusion.abecto.project.knowledgebase.KnowledgeBaseRepository;
 import de.uni_jena.cs.fusion.abecto.project.knowledgebase.module.KnowledgeBaseModule;
 import de.uni_jena.cs.fusion.abecto.project.knowledgebase.module.KnowledgeBaseModuleRepository;
-import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraph;
-import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraphRepository;
+import de.uni_jena.cs.fusion.abecto.rdfModel.RdfModelRepository;
+import de.uni_jena.cs.fusion.abecto.rdfModel.RdfModel;
 
 @Component
 public class Runner implements CommandLineRunner {
@@ -45,7 +45,7 @@ public class Runner implements CommandLineRunner {
 	@Autowired
 	KnowledgeBaseModuleRepository knowledgeBaseModules;
 	@Autowired
-	RdfGraphRepository rdfGraphs;
+	RdfModelRepository rdfGraphs;
 	@Autowired
 	ProcessingParameterRepository processingParameters;
 	@Autowired
@@ -102,7 +102,7 @@ public class Runner implements CommandLineRunner {
 		// fetch all
 		log.info("RdfGraphs found with findAll():");
 		log.info("-------------------------------");
-		for (RdfGraph graph : rdfGraphs.findAll()) {
+		for (RdfModel graph : rdfGraphs.findAll()) {
 			log.info(graph.toString());
 
 			log.info("Content Examples:");

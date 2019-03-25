@@ -8,8 +8,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.compose.MultiUnion;
+import org.apache.jena.ontology.OntModel;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 
 import de.uni_jena.cs.fusion.abecto.processor.AbstractProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
@@ -22,30 +24,38 @@ public abstract class AbstractRefinementProcessor extends AbstractProcessor impl
 	protected final Collection<Processor> inputProcessors = new ArrayList<>();
 
 	/**
-	 * The previous meta result graph that is a {@link MultiUnion} of all
-	 * {@link #metaSubGraphs}.
+	 * TODO The previous meta result graph that is a {@link MultiUnion} of all
+	 * {@link #metaSubModels}.
 	 */
-	protected final MultiUnion metaGraph = new MultiUnion();
+	protected final OntModel metaModel = ModelFactory.createOntologyModel();
 	/**
-	 * The previous meta result subgraphs.
+	 * TODO The previous meta result submodels.
 	 */
-	protected final Set<Graph> metaSubGraphs = new HashSet<>();
+	protected final Set<Model> metaSubModels = new HashSet<>();
 	/**
-	 * The input graphs that as {@link MultiUnion}s of the according
-	 * {@link #inputSubGraphs}.
+	 * TODO The input {@link Model}s that as {@link MultiUnion}s of the according
+	 * {@link #inputSubModels}.
 	 */
-	protected final Map<UUID, MultiUnion> inputGroupGraphs = new HashMap<>();
+	protected final Map<UUID, Model> inputGroupModels = new HashMap<>();
 	/**
-	 * The input subgraphs.
+	 * TODO The input submodels.
 	 */
-	protected final Map<UUID, Collection<Graph>> inputGroupSubGraphs = new HashMap<>();
+	protected final Map<UUID, Collection<Model>> inputGroupSubModels = new HashMap<>();
+	/**
+	 * Union of all input {@link Model}s.
+	 */
+	protected final OntModel inputModelUnion = ModelFactory.createOntologyModel();
 
 	@Override
-	public void addInputGraphGroup(UUID uuid, Collection<Graph> inputGraphGroup) {
-		MultiUnion graphUnion = inputGroupGraphs.computeIfAbsent(uuid, (a) -> new MultiUnion());
-		Collection<Graph> graphCollection = inputGroupSubGraphs.computeIfAbsent(uuid, (a) -> new HashSet<Graph>());
-		inputGraphGroup.forEach(graphUnion::addGraph);
-		graphCollection.addAll(inputGraphGroup);
+	public void addInputModelGroup(UUID uuid, Collection<Model> inputModelGroup) {
+		Collection<Model> modelCollection = this.inputGroupSubModels.computeIfAbsent(uuid, (a) -> new HashSet<Model>());
+		modelCollection.addAll(inputModelGroup);
+
+		OntModel modelUnion = (OntModel) this.inputGroupModels.computeIfAbsent(uuid,
+				(a) -> ModelFactory.createOntologyModel());
+		inputModelGroup.forEach(modelUnion::addSubModel);
+
+		inputModelGroup.forEach(this.inputModelUnion::addSubModel);
 	}
 
 	@Override
@@ -54,9 +64,9 @@ public abstract class AbstractRefinementProcessor extends AbstractProcessor impl
 	}
 
 	@Override
-	public void addMetaGraphs(Collection<Graph> graphs) {
-		graphs.forEach(this.metaGraph::addGraph);
-		this.metaSubGraphs.addAll(graphs);
+	public void addMetaModels(Collection<Model> models) {
+		models.forEach(this.metaModel::addSubModel);
+		this.metaSubModels.addAll(models);
 	}
 
 	@Override
@@ -68,8 +78,8 @@ public abstract class AbstractRefinementProcessor extends AbstractProcessor impl
 				}
 				dependedProcessor.await();
 			}
-			this.addMetaGraphs(dependedProcessor.getMetaGraph());
-			this.addInputGraphGroups(dependedProcessor.getDataGraphs());
+			this.addMetaModels(dependedProcessor.getMetaModel());
+			this.addInputModelGroups(dependedProcessor.getDataModels());
 		}
 	}
 }

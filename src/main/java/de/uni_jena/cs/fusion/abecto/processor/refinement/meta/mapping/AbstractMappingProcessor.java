@@ -6,12 +6,12 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.UUID;
 
-import org.apache.jena.graph.Factory;
-import org.apache.jena.graph.Graph;
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.Node_URI;
-import org.apache.jena.graph.Triple;
-import org.apache.jena.graph.compose.MultiUnion;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.rdf.model.Statement;
 
 import de.uni_jena.cs.fusion.abecto.processor.refinement.meta.AbstractMetaProcessor;
 import de.uni_jena.cs.fusion.abecto.util.Vocabulary;
@@ -19,26 +19,28 @@ import de.uni_jena.cs.fusion.abecto.util.Vocabulary;
 public abstract class AbstractMappingProcessor extends AbstractMetaProcessor implements MappingProcessor {
 
 	@Override
-	protected Graph computeResultGraph() {
+	protected Model computeResultModel() {
 		// collect known mappings
 		Collection<Mapping> knownMappings = new HashSet<>();
-		Iterator<Triple> knownMappingsIterator = metaGraph.find(Node.ANY, Vocabulary.MAPPING_PROPERTY, Node.ANY);
-		Iterator<Triple> knownAntiMappingsIterator = metaGraph.find(Node.ANY, Vocabulary.ANTI_MAPPING_PROPERTY,
-				Node.ANY);
+		Iterator<Statement> knownMappingsIterator = this.metaModel.listStatements(null, Vocabulary.MAPPING_PROPERTY,
+				(RDFNode) null);
+		Iterator<Statement> knownAntiMappingsIterator = this.metaModel.listStatements(null,
+				Vocabulary.ANTI_MAPPING_PROPERTY, (RDFNode) null);
+
 		while (knownMappingsIterator.hasNext()) {
-			Triple triple = knownMappingsIterator.next();
-			knownMappings.add(Mapping.of((Node_URI) triple.getSubject(), (Node_URI) triple.getObject()));
+			Statement statement = knownMappingsIterator.next();
+			knownMappings.add(Mapping.of(statement.getSubject(), statement.getObject().asResource()));
 		}
 		while (knownAntiMappingsIterator.hasNext()) {
-			Triple triple = knownAntiMappingsIterator.next();
-			knownMappings.add(Mapping.not((Node_URI) triple.getSubject(), (Node_URI) triple.getObject()));
+			Statement statement = knownAntiMappingsIterator.next();
+			knownMappings.add(Mapping.not(statement.getSubject(), statement.getObject().asResource()));
 		}
 
-		// init result graph
-		Graph resultsGraph = Factory.createGraphMem();
+		// init result model
+		Model resultsModel = ModelFactory.createDefaultModel();
 
-		for (Entry<UUID, MultiUnion> i : this.inputGroupGraphs.entrySet()) {
-			for (Entry<UUID, MultiUnion> j : this.inputGroupGraphs.entrySet()) {
+		for (Entry<UUID, Model> i : this.inputGroupModels.entrySet()) {
+			for (Entry<UUID, Model> j : this.inputGroupModels.entrySet()) {
 				if (i.getKey().compareTo(j.getKey()) > 0) {
 					// compute mapping
 					Collection<Mapping> mappings = computeMapping(i.getValue(), j.getValue());
@@ -48,52 +50,52 @@ public abstract class AbstractMappingProcessor extends AbstractMetaProcessor imp
 						if (!knownMappings.contains(mapping) && !knownMappings.contains(mapping.inverse())) {
 
 							// add mapping to results
-							resultsGraph.add(mapping.getTriple());
-							resultsGraph.add(mapping.getReverseTriple());
+							resultsModel.add(mapping.getStatement());
+							resultsModel.add(mapping.getReverseStatement());
 						}
 					}
 				}
 			}
 		}
 
-		return resultsGraph;
+		return resultsModel;
 	}
 
 	/**
-	 * Compute the mapping of two graphs.
+	 * Compute the mapping of two models.
 	 * 
-	 * @param firstGraph  first graph to process
-	 * @param secondGraph second graph to process
+	 * @param firstModel  first model to process
+	 * @param secondModel second model to process
 	 * @return computed mapping
 	 */
-	protected abstract Collection<Mapping> computeMapping(Graph firstGraph, Graph secondGraph);
+	protected abstract Collection<Mapping> computeMapping(Model firstModel, Model secondModel);
 
 	protected final static class Mapping {
-		public final Node_URI first;
-		public final Node_URI second;
+		public final Resource first;
+		public final Resource second;
 		public final boolean isAntiMapping;
 
-		private Mapping(Node_URI first, Node_URI second, boolean isAntiMapping) {
+		private Mapping(Resource first, Resource second, boolean isAntiMapping) {
 			this.first = first;
 			this.second = second;
 			this.isAntiMapping = isAntiMapping;
 		}
 
-		public static Mapping of(Node_URI first, Node_URI second) {
+		public static Mapping of(Resource first, Resource second) {
 			return new Mapping(first, second, false);
 		}
 
-		public static Mapping not(Node_URI first, Node_URI second) {
+		public static Mapping not(Resource first, Resource second) {
 			return new Mapping(first, second, true);
 		}
 
-		public Triple getTriple() {
-			return new Triple(first,
+		public Statement getStatement() {
+			return ResourceFactory.createStatement(first,
 					((this.isAntiMapping) ? Vocabulary.ANTI_MAPPING_PROPERTY : Vocabulary.MAPPING_PROPERTY), second);
 		}
 
-		public Triple getReverseTriple() {
-			return new Triple(second,
+		public Statement getReverseStatement() {
+			return ResourceFactory.createStatement(second,
 					((this.isAntiMapping) ? Vocabulary.ANTI_MAPPING_PROPERTY : Vocabulary.MAPPING_PROPERTY), first);
 		}
 

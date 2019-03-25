@@ -1,6 +1,6 @@
 package de.uni_jena.cs.fusion.abecto.processing.runner;
 
-import org.apache.jena.graph.Graph;
+import org.apache.jena.rdf.model.Model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,8 +10,8 @@ import org.springframework.stereotype.Component;
 import de.uni_jena.cs.fusion.abecto.processing.Processing;
 import de.uni_jena.cs.fusion.abecto.processing.ProcessingRepository;
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
-import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraph;
-import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraphRepository;
+import de.uni_jena.cs.fusion.abecto.rdfModel.RdfModel;
+import de.uni_jena.cs.fusion.abecto.rdfModel.RdfModelRepository;
 
 @Component
 public class ProcessorRunner {
@@ -19,7 +19,7 @@ public class ProcessorRunner {
 	@Autowired
 	ProcessingRepository processingRepository;
 	@Autowired
-	RdfGraphRepository rdfGraphRepository;
+	RdfModelRepository rdfModelRepository;
 
 	@Async
 	public void execute(Processing processing, Processor processor) {
@@ -27,14 +27,15 @@ public class ProcessorRunner {
 		try {
 			log.info("Running processor " + processor);
 			processing.setStateStart();
-			Graph graph = processor.call();
-			RdfGraph rdfGraph = rdfGraphRepository.save(new RdfGraph(graph));
-			processing.setStateSuccess(rdfGraph);
+			Model model = processor.call();
+			RdfModel rdfModel = this.rdfModelRepository.save(new RdfModel(model));
+			processing.setStateSuccess(rdfModel);
 			log.info("Processor " + processor + " succeded");
 		} catch (Throwable e) {
 			log.error("Processor " + processor + " failed", e);
 			processor.fail();
 			processing.setStateFail(e);
 		}
+
 	}
 }

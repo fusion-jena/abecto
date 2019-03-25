@@ -6,7 +6,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.UUID;
 
-import org.apache.jena.graph.Graph;
+import org.apache.jena.rdf.model.Model;
 
 import de.uni_jena.cs.fusion.abecto.processor.refinement.AbstractRefinementProcessor;
 
@@ -14,22 +14,21 @@ public abstract class AbstractTransformationProcessor extends AbstractRefinement
 		implements TransformationProcessor {
 
 	@Override
-	public Map<UUID, Collection<Graph>> getDataGraphs() {
+	public Map<UUID, Collection<Model>> getDataModels() {
 		if (!this.isSucceeded()) {
-			throw new IllegalStateException("Result Graph is not avaliable.");
+			throw new IllegalStateException("Result Model is not avaliable.");
 		}
-		Map<UUID, Collection<Graph>> result = new HashMap<>();
-		for (UUID uuid : inputGroupSubGraphs.keySet()) {
-			Collection<Graph> collection = result.computeIfAbsent(uuid, (a) -> new HashSet<Graph>());
-			collection.addAll(inputGroupSubGraphs.get(uuid));
-			collection.add(this.getResultGraph());
+		Map<UUID, Collection<Model>> result = new HashMap<>();
+		for (UUID uuid : this.inputGroupSubModels.keySet()) {
+			Collection<Model> collection = result.computeIfAbsent(uuid, (a) -> new HashSet<Model>());
+			collection.addAll(this.inputGroupSubModels.get(uuid));
+			collection.add(this.getResultModel());
 		}
 		return result;
 	}
 
 	@Override
-	public Collection<Graph> getMetaGraph() {
-		return this.metaSubGraphs;
+	public Collection<Model> getMetaModel() {
+		return this.metaSubModels;
 	}
-
 }

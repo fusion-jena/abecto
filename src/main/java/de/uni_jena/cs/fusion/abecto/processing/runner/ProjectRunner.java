@@ -18,7 +18,7 @@ import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfigura
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
 import de.uni_jena.cs.fusion.abecto.processor.refinement.RefinementProcessor;
 import de.uni_jena.cs.fusion.abecto.project.Project;
-import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraphRepository;
+import de.uni_jena.cs.fusion.abecto.rdfModel.RdfModelRepository;
 
 @Component
 public class ProjectRunner {
@@ -26,7 +26,7 @@ public class ProjectRunner {
 	@Autowired
 	ProcessingRepository processingRepository;
 	@Autowired
-	RdfGraphRepository rdfGraphRepository;
+	RdfModelRepository rdfGraphRepository;
 	@Autowired
 	ProcessingConfigurationRepository configurationRepository;
 	@Autowired
@@ -108,8 +108,8 @@ public class ProjectRunner {
 						throw new IllegalStateException("Dependent Processing is failed.");
 					case SUCCEEDED:
 						if (processor instanceof RefinementProcessor) {
-							((RefinementProcessor) processor).addInputGraphGroups(dependentProcessing.getDataGraphs());
-							((RefinementProcessor) processor).addMetaGraphs(dependentProcessing.getMetaGraphs());
+							((RefinementProcessor) processor).addInputModelGroups(dependentProcessing.getDataModels());
+							((RefinementProcessor) processor).addMetaModels(dependentProcessing.getMetaModels());
 						}
 						break;
 					case NOT_STARTED:

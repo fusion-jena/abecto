@@ -19,15 +19,15 @@ import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 
-import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.compose.MultiUnion;
+import org.apache.jena.rdf.model.Model;
 
 import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfiguration;
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameter;
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
 import de.uni_jena.cs.fusion.abecto.processor.Processor.Status;
 import de.uni_jena.cs.fusion.abecto.processor.source.SourceProcessor;
-import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraph;
+import de.uni_jena.cs.fusion.abecto.rdfModel.RdfModel;
 import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
 
 /**
@@ -47,17 +47,17 @@ public class Processing extends AbstractEntityWithUUID {
 	@ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
 	private ProcessingConfiguration configuration;
 	/**
-	 * {@link Processor} used to produce the result {@link RdfGraph}.
+	 * {@link Processor} used to produce the result {@link RdfModel}.
 	 */
 	private Class<? extends Processor> processor;
 	/**
-	 * {@link ProcessingParameter} used to produce the result {@link RdfGraph}.
+	 * {@link ProcessingParameter} used to produce the result {@link RdfModel}.
 	 */
 	@ManyToOne(fetch = FetchType.LAZY)
 	private ProcessingParameter parameter;
 	/**
 	 * Collection of {@link Processing}s used to produce the result
-	 * {@link RdfGraph}.
+	 * {@link RdfModel}.
 	 */
 	@ManyToMany()
 	private Set<Processing> inputProcessings = new HashSet<>();
@@ -71,7 +71,7 @@ public class Processing extends AbstractEntityWithUUID {
 
 	// results
 	@OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-	private RdfGraph rdfGraph;
+	private RdfModel rdfModel;
 
 	public Processing(ProcessingConfiguration configuration) {
 		this.configuration = configuration;
@@ -116,8 +116,8 @@ public class Processing extends AbstractEntityWithUUID {
 		return this.processor;
 	}
 
-	public RdfGraph getRdfGraph() {
-		return this.rdfGraph;
+	public RdfModel getRdfModel() {
+		return this.rdfModel;
 	}
 
 	public String getStackTrace() {
@@ -195,10 +195,10 @@ public class Processing extends AbstractEntityWithUUID {
 		}
 	}
 
-	public Processing setStateSuccess(RdfGraph rdfGraph) {
+	public Processing setStateSuccess(RdfModel rdfModel) {
 		if (this.isRunning() || this.isNotStarted()) {
-			Objects.requireNonNull(rdfGraph);
-			this.rdfGraph = rdfGraph;
+			Objects.requireNonNull(rdfModel);
+			this.rdfModel = rdfModel;
 			this.status = Status.SUCCEEDED;
 			return this;
 		} else {
@@ -208,23 +208,24 @@ public class Processing extends AbstractEntityWithUUID {
 	}
 
 	/**
-	 * @return {@link MultiUnion}s of result data {@link Graph}s of this
+	 * @return {@link MultiUnion}s of result data {@link Model}s of this
 	 *         {@link Processing} and its input {@link Processing}s
 	 * 
-	 * @see #getMetaGraph()
-	 * @see #getResultGraph()
+	 * @see #getMetaModel()
 	 */
-	public Map<UUID, Collection<Graph>> getDataGraphs() {
-		// TODO Processing#getDataGraphs
+	public Map<UUID, Collection<Model>> getDataModels() {
+		// TODO Processing#getDataModels
 		return null;
 	}
 
 	/**
-	 * @return {@link MultiUnion} of result meta {@link Graph}s of this
+	 * @return {@link MultiUnion} of result meta {@link Model}s of this
 	 *         {@link Processing} and its input {@link Processing}s
+	 * 
+	 * @see #getDataModels()
 	 */
-	public Collection<Graph> getMetaGraphs() {
-		// TODO Processing#getMetaGraph
+	public Collection<Model> getMetaModels() {
+		// TODO Processing#getMetaModel
 		return null;
 	}
 }

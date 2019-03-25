@@ -6,14 +6,14 @@ import java.util.UUID;
 import java.util.concurrent.Callable;
 
 import org.apache.commons.lang3.reflect.TypeLiteral;
-import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.compose.MultiUnion;
+import org.apache.jena.rdf.model.Model;
 
 /**
- * A task that returns a new {@link Graph} based on given properties using
+ * A task that returns a new {@link Model} based on given properties using
  * {@link #setProperties(Map)}.
  */
-public interface Processor extends Callable<Graph> {
+public interface Processor extends Callable<Model> {
 
 	/**
 	 * {@link Status} of the {@link Processor}
@@ -44,19 +44,19 @@ public interface Processor extends Callable<Graph> {
 	public void fail();
 
 	/**
-	 * @return {@link MultiUnion}s of result data {@link Graph}s of this
+	 * @return {@link MultiUnion}s of result data {@link Model}s of this
 	 *         {@link Processor} and its input {@link Processor}s
 	 * 
-	 * @see #getMetaGraph()
-	 * @see #getResultGraph()
+	 * @see #getMetaModel()
+	 * @see #getResultModel()
 	 */
-	public Map<UUID,Collection<Graph>> getDataGraphs();
+	public Map<UUID, Collection<Model>> getDataModels();
 
 	/**
-	 * @return {@link MultiUnion} of result meta {@link Graph}s of this
+	 * @return {@link MultiUnion} of result meta {@link Model}s of this
 	 *         {@link Processor} and its input {@link Processor}s
 	 */
-	public Collection<Graph> getMetaGraph();
+	public Collection<Model> getMetaModel();
 
 	/**
 	 * Returns a map of allowed properties for this processor and the required data
@@ -67,13 +67,13 @@ public interface Processor extends Callable<Graph> {
 	public Map<String, TypeLiteral<?>> getPropertyTypes();
 
 	/**
-	 * Returns the result {@link Graph} produced by this {@link Processor}. The
-	 * returned {@link Graph} is either a data {@link Graph} or a meta {@link Graph}
+	 * Returns the result {@link Model} produced by this {@link Processor}. The
+	 * returned {@link Model} is either a data {@link Model} or a meta {@link Model}
 	 * depending on the type of this {@link Processor}.
 	 * 
-	 * @return result {@link Graph} produced by this {@link Processor}
+	 * @return result {@link Model} produced by this {@link Processor}
 	 */
-	public Graph getResultGraph();
+	public Model getResultModel();
 
 	/**
 	 * @return {@link Status} of this {@link Processor}

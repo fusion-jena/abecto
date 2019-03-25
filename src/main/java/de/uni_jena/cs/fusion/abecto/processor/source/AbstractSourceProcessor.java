@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
 
-import org.apache.jena.graph.Graph;
+import org.apache.jena.rdf.model.Model;
 
 import de.uni_jena.cs.fusion.abecto.processor.AbstractProcessor;
 
@@ -19,18 +19,18 @@ public abstract class AbstractSourceProcessor extends AbstractProcessor implemen
 	}
 
 	@Override
-	public Map<UUID, Collection<Graph>> getDataGraphs() {
+	public Map<UUID, Collection<Model>> getDataModels() {
 		if (!this.isSucceeded()) {
-			throw new IllegalStateException("Result Graph is not avaliable.");
+			throw new IllegalStateException("Result model is not avaliable.");
 		}
-		if (knowledgBase == null) {
+		if (this.knowledgBase == null) {
 			throw new IllegalStateException("UUID of knowledg base not set.");
 		}
-		return Collections.singletonMap(knowledgBase, Collections.singleton(this.getResultGraph()));
+		return Collections.singletonMap(knowledgBase, Collections.singleton(this.getResultModel()));
 	}
 
 	@Override
-	public Collection<Graph> getMetaGraph() {
+	public Collection<Model> getMetaModel() {
 		return Collections.emptySet();
 	}
 

@@ -6,14 +6,11 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import org.apache.commons.lang3.reflect.TypeLiteral;
-import org.apache.jena.graph.Graph;
-import org.apache.tomcat.util.http.fileupload.ProgressListener;
-
-import de.uni_jena.cs.fusion.abecto.rdfGraph.RdfGraph;
+import org.apache.jena.rdf.model.Model;
 
 public abstract class AbstractProcessor implements Processor {
 
-	private Graph resultGraph;
+	private Model resultModel;
 
 	private Status status = Status.NOT_STARTED;
 
@@ -23,9 +20,11 @@ public abstract class AbstractProcessor implements Processor {
 	 * </p>
 	 * 
 	 * <p>
-	 * Use {@link #getProperty(String, Class)} or
-	 * {@link #getOptionalProperty(String, Class)} for type safe access without need
-	 * of missing error exception handling.
+	 * Use {@link #getProperty(String, Class)},
+	 * {@link #getProperty(String, TypeLiteral, Function)},
+	 * {@link #getOptionalProperty(String, Class)} or
+	 * {@link #getOptionalProperty(String, TypeLiteral, Function) for type safe
+	 * access without need of missing error exception handling.
 	 * </p>
 	 */
 	private Map<String, Object> properties;
@@ -41,32 +40,26 @@ public abstract class AbstractProcessor implements Processor {
 	}
 
 	@Override
-	public Graph call() throws Exception {
+	public Model call() throws Exception {
 		this.status = Status.RUNNING;
 		this.prepare();
-		this.resultGraph = this.computeResultGraph();
+		this.resultModel = this.computeResultModel();
 		this.status = Status.SUCCEEDED;
 		this.alert();
-		return resultGraph;
+		return resultModel;
 	}
 
 	/**
 	 * <p>
-	 * Computes a {@link RdfGraph}, or throws an exception if unable to do so.
+	 * Computes a {@link Model}, or throws an exception if unable to do so. This
+	 * method is used by {@link #call()} should be implemented instead of
+	 * overwriting {@link #call()}.
 	 * </p>
 	 * 
-	 * <p>
-	 * This method should be implemented instead of overwriting {@link call}. It
-	 * will be called by {@link call}. Calling {@link ProgressListener#onSuccess()}
-	 * or {@link ProgressListener#onFailure(Throwable)} is done by {@link call}.
-	 * Therefore, only {@link ProgressListener#onProgress(long, long)} needs to be
-	 * called here.
-	 * </p>
-	 * 
-	 * @return computed {@link Graph}
+	 * @return computed {@link Model}
 	 * @throws Exception
 	 */
-	protected abstract Graph computeResultGraph() throws Exception;
+	protected abstract Model computeResultModel() throws Exception;
 
 	@Override
 	public void fail() {
@@ -155,8 +148,8 @@ public abstract class AbstractProcessor implements Processor {
 	}
 
 	@Override
-	public Graph getResultGraph() {
-		return this.resultGraph;
+	public Model getResultModel() {
+		return this.resultModel;
 	}
 
 	@Override

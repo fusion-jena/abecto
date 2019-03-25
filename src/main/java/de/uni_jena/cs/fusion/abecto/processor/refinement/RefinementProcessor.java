@@ -5,34 +5,27 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 
-import org.apache.jena.graph.Graph;
+import org.apache.jena.rdf.model.Model;
 
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
 
 public interface RefinementProcessor extends Processor {
 
 	/**
-	 * Add the previous meta {@link Graph}.
+	 * Add a {@link Model} to process.
 	 * 
-	 * @param metaGraph previous meta {@link Graph}
+	 * @param inputModel {@link Model}s to process
 	 */
-	public void addMetaGraphs(Collection<Graph> metaGraphs);
+	public void addInputModelGroup(UUID uuid, Collection<Model> inputModelGroup);
 
 	/**
-	 * Add a {@link Graph} to process.
+	 * Add {@link Model}s to process.
 	 * 
-	 * @param inputGraph {@link Graph}s to process
+	 * @param inputModelGroups {@link Model}s to process
 	 */
-	public void addInputGraphGroup(UUID uuid, Collection<Graph> inputGraphGroup);
-
-	/**
-	 * Add {@link Graph}s to process.
-	 * 
-	 * @param inputGraphGroups {@link Graph}s to process
-	 */
-	default public void addInputGraphGroups(Map<UUID, Collection<Graph>> inputGraphGroups) {
-		for (Entry<UUID, Collection<Graph>> inputGraphGroup : inputGraphGroups.entrySet()) {
-			this.addInputGraphGroup(inputGraphGroup.getKey(), inputGraphGroup.getValue());
+	default public void addInputModelGroups(Map<UUID, Collection<Model>> inputModelGroups) {
+		for (Entry<UUID, Collection<Model>> inputModelGroup : inputModelGroups.entrySet()) {
+			this.addInputModelGroup(inputModelGroup.getKey(), inputModelGroup.getValue());
 		}
 	}
 
@@ -42,4 +35,11 @@ public interface RefinementProcessor extends Processor {
 	 * @param processor {@link Processor} this {@link Processor} depends on
 	 */
 	public void addInputProcessor(Processor processor);
+
+	/**
+	 * Add the previous meta {@link Model}.
+	 * 
+	 * @param metaModel previous meta {@link Model}
+	 */
+	public void addMetaModels(Collection<Model> metaModels);
 }

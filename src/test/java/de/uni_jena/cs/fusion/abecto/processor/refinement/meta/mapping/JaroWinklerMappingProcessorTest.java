@@ -19,7 +19,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import de.uni_jena.cs.fusion.abecto.processor.refinement.meta.mapping.AbstractMappingProcessor.Mapping;
-import de.uni_jena.cs.fusion.abecto.util.GraphFactory;
+import de.uni_jena.cs.fusion.abecto.util.ModelLoader;
 import de.uni_jena.cs.fusion.abecto.util.Vocabulary;
 
 public class JaroWinklerMappingProcessorTest {
@@ -29,9 +29,9 @@ public class JaroWinklerMappingProcessorTest {
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
-		FIRST_GRAPH = GraphFactory.getGraph(JaroWinklerMappingProcessorTest.class
+		FIRST_GRAPH = ModelLoader.getGraph(JaroWinklerMappingProcessorTest.class
 				.getResourceAsStream("JaroWinklerMappingProcessorTest-example1.ttl"));
-		SECOND_GRAPH = GraphFactory.getGraph(JaroWinklerMappingProcessorTest.class
+		SECOND_GRAPH = ModelLoader.getGraph(JaroWinklerMappingProcessorTest.class
 				.getResourceAsStream("JaroWinklerMappingProcessorTest-example2.ttl"));
 	}
 
@@ -53,7 +53,7 @@ public class JaroWinklerMappingProcessorTest {
 		processor.setProperties(Map.of("threshold", 0.90D, "case_sensitive", false));
 		processor.addInputGraphGroups(Map.of(UUID.randomUUID(), Collections.singleton(FIRST_GRAPH), UUID.randomUUID(),
 				Collections.singleton(SECOND_GRAPH)));
-		Graph result = processor.computeResultGraph();
+		Graph result = processor.computeResultModel();
 		List<Triple> triples = new ArrayList<>();
 		result.find(Node.ANY, Node.ANY, Node.ANY).forEachRemaining(triples::add);
 		assertEquals(2, triples.size());

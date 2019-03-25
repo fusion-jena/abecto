@@ -6,24 +6,24 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.UUID;
 
-import org.apache.jena.graph.Graph;
+import org.apache.jena.rdf.model.Model;
 
 import de.uni_jena.cs.fusion.abecto.processor.refinement.AbstractRefinementProcessor;
 
 public abstract class AbstractMetaProcessor extends AbstractRefinementProcessor implements MetaProcessor {
 
 	@Override
-	public Map<UUID, Collection<Graph>> getDataGraphs() {
+	public Map<UUID, Collection<Model>> getDataModels() {
 		return Collections.emptyMap();
 	}
 
 	@Override
-	public Collection<Graph> getMetaGraph() {
+	public Collection<Model> getMetaModel() {
 		if (!this.isSucceeded()) {
-			throw new IllegalStateException("Result Graph is not avaliable.");
+			throw new IllegalStateException("Result Model is not avaliable.");
 		}
-		Collection<Graph> result = new HashSet<>(this.metaSubGraphs);
-		result.add(this.getResultGraph());
+		Collection<Model> result = new HashSet<>(this.metaSubModels);
+		result.add(this.getResultModel());
 		return result;
 	}
 }
