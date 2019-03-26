@@ -17,8 +17,9 @@ public class ProcessingParameter extends AbstractEntityWithUUID {
 	@Convert(converter = ProcessingParameterConverter.class)
 	private Map<String, Object> parameter = new HashMap<String, Object>();
 
-	public <T> void set(String key, Object value) {
+	public <T> ProcessingParameter set(String key, Object value) {
 		parameter.put(key, value);
+		return this;
 	}
 
 	@SuppressWarnings("unchecked")

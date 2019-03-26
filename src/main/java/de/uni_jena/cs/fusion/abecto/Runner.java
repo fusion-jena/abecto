@@ -1,6 +1,6 @@
 package de.uni_jena.cs.fusion.abecto;
 
-import java.util.Collections;
+import java.util.List;
 
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
@@ -22,8 +22,7 @@ import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfigura
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameter;
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameterRepository;
 import de.uni_jena.cs.fusion.abecto.processing.runner.ProjectRunner;
-import de.uni_jena.cs.fusion.abecto.processor.refinement.transformation.OpenlletReasoningProcessor;
-import de.uni_jena.cs.fusion.abecto.processor.refinement.transformation.SparqlConstructProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.refinement.meta.mapping.JaroWinklerMappingProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.source.PathSourceProcessor;
 import de.uni_jena.cs.fusion.abecto.project.Project;
 import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
@@ -31,8 +30,8 @@ import de.uni_jena.cs.fusion.abecto.project.knowledgebase.KnowledgeBase;
 import de.uni_jena.cs.fusion.abecto.project.knowledgebase.KnowledgeBaseRepository;
 import de.uni_jena.cs.fusion.abecto.project.knowledgebase.module.KnowledgeBaseModule;
 import de.uni_jena.cs.fusion.abecto.project.knowledgebase.module.KnowledgeBaseModuleRepository;
-import de.uni_jena.cs.fusion.abecto.rdfModel.RdfModelRepository;
 import de.uni_jena.cs.fusion.abecto.rdfModel.RdfModel;
+import de.uni_jena.cs.fusion.abecto.rdfModel.RdfModelRepository;
 
 @Component
 public class Runner implements CommandLineRunner {
@@ -41,15 +40,15 @@ public class Runner implements CommandLineRunner {
 	@Autowired
 	ProjectRepository projects;
 	@Autowired
-	KnowledgeBaseRepository knowledgeBases;
+	KnowledgeBaseRepository knowledgeBaseRepository;
 	@Autowired
-	KnowledgeBaseModuleRepository knowledgeBaseModules;
+	KnowledgeBaseModuleRepository knowledgeBaseModuleRepository;
 	@Autowired
 	RdfModelRepository rdfGraphs;
 	@Autowired
 	ProcessingParameterRepository processingParameters;
 	@Autowired
-	ProcessingConfigurationRepository configurations;
+	ProcessingConfigurationRepository processingConfigurationRepository;
 	@Autowired
 	ProjectRunner projectRunner;
 
@@ -58,43 +57,71 @@ public class Runner implements CommandLineRunner {
 	public void run(String... args) throws Exception {
 
 		// create a Project
-		Project project = projects.save(new Project("a"));
+		Project projectUnits = projects.save(new Project("unit ontologies"));
 
 		// create some KnowledgeBase
-		KnowledgeBase knowledgeBase = knowledgeBases.save(new KnowledgeBase(project, "b"));
-		knowledgeBases.save(new KnowledgeBase(project, "d"));
+		KnowledgeBase knowledgeBaseQU = knowledgeBaseRepository.save(new KnowledgeBase(projectUnits, "QU"));
+		KnowledgeBase knowledgeBaseOM = knowledgeBaseRepository.save(new KnowledgeBase(projectUnits, "OM"));
 
 		// create some KnowledgeBaseModule
-		KnowledgeBaseModule knowledgeBaseModule = knowledgeBaseModules
-				.save(new KnowledgeBaseModule(knowledgeBase, "c"));
-		knowledgeBaseModules.save(new KnowledgeBaseModule(knowledgeBase, "e"));
+		KnowledgeBaseModule knowledgeBaseModuleQU1 = knowledgeBaseModuleRepository
+				.save(new KnowledgeBaseModule(knowledgeBaseQU, "QU1"));
+		KnowledgeBaseModule knowledgeBaseModuleQU2 = knowledgeBaseModuleRepository
+				.save(new KnowledgeBaseModule(knowledgeBaseQU, "QU2"));
+		KnowledgeBaseModule knowledgeBaseModuleMUO1 = knowledgeBaseModuleRepository
+				.save(new KnowledgeBaseModule(knowledgeBaseOM, "MUO1"));
+		KnowledgeBaseModule knowledgeBaseModuleMUO2 = knowledgeBaseModuleRepository
+				.save(new KnowledgeBaseModule(knowledgeBaseOM, "MUO2"));
 
-		for (KnowledgeBaseModule x : knowledgeBaseModules.findAll()) {
+		for (KnowledgeBaseModule x : knowledgeBaseModuleRepository.findAll()) {
 			log.info(x.toString());
 		}
 
-		// execute PathSourceProcessor
-		ProcessingParameter parameterPathSource = new ProcessingParameter();
-		parameterPathSource.set("path", "C:\\Users\\admin\\Documents\\Workspace\\unit-ontologies\\qu\\qu-rec20.owl");
-		parameterPathSource = processingParameters.save(parameterPathSource);
-		ProcessingConfiguration configurationPathSource = configurations
-				.save(new ProcessingConfiguration(PathSourceProcessor.class, parameterPathSource, knowledgeBaseModule));
+		ProcessingParameter parameterQU1 = new ProcessingParameter();
+		parameterQU1.set("path", "C:\\Users\\admin\\Documents\\Workspace\\unit-ontologies\\qu\\qu.owl");
+		parameterQU1 = processingParameters.save(parameterQU1);
+		ProcessingConfiguration configurationQU1 = processingConfigurationRepository
+				.save(new ProcessingConfiguration(PathSourceProcessor.class, parameterQU1, knowledgeBaseModuleQU1));
 
-		// execute SparqlConstructProcessor
-		ProcessingParameter parameterSparqlConstruct = new ProcessingParameter();
-		parameterSparqlConstruct.set("query",
-				"CONSTRUCT {?s <http://example.org/p> <http://example.org/o>} WHERE {?s ?p ?o. Filter(!isBLANK(?s))}");
-		parameterSparqlConstruct = processingParameters.save(parameterSparqlConstruct);
-		configurations.save(new ProcessingConfiguration(SparqlConstructProcessor.class, parameterSparqlConstruct,
-				Collections.singleton(configurationPathSource)));
+		ProcessingParameter parameterQU2 = new ProcessingParameter();
+		parameterQU2.set("path", "C:\\Users\\admin\\Documents\\Workspace\\unit-ontologies\\qu\\qu-rec20.owl");
+		parameterQU2 = processingParameters.save(parameterQU2);
+		ProcessingConfiguration configurationQU2 = processingConfigurationRepository
+				.save(new ProcessingConfiguration(PathSourceProcessor.class, parameterQU2, knowledgeBaseModuleQU2));
 
-		// execute OpenlletReasoningProcessor
-		ProcessingParameter parameterOpenlletReasoning = new ProcessingParameter();
-		parameterSparqlConstruct = processingParameters.save(parameterOpenlletReasoning);
-		configurations.save(new ProcessingConfiguration(OpenlletReasoningProcessor.class, parameterOpenlletReasoning,
-				Collections.singleton(configurationPathSource)));
+		ProcessingParameter parameterMUO1 = new ProcessingParameter();
+		parameterMUO1.set("path", "C:\\Users\\admin\\Documents\\Workspace\\unit-ontologies\\muo\\muo-vocab.owl");
+		parameterMUO1 = processingParameters.save(parameterMUO1);
+		ProcessingConfiguration configurationMUO1 = processingConfigurationRepository
+				.save(new ProcessingConfiguration(PathSourceProcessor.class, parameterMUO1, knowledgeBaseModuleMUO1));
 
-		projectRunner.execute(project);
+		ProcessingParameter parameterMUO2 = new ProcessingParameter();
+		parameterMUO2.set("path", "C:\\Users\\admin\\Documents\\Workspace\\unit-ontologies\\muo\\ucum-instances.owl");
+		parameterMUO2 = processingParameters.save(parameterMUO2);
+		ProcessingConfiguration configurationMUO2 = processingConfigurationRepository
+				.save(new ProcessingConfiguration(PathSourceProcessor.class, parameterMUO2, knowledgeBaseModuleMUO2));
+
+		ProcessingParameter parameterJWSMapper = processingParameters
+				.save(new ProcessingParameter().set("case_sensitive", false).set("threshold", 0.95D));
+		ProcessingConfiguration configurationJWSMapper = processingConfigurationRepository
+				.save(new ProcessingConfiguration(JaroWinklerMappingProcessor.class, parameterJWSMapper,
+						List.of(configurationQU1, configurationQU2, configurationMUO1, configurationMUO2)));
+
+//		// execute SparqlConstructProcessor
+//		ProcessingParameter parameterSparqlConstruct = new ProcessingParameter();
+//		parameterSparqlConstruct.set("query",
+//				"CONSTRUCT {?s <http://example.org/p> <http://example.org/o>} WHERE {?s ?p ?o. Filter(!isBLANK(?s))}");
+//		parameterSparqlConstruct = processingParameters.save(parameterSparqlConstruct);
+//		processingConfigurationRepository.save(new ProcessingConfiguration(SparqlConstructProcessor.class,
+//				parameterSparqlConstruct, Collections.singleton(configurationQU2)));
+
+//		// execute OpenlletReasoningProcessor
+//		ProcessingParameter parameterOpenlletReasoning = new ProcessingParameter();
+//		parameterSparqlConstruct = processingParameters.save(parameterOpenlletReasoning);
+//		processingConfigurationRepository.save(new ProcessingConfiguration(OpenlletReasoningProcessor.class,
+//				parameterOpenlletReasoning, Collections.singleton(configurationQU2)));
+
+		projectRunner.execute(projectUnits);
 	}
 
 	@Scheduled(fixedDelay = 5000)
@@ -108,7 +135,7 @@ public class Runner implements CommandLineRunner {
 			log.info("Content Examples:");
 			// prepare query
 			Query query = QueryFactory
-					.create("SELECT * WHERE {?s ?p ?o. Filter(!isBLANK(?s) && !isBLANK(?o))} LIMIT 10");
+					.create("SELECT * WHERE {?s ?p ?o. Filter(!isBLANK(?s) && !isBLANK(?o))} LIMIT 100");
 			// prepare execution
 			Model model = graph.getModel();
 			QueryExecution queryExecution = QueryExecutionFactory.create(query, model);
