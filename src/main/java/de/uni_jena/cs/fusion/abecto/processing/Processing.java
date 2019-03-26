@@ -5,8 +5,10 @@ import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -26,6 +28,8 @@ import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfigura
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameter;
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
 import de.uni_jena.cs.fusion.abecto.processor.Processor.Status;
+import de.uni_jena.cs.fusion.abecto.processor.refinement.meta.MetaProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.refinement.transformation.TransformationProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.source.SourceProcessor;
 import de.uni_jena.cs.fusion.abecto.rdfModel.RdfModel;
 import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
@@ -214,8 +218,28 @@ public class Processing extends AbstractEntityWithUUID {
 	 * @see #getMetaModel()
 	 */
 	public Map<UUID, Collection<Model>> getDataModels() {
-		// TODO Processing#getDataModels
-		return null;
+		Map<UUID, Collection<Model>> result = new HashMap<>();
+
+		if (SourceProcessor.class.isAssignableFrom(this.processor)) {
+			UUID uuid = this.configuration.getKnowledgeBaseModule().getKnowledgeBase().getId();
+			Collection<Model> set = new HashSet<>();
+			set.add(this.getRdfModel().getModel());
+			result.put(uuid, set);
+		} else {
+			for (Processing processing : this.inputProcessings) {
+				for (Entry<UUID, Collection<Model>> entry : processing.getDataModels().entrySet()) {
+					result.computeIfAbsent(entry.getKey(), (uuid) -> new HashSet<>()).addAll(entry.getValue());
+				}
+			}
+			if (TransformationProcessor.class.isAssignableFrom(this.processor)) {
+				for (Collection<Model> models : result.values()) {
+					models.add(this.getRdfModel().getModel());
+				}
+			} else if (MetaProcessor.class.isAssignableFrom(this.processor)) {
+				// do nothing
+			}
+		}
+		return result;
 	}
 
 	/**
@@ -225,7 +249,13 @@ public class Processing extends AbstractEntityWithUUID {
 	 * @see #getDataModels()
 	 */
 	public Collection<Model> getMetaModels() {
-		// TODO Processing#getMetaModel
-		return null;
+		Set<Model> result = new HashSet<>();
+		for (Processing processing : this.inputProcessings) {
+			result.addAll(processing.getMetaModels());
+		}
+		if (MetaProcessor.class.isAssignableFrom(this.processor)) {
+			result.add(this.getRdfModel().getModel());
+		}
+		return result;
 	}
 }
