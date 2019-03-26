@@ -59,7 +59,7 @@ public class JaroWinklerMappingProcessorTest {
 	}
 
 	@Test
-	public void testComputeResultGraph() throws Exception {
+	public void testComputeResultModel() throws Exception {
 		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor();
 		processor.setProperties(Map.of("threshold", 0.90D, "case_sensitive", false));
 		processor.addInputModelGroups(Map.of(UUID.randomUUID(), Collections.singleton(FIRST_GRAPH), UUID.randomUUID(),
