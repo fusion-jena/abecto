@@ -26,15 +26,15 @@ public class ProcessorRunner {
 		Logger log = LoggerFactory.getLogger(this.getClass());
 		try {
 			log.info("Running processor " + processor);
-			processing.setStateStart();
+			this.processingRepository.save(processing.setStateStart());
 			Model model = processor.call();
 			RdfModel rdfModel = this.rdfModelRepository.save(new RdfModel(model));
-			processing.setStateSuccess(rdfModel);
+			this.processingRepository.save(processing.setStateSuccess(rdfModel));
 			log.info("Processor " + processor + " succeded");
 		} catch (Throwable e) {
 			log.error("Processor " + processor + " failed", e);
 			processor.fail();
-			processing.setStateFail(e);
+			this.processingRepository.save(processing.setStateFail(e));
 		}
 
 	}
