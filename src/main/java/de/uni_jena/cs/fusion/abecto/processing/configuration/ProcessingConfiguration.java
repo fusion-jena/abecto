@@ -37,9 +37,6 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	protected Project project;
 
-	@ManyToMany(fetch = FetchType.LAZY, mappedBy = "inputProcessingConfigurations")
-	protected Collection<ProcessingConfiguration> subsequentProcessingConfigurations = new HashSet<>();
-
 	@ManyToMany(fetch = FetchType.LAZY)
 	protected Collection<ProcessingConfiguration> inputProcessingConfigurations = new HashSet<>();
 	@ManyToOne(fetch = FetchType.LAZY)
@@ -106,7 +103,6 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 
 	public void addInputProcessingConfiguration(ProcessingConfiguration inputProcessingConfiguration) {
 		this.inputProcessingConfigurations.add(inputProcessingConfiguration);
-		inputProcessingConfiguration.subsequentProcessingConfigurations.add(this);
 	}
 
 	public Collection<ProcessingConfiguration> getInputProcessingConfigurations() {
@@ -131,10 +127,6 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 
 	public Project getProject() {
 		return this.project;
-	}
-
-	public Collection<ProcessingConfiguration> getSubsequentProcessingConfigurations() {
-		return this.subsequentProcessingConfigurations;
 	}
 
 	/**
