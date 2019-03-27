@@ -7,14 +7,14 @@ import java.util.Map;
 import org.apache.commons.lang3.reflect.TypeLiteral;
 import org.apache.jena.rdf.model.Model;
 
-import de.uni_jena.cs.fusion.abecto.util.ModelLoader;
+import de.uni_jena.cs.fusion.abecto.util.ModelUtils;
 
 public class PathSourceProcessor extends AbstractSourceProcessor {
 
 	@Override
 	public Model computeResultModel() throws Exception {
 		String path = this.getProperty("path", new TypeLiteral<String>() {});
-		return ModelLoader.getModel(new FileInputStream(path));
+		return ModelUtils.load(new FileInputStream(path));
 	}
 
 	@Override

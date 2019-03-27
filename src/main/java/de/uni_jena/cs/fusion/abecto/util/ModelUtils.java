@@ -5,24 +5,26 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
 
+import org.apache.jena.ontology.OntModel;
+import org.apache.jena.ontology.OntModelSpec;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 
-public class ModelLoader {
+public class ModelUtils {
 
-	public static Model getModel(InputStream in) throws IOException {
-		return getModel(in, null, null);
+	public static Model load(InputStream in) throws IOException {
+		return load(in, null, null);
 	}
 
-	public static Model getModel(InputStream in, RdfSerializationLanguage lang) throws IOException {
-		return getModel(in, null, lang);
+	public static Model load(InputStream in, RdfSerializationLanguage lang) throws IOException {
+		return load(in, null, lang);
 	}
 
-	public static Model getModel(InputStream in, String base) throws IOException {
-		return getModel(in, base, null);
+	public static Model load(InputStream in, String base) throws IOException {
+		return load(in, base, null);
 	}
 
-	public static Model getModel(InputStream in, String base, RdfSerializationLanguage lang) throws IOException {
+	public static Model load(InputStream in, String base, RdfSerializationLanguage lang) throws IOException {
 		// determine serialization language
 		if (Objects.isNull(lang)) {
 			if (!in.markSupported()) {
@@ -45,6 +47,10 @@ public class ModelLoader {
 		Model model = ModelFactory.createDefaultModel();
 		model.read(in, base, lang.getApacheJenaKey());
 		return model;
+	}
+	
+	public static OntModel getEmptyOntModel() {
+		return ModelFactory.createOntologyModel(OntModelSpec.OWL_MEM);
 	}
 
 }

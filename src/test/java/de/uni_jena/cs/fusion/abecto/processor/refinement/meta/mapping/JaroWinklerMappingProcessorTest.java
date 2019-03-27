@@ -18,7 +18,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import de.uni_jena.cs.fusion.abecto.processor.refinement.meta.mapping.AbstractMappingProcessor.Mapping;
-import de.uni_jena.cs.fusion.abecto.util.ModelLoader;
+import de.uni_jena.cs.fusion.abecto.util.ModelUtils;
 import de.uni_jena.cs.fusion.abecto.util.Vocabulary;
 
 public class JaroWinklerMappingProcessorTest {
@@ -28,7 +28,7 @@ public class JaroWinklerMappingProcessorTest {
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
-		FIRST_GRAPH = ModelLoader.getModel(new ByteArrayInputStream(("" + //
+		FIRST_GRAPH = ModelUtils.load(new ByteArrayInputStream(("" + //
 				"@base <http://example.org/> .\r\n" + //
 				"@prefix : <http://example.org/> .\r\n" + //
 				"@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\r\n" + //
@@ -36,7 +36,7 @@ public class JaroWinklerMappingProcessorTest {
 				":entity1 rdfs:label \"abcdabcdabcdabcdabcd\" .\r\n" + //
 				":entity2 rdfs:label \"efghefghefghefghefgh\" .\r\n" + //
 				":entity3 rdfs:label \"ijklijklijklijklijkl\" .").getBytes()));
-		SECOND_GRAPH = ModelLoader.getModel(new ByteArrayInputStream(("" + //
+		SECOND_GRAPH = ModelUtils.load(new ByteArrayInputStream(("" + //
 				"@base <http://example.com/> .\r\n" + //
 				"@prefix : <http://example.org/> .\r\n" + //
 				"@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\r\n" + //

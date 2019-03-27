@@ -12,12 +12,11 @@ import java.util.zip.GZIPOutputStream;
 import javax.persistence.Entity;
 import javax.persistence.Lob;
 
-import org.apache.jena.ontology.OntModel;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 
 import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
-import de.uni_jena.cs.fusion.abecto.util.ModelLoader;
+import de.uni_jena.cs.fusion.abecto.util.ModelUtils;
 import de.uni_jena.cs.fusion.abecto.util.RdfSerializationLanguage;
 
 @Entity
@@ -43,7 +42,7 @@ public class RdfModel extends AbstractEntityWithUUID {
 	}
 
 	public RdfModel(InputStream in, String base, RdfSerializationLanguage lang) throws IOException {
-		consumeModel(ModelLoader.getModel(in, base, lang));
+		consumeModel(ModelUtils.load(in, base, lang));
 	}
 
 	public RdfModel(Model model) {
@@ -68,9 +67,9 @@ public class RdfModel extends AbstractEntityWithUUID {
 		}
 	}
 
-	public OntModel getModel() {
+	public Model getModel() {
 		try {
-			OntModel model = ModelFactory.createOntologyModel();
+			Model model = ModelFactory.createDefaultModel();
 			InputStream in = new BufferedInputStream(
 					new GZIPInputStream(new ByteArrayInputStream(this.compressedModel)));
 			model.read(in, null, DB_SERIALIZATION_LANG.getApacheJenaKey());

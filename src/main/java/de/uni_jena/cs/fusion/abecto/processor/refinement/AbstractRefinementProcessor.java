@@ -15,6 +15,7 @@ import org.apache.jena.rdf.model.ModelFactory;
 
 import de.uni_jena.cs.fusion.abecto.processor.AbstractProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
+import de.uni_jena.cs.fusion.abecto.util.ModelUtils;
 
 public abstract class AbstractRefinementProcessor extends AbstractProcessor implements RefinementProcessor {
 
@@ -27,7 +28,7 @@ public abstract class AbstractRefinementProcessor extends AbstractProcessor impl
 	 * TODO The previous meta result graph that is a {@link MultiUnion} of all
 	 * {@link #metaSubModels}.
 	 */
-	protected final OntModel metaModel = ModelFactory.createOntologyModel();
+	protected final OntModel metaModel = ModelUtils.getEmptyOntModel();
 	/**
 	 * TODO The previous meta result submodels.
 	 */
@@ -44,7 +45,7 @@ public abstract class AbstractRefinementProcessor extends AbstractProcessor impl
 	/**
 	 * Union of all input {@link Model}s.
 	 */
-	protected final OntModel inputModelUnion = ModelFactory.createOntologyModel();
+	protected final OntModel inputModelUnion = ModelUtils.getEmptyOntModel();
 
 	@Override
 	public void addInputModelGroup(UUID uuid, Collection<Model> inputModelGroup) {

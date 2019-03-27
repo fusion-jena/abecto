@@ -9,13 +9,13 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.junit.Test;
 
-import de.uni_jena.cs.fusion.abecto.util.ModelLoader;
+import de.uni_jena.cs.fusion.abecto.util.ModelUtils;
 
 public class SparqlConstructProcessorTest {
 	@Test
 	public void testComputeResultModel() throws Exception {
 		String inputRdf = "<http://example.org/s> <http://example.org/p> <http://example.org/o> .";
-		Model inputModel = ModelLoader.getModel(new ByteArrayInputStream(inputRdf.getBytes()));
+		Model inputModel = ModelUtils.load(new ByteArrayInputStream(inputRdf.getBytes()));
 		SparqlConstructProcessor processor = new SparqlConstructProcessor();
 		processor.addInputModelGroup(UUID.randomUUID(), Collections.singleton(inputModel));
 		processor.setProperties(

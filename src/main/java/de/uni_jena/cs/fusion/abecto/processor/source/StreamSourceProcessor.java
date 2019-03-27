@@ -7,14 +7,14 @@ import java.util.Map;
 import org.apache.commons.lang3.reflect.TypeLiteral;
 import org.apache.jena.rdf.model.Model;
 
-import de.uni_jena.cs.fusion.abecto.util.ModelLoader;
+import de.uni_jena.cs.fusion.abecto.util.ModelUtils;
 
 public class StreamSourceProcessor extends AbstractSourceProcessor {
 
 	@Override
 	public Model computeResultModel() throws Exception {
 		InputStream stream = this.getProperty("stream", new TypeLiteral<InputStream>() {});
-		return ModelLoader.getModel(stream);
+		return ModelUtils.load(stream);
 	}
 
 	@Override
