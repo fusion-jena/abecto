@@ -3,7 +3,7 @@ package de.uni_jena.cs.fusion.abecto.processing;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -67,8 +67,8 @@ public class Processing extends AbstractEntityWithUUID {
 	private Set<Processing> inputProcessings = new HashSet<>();
 
 	// status
-	private LocalDateTime startDateTime;
-	private LocalDateTime endDateTime;
+	private ZonedDateTime startDateTime;
+	private ZonedDateTime endDateTime;
 	private Status status = Status.NOT_STARTED;
 	@Lob
 	private String stackTrace;
@@ -127,7 +127,7 @@ public class Processing extends AbstractEntityWithUUID {
 		return result;
 	}
 
-	public LocalDateTime getEndDateTime() {
+	public ZonedDateTime getEndDateTime() {
 		return this.endDateTime;
 	}
 
@@ -177,7 +177,7 @@ public class Processing extends AbstractEntityWithUUID {
 		return this.stackTrace;
 	}
 
-	public LocalDateTime getStartDateTime() {
+	public ZonedDateTime getStartDateTime() {
 		return this.startDateTime;
 	}
 
@@ -230,7 +230,7 @@ public class Processing extends AbstractEntityWithUUID {
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			t.printStackTrace(new PrintStream(out));
 			this.stackTrace = out.toString();
-			this.endDateTime = LocalDateTime.now();
+			this.endDateTime = ZonedDateTime.now();
 			return this;
 		} else {
 			throw new IllegalStateException(
@@ -241,7 +241,7 @@ public class Processing extends AbstractEntityWithUUID {
 	public Processing setStateStart() {
 		if (this.isNotStarted()) {
 			this.status = Status.RUNNING;
-			this.startDateTime = LocalDateTime.now();
+			this.startDateTime = ZonedDateTime.now();
 			return this;
 		} else {
 			throw new IllegalStateException("Failed to set state RUNNING as current state is not NOT_STARTED.");
@@ -253,6 +253,7 @@ public class Processing extends AbstractEntityWithUUID {
 			Objects.requireNonNull(rdfModel);
 			this.rdfModel = rdfModel;
 			this.status = Status.SUCCEEDED;
+			this.endDateTime = ZonedDateTime.now();
 			return this;
 		} else {
 			throw new IllegalStateException(
@@ -263,7 +264,7 @@ public class Processing extends AbstractEntityWithUUID {
 	@Override
 	public String toString() {
 		return String.format(
-				"Processing[id=%s, configuration=%s, processor='%s', status=%s, start=%c, end=%c, parameter=%s]",
+				"Processing[id=%s, configuration=%s, processor='%s', status=%s, start=%tc, end=%tc, parameter=%s]",
 				this.id, this.configuration.getId(), this.processor.getSimpleName(), this.status, this.startDateTime,
 				this.endDateTime, this.parameter.getId());
 	}
