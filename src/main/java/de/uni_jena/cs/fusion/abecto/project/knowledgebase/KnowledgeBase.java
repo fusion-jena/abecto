@@ -1,14 +1,10 @@
 package de.uni_jena.cs.fusion.abecto.project.knowledgebase;
 
-import java.util.Collection;
-
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
 
 import de.uni_jena.cs.fusion.abecto.project.Project;
-import de.uni_jena.cs.fusion.abecto.project.knowledgebase.module.KnowledgeBaseModule;
 import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
 
 @Entity
@@ -17,8 +13,6 @@ public class KnowledgeBase extends AbstractEntityWithUUID {
 	protected String label;
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	protected Project project;
-	@OneToMany(mappedBy = "knowledgeBase")
-	protected Collection<KnowledgeBaseModule> knowledgeBaseModules;
 
 	protected KnowledgeBase() {
 	}

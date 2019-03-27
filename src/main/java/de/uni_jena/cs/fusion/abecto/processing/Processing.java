@@ -99,7 +99,7 @@ public class Processing extends AbstractEntityWithUUID {
 		Processor processor = this.processor.getDeclaredConstructor().newInstance();
 		if (processor instanceof SourceProcessor) {
 			((SourceProcessor) processor)
-					.setKnowledgBase(this.configuration.getKnowledgeBaseModule().getKnowledgeBase().getId());
+					.setKnowledgBase(this.configuration.getKnowledgeBase().getId());
 		}
 		return processor;
 	}
@@ -221,7 +221,7 @@ public class Processing extends AbstractEntityWithUUID {
 		Map<UUID, Collection<Model>> result = new HashMap<>();
 
 		if (SourceProcessor.class.isAssignableFrom(this.processor)) {
-			UUID uuid = this.configuration.getKnowledgeBaseModule().getKnowledgeBase().getId();
+			UUID uuid = this.configuration.getKnowledgeBase().getId();
 			Collection<Model> set = new HashSet<>();
 			set.add(this.getRdfModel().getModel());
 			result.put(uuid, set);

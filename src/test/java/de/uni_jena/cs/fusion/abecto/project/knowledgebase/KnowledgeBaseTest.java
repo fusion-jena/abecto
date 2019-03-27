@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 import de.uni_jena.cs.fusion.abecto.project.Project;
+import de.uni_jena.cs.fusion.abecto.project.knowledgebase.KnowledgeBase;
 
 public class KnowledgeBaseTest {
 

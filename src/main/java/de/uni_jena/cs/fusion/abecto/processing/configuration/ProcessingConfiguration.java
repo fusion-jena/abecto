@@ -2,10 +2,8 @@ package de.uni_jena.cs.fusion.abecto.processing.configuration;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.NoSuchElementException;
-import java.util.Set;
 
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -21,24 +19,18 @@ import de.uni_jena.cs.fusion.abecto.processor.refinement.transformation.Transfor
 import de.uni_jena.cs.fusion.abecto.processor.source.SourceProcessor;
 import de.uni_jena.cs.fusion.abecto.project.Project;
 import de.uni_jena.cs.fusion.abecto.project.knowledgebase.KnowledgeBase;
-import de.uni_jena.cs.fusion.abecto.project.knowledgebase.module.KnowledgeBaseModule;
 import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
 
 @Entity
 public class ProcessingConfiguration extends AbstractEntityWithUUID {
 
 	/**
-	 * The {@link KnowledgeBaseModule} this {@link ProcessingConfiguration} belongs
-	 * to. {@code null}, if it belongs to multiple {@link KnowledgeBaseModule}s.
+	 * The {@link KnowledgeBase} this {@link ProcessingConfiguration} of a
+	 * {@link SourceProcessor} belongs to or {@code null}, if this does not belong
+	 * toa {@link SourceProcessor}.
 	 */
-	@ManyToOne(fetch = FetchType.LAZY, optional = true)
-	protected KnowledgeBaseModule knowledgeBaseModule;
-	/**
-	 * The {@link KnowledgeBase} this {@link ProcessingConfiguration} belongs to.
-	 * {@code null}, if it belongs to multiple {@link KnowledgeBase}s.
-	 */
-	@ManyToMany(fetch = FetchType.LAZY)
-	protected Collection<KnowledgeBase> knowledgeBases = new HashSet<>();
+	@ManyToOne(fetch = FetchType.LAZY)
+	protected KnowledgeBase knowledgeBase;
 	/**
 	 * The {@link Project} this {@link ProcessingConfiguration} belongs to.
 	 */
@@ -75,7 +67,13 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 			this.addInputProcessingConfiguration(inputProcessingConfiguration);
 		}
 
-		this.updateAssociations();
+		// set project
+		if (this.inputProcessingConfigurations.stream().map((configuration) -> configuration.project).distinct()
+				.count() == 1L) {
+			this.project = this.inputProcessingConfigurations.iterator().next().project;
+		} else {
+			throw new IllegalStateException("InputProcessingConfigurations belong to multiple projects.");
+		}
 	}
 
 	/**
@@ -87,11 +85,10 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 	 *                            configuration to.
 	 */
 	public ProcessingConfiguration(Class<? extends SourceProcessor> processor, ProcessingParameter parameter,
-			KnowledgeBaseModule knowledgeBaseModule) {
+			KnowledgeBase knowledgeBase) {
 		this(parameter, processor);
-		this.knowledgeBaseModule = knowledgeBaseModule;
-		this.knowledgeBases.add(knowledgeBaseModule.getKnowledgeBase());
-		this.project = knowledgeBaseModule.getKnowledgeBase().getProject();
+		this.knowledgeBase = knowledgeBase;
+		this.project = knowledgeBase.getProject();
 	}
 
 	/**
@@ -116,12 +113,8 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 		return this.inputProcessingConfigurations;
 	}
 
-	public KnowledgeBaseModule getKnowledgeBaseModule() {
-		return this.knowledgeBaseModule;
-	}
-
-	public Collection<KnowledgeBase> getKnowledgeBases() {
-		return Collections.unmodifiableCollection(this.knowledgeBases);
+	public KnowledgeBase getKnowledgeBase() {
+		return this.knowledgeBase;
 	}
 
 	public LocalDateTime getLastChange() {
@@ -187,39 +180,6 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 	@Override
 	public String toString() {
 		return String.format("ProcessingConfiguration[id=%s]", this.id);
-	}
-
-	/**
-	 * Updates the {@link KnowledgeBase}s and {@link Project} associations based on
-	 * the input {@link ProcessingConfiguration}s.
-	 * 
-	 * @throws IllegalStateException if this {@link ProcessingConfiguration} belongs
-	 *                               to multiple projects
-	 */
-	public void updateAssociations() throws IllegalStateException {
-		// update knowledgeBaseModule ((Note: container required to accept null)
-		Set<KnowledgeBaseModule> inputKnowledgeBaseModules = this.inputProcessingConfigurations.stream()
-				.map((configuration) -> configuration.knowledgeBaseModule)
-				.collect(HashSet::new, Set::add, (a, b) -> a.addAll(b));
-		if (inputKnowledgeBaseModules.size() == 1) {
-			this.knowledgeBaseModule = inputKnowledgeBaseModules.iterator().next();
-		} else {
-			inputKnowledgeBaseModules = null;
-		}
-
-		// update knowledgeBases
-		this.knowledgeBases = this.inputProcessingConfigurations.stream()
-				.map((configuration) -> configuration.knowledgeBases)
-				.collect(HashSet::new, Set::addAll, (a, b) -> a.addAll(b));
-
-		// update project
-		Set<Project> inputProjects = this.inputProcessingConfigurations.stream()
-				.map((configuration) -> configuration.project).collect(HashSet::new, Set::add, (a, b) -> a.addAll(b));
-		if (inputProjects.size() == 1) {
-			this.project = inputProjects.iterator().next();
-		} else {
-			throw new IllegalStateException(String.format("%s belongs to multiple project.", this));
-		}
 	}
 
 }
