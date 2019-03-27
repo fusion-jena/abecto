@@ -15,7 +15,7 @@ public class SparqlConstructProcessor extends AbstractTransformationProcessor {
 	@Override
 	public Model computeResultModel() {
 		// prepare query
-		String queryString = this.getProperty("query", new TypeLiteral<String>() {});
+		String queryString = this.getParameter("query", new TypeLiteral<String>() {});
 		Query query = QueryFactory.create(queryString);
 
 		// prepare execution

@@ -13,7 +13,7 @@ public class StreamSourceProcessor extends AbstractSourceProcessor {
 
 	@Override
 	public Model computeResultModel() throws Exception {
-		InputStream stream = this.getProperty("stream", new TypeLiteral<InputStream>() {});
+		InputStream stream = this.getParameter("stream", new TypeLiteral<InputStream>() {});
 		return ModelUtils.load(stream);
 	}
 

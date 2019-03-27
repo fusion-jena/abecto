@@ -16,14 +16,14 @@ public abstract class AbstractProcessor implements Processor {
 
 	/**
 	 * <p>
-	 * The current configuration properties of this processor.
+	 * The current configuration parameters of this processor.
 	 * </p>
 	 * 
 	 * <p>
-	 * Use {@link #getProperty(String, Class)},
-	 * {@link #getProperty(String, TypeLiteral, Function)},
-	 * {@link #getOptionalProperty(String, Class)} or
-	 * {@link #getOptionalProperty(String, TypeLiteral, Function) for type safe
+	 * Use {@link #getParameter(String, Class)},
+	 * {@link #getParameter(String, TypeLiteral, Function)},
+	 * {@link #getOptionalParameter(String, Class)} or
+	 * {@link #getOptionalParameter(String, TypeLiteral, Function) for type safe
 	 * access without need of missing error exception handling.
 	 * </p>
 	 */
@@ -68,17 +68,17 @@ public abstract class AbstractProcessor implements Processor {
 	}
 
 	/**
-	 * Get an optional property value as {@link Optional}.
+	 * Get an optional parameter value as {@link Optional}.
 	 * 
-	 * @param key  property name
-	 * @param type expected type of the property value
-	 * @return property value
+	 * @param key  parameter name
+	 * @param type expected type of the parameter value
+	 * @return parameter value
 	 * 
-	 * @throws ClassCastException if the property can not be casted to the specified
+	 * @throws ClassCastException if the parameter can not be casted to the specified
 	 *                            type.
 	 */
 	@SuppressWarnings("unchecked")
-	protected <T> Optional<T> getOptionalProperty(String key, TypeLiteral<T> type) {
+	protected <T> Optional<T> getOptionalParameter(String key, TypeLiteral<T> type) {
 		Object value = this.parameters.get(key);
 		if (Objects.isNull(value)) {
 			return Optional.empty();
@@ -88,18 +88,18 @@ public abstract class AbstractProcessor implements Processor {
 	}
 
 	/**
-	 * Get an optional property value as {@link Optional}.
+	 * Get an optional parameter value as {@link Optional}.
 	 * 
-	 * @param key       property name
-	 * @param type      expected type of the property value
+	 * @param key       parameter name
+	 * @param type      expected type of the parameter value
 	 * @param converter
-	 * @return property value
+	 * @return parameter value
 	 * 
-	 * @throws ClassCastException if the property can not be casted to the specified
+	 * @throws ClassCastException if the parameter can not be casted to the specified
 	 *                            type.
 	 */
 	@SuppressWarnings("unchecked")
-	protected <T, R> Optional<R> getOptionalProperty(String key, TypeLiteral<T> type, Function<T, R> converter) {
+	protected <T, R> Optional<R> getOptionalParameter(String key, TypeLiteral<T> type, Function<T, R> converter) {
 		Object value = this.parameters.get(key);
 		if (Objects.isNull(value)) {
 			return Optional.empty();
@@ -110,40 +110,40 @@ public abstract class AbstractProcessor implements Processor {
 
 	/**
 	 * 
-	 * Get an property value.
+	 * Get an parameter value.
 	 * 
-	 * @param key  property name
-	 * @param type expected type of the property value
-	 * @return property value
+	 * @param key  parameter name
+	 * @param type expected type of the parameter value
+	 * @return parameter value
 	 * 
-	 * @throws ClassCastException   if the property can not be casted to the
+	 * @throws ClassCastException   if the parameter can not be casted to the
 	 *                              specified type.
-	 * @throws NullPointerException if the property has not been set.
+	 * @throws NullPointerException if the parameter has not been set.
 	 */
 	@SuppressWarnings("unchecked")
-	protected <T> T getProperty(String key, TypeLiteral<T> type) {
+	protected <T> T getParameter(String key, TypeLiteral<T> type) {
 		Object value = this.parameters.get(key);
-		Objects.requireNonNull(value, "Missing value of property \"" + key + "\".");
+		Objects.requireNonNull(value, "Missing value of parameter \"" + key + "\".");
 		return (T) value;
 	}
 
 	/**
 	 * 
-	 * Get an property value.
+	 * Get an parameter value.
 	 * 
-	 * @param key       property name
-	 * @param type      expected type of the property value
+	 * @param key       parameter name
+	 * @param type      expected type of the parameter value
 	 * @param converter
-	 * @return property value
+	 * @return parameter value
 	 * 
-	 * @throws ClassCastException   if the property can not be casted to the
+	 * @throws ClassCastException   if the parameter can not be casted to the
 	 *                              specified type.
-	 * @throws NullPointerException if the property has not been set.
+	 * @throws NullPointerException if the parameter has not been set.
 	 */
 	@SuppressWarnings("unchecked")
-	protected <T, R> R getProperty(String key, TypeLiteral<T> type, Function<T, R> converter) {
+	protected <T, R> R getParameter(String key, TypeLiteral<T> type, Function<T, R> converter) {
 		Object value = this.parameters.get(key);
-		Objects.requireNonNull(value, "Missing value of property \"" + key + "\".");
+		Objects.requireNonNull(value, "Missing value of parameter \"" + key + "\".");
 		return converter.apply((T) value);
 	}
 

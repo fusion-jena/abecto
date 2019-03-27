@@ -22,7 +22,7 @@ public class ManualMappingProcessor extends AbstractMappingProcessor {
 		Collection<Mapping> mappings = new HashSet<>();
 
 		for (Collection<String> allEquivalent : this
-				.getOptionalProperty("mappings", new TypeLiteral<Collection<Collection<String>>>() {})
+				.getOptionalParameter("mappings", new TypeLiteral<Collection<Collection<String>>>() {})
 				.orElse(Collections.emptyList())) {
 			for (String firstEntity : allEquivalent) {
 				for (String secondEntity : allEquivalent) {
@@ -34,7 +34,7 @@ public class ManualMappingProcessor extends AbstractMappingProcessor {
 			}
 		}
 		for (Collection<String> allEquivalent : this
-				.getOptionalProperty("suppressed-mappings", new TypeLiteral<Collection<Collection<String>>>() {})
+				.getOptionalParameter("suppressed-mappings", new TypeLiteral<Collection<Collection<String>>>() {})
 				.orElse(Collections.emptyList())) {
 			for (String firstEntity : allEquivalent) {
 				for (String secondEntity : allEquivalent) {

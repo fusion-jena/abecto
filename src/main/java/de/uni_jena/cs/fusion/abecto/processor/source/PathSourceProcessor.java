@@ -13,7 +13,7 @@ public class PathSourceProcessor extends AbstractSourceProcessor {
 
 	@Override
 	public Model computeResultModel() throws Exception {
-		String path = this.getProperty("path", new TypeLiteral<String>() {});
+		String path = this.getParameter("path", new TypeLiteral<String>() {});
 		return ModelUtils.load(new FileInputStream(path));
 	}
 

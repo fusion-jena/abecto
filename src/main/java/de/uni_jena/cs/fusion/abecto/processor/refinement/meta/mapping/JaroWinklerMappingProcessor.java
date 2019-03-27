@@ -46,10 +46,10 @@ public class JaroWinklerMappingProcessor extends AbstractMappingProcessor {
 
 	@Override
 	protected Collection<Mapping> computeMapping(Model firstModel, Model secondModel) {
-		boolean caseSensitive = this.getProperty("case_sensitive", new TypeLiteral<Boolean>() {});
-		double threshold = this.getProperty("threshold", new TypeLiteral<Double>() {});
+		boolean caseSensitive = this.getParameter("case_sensitive", new TypeLiteral<Boolean>() {});
+		double threshold = this.getParameter("threshold", new TypeLiteral<Double>() {});
 		Property property = this
-				.getOptionalProperty("property", new TypeLiteral<String>() {}, ResourceFactory::createProperty)
+				.getOptionalParameter("property", new TypeLiteral<String>() {}, ResourceFactory::createProperty)
 				.orElse(Vocabulary.RDFS_LABEL);
 
 		// get label maps
