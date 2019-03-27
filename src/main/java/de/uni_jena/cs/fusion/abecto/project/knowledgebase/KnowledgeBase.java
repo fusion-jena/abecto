@@ -25,7 +25,7 @@ public class KnowledgeBase extends AbstractEntityWithUUID {
 	@Override
 	public String toString() {
 		return String.format("KnowledgeBase[id=%s, label='%s', project='%s']", this.id, this.label,
-				this.project);
+				this.project.getId());
 	}
 	
 	public Project getProject() {

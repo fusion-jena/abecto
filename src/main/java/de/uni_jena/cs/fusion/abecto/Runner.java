@@ -1,14 +1,9 @@
 package de.uni_jena.cs.fusion.abecto;
 
+import java.util.Iterator;
 import java.util.List;
 
-import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryExecution;
-import org.apache.jena.query.QueryExecutionFactory;
-import org.apache.jena.query.QueryFactory;
-import org.apache.jena.query.QuerySolution;
-import org.apache.jena.query.ResultSet;
-import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +31,7 @@ public class Runner implements CommandLineRunner {
 	private static final Logger log = LoggerFactory.getLogger(Abecto.class);
 
 	@Autowired
-	ProjectRepository projects;
+	ProjectRepository projectRepository;
 	@Autowired
 	KnowledgeBaseRepository knowledgeBaseRepository;
 	@Autowired
@@ -53,7 +48,7 @@ public class Runner implements CommandLineRunner {
 	public void run(String... args) throws Exception {
 
 		// create a Project
-		Project projectUnits = projects.save(new Project("unit ontologies"));
+		Project projectUnits = projectRepository.save(new Project("unit ontologies"));
 
 		// create KnowledgeBases
 		KnowledgeBase knowledgeBaseQU = knowledgeBaseRepository.save(new KnowledgeBase(projectUnits, "QU"));
@@ -108,25 +103,22 @@ public class Runner implements CommandLineRunner {
 	}
 
 	@Scheduled(fixedDelay = 10000)
-	public void reportRdfGraphs() {
-		// fetch all
-		log.info("RdfGraphs found with findAll():");
-		log.info("-------------------------------");
+	public void reportEntities() {
+		log.info("Projects:");
+		for (Project project : projectRepository.findAll()) {
+			log.info("  " + project);
+		}
+		log.info("KnowledgeBases:");
+		for (KnowledgeBase knowledgeBase : knowledgeBaseRepository.findAll()) {
+			log.info("  " + knowledgeBase);
+		}
+		log.info("RdfModels:");
 		for (RdfModel rdfModel : rdfModelRepository.findAll()) {
-			log.info(rdfModel.toString());
-
-			log.info("Content Examples:");
-			// prepare query
-			Query query = QueryFactory
-					.create("SELECT * WHERE {?s ?p ?o. Filter(!isBLANK(?s) && !isBLANK(?o))} LIMIT 10");
-			// prepare execution
-			Model model = rdfModel.getModel();
-			QueryExecution queryExecution = QueryExecutionFactory.create(query, model);
-			// execute and process result
-			ResultSet result = queryExecution.execSelect();
-			while (result.hasNext()) {
-				QuerySolution solution = result.next();
-				log.info("  " + solution.toString());
+			log.info("  " + rdfModel + " - content examples:");
+			Iterator<Statement> statements = rdfModel.getModel().listStatements();
+			for (int i = 0; i < 10 && statements.hasNext(); i++) {
+				Statement statement = statements.next();
+				log.info("    " + statement.toString());
 			}
 		}
 	}
