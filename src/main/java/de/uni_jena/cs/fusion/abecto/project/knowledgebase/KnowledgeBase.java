@@ -14,21 +14,19 @@ public class KnowledgeBase extends AbstractEntityWithUUID {
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	protected Project project;
 
-	protected KnowledgeBase() {
-	}
+	protected KnowledgeBase() {}
 
 	public KnowledgeBase(Project project, String label) {
 		this.project = project;
 		this.label = label;
 	}
 
-	@Override
-	public String toString() {
-		return String.format("KnowledgeBase[id=%s, label='%s', project='%s']", this.id, this.label,
-				this.project.getId());
-	}
-	
 	public Project getProject() {
 		return this.project;
+	}
+
+	@Override
+	public String toString() {
+		return String.format("KnowledgeBase[id=%s, label='%s', project=%s]", this.id, this.label, this.project.getId());
 	}
 }

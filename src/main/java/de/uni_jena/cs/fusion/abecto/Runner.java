@@ -12,6 +12,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.uni_jena.cs.fusion.abecto.processing.Processing;
+import de.uni_jena.cs.fusion.abecto.processing.ProcessingRepository;
 import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfiguration;
 import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfigurationRepository;
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameter;
@@ -33,6 +35,8 @@ public class Runner implements CommandLineRunner {
 	@Autowired
 	ProjectRepository projectRepository;
 	@Autowired
+	ProcessingRepository processingRepository;
+	@Autowired
 	KnowledgeBaseRepository knowledgeBaseRepository;
 	@Autowired
 	RdfModelRepository rdfModelRepository;
@@ -42,6 +46,8 @@ public class Runner implements CommandLineRunner {
 	ProcessingConfigurationRepository processingConfigurationRepository;
 	@Autowired
 	ProjectRunner projectRunner;
+	@Autowired
+	ProcessingParameterRepository processingParameterRepository;
 
 	@Override
 	@Transactional
@@ -102,7 +108,7 @@ public class Runner implements CommandLineRunner {
 		projectRunner.execute(projectUnits);
 	}
 
-	@Scheduled(fixedDelay = 10000)
+	@Scheduled(fixedDelay = 5000)
 	public void reportEntities() {
 		log.info("Projects:");
 		for (Project project : projectRepository.findAll()) {
@@ -111,6 +117,18 @@ public class Runner implements CommandLineRunner {
 		log.info("KnowledgeBases:");
 		for (KnowledgeBase knowledgeBase : knowledgeBaseRepository.findAll()) {
 			log.info("  " + knowledgeBase);
+		}
+		log.info("ProcessingConfigurations:");
+		for (ProcessingConfiguration processingConfiguration : processingConfigurationRepository.findAll()) {
+			log.info("  " + processingConfiguration);
+		}
+		log.info("ProcessingParameter:");
+		for (ProcessingParameter processingParameter : processingParameterRepository.findAll()) {
+			log.info("  " + processingParameter);
+		}
+		log.info("Processings:");
+		for (Processing processing : processingRepository.findAll()) {
+			log.info("  " + processing);
 		}
 		log.info("RdfModels:");
 		for (RdfModel rdfModel : rdfModelRepository.findAll()) {

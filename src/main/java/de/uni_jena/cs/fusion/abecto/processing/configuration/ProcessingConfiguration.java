@@ -179,7 +179,8 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 
 	@Override
 	public String toString() {
-		return String.format("ProcessingConfiguration[id=%s,project=%s]", this.id, this.project.getId());
+		return String.format("ProcessingConfiguration[id=%s, project=%s, parameter=%s]", this.id, this.project.getId(),
+				this.parameter.getId());
 	}
 
 }

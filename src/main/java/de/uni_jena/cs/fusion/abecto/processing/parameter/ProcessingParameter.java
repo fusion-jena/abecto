@@ -17,11 +17,6 @@ public class ProcessingParameter extends AbstractEntityWithUUID {
 	@Convert(converter = ProcessingParameterConverter.class)
 	private Map<String, Object> parameter = new HashMap<String, Object>();
 
-	public <T> ProcessingParameter set(String key, Object value) {
-		parameter.put(key, value);
-		return this;
-	}
-
 	@SuppressWarnings("unchecked")
 	public <T> T get(String key, TypeLiteral<T> type) {
 		Object value = this.parameter.get(key);
@@ -31,6 +26,16 @@ public class ProcessingParameter extends AbstractEntityWithUUID {
 
 	public Map<String, Object> getAll() {
 		return this.parameter;
+	}
+
+	public <T> ProcessingParameter set(String key, Object value) {
+		parameter.put(key, value);
+		return this;
+	}
+
+	@Override
+	public String toString() {
+		return String.format("ProcessingParameter[id=%s, parameter=%s]", this.id, this.parameter);
 	}
 
 }
