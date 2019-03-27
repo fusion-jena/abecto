@@ -27,7 +27,7 @@ public abstract class AbstractProcessor implements Processor {
 	 * access without need of missing error exception handling.
 	 * </p>
 	 */
-	private Map<String, Object> properties;
+	private Map<String, Object> parameters;
 
 	@Override
 	public synchronized void alert() {
@@ -79,7 +79,7 @@ public abstract class AbstractProcessor implements Processor {
 	 */
 	@SuppressWarnings("unchecked")
 	protected <T> Optional<T> getOptionalProperty(String key, TypeLiteral<T> type) {
-		Object value = this.properties.get(key);
+		Object value = this.parameters.get(key);
 		if (Objects.isNull(value)) {
 			return Optional.empty();
 		} else {
@@ -100,7 +100,7 @@ public abstract class AbstractProcessor implements Processor {
 	 */
 	@SuppressWarnings("unchecked")
 	protected <T, R> Optional<R> getOptionalProperty(String key, TypeLiteral<T> type, Function<T, R> converter) {
-		Object value = this.properties.get(key);
+		Object value = this.parameters.get(key);
 		if (Objects.isNull(value)) {
 			return Optional.empty();
 		} else {
@@ -122,7 +122,7 @@ public abstract class AbstractProcessor implements Processor {
 	 */
 	@SuppressWarnings("unchecked")
 	protected <T> T getProperty(String key, TypeLiteral<T> type) {
-		Object value = this.properties.get(key);
+		Object value = this.parameters.get(key);
 		Objects.requireNonNull(value, "Missing value of property \"" + key + "\".");
 		return (T) value;
 	}
@@ -142,7 +142,7 @@ public abstract class AbstractProcessor implements Processor {
 	 */
 	@SuppressWarnings("unchecked")
 	protected <T, R> R getProperty(String key, TypeLiteral<T> type, Function<T, R> converter) {
-		Object value = this.properties.get(key);
+		Object value = this.parameters.get(key);
 		Objects.requireNonNull(value, "Missing value of property \"" + key + "\".");
 		return converter.apply((T) value);
 	}
@@ -186,8 +186,8 @@ public abstract class AbstractProcessor implements Processor {
 	protected abstract void prepare() throws Exception;
 
 	@Override
-	public void setProperties(Map<String, Object> properties) {
-		this.properties = properties;
+	public void setParameters(Map<String, Object> parameters) {
+		this.parameters = parameters;
 	}
 
 	@Override
@@ -202,6 +202,6 @@ public abstract class AbstractProcessor implements Processor {
 
 	@Override
 	public String toString() {
-		return String.format("%s%s", this.getClass().getSimpleName(), this.properties);
+		return String.format("%s%s", this.getClass().getSimpleName(), this.parameters);
 	}
 }

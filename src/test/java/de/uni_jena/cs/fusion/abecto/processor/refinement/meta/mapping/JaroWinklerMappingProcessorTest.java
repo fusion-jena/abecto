@@ -49,7 +49,7 @@ public class JaroWinklerMappingProcessorTest {
 	@Test
 	public void testComputeMapping() throws Exception {
 		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor();
-		processor.setProperties(Map.of("threshold", 0.90D, "case_sensitive", false));
+		processor.setParameters(Map.of("threshold", 0.90D, "case_sensitive", false));
 		Collection<Mapping> mappings = processor.computeMapping(FIRST_GRAPH, SECOND_GRAPH);
 		assertEquals(2, mappings.size());
 		assertTrue(mappings.contains(Mapping.of(ResourceFactory.createResource("http://example.org/entity1"),
@@ -61,7 +61,7 @@ public class JaroWinklerMappingProcessorTest {
 	@Test
 	public void testComputeResultModel() throws Exception {
 		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor();
-		processor.setProperties(Map.of("threshold", 0.90D, "case_sensitive", false));
+		processor.setParameters(Map.of("threshold", 0.90D, "case_sensitive", false));
 		processor.addInputModelGroups(Map.of(UUID.randomUUID(), Collections.singleton(FIRST_GRAPH), UUID.randomUUID(),
 				Collections.singleton(SECOND_GRAPH)));
 		Model result = processor.computeResultModel();

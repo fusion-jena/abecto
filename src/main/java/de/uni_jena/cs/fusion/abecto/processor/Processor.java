@@ -11,7 +11,7 @@ import org.apache.jena.rdf.model.Model;
 
 /**
  * A task that returns a new {@link Model} based on given properties using
- * {@link #setProperties(Map)}.
+ * {@link #setParameters(Map)}.
  */
 public interface Processor extends Callable<Model> {
 
@@ -109,12 +109,12 @@ public interface Processor extends Callable<Model> {
 	public boolean isSucceeded();
 
 	/**
-	 * Set the properties for this processor. Earlier property configurations will
+	 * Set the parameters for this processor. Earlier parameter configurations will
 	 * be overwritten.
 	 * 
-	 * @param properties {@link Map} of property keys and property values.
+	 * @param parameters {@link Map} of parameter keys and parameter values.
 	 */
-	public void setProperties(Map<String, Object> properties);
+	public void setParameters(Map<String, Object> parameters);
 
 	/**
 	 * Set the result {@link Model} for this {@link Processor}.

@@ -18,7 +18,7 @@ public class SparqlConstructProcessorTest {
 		Model inputModel = ModelUtils.load(new ByteArrayInputStream(inputRdf.getBytes()));
 		SparqlConstructProcessor processor = new SparqlConstructProcessor();
 		processor.addInputModelGroup(UUID.randomUUID(), Collections.singleton(inputModel));
-		processor.setProperties(
+		processor.setParameters(
 				Map.of("query", "CONSTRUCT {?s <http://example.org/x> <http://example.org/y>} WHERE {?s ?p ?o.}"));
 		Model outputModel = processor.call();
 		outputModel.contains(ResourceFactory.createResource("http://example.org/s"),
