@@ -115,4 +115,18 @@ public interface Processor extends Callable<Model> {
 	 * @param properties {@link Map} of property keys and property values.
 	 */
 	public void setProperties(Map<String, Object> properties);
+
+	/**
+	 * Set the result {@link Model} for this {@link Processor}.
+	 * 
+	 * @param resultModel {@link Model} to use as result model
+	 */
+	public void setResultModel(Model model);
+
+	/**
+	 * Set the {@link Status} for this {@link Processor}.
+	 * 
+	 * @param resultModel {@link Status} to set
+	 */
+	public void setStatus(Status status);
 }

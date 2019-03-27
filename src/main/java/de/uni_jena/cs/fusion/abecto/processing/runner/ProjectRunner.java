@@ -3,7 +3,9 @@ package de.uni_jena.cs.fusion.abecto.processing.runner;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
+import java.util.Queue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,22 +61,21 @@ public class ProjectRunner {
 		Map<ProcessingConfiguration, Processing> processingsMap = new HashMap<>();
 
 		try {
-			log.info("add given processings to processingsMap");
-			// add given processings to processingsMap
-			for (Processing processing : processings) {
-				processingsMap.put(processing.getConfiguration(), processing);
+			log.info("add given processings and their input processings to processingsMap");
+			Queue<Processing> completedProcessings = new LinkedList<>(processings);
+			while (!completedProcessings.isEmpty()) {
+				Processing completedProcessing = completedProcessings.poll();
+				processingsMap.put(completedProcessing.getConfiguration(), completedProcessing);
+				completedProcessings.addAll(completedProcessing.getInputProcessings());
 			}
 
-			// TODO add dependet processings of given processings to processingsMap
-
 			log.info("add new processings for missing configurations to processingsMap");
-			// add new processings for missing configurations to processingsMap
 			for (ProcessingConfiguration configuration : configurations) {
 				processingsMap.computeIfAbsent(configuration, (c) -> new Processing(c));
 			}
 
 			// save processings
-			processingRepository.saveAll(processingsMap.values());
+			this.processingRepository.saveAll(processingsMap.values());
 
 			Map<ProcessingConfiguration, Processor> processorsMap = new HashMap<>();
 
@@ -82,45 +83,27 @@ public class ProjectRunner {
 			// initialize processors for not startet processings
 			for (ProcessingConfiguration configuration : configurations) {
 				Processing processing = processingsMap.get(configuration);
-				if (processing.isNotStarted()) {
-					try {
-						Processor processor;
-						processor = processing.getProcessorInsance();
-						processor.setProperties(configuration.getParameter().getAll());
-						processorsMap.put(configuration, processor);
-					} catch (Throwable t) {
-						processing.setStateFail(t);
+				try {
+					Processor processor = processing.getProcessorInsance();
+					processor.setProperties(configuration.getParameter().getAll());
+					processorsMap.put(configuration, processor);
+				} catch (Throwable t) {
+					if (processing.isNotStarted()) {
+						this.processingRepository.save(processing.setStateFail(t));
 					}
 				}
+
 			}
 
 			log.info("add dependent processors or input graphs to processors");
-			// add dependent processors or input graphs to processors
+			// add dependent processors
 			for (ProcessingConfiguration configuration : processorsMap.keySet()) {
 				Processor processor = processorsMap.get(configuration);
-				for (ProcessingConfiguration dependentConfiguration : configuration
-						.getInputProcessingConfigurations()) {
-					Processing dependentProcessing = processingsMap.get(dependentConfiguration);
-					switch (processingsMap.get(dependentConfiguration).getStatus()) {
-					case RUNNING:
-						throw new UnsupportedOperationException("Dependent Processing is currently running.");
-					case FAILED:
-						throw new IllegalStateException("Dependent Processing is failed.");
-					case SUCCEEDED:
-						if (processor instanceof RefinementProcessor) {
-							((RefinementProcessor) processor).addInputModelGroups(dependentProcessing.getDataModels());
-							((RefinementProcessor) processor).addMetaModels(dependentProcessing.getMetaModels());
-						}
-						break;
-					case NOT_STARTED:
-						if (processor instanceof RefinementProcessor) {
-							((RefinementProcessor) processor)
-									.addInputProcessor(processorsMap.get(dependentConfiguration));
-						}
-						break;
+				for (ProcessingConfiguration inputConfiguration : configuration.getInputProcessingConfigurations()) {
+					if (processor instanceof RefinementProcessor) {
+						((RefinementProcessor) processor).addInputProcessor(processorsMap.get(inputConfiguration));
 					}
 				}
-
 			}
 
 			// execute processors
@@ -134,7 +117,7 @@ public class ProjectRunner {
 			for (Processing processing : processingsMap.values()) {
 				if (processing.isNotStarted() || processing.isRunning()) {
 					processing.setStateFail(new ProcessingException("Pipeline execution failed.", t));
-					processingRepository.save(processing);
+					this.processingRepository.save(processing);
 				}
 			}
 		}

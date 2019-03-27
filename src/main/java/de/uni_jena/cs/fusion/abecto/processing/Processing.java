@@ -5,13 +5,9 @@ import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.time.ZonedDateTime;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -21,15 +17,12 @@ import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 
-import org.apache.jena.graph.compose.MultiUnion;
 import org.apache.jena.rdf.model.Model;
 
 import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfiguration;
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameter;
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
 import de.uni_jena.cs.fusion.abecto.processor.Processor.Status;
-import de.uni_jena.cs.fusion.abecto.processor.refinement.meta.MetaProcessor;
-import de.uni_jena.cs.fusion.abecto.processor.refinement.transformation.TransformationProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.source.SourceProcessor;
 import de.uni_jena.cs.fusion.abecto.rdfModel.RdfModel;
 import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
@@ -96,60 +89,12 @@ public class Processing extends AbstractEntityWithUUID {
 		return this.configuration;
 	}
 
-	/**
-	 * @return {@link MultiUnion}s of result data {@link Model}s of this
-	 *         {@link Processing} and its input {@link Processing}s
-	 * 
-	 * @see #getMetaModel()
-	 */
-	public Map<UUID, Collection<Model>> getDataModels() {
-		Map<UUID, Collection<Model>> result = new HashMap<>();
-
-		if (SourceProcessor.class.isAssignableFrom(this.processor)) {
-			UUID uuid = this.configuration.getKnowledgeBase().getId();
-			Collection<Model> set = new HashSet<>();
-			set.add(this.getRdfModel().getModel());
-			result.put(uuid, set);
-		} else {
-			for (Processing processing : this.inputProcessings) {
-				for (Entry<UUID, Collection<Model>> entry : processing.getDataModels().entrySet()) {
-					result.computeIfAbsent(entry.getKey(), (uuid) -> new HashSet<>()).addAll(entry.getValue());
-				}
-			}
-			if (TransformationProcessor.class.isAssignableFrom(this.processor)) {
-				for (Collection<Model> models : result.values()) {
-					models.add(this.getRdfModel().getModel());
-				}
-			} else if (MetaProcessor.class.isAssignableFrom(this.processor)) {
-				// do nothing
-			}
-		}
-		return result;
-	}
-
 	public ZonedDateTime getEndDateTime() {
 		return this.endDateTime;
 	}
 
 	public Collection<Processing> getInputProcessings() {
 		return this.inputProcessings;
-	}
-
-	/**
-	 * @return {@link MultiUnion} of result meta {@link Model}s of this
-	 *         {@link Processing} and its input {@link Processing}s
-	 * 
-	 * @see #getDataModels()
-	 */
-	public Collection<Model> getMetaModels() {
-		Set<Model> result = new HashSet<>();
-		for (Processing processing : this.inputProcessings) {
-			result.addAll(processing.getMetaModels());
-		}
-		if (MetaProcessor.class.isAssignableFrom(this.processor)) {
-			result.add(this.getRdfModel().getModel());
-		}
-		return result;
 	}
 
 	public ProcessingParameter getParameter() {
@@ -160,11 +105,27 @@ public class Processing extends AbstractEntityWithUUID {
 		return this.processor;
 	}
 
+	/**
+	 * Returns an instance of the {@link Processor} with the same {@link Status} and
+	 * result {@link Model} (if applicable) as this {@link Processing}.
+	 * 
+	 * @return
+	 * @throws InstantiationException
+	 * @throws IllegalAccessException
+	 * @throws IllegalArgumentException
+	 * @throws InvocationTargetException
+	 * @throws NoSuchMethodException
+	 * @throws SecurityException
+	 */
 	public Processor getProcessorInsance() throws InstantiationException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
 		Processor processor = this.processor.getDeclaredConstructor().newInstance();
 		if (processor instanceof SourceProcessor) {
 			((SourceProcessor) processor).setKnowledgBase(this.configuration.getKnowledgeBase().getId());
+		}
+		processor.setStatus(this.status);
+		if (this.isSucceeded()) {
+			processor.setResultModel(rdfModel.getModel());
 		}
 		return processor;
 	}

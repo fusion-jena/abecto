@@ -191,6 +191,16 @@ public abstract class AbstractProcessor implements Processor {
 	}
 
 	@Override
+	public void setResultModel(Model model) {
+		this.resultModel = Objects.requireNonNull(model);
+	}
+
+	@Override
+	public void setStatus(Status status) {
+		this.status = status;
+	}
+
+	@Override
 	public String toString() {
 		return String.format("%s%s", this.getClass().getSimpleName(), this.properties);
 	}
