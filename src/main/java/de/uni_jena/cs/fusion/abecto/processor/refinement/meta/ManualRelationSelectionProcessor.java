@@ -29,13 +29,13 @@ import org.slf4j.LoggerFactory;
 import de.uni_jena.cs.fusion.abecto.util.SparqlUtil;
 import de.uni_jena.cs.fusion.abecto.util.Vocabulary;
 
-public class ManualCategorySelectionProcessor extends AbstractMetaProcessor {
+public class ManualRelationSelectionProcessor extends AbstractMetaProcessor {
 
 	private static final TypeLiteral<Map<String, String>> parameterTypeLiteral = new TypeLiteral<>() {};
 
 	@Override
 	public Map<String, TypeLiteral<?>> getPropertyTypes() {
-		return Map.of("categories", parameterTypeLiteral, "suppressed_categories", parameterTypeLiteral);
+		return Map.of("relations", parameterTypeLiteral, "suppressed_relations", parameterTypeLiteral);
 	}
 
 	@Override
@@ -49,19 +49,19 @@ public class ManualCategorySelectionProcessor extends AbstractMetaProcessor {
 		query.setQueryConstructType();
 		BasicPattern construct = new BasicPattern();
 		Node blankNode = NodeFactory.createBlankNode();
-		construct.add(new Triple(blankNode, Vocabulary.CATEGORY_ASSIGNMENT_KNOWLEDGE_BASE.asNode(), uuidVar));
-		construct.add(new Triple(blankNode, Vocabulary.CATEGORY_NAME.asNode(), nameVar));
-		construct.add(new Triple(blankNode, Vocabulary.CATEGORY_ASSIGNMENT_PATH.asNode(), pathVar));
-		construct.add(new Triple(blankNode, Vocabulary.CATEGORY_ASSIGNMENT_ENABLED.asNode(), enabledVar));
+		construct.add(new Triple(blankNode, Vocabulary.KNOWLEDGE_BASE.asNode(), uuidVar));
+		construct.add(new Triple(blankNode, Vocabulary.RELATION_TYPE_NAME.asNode(), nameVar));
+		construct.add(new Triple(blankNode, Vocabulary.RELATION_ASSIGNMENT_PATH.asNode(), pathVar));
+		construct.add(new Triple(blankNode, Vocabulary.RELATION_TYPE_ASSIGNMENT_ENABLED.asNode(), enabledVar));
 		query.setConstructTemplate(new Template(construct));
 
 		ElementGroup pattern = new ElementGroup();
 		query.setQueryPattern(pattern);
 
 		BasicPattern condition = new BasicPattern();
-		condition.add(new Triple(blankNode, Vocabulary.CATEGORY_ASSIGNMENT_KNOWLEDGE_BASE.asNode(), uuidVar));
-		condition.add(new Triple(blankNode, Vocabulary.CATEGORY_NAME.asNode(), nameVar));
-		condition.add(new Triple(blankNode, Vocabulary.CATEGORY_ASSIGNMENT_PATH.asNode(), pathVar));
+		condition.add(new Triple(blankNode, Vocabulary.KNOWLEDGE_BASE.asNode(), uuidVar));
+		condition.add(new Triple(blankNode, Vocabulary.RELATION_TYPE_NAME.asNode(), nameVar));
+		condition.add(new Triple(blankNode, Vocabulary.RELATION_ASSIGNMENT_PATH.asNode(), pathVar));
 		pattern.addElementFilter(new ElementFilter(new E_NotExists(new ElementTriplesBlock(condition))));
 
 		ElementData values = new ElementData();
@@ -71,7 +71,7 @@ public class ManualCategorySelectionProcessor extends AbstractMetaProcessor {
 		values.add(enabledVar);
 		pattern.addElement(values);
 
-		Optional<Map<String, String>> categoriesParameterOptional = this.getOptionalParameter("categories",
+		Optional<Map<String, String>> categoriesParameterOptional = this.getOptionalParameter("relations",
 				parameterTypeLiteral);
 		if (categoriesParameterOptional.isPresent()) {
 			for (Entry<String, String> categoryEntry : categoriesParameterOptional.orElseThrow().entrySet()) {
@@ -89,7 +89,7 @@ public class ManualCategorySelectionProcessor extends AbstractMetaProcessor {
 		}
 
 		Optional<Map<String, String>> suppressedCategoriesParameterOptional = this
-				.getOptionalParameter("suppressed-categories", parameterTypeLiteral);
+				.getOptionalParameter("suppressed-relations", parameterTypeLiteral);
 		if (suppressedCategoriesParameterOptional.isPresent()) {
 			for (Entry<String, String> categoryEntry : suppressedCategoriesParameterOptional.orElseThrow().entrySet()) {
 				String categoryName = categoryEntry.getKey();
@@ -105,7 +105,7 @@ public class ManualCategorySelectionProcessor extends AbstractMetaProcessor {
 			}
 		}
 
-		LoggerFactory.getLogger(ManualCategorySelectionProcessor.class).info(query.serialize());
+		LoggerFactory.getLogger(ManualRelationSelectionProcessor.class).info(query.serialize());
 		
 		// prepare execution
 		QueryExecution queryExecution = QueryExecutionFactory.create(query, this.inputModelUnion);

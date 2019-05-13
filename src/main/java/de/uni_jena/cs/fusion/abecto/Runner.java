@@ -21,7 +21,7 @@ import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfigura
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameter;
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameterRepository;
 import de.uni_jena.cs.fusion.abecto.processing.runner.ProjectRunner;
-import de.uni_jena.cs.fusion.abecto.processor.refinement.meta.ManualCategorySelectionProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.refinement.meta.ManualRelationSelectionProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.refinement.meta.mapping.JaroWinklerMappingProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.refinement.transformation.OpenlletReasoningProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.refinement.transformation.SparqlConstructProcessor;
@@ -91,15 +91,15 @@ public class Runner implements CommandLineRunner {
 						knowledgeBaseOM));
 
 		ProcessingConfiguration configurationQUCategories = processingConfigurationRepository
-				.save(new ProcessingConfiguration(ManualCategorySelectionProcessor.class,
-						this.processingParameters
-								.save(new ProcessingParameter().set("categories", Map.of("instance", "rdfs:type","label","rdfs:label"))),
+				.save(new ProcessingConfiguration(ManualRelationSelectionProcessor.class,
+						this.processingParameters.save(new ProcessingParameter().set("relations",
+								Map.of("instance", "rdfs:type", "label", "rdfs:label"))),
 						List.of(configurationQU1, configurationQU2)));
 
 		ProcessingConfiguration configurationMUOCategories = processingConfigurationRepository
-				.save(new ProcessingConfiguration(ManualCategorySelectionProcessor.class,
-						this.processingParameters
-								.save(new ProcessingParameter().set("categories", Map.of("instance", "rdfs:type","label","rdfs:label"))),
+				.save(new ProcessingConfiguration(ManualRelationSelectionProcessor.class,
+						this.processingParameters.save(new ProcessingParameter().set("relations",
+								Map.of("instance", "rdfs:type", "label", "rdfs:label"))),
 						List.of(configurationMUO1, configurationMUO2)));
 
 		ProcessingConfiguration configurationJWSMapper = processingConfigurationRepository
