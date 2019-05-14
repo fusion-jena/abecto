@@ -15,8 +15,8 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.vocabulary.RDFS;
 
-import de.uni_jena.cs.fusion.abecto.util.Vocabulary;
 import de.uni_jena.cs.fusion.similarity.jarowinkler.JaroWinklerSimilarity;
 
 public class JaroWinklerMappingProcessor extends AbstractMappingProcessor {
@@ -50,7 +50,7 @@ public class JaroWinklerMappingProcessor extends AbstractMappingProcessor {
 		double threshold = this.getParameter("threshold", new TypeLiteral<Double>() {});
 		Property property = this
 				.getOptionalParameter("property", new TypeLiteral<String>() {}, ResourceFactory::createProperty)
-				.orElse(Vocabulary.RDFS_LABEL);
+				.orElse(RDFS.label);
 
 		// get label maps
 		Map<String, Collection<Resource>> firstModelLabels = getLabels(firstModel, property, caseSensitive);

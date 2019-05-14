@@ -21,10 +21,6 @@ public final class Vocabulary {
 	public final static Property VALUE = ResourceFactory
 			.createProperty("http://fusion.cs.uni-jena.de/ontology/abecto/value");
 
-	public final static Property RDFS_LABEL = ResourceFactory
-			.createProperty("http://www.w3.org/2000/01/rdf-schema#label");
-	public final static Property RDF_TYPE = ResourceFactory
-			.createProperty("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
 
 //	public final static Node EQUIVALENT_CLASS = ResourceFactory.createResource("http://www.w3.org/2002/07/owl#equivalentClass");
 //	public final static Node DISJOINT_CLASS = ResourceFactory.createResource("http://www.w3.org/2002/07/owl#disjointWith");
