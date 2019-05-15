@@ -33,7 +33,7 @@ import de.uni_jena.cs.fusion.abecto.project.knowledgebase.KnowledgeBaseRepositor
 import de.uni_jena.cs.fusion.abecto.rdfModel.RdfModel;
 import de.uni_jena.cs.fusion.abecto.rdfModel.RdfModelRepository;
 
-@Component
+//@Component
 public class Runner implements CommandLineRunner {
 	private static final Logger log = LoggerFactory.getLogger(Abecto.class);
 

@@ -11,6 +11,8 @@ import javax.persistence.Transient;
 
 import org.springframework.data.domain.Persistable;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 /**
  * Abstract base class for entities providing an UUID based ID and
  * implementations of {@link #equals(Object)} and {@link #hashCode()}, as well
@@ -45,6 +47,7 @@ public abstract class AbstractEntityWithUUID implements Persistable<UUID> {
 	}
 
 	@Override
+	@JsonIgnore
 	public boolean isNew() {
 		return !this.persisted;
 	}
