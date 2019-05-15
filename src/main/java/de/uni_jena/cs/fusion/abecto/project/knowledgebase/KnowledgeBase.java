@@ -4,6 +4,8 @@ import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import de.uni_jena.cs.fusion.abecto.project.Project;
 import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
 
@@ -21,6 +23,11 @@ public class KnowledgeBase extends AbstractEntityWithUUID {
 		this.label = label;
 	}
 
+	public String getLabel() {
+		return label;
+	}
+
+	@JsonIgnore //TODO add project uuid to json
 	public Project getProject() {
 		return this.project;
 	}

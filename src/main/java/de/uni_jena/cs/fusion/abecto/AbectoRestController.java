@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.uni_jena.cs.fusion.abecto.project.Project;
 import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
+import de.uni_jena.cs.fusion.abecto.project.knowledgebase.KnowledgeBase;
+import de.uni_jena.cs.fusion.abecto.project.knowledgebase.KnowledgeBaseRepository;
 
 @RestController
 public class AbectoRestController {
@@ -24,8 +26,8 @@ public class AbectoRestController {
 		return projectRepository.save(new Project(label));
 	}
 
-	@RequestMapping("/project/delete/{uuid}")
-	public ResponseEntity<?> projectDelete(@PathVariable("uuid") UUID uuid) {
+	@RequestMapping("/project/delete/{project}")
+	public ResponseEntity<?> projectDelete(@PathVariable("project") UUID uuid) {
 		Optional<Project> project = projectRepository.findById(uuid);
 		if (project.isPresent()) {
 			projectRepository.delete(project.get());
@@ -35,20 +37,69 @@ public class AbectoRestController {
 		}
 	}
 
-	@RequestMapping("/project/get/{uuid}")
-	public ResponseEntity<Project> projectGet(@PathVariable("uuid") UUID uuid) {
+	@RequestMapping("/project/{project}")
+	public ResponseEntity<Project> projectGet(@PathVariable("project") UUID uuid) {
 		Optional<Project> project = projectRepository.findById(uuid);
 		if (project.isPresent()) {
-			System.out.print(project.get());
 			return ResponseEntity.ok(project.get());
 		} else {
 			return ResponseEntity.notFound().build();
 		}
 	}
 
-	@RequestMapping("/project")
+	@RequestMapping("/project/list")
 	public Iterable<Project> projectList() {
 		return projectRepository.findAll();
+	}
+
+	@Autowired
+	KnowledgeBaseRepository knowledgeBaseRepository;
+
+	@RequestMapping("/knowledgebase/create")
+	public ResponseEntity<KnowledgeBase> knowledgeBaseCreate(@RequestParam(value = "project") UUID projectId,
+			@RequestParam(value = "label", defaultValue = "") String label) {
+		Optional<Project> project = projectRepository.findById(projectId);
+		if (project.isPresent()) {
+			return ResponseEntity.ok(knowledgeBaseRepository.save(new KnowledgeBase(project.get(), label)));
+		} else {
+			return ResponseEntity.notFound().build();
+		}
+	}
+
+	@RequestMapping("/knowledgebase/delete/{knowledgebase}")
+	public ResponseEntity<?> knowledgeBaseDelete(@PathVariable("knowledgebase") UUID uuid) {
+		Optional<KnowledgeBase> knowledgeBase = knowledgeBaseRepository.findById(uuid);
+		if (knowledgeBase.isPresent()) {
+			knowledgeBaseRepository.delete(knowledgeBase.get());
+			return ResponseEntity.noContent().build();
+		} else {
+			return ResponseEntity.notFound().build();
+		}
+	}
+
+	@RequestMapping("/knowledgebase/{knowledgebase}")
+	public ResponseEntity<KnowledgeBase> knowledgeBaseGet(@PathVariable("knowledgebase") UUID uuid) {
+		Optional<KnowledgeBase> knowledgeBase = knowledgeBaseRepository.findById(uuid);
+		if (knowledgeBase.isPresent()) {
+			return ResponseEntity.ok(knowledgeBase.get());
+		} else {
+			return ResponseEntity.notFound().build();
+		}
+	}
+
+	@RequestMapping("/knowledgebase/list")
+	public ResponseEntity<Iterable<KnowledgeBase>> knowledgeBaseList(
+			@RequestParam(value = "project", required = false) UUID projectId) {
+		if (projectId != null) {
+			Optional<Project> project = projectRepository.findById(projectId);
+			if (project.isPresent()) {
+				return ResponseEntity.ok(knowledgeBaseRepository.findAllByProject(project.get()));
+			} else {
+				return ResponseEntity.notFound().build();
+			}
+		} else {
+			return ResponseEntity.ok(knowledgeBaseRepository.findAll());
+		}
 	}
 
 }
