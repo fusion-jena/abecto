@@ -2,11 +2,10 @@ package de.uni_jena.cs.fusion.abecto;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.UUID;
+import java.io.IOException;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -16,6 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -29,7 +29,7 @@ public class AbectoRestControllerTest {
 	@Autowired
 	private MockMvc mvc;
 
-	private ObjectMapper jackson = new ObjectMapper();
+	private final static ObjectMapper JACKSON = new ObjectMapper();
 
 	@Test
 	public void project() throws Exception {
@@ -40,29 +40,27 @@ public class AbectoRestControllerTest {
 				.andExpect(status().isOk()).andExpect(content().json("[]"));
 
 		// return created project
-		JsonNode projectJson = jackson.readTree(mvc
-				.perform(MockMvcRequestBuilders.get("/project/create").param("label", projectLabel)
-						.accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk()).andReturn().getResponse().getContentAsByteArray());
+		JsonNode projectJson = getResultJson(mvc.perform(MockMvcRequestBuilders.get("/project/create")
+				.param("label", projectLabel).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()));
 		assertEquals(projectLabel, projectJson.path("label").asText());
-		UUID uuid = UUID.fromString(projectJson.path("id").asText());
+		String projectId = projectJson.path("id").asText();
 
 		// return selected project
-		projectJson = jackson
-				.readTree(mvc.perform(MockMvcRequestBuilders.get("/project/" + uuid).accept(MediaType.APPLICATION_JSON))
-						.andExpect(status().isOk()).andReturn().getResponse().getContentAsByteArray());
+		projectJson = getResultJson(
+				mvc.perform(MockMvcRequestBuilders.get("/project/" + projectId).accept(MediaType.APPLICATION_JSON))
+						.andExpect(status().isOk()));
 		assertEquals(projectLabel, projectJson.path("label").asText());
-		assertEquals(uuid.toString(), projectJson.path("id").asText());
+		assertEquals(projectId, projectJson.path("id").asText());
 
 		// return not empty project list
-		projectJson = jackson
-				.readTree(mvc.perform(MockMvcRequestBuilders.get("/project/list").accept(MediaType.APPLICATION_JSON))
-						.andExpect(status().isOk()).andReturn().getResponse().getContentAsByteArray());
+		projectJson = getResultJson(
+				mvc.perform(MockMvcRequestBuilders.get("/project/list").accept(MediaType.APPLICATION_JSON))
+						.andExpect(status().isOk()));
 		assertTrue(projectJson.findValuesAsText("label").contains(projectLabel));
-		assertTrue(projectJson.findValuesAsText("id").contains(uuid.toString()));
+		assertTrue(projectJson.findValuesAsText("id").contains(projectId));
 
 		// delete project
-		mvc.perform(MockMvcRequestBuilders.get("/project/delete/" + uuid).accept(MediaType.APPLICATION_JSON))
+		mvc.perform(MockMvcRequestBuilders.get("/project/delete/" + projectId).accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isNoContent());
 
 		// return empty project list
@@ -73,10 +71,9 @@ public class AbectoRestControllerTest {
 	@Test
 	public void knowledgeBase() throws Exception {
 		// create project and get project id
-		String projectId = jackson
-				.readTree(mvc.perform(MockMvcRequestBuilders.get("/project/create").accept(MediaType.APPLICATION_JSON))
-						.andExpect(status().isOk()).andReturn().getResponse().getContentAsByteArray())
-				.path("id").asText();
+		String projectId = getResultId(
+				mvc.perform(MockMvcRequestBuilders.get("/project/create").accept(MediaType.APPLICATION_JSON))
+						.andExpect(status().isOk()));
 		String kowledgBaseLabel = "knowledgbase label";
 
 		// return empty knowledgeBase list
@@ -88,40 +85,38 @@ public class AbectoRestControllerTest {
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andExpect(content().json("[]"));
 
 		// return created knowledgeBase
-		JsonNode knowledgeBaseJson = jackson.readTree(mvc
+		JsonNode knowledgeBaseJson = getResultJson(mvc
 				.perform(MockMvcRequestBuilders.get("/knowledgebase/create").param("project", projectId)
 						.param("label", kowledgBaseLabel).accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk()).andDo(print()).andReturn().getResponse().getContentAsByteArray());
+				.andExpect(status().isOk()));
 		assertEquals(kowledgBaseLabel, knowledgeBaseJson.path("label").asText());
 		String knowledgeBaseId = knowledgeBaseJson.path("id").asText();
 
 		// return selected project
-		knowledgeBaseJson = jackson.readTree(
-				mvc.perform(MockMvcRequestBuilders.get("/knowledgebase/" + knowledgeBaseId).accept(MediaType.APPLICATION_JSON))
-						.andExpect(status().isOk()).andReturn().getResponse().getContentAsByteArray());
+		knowledgeBaseJson = getResultJson(mvc.perform(
+				MockMvcRequestBuilders.get("/knowledgebase/" + knowledgeBaseId).accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()));
 		assertEquals(kowledgBaseLabel, knowledgeBaseJson.path("label").asText());
 		assertEquals(knowledgeBaseId, knowledgeBaseJson.path("id").asText());
 
 		// return not empty project list
-		knowledgeBaseJson = jackson.readTree(
+		knowledgeBaseJson = getResultJson(
 				mvc.perform(MockMvcRequestBuilders.get("/knowledgebase/list").accept(MediaType.APPLICATION_JSON))
-						.andExpect(status().isOk()).andReturn().getResponse().getContentAsByteArray());
+						.andExpect(status().isOk()));
 		assertTrue(knowledgeBaseJson.findValuesAsText("label").contains(kowledgBaseLabel));
 		assertTrue(knowledgeBaseJson.findValuesAsText("projectId").contains(projectId));
 		assertTrue(knowledgeBaseJson.findValuesAsText("id").contains(knowledgeBaseId));
 
 		// return not empty knowledgeBase list by project
-		knowledgeBaseJson = jackson.readTree(mvc
-				.perform(MockMvcRequestBuilders.get("/knowledgebase/list").param("project", projectId)
-						.accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk()).andReturn().getResponse().getContentAsByteArray());
+		knowledgeBaseJson = getResultJson(mvc.perform(MockMvcRequestBuilders.get("/knowledgebase/list")
+				.param("project", projectId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()));
 		assertTrue(knowledgeBaseJson.findValuesAsText("label").contains(kowledgBaseLabel));
 		assertTrue(knowledgeBaseJson.findValuesAsText("projectId").contains(projectId));
 		assertTrue(knowledgeBaseJson.findValuesAsText("id").contains(knowledgeBaseId));
 
 		// delete project
-		mvc.perform(MockMvcRequestBuilders.get("/knowledgebase/delete/" + knowledgeBaseId).accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isNoContent());
+		mvc.perform(MockMvcRequestBuilders.get("/knowledgebase/delete/" + knowledgeBaseId)
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isNoContent());
 
 		// return empty knowledgeBase list
 		mvc.perform(MockMvcRequestBuilders.get("/knowledgebase/list").accept(MediaType.APPLICATION_JSON))
@@ -130,6 +125,14 @@ public class AbectoRestControllerTest {
 		// return empty knowledgeBase list by project
 		mvc.perform(MockMvcRequestBuilders.get("/knowledgebase/list").param("project", projectId)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andExpect(content().json("[]"));
+	}
+
+	public static JsonNode getResultJson(ResultActions resultActions) throws IOException {
+		return JACKSON.readTree(resultActions.andReturn().getResponse().getContentAsByteArray());
+	}
+
+	public static String getResultId(ResultActions resultActions) throws IOException {
+		return getResultJson(resultActions).path("id").asText();
 	}
 
 }
