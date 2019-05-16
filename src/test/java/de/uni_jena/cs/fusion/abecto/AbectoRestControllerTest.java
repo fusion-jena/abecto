@@ -73,7 +73,7 @@ public class AbectoRestControllerTest {
 	@Test
 	public void knowledgeBase() throws Exception {
 		// create project and get project id
-		String project = jackson
+		String projectId = jackson
 				.readTree(mvc.perform(MockMvcRequestBuilders.get("/project/create").accept(MediaType.APPLICATION_JSON))
 						.andExpect(status().isOk()).andReturn().getResponse().getContentAsByteArray())
 				.path("id").asText();
@@ -84,43 +84,43 @@ public class AbectoRestControllerTest {
 				.andExpect(status().isOk()).andExpect(content().json("[]"));
 
 		// return empty knowledgeBase list by project
-		mvc.perform(MockMvcRequestBuilders.get("/knowledgebase/list").param("project", project)
+		mvc.perform(MockMvcRequestBuilders.get("/knowledgebase/list").param("project", projectId)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andExpect(content().json("[]"));
 
 		// return created knowledgeBase
 		JsonNode knowledgeBaseJson = jackson.readTree(mvc
-				.perform(MockMvcRequestBuilders.get("/knowledgebase/create").param("project", project)
+				.perform(MockMvcRequestBuilders.get("/knowledgebase/create").param("project", projectId)
 						.param("label", kowledgBaseLabel).accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(print()).andReturn().getResponse().getContentAsByteArray());
 		assertEquals(kowledgBaseLabel, knowledgeBaseJson.path("label").asText());
-		UUID uuid = UUID.fromString(knowledgeBaseJson.path("id").asText());
+		String knowledgeBaseId = knowledgeBaseJson.path("id").asText();
 
 		// return selected project
 		knowledgeBaseJson = jackson.readTree(
-				mvc.perform(MockMvcRequestBuilders.get("/knowledgebase/" + uuid).accept(MediaType.APPLICATION_JSON))
+				mvc.perform(MockMvcRequestBuilders.get("/knowledgebase/" + knowledgeBaseId).accept(MediaType.APPLICATION_JSON))
 						.andExpect(status().isOk()).andReturn().getResponse().getContentAsByteArray());
 		assertEquals(kowledgBaseLabel, knowledgeBaseJson.path("label").asText());
-		assertEquals(uuid.toString(), knowledgeBaseJson.path("id").asText());
+		assertEquals(knowledgeBaseId, knowledgeBaseJson.path("id").asText());
 
 		// return not empty project list
 		knowledgeBaseJson = jackson.readTree(
 				mvc.perform(MockMvcRequestBuilders.get("/knowledgebase/list").accept(MediaType.APPLICATION_JSON))
 						.andExpect(status().isOk()).andReturn().getResponse().getContentAsByteArray());
 		assertTrue(knowledgeBaseJson.findValuesAsText("label").contains(kowledgBaseLabel));
-		//TODO check project uuid
-		assertTrue(knowledgeBaseJson.findValuesAsText("id").contains(uuid.toString()));
+		assertTrue(knowledgeBaseJson.findValuesAsText("projectId").contains(projectId));
+		assertTrue(knowledgeBaseJson.findValuesAsText("id").contains(knowledgeBaseId));
 
 		// return not empty knowledgeBase list by project
 		knowledgeBaseJson = jackson.readTree(mvc
-				.perform(MockMvcRequestBuilders.get("/knowledgebase/list").param("project", project)
+				.perform(MockMvcRequestBuilders.get("/knowledgebase/list").param("project", projectId)
 						.accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andReturn().getResponse().getContentAsByteArray());
 		assertTrue(knowledgeBaseJson.findValuesAsText("label").contains(kowledgBaseLabel));
-		//TODO check project uuid
-		assertTrue(knowledgeBaseJson.findValuesAsText("id").contains(uuid.toString()));
+		assertTrue(knowledgeBaseJson.findValuesAsText("projectId").contains(projectId));
+		assertTrue(knowledgeBaseJson.findValuesAsText("id").contains(knowledgeBaseId));
 
 		// delete project
-		mvc.perform(MockMvcRequestBuilders.get("/knowledgebase/delete/" + uuid).accept(MediaType.APPLICATION_JSON))
+		mvc.perform(MockMvcRequestBuilders.get("/knowledgebase/delete/" + knowledgeBaseId).accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isNoContent());
 
 		// return empty knowledgeBase list
@@ -128,7 +128,7 @@ public class AbectoRestControllerTest {
 				.andExpect(status().isOk()).andExpect(content().json("[]"));
 
 		// return empty knowledgeBase list by project
-		mvc.perform(MockMvcRequestBuilders.get("/knowledgebase/list").param("project", project)
+		mvc.perform(MockMvcRequestBuilders.get("/knowledgebase/list").param("project", projectId)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andExpect(content().json("[]"));
 	}
 

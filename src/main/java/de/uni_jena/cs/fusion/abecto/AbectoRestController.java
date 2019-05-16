@@ -19,41 +19,10 @@ import de.uni_jena.cs.fusion.abecto.project.knowledgebase.KnowledgeBaseRepositor
 public class AbectoRestController {
 
 	@Autowired
-	ProjectRepository projectRepository;
-
-	@RequestMapping("/project/create")
-	public Project projectCreate(@RequestParam(value = "label", defaultValue = "") String label) {
-		return projectRepository.save(new Project(label));
-	}
-
-	@RequestMapping("/project/delete/{project}")
-	public ResponseEntity<?> projectDelete(@PathVariable("project") UUID uuid) {
-		Optional<Project> project = projectRepository.findById(uuid);
-		if (project.isPresent()) {
-			projectRepository.delete(project.get());
-			return ResponseEntity.noContent().build();
-		} else {
-			return ResponseEntity.notFound().build();
-		}
-	}
-
-	@RequestMapping("/project/{project}")
-	public ResponseEntity<Project> projectGet(@PathVariable("project") UUID uuid) {
-		Optional<Project> project = projectRepository.findById(uuid);
-		if (project.isPresent()) {
-			return ResponseEntity.ok(project.get());
-		} else {
-			return ResponseEntity.notFound().build();
-		}
-	}
-
-	@RequestMapping("/project/list")
-	public Iterable<Project> projectList() {
-		return projectRepository.findAll();
-	}
+	KnowledgeBaseRepository knowledgeBaseRepository;
 
 	@Autowired
-	KnowledgeBaseRepository knowledgeBaseRepository;
+	ProjectRepository projectRepository;
 
 	@RequestMapping("/knowledgebase/create")
 	public ResponseEntity<KnowledgeBase> knowledgeBaseCreate(@RequestParam(value = "project") UUID projectId,
@@ -100,6 +69,37 @@ public class AbectoRestController {
 		} else {
 			return ResponseEntity.ok(knowledgeBaseRepository.findAll());
 		}
+	}
+
+	@RequestMapping("/project/create")
+	public Project projectCreate(@RequestParam(value = "label", defaultValue = "") String label) {
+		return projectRepository.save(new Project(label));
+	}
+
+	@RequestMapping("/project/delete/{project}")
+	public ResponseEntity<?> projectDelete(@PathVariable("project") UUID uuid) {
+		Optional<Project> project = projectRepository.findById(uuid);
+		if (project.isPresent()) {
+			projectRepository.delete(project.get());
+			return ResponseEntity.noContent().build();
+		} else {
+			return ResponseEntity.notFound().build();
+		}
+	}
+
+	@RequestMapping("/project/{project}")
+	public ResponseEntity<Project> projectGet(@PathVariable("project") UUID uuid) {
+		Optional<Project> project = projectRepository.findById(uuid);
+		if (project.isPresent()) {
+			return ResponseEntity.ok(project.get());
+		} else {
+			return ResponseEntity.notFound().build();
+		}
+	}
+
+	@RequestMapping("/project/list")
+	public Iterable<Project> projectList() {
+		return projectRepository.findAll();
 	}
 
 }

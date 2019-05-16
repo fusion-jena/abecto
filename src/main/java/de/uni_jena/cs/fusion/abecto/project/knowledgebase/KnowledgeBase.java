@@ -1,5 +1,7 @@
 package de.uni_jena.cs.fusion.abecto.project.knowledgebase;
 
+import java.util.UUID;
+
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
@@ -27,9 +29,13 @@ public class KnowledgeBase extends AbstractEntityWithUUID {
 		return label;
 	}
 
-	@JsonIgnore //TODO add project uuid to json
+	@JsonIgnore
 	public Project getProject() {
 		return this.project;
+	}
+
+	public UUID getProjectId() {
+		return this.project.getId();
 	}
 
 	@Override
