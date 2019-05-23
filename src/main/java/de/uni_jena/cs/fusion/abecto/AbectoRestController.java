@@ -3,13 +3,16 @@ package de.uni_jena.cs.fusion.abecto;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -37,80 +40,80 @@ public class AbectoRestController {
 	@Autowired
 	ProjectRepository projectRepository;
 
-	@RequestMapping("/knowledgebase/create")
-	public ResponseEntity<KnowledgeBase> knowledgeBaseCreate(@RequestParam(value = "project") UUID projectId,
+	@PostMapping("/knowledgebase")
+	public KnowledgeBase knowledgeBaseCreate(@RequestParam(value = "project") UUID projectId,
 			@RequestParam(value = "label", defaultValue = "") String label) {
 		Optional<Project> project = projectRepository.findById(projectId);
 		if (project.isPresent()) {
-			return ResponseEntity.ok(knowledgeBaseRepository.save(new KnowledgeBase(project.get(), label)));
+			return knowledgeBaseRepository.save(new KnowledgeBase(project.get(), label));
 		} else {
-			return ResponseEntity.badRequest().build();
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Project not found.");
 		}
 	}
 
-	@RequestMapping("/knowledgebase/delete")
-	public ResponseEntity<?> knowledgeBaseDelete(@RequestParam(value = "id") UUID uuid) {
+	@DeleteMapping("/knowledgebase/{uuid}")
+	@ResponseStatus(value = HttpStatus.NO_CONTENT)
+	public void knowledgeBaseDelete(@PathVariable("uuid") UUID uuid) {
 		Optional<KnowledgeBase> knowledgeBase = knowledgeBaseRepository.findById(uuid);
 		if (knowledgeBase.isPresent()) {
 			knowledgeBaseRepository.delete(knowledgeBase.get());
-			return ResponseEntity.noContent().build();
 		} else {
-			return ResponseEntity.badRequest().build();
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "KnowledgeBase not found.");
 		}
 	}
 
-	@RequestMapping("/knowledgebase/get")
-	public ResponseEntity<KnowledgeBase> knowledgeBaseGet(@RequestParam(value = "id") UUID uuid) {
+	@GetMapping("/knowledgebase/{uuid}")
+	public KnowledgeBase knowledgeBaseGet(@PathVariable("uuid") UUID uuid) {
 		Optional<KnowledgeBase> knowledgeBase = knowledgeBaseRepository.findById(uuid);
 		if (knowledgeBase.isPresent()) {
-			return ResponseEntity.ok(knowledgeBase.get());
+			return knowledgeBase.get();
 		} else {
-			return ResponseEntity.badRequest().build();
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "KnowledgeBase not found.");
 		}
 	}
 
-	@RequestMapping("/knowledgebase/list")
-	public ResponseEntity<Iterable<KnowledgeBase>> knowledgeBaseList(
+	@GetMapping("/knowledgebase")
+	public Iterable<KnowledgeBase> knowledgeBaseList(
 			@RequestParam(value = "project", required = false) UUID projectId) {
 		if (projectId != null) {
 			Optional<Project> project = projectRepository.findById(projectId);
 			if (project.isPresent()) {
-				return ResponseEntity.ok(knowledgeBaseRepository.findAllByProject(project.get()));
+				return knowledgeBaseRepository.findAllByProject(project.get());
 			} else {
-				return ResponseEntity.badRequest().build();
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Project not found.");
 			}
 		} else {
-			return ResponseEntity.ok(knowledgeBaseRepository.findAll());
+			return knowledgeBaseRepository.findAll();
 		}
 	}
 
-	@RequestMapping("/project/create")
+	@PostMapping("/project")
 	public Project projectCreate(@RequestParam(value = "label", defaultValue = "") String label) {
 		return projectRepository.save(new Project(label));
 	}
 
-	@RequestMapping("/project/delete")
-	public ResponseEntity<?> projectDelete(@RequestParam(value = "id") UUID uuid) {
+	@DeleteMapping("/project/{uuid}")
+	@ResponseStatus(value = HttpStatus.NO_CONTENT)
+	public void projectDelete(@PathVariable("uuid") UUID uuid) {
 		Optional<Project> project = projectRepository.findById(uuid);
 		if (project.isPresent()) {
 			projectRepository.delete(project.get());
-			return ResponseEntity.noContent().build();
 		} else {
-			return ResponseEntity.badRequest().build();
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found.");
 		}
 	}
 
-	@RequestMapping("/project/get")
-	public ResponseEntity<Project> projectGet(@RequestParam(value = "id") UUID uuid) {
+	@GetMapping("/project/{uuid}")
+	public Project projectGet(@PathVariable("uuid") UUID uuid) {
 		Optional<Project> project = projectRepository.findById(uuid);
 		if (project.isPresent()) {
-			return ResponseEntity.ok(project.get());
+			return project.get();
 		} else {
-			return ResponseEntity.badRequest().build();
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found.");
 		}
 	}
 
-	@RequestMapping("/project/list")
+	@GetMapping("/project")
 	public Iterable<Project> projectList() {
 		return projectRepository.findAll();
 	}
@@ -123,14 +126,19 @@ public class AbectoRestController {
 
 		Class<SourceProcessor> processorClass = getProcessorClass(processorClassName, SourceProcessor.class);
 
-		KnowledgeBase knowledgeBase = knowledgeBaseRepository.findById(knowledgebaseId).orElseThrow();
+		KnowledgeBase knowledgeBase = knowledgeBaseRepository.findById(knowledgebaseId)
+				.orElseThrow(new Supplier<ResponseStatusException>() {
+					@Override
+					public ResponseStatusException get() {
+						return new ResponseStatusException(HttpStatus.BAD_REQUEST, "KnowledgeBase not found.");
+					}
+				});
 
 		return processingConfigurationRepository
 				.save(new ProcessingConfiguration(processorClass,
 						processingParameterRepository.save(new ProcessingParameter().set("path",
 								"C:\\Users\\admin\\Documents\\Workspace\\unit-ontologies\\qu\\qu.owl")),
 						knowledgeBase));
-		// TODO specify exception thrown
 
 	}
 
@@ -168,7 +176,7 @@ public class AbectoRestController {
 
 			return (Class<T>) Class.forName(processorClassName);
 		} catch (ClassNotFoundException e) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Processor class not found.");
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Processor class unknown.");
 		} catch (ClassCastException e) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, String
 					.format("Processor class not appropriate: Expected implementation of \"%s\".", processorInterface));
