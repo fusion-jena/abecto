@@ -46,9 +46,9 @@ public class AbectoRestControllerTest {
 		String projectId = projectJson.path("id").asText();
 
 		// return selected project
-		projectJson = getResultJson(
-				mvc.perform(MockMvcRequestBuilders.get("/project/" + projectId).accept(MediaType.APPLICATION_JSON))
-						.andExpect(status().isOk()));
+		projectJson = getResultJson(mvc.perform(
+				MockMvcRequestBuilders.get("/project/get").param("id", projectId).accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()));
 		assertEquals(projectLabel, projectJson.path("label").asText());
 		assertEquals(projectId, projectJson.path("id").asText());
 
@@ -60,7 +60,8 @@ public class AbectoRestControllerTest {
 		assertTrue(projectJson.findValuesAsText("id").contains(projectId));
 
 		// delete project
-		mvc.perform(MockMvcRequestBuilders.get("/project/delete/" + projectId).accept(MediaType.APPLICATION_JSON))
+		mvc.perform(
+				MockMvcRequestBuilders.get("/project/delete").param("id", projectId).accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isNoContent());
 
 		// return empty project list
@@ -93,9 +94,8 @@ public class AbectoRestControllerTest {
 		String knowledgeBaseId = knowledgeBaseJson.path("id").asText();
 
 		// return selected project
-		knowledgeBaseJson = getResultJson(mvc.perform(
-				MockMvcRequestBuilders.get("/knowledgebase/" + knowledgeBaseId).accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk()));
+		knowledgeBaseJson = getResultJson(mvc.perform(MockMvcRequestBuilders.get("/knowledgebase/get")
+				.param("id", knowledgeBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()));
 		assertEquals(kowledgBaseLabel, knowledgeBaseJson.path("label").asText());
 		assertEquals(knowledgeBaseId, knowledgeBaseJson.path("id").asText());
 
@@ -115,7 +115,7 @@ public class AbectoRestControllerTest {
 		assertTrue(knowledgeBaseJson.findValuesAsText("id").contains(knowledgeBaseId));
 
 		// delete project
-		mvc.perform(MockMvcRequestBuilders.get("/knowledgebase/delete/" + knowledgeBaseId)
+		mvc.perform(MockMvcRequestBuilders.get("/knowledgebase/delete").param("id", knowledgeBaseId)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isNoContent());
 
 		// return empty knowledgeBase list

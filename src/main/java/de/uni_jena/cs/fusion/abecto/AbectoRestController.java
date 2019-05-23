@@ -5,7 +5,6 @@ import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -35,8 +34,8 @@ public class AbectoRestController {
 		}
 	}
 
-	@RequestMapping("/knowledgebase/delete/{knowledgebase}")
-	public ResponseEntity<?> knowledgeBaseDelete(@PathVariable("knowledgebase") UUID uuid) {
+	@RequestMapping("/knowledgebase/delete")
+	public ResponseEntity<?> knowledgeBaseDelete(@RequestParam(value = "id") UUID uuid) {
 		Optional<KnowledgeBase> knowledgeBase = knowledgeBaseRepository.findById(uuid);
 		if (knowledgeBase.isPresent()) {
 			knowledgeBaseRepository.delete(knowledgeBase.get());
@@ -46,8 +45,8 @@ public class AbectoRestController {
 		}
 	}
 
-	@RequestMapping("/knowledgebase/{knowledgebase}")
-	public ResponseEntity<KnowledgeBase> knowledgeBaseGet(@PathVariable("knowledgebase") UUID uuid) {
+	@RequestMapping("/knowledgebase/get")
+	public ResponseEntity<KnowledgeBase> knowledgeBaseGet(@RequestParam(value = "id") UUID uuid) {
 		Optional<KnowledgeBase> knowledgeBase = knowledgeBaseRepository.findById(uuid);
 		if (knowledgeBase.isPresent()) {
 			return ResponseEntity.ok(knowledgeBase.get());
@@ -76,8 +75,8 @@ public class AbectoRestController {
 		return projectRepository.save(new Project(label));
 	}
 
-	@RequestMapping("/project/delete/{project}")
-	public ResponseEntity<?> projectDelete(@PathVariable("project") UUID uuid) {
+	@RequestMapping("/project/delete")
+	public ResponseEntity<?> projectDelete(@RequestParam(value = "id") UUID uuid) {
 		Optional<Project> project = projectRepository.findById(uuid);
 		if (project.isPresent()) {
 			projectRepository.delete(project.get());
@@ -87,8 +86,8 @@ public class AbectoRestController {
 		}
 	}
 
-	@RequestMapping("/project/{project}")
-	public ResponseEntity<Project> projectGet(@PathVariable("project") UUID uuid) {
+	@RequestMapping("/project/get")
+	public ResponseEntity<Project> projectGet(@RequestParam(value = "id") UUID uuid) {
 		Optional<Project> project = projectRepository.findById(uuid);
 		if (project.isPresent()) {
 			return ResponseEntity.ok(project.get());
