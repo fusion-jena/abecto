@@ -15,7 +15,6 @@ public class Abecto {
 
 	public static void main(String[] args) {
 		SpringApplication.run(Abecto.class, args);
-//		SpringApplication.exit(SpringApplication.run(Abecto.class, args));
 	}
 
 	@Bean
