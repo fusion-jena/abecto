@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.uni_jena.cs.fusion.abecto.processing.Processing;
@@ -33,7 +32,7 @@ import de.uni_jena.cs.fusion.abecto.project.knowledgebase.KnowledgeBaseRepositor
 import de.uni_jena.cs.fusion.abecto.rdfModel.RdfModel;
 import de.uni_jena.cs.fusion.abecto.rdfModel.RdfModelRepository;
 
-//@Component
+@Deprecated
 public class Runner implements CommandLineRunner {
 	private static final Logger log = LoggerFactory.getLogger(Abecto.class);
 
