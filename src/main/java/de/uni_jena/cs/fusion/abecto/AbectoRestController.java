@@ -1,5 +1,6 @@
 package de.uni_jena.cs.fusion.abecto;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -9,6 +10,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfiguration;
+import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfigurationRepository;
+import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameter;
+import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameterRepository;
+import de.uni_jena.cs.fusion.abecto.processor.JaroWinklerMappingProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.Processor;
+import de.uni_jena.cs.fusion.abecto.processor.source.PathSourceProcessor;
 import de.uni_jena.cs.fusion.abecto.project.Project;
 import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
 import de.uni_jena.cs.fusion.abecto.project.knowledgebase.KnowledgeBase;
@@ -19,7 +27,10 @@ public class AbectoRestController {
 
 	@Autowired
 	KnowledgeBaseRepository knowledgeBaseRepository;
-
+	@Autowired
+	ProcessingConfigurationRepository processingConfigurationRepository;
+	@Autowired
+	ProcessingParameterRepository processingParameterRepository;
 	@Autowired
 	ProjectRepository projectRepository;
 

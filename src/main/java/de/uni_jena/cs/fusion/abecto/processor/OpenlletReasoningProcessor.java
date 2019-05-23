@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.processor.refinement.transformation;
+package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.util.Collections;
 import java.util.Map;

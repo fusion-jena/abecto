@@ -11,11 +11,11 @@ import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameter;
+import de.uni_jena.cs.fusion.abecto.processor.MappingProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.MetaProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
-import de.uni_jena.cs.fusion.abecto.processor.refinement.RefinementProcessor;
-import de.uni_jena.cs.fusion.abecto.processor.refinement.meta.MetaProcessor;
-import de.uni_jena.cs.fusion.abecto.processor.refinement.meta.mapping.MappingProcessor;
-import de.uni_jena.cs.fusion.abecto.processor.refinement.transformation.TransformationProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.RefinementProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.TransformationProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.source.SourceProcessor;
 import de.uni_jena.cs.fusion.abecto.project.Project;
 import de.uni_jena.cs.fusion.abecto.project.knowledgebase.KnowledgeBase;

@@ -17,7 +17,8 @@ import org.apache.jena.rdf.model.Statement;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import de.uni_jena.cs.fusion.abecto.processor.refinement.meta.mapping.AbstractMappingProcessor.Mapping;
+import de.uni_jena.cs.fusion.abecto.processor.JaroWinklerMappingProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.AbstractMappingProcessor.Mapping;
 import de.uni_jena.cs.fusion.abecto.util.ModelUtils;
 import de.uni_jena.cs.fusion.abecto.util.Vocabulary;
 

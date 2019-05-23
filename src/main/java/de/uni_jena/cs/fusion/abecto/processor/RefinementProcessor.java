@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.processor.refinement;
+package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.util.Collection;
 import java.util.Map;
@@ -6,8 +6,6 @@ import java.util.Map.Entry;
 import java.util.UUID;
 
 import org.apache.jena.rdf.model.Model;
-
-import de.uni_jena.cs.fusion.abecto.processor.Processor;
 
 public interface RefinementProcessor extends Processor {
 

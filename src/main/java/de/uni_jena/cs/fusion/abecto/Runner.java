@@ -20,10 +20,10 @@ import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfigura
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameter;
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameterRepository;
 import de.uni_jena.cs.fusion.abecto.processing.runner.ProjectRunner;
-import de.uni_jena.cs.fusion.abecto.processor.refinement.meta.ManualRelationSelectionProcessor;
-import de.uni_jena.cs.fusion.abecto.processor.refinement.meta.mapping.JaroWinklerMappingProcessor;
-import de.uni_jena.cs.fusion.abecto.processor.refinement.transformation.OpenlletReasoningProcessor;
-import de.uni_jena.cs.fusion.abecto.processor.refinement.transformation.SparqlConstructProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.JaroWinklerMappingProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.ManualRelationSelectionProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.OpenlletReasoningProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.SparqlConstructProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.source.PathSourceProcessor;
 import de.uni_jena.cs.fusion.abecto.project.Project;
 import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;

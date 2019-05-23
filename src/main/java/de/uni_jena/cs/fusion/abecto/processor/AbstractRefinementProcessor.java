@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.processor.refinement;
+package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -13,8 +13,6 @@ import org.apache.jena.ontology.OntModel;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 
-import de.uni_jena.cs.fusion.abecto.processor.AbstractProcessor;
-import de.uni_jena.cs.fusion.abecto.processor.Processor;
 import de.uni_jena.cs.fusion.abecto.util.ModelUtils;
 
 public abstract class AbstractRefinementProcessor extends AbstractProcessor implements RefinementProcessor {

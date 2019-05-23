@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.processor.refinement.meta.mapping;
+package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.util.ArrayList;
 import java.util.Collection;

@@ -9,6 +9,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.junit.Test;
 
+import de.uni_jena.cs.fusion.abecto.processor.SparqlConstructProcessor;
 import de.uni_jena.cs.fusion.abecto.util.ModelUtils;
 
 public class SparqlConstructProcessorTest {

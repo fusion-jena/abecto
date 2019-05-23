@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.processor.refinement.meta;
+package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.util.Map;
 import java.util.Map.Entry;

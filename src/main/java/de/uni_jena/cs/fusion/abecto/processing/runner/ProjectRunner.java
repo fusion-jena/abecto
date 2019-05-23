@@ -18,7 +18,7 @@ import de.uni_jena.cs.fusion.abecto.processing.ProcessingRepository;
 import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfiguration;
 import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfigurationRepository;
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
-import de.uni_jena.cs.fusion.abecto.processor.refinement.RefinementProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.RefinementProcessor;
 import de.uni_jena.cs.fusion.abecto.project.Project;
 import de.uni_jena.cs.fusion.abecto.rdfModel.RdfModelRepository;
 

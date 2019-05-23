@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.processor.refinement.transformation;
+package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -7,8 +7,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.apache.jena.rdf.model.Model;
-
-import de.uni_jena.cs.fusion.abecto.processor.refinement.AbstractRefinementProcessor;
 
 public abstract class AbstractTransformationProcessor extends AbstractRefinementProcessor
 		implements TransformationProcessor {
