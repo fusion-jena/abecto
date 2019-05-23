@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.processor.refinement.meta.mapping;
+package de.uni_jena.cs.fusion.abecto.processor;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -17,7 +17,6 @@ import org.apache.jena.rdf.model.Statement;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import de.uni_jena.cs.fusion.abecto.processor.JaroWinklerMappingProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.AbstractMappingProcessor.Mapping;
 import de.uni_jena.cs.fusion.abecto.util.ModelUtils;
 import de.uni_jena.cs.fusion.abecto.util.Vocabulary;
