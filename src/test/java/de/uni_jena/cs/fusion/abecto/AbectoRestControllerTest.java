@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
 import java.io.IOException;
 
@@ -125,6 +126,18 @@ public class AbectoRestControllerTest {
 		// return empty knowledgeBase list by project
 		mvc.perform(MockMvcRequestBuilders.get("/knowledgebase/list").param("project", projectId)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andExpect(content().json("[]"));
+	}
+
+	@Test
+	public void processingConfiguration() throws Exception {
+		mvc.perform(MockMvcRequestBuilders.get("/processing")
+				.param("class", "Qwertz")
+				.param("parameters", "")
+				.param("input",
+						new String[] { "550e8400-e29b-11d4-a716-446655440000", "550e8400-e29b-11d4-a716-446655440001" })
+				.accept(MediaType.APPLICATION_JSON)
+				)
+				.andDo(print());
 	}
 
 	public static JsonNode getResultJson(ResultActions resultActions) throws IOException {

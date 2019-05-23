@@ -55,7 +55,7 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 	 *                                      whose result to use as input.
 	 */
 	public ProcessingConfiguration(Class<? extends RefinementProcessor> processor, ProcessingParameter parameter,
-			Collection<ProcessingConfiguration> inputProcessingConfigurations)
+			Iterable<ProcessingConfiguration> inputProcessingConfigurations)
 			throws NoSuchElementException, IllegalArgumentException, IllegalStateException {
 		this(parameter, processor);
 
