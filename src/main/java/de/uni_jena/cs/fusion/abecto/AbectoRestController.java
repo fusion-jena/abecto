@@ -128,7 +128,6 @@ public class AbectoRestController {
 	@PostMapping("/source")
 	public ProcessingConfiguration processingConfigurationCreateSource(
 			@RequestParam(value = "class") String processorClassName,
-			@RequestParam(value = "parameters") String parameters,
 			@RequestParam(value = "knowledgebase") UUID knowledgebaseId) {
 
 		Class<SourceProcessor> processorClass = getProcessorClass(processorClassName, SourceProcessor.class);
@@ -143,15 +142,13 @@ public class AbectoRestController {
 
 		return processingConfigurationRepository
 				.save(new ProcessingConfiguration(processorClass,
-						processingParameterRepository.save(new ProcessingParameter().put("path",
-								"C:\\Users\\admin\\Documents\\Workspace\\unit-ontologies\\qu\\qu.owl")),
+						processingParameterRepository.save(new ProcessingParameter()),
 						knowledgeBase));
 	}
 
 	@PostMapping("/processing")
 	public ProcessingConfiguration processingConfigurationCreateProcessing(
 			@RequestParam(value = "class") String processorClassName,
-			@RequestParam(value = "parameters") String parameters,
 			@RequestParam(value = "input") Collection<UUID> configurationIds) {
 
 		Class<RefinementProcessor> processorClass = getProcessorClass(processorClassName, RefinementProcessor.class);
@@ -167,8 +164,7 @@ public class AbectoRestController {
 
 		return processingConfigurationRepository
 				.save(new ProcessingConfiguration(processorClass,
-						processingParameterRepository.save(new ProcessingParameter().put("path",
-								"C:\\Users\\admin\\Documents\\Workspace\\unit-ontologies\\qu\\qu.owl")),
+						processingParameterRepository.save(new ProcessingParameter()),
 						inputConfigurations));
 	}
 
@@ -186,12 +182,12 @@ public class AbectoRestController {
 					}
 				});
 
-		if (configuration.getParameter().containsKey(parameterPath)) {
+		if (configuration.getProcessingParameter().containsKey(parameterPath)) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Parameter already set.");
 		} else {
 			try {
 				// copy parameter
-				ProcessingParameter newParameter = configuration.getParameter().copy();
+				ProcessingParameter newParameter = configuration.getProcessingParameter().copy();
 				// update parameter
 				newParameter.put(parameterPath, parameterValue);
 				// update configuration

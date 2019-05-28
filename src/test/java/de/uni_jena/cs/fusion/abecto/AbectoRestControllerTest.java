@@ -7,7 +7,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
+import java.util.List;
 
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +33,16 @@ public class AbectoRestControllerTest {
 	private MockMvc mvc;
 
 	private final static ObjectMapper JACKSON = new ObjectMapper();
+
+	// TODO delete cascade @After
+	public void cleanup() throws IOException, Exception {
+		List<String> projectIds = getResultIds(
+				mvc.perform(MockMvcRequestBuilders.get("/project").accept(MediaType.APPLICATION_JSON))
+						.andExpect(status().isOk()));
+		for (String projectId : projectIds) {
+			mvc.perform(MockMvcRequestBuilders.delete("/project/" + projectId).accept(MediaType.APPLICATION_JSON));
+		}
+	}
 
 	@Test
 	public void project() throws Exception {
@@ -145,12 +157,13 @@ public class AbectoRestControllerTest {
 		String kowledgBaseId = getNewKowledgBase();
 
 		// use invalid processor class name
-		mvc.perform(MockMvcRequestBuilders.post("/processing").param("class", "Qwert").param("parameters", "")
+		mvc.perform(MockMvcRequestBuilders.post("/processing").param("class", "Qwert")
 				.param("input",
 						new String[] { "550e8400-e29b-11d4-a716-446655440000", "550e8400-e29b-11d4-a716-446655440001" })
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
 		// create new source
-		mvc.perform(MockMvcRequestBuilders.post("/source").param("class", "PathSourceProcessor").param("parameters", "")
+		// TODO causes error
+		mvc.perform(MockMvcRequestBuilders.post("/source").param("class", "PathSourceProcessor")
 				.param("knowledgebase", kowledgBaseId).accept(MediaType.APPLICATION_JSON)).andDo(print());
 	}
 
@@ -160,6 +173,10 @@ public class AbectoRestControllerTest {
 
 	public static String getResultId(ResultActions resultActions) throws IOException {
 		return getResultJson(resultActions).path("id").asText();
+	}
+
+	public static List<String> getResultIds(ResultActions resultActions) throws IOException {
+		return getResultJson(resultActions).findValuesAsText("id");
 	}
 
 }

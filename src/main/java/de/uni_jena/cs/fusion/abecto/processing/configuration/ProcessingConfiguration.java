@@ -3,12 +3,18 @@ package de.uni_jena.cs.fusion.abecto.processing.configuration;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.UUID;
 
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+
+import org.apache.commons.lang3.reflect.TypeLiteral;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameter;
 import de.uni_jena.cs.fusion.abecto.processor.MappingProcessor;
@@ -109,24 +115,40 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 		return this.inputProcessingConfigurations;
 	}
 
+	@JsonIgnore
 	public KnowledgeBase getKnowledgeBase() {
 		return this.knowledgeBase;
 	}
 
+	public UUID getKnowledgeBaseId() {
+		return this.knowledgeBase.getId();
+	}
+
+	@JsonIgnore
 	public LocalDateTime getLastChange() {
 		return this.lastChange;
 	}
 
-	public ProcessingParameter getParameter() {
+	@JsonIgnore
+	public ProcessingParameter getProcessingParameter() {
 		return this.parameter;
+	}
+
+	public Map<String, Object> getParameter() {
+		return this.parameter.get("", new TypeLiteral<Map<String,Object>>() {});
 	}
 
 	public Class<? extends Processor> getProcessorClass() {
 		return this.processor;
 	}
 
+	@JsonIgnore
 	public Project getProject() {
 		return this.project;
+	}
+
+	public UUID getProjectId() {
+		return this.project.getId();
 	}
 
 	/**
