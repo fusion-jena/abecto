@@ -1,8 +1,6 @@
-package de.uni_jena.cs.fusion.abecto.processor.source;
+package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.util.UUID;
-
-import de.uni_jena.cs.fusion.abecto.processor.Processor;
 
 public interface SourceProcessor extends Processor {
 	

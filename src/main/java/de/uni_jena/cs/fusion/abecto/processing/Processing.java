@@ -22,8 +22,8 @@ import org.apache.jena.rdf.model.Model;
 import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfiguration;
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameter;
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
+import de.uni_jena.cs.fusion.abecto.processor.SourceProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.Processor.Status;
-import de.uni_jena.cs.fusion.abecto.processor.source.SourceProcessor;
 import de.uni_jena.cs.fusion.abecto.rdfModel.RdfModel;
 import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
 
