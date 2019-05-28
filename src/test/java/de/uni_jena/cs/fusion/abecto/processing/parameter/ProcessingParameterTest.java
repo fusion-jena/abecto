@@ -13,7 +13,7 @@ public class ProcessingParameterTest {
 	public void test() {
 		ProcessingParameter processingParameter = new ProcessingParameter();
 		assertTrue(processingParameter.getAll().isEmpty());
-		processingParameter.set("key", "value");
+		processingParameter.put("key", "value");
 		assertEquals("value", processingParameter.get("key", new TypeLiteral<String>() {}));
 		Map<String, Object> map = processingParameter.getAll();
 		assertTrue(map.containsKey("key"));

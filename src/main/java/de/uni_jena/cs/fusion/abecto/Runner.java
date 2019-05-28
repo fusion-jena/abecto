@@ -67,50 +67,50 @@ public class Runner implements CommandLineRunner {
 		// create ProcessingConfigurations
 		ProcessingConfiguration configurationQU1 = processingConfigurationRepository
 				.save(new ProcessingConfiguration(PathSourceProcessor.class,
-						this.processingParameters.save(new ProcessingParameter().set("path",
+						this.processingParameters.save(new ProcessingParameter().put("path",
 								"C:\\Users\\admin\\Documents\\Workspace\\unit-ontologies\\qu\\qu.owl")),
 						knowledgeBaseQU));
 
 		ProcessingConfiguration configurationQU2 = processingConfigurationRepository
 				.save(new ProcessingConfiguration(PathSourceProcessor.class,
-						this.processingParameters.save(new ProcessingParameter().set("path",
+						this.processingParameters.save(new ProcessingParameter().put("path",
 								"C:\\Users\\admin\\Documents\\Workspace\\unit-ontologies\\qu\\qu-rec20.owl")),
 						knowledgeBaseQU));
 
 		ProcessingConfiguration configurationMUO1 = processingConfigurationRepository
 				.save(new ProcessingConfiguration(PathSourceProcessor.class,
-						this.processingParameters.save(new ProcessingParameter().set("path",
+						this.processingParameters.save(new ProcessingParameter().put("path",
 								"C:\\Users\\admin\\Documents\\Workspace\\unit-ontologies\\muo\\muo-vocab.owl")),
 						knowledgeBaseOM));
 
 		ProcessingConfiguration configurationMUO2 = processingConfigurationRepository
 				.save(new ProcessingConfiguration(PathSourceProcessor.class,
-						this.processingParameters.save(new ProcessingParameter().set("path",
+						this.processingParameters.save(new ProcessingParameter().put("path",
 								"C:\\Users\\admin\\Documents\\Workspace\\unit-ontologies\\muo\\ucum-instances.owl")),
 						knowledgeBaseOM));
 
 		ProcessingConfiguration configurationQUCategories = processingConfigurationRepository
 				.save(new ProcessingConfiguration(ManualRelationSelectionProcessor.class,
-						this.processingParameters.save(new ProcessingParameter().set("relations",
+						this.processingParameters.save(new ProcessingParameter().put("relations",
 								Map.of("instance", "rdfs:type", "label", "rdfs:label"))),
 						List.of(configurationQU1, configurationQU2)));
 
 		ProcessingConfiguration configurationMUOCategories = processingConfigurationRepository
 				.save(new ProcessingConfiguration(ManualRelationSelectionProcessor.class,
-						this.processingParameters.save(new ProcessingParameter().set("relations",
+						this.processingParameters.save(new ProcessingParameter().put("relations",
 								Map.of("instance", "rdfs:type", "label", "rdfs:label"))),
 						List.of(configurationMUO1, configurationMUO2)));
 
 		ProcessingConfiguration configurationJWSMapper = processingConfigurationRepository
 				.save(new ProcessingConfiguration(JaroWinklerMappingProcessor.class,
 						this.processingParameters
-								.save(new ProcessingParameter().set("case_sensitive", false).set("threshold", 0.95D)),
+								.save(new ProcessingParameter().put("case_sensitive", false).put("threshold", 0.95D)),
 						List.of(configurationQU1, configurationQU2, configurationQUCategories, configurationMUO1,
 								configurationMUO2, configurationMUOCategories)));
 
 		ProcessingConfiguration configurationSparqlConstruct = processingConfigurationRepository
 				.save(new ProcessingConfiguration(SparqlConstructProcessor.class,
-						this.processingParameters.save(new ProcessingParameter().set("query",
+						this.processingParameters.save(new ProcessingParameter().put("query",
 								"CONSTRUCT {?s <http://example.org/p> <http://example.org/o>} WHERE {?s ?p ?o. Filter(!isBLANK(?s))}")),
 						Collections.singleton(configurationQU2)));
 

@@ -2,9 +2,9 @@ package de.uni_jena.cs.fusion.abecto;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
 import java.io.IOException;
 
@@ -70,12 +70,21 @@ public class AbectoRestControllerTest {
 				.andExpect(status().isOk()).andExpect(content().json("[]"));
 	}
 
+	private String getNewProject() throws IOException, Exception {
+		return getResultId(mvc.perform(MockMvcRequestBuilders.post("/project").accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()));
+	}
+
+	private String getNewKowledgBase() throws IOException, Exception {
+		return getResultId(mvc.perform(MockMvcRequestBuilders.post("/knowledgebase").param("project", getNewProject())
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()));
+	}
+
 	@Test
 	public void knowledgeBase() throws Exception {
 		// create project and get project id
-		String projectId = getResultId(
-				mvc.perform(MockMvcRequestBuilders.post("/project").accept(MediaType.APPLICATION_JSON))
-						.andExpect(status().isOk()));
+		String projectId = getNewProject();
+
 		String kowledgBaseLabel = "knowledgbase label";
 
 		// return empty knowledgeBase list
@@ -132,10 +141,17 @@ public class AbectoRestControllerTest {
 
 	@Test
 	public void processingConfiguration() throws Exception {
-		mvc.perform(MockMvcRequestBuilders.get("/processing").param("class", "Qwertz").param("parameters", "")
+		// create a KowledgBase
+		String kowledgBaseId = getNewKowledgBase();
+
+		// use invalid processor class name
+		mvc.perform(MockMvcRequestBuilders.post("/processing").param("class", "Qwert").param("parameters", "")
 				.param("input",
 						new String[] { "550e8400-e29b-11d4-a716-446655440000", "550e8400-e29b-11d4-a716-446655440001" })
-				.accept(MediaType.APPLICATION_JSON)).andDo(print());
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
+		// create new source
+		mvc.perform(MockMvcRequestBuilders.post("/source").param("class", "PathSourceProcessor").param("parameters", "")
+				.param("knowledgebase", kowledgBaseId).accept(MediaType.APPLICATION_JSON)).andDo(print());
 	}
 
 	public static JsonNode getResultJson(ResultActions resultActions) throws IOException {

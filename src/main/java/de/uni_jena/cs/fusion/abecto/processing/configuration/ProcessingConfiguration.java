@@ -169,6 +169,10 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 		return TransformationProcessor.class.isAssignableFrom(this.processor);
 	}
 
+	public void setParameter(ProcessingParameter parameter) {
+		this.parameter = parameter;
+	}
+
 	@Override
 	public String toString() {
 		return String.format("ProcessingConfiguration[id=%s, project=%s, parameter=%s]", this.id, this.project.getId(),
