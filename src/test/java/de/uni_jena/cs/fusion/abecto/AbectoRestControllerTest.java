@@ -166,9 +166,15 @@ public class AbectoRestControllerTest {
 		mvc.perform(MockMvcRequestBuilders.post("/source").param("class", "PathSourceProcessor")
 				.param("knowledgebase", kowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
-//		mvc.perform(MockMvcRequestBuilders.post(String.format("/source/%s/parameter", buffer.getId()))
-//				.param("class", "PathSourceProcessor").param("knowledgebase", kowledgBaseId)
-//				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer).andDo(print());
+		// set path parameter
+		String pathValue = "C:\\Users\\admin\\Documents\\Workspace\\unit-ontologies\\qu\\qu-rec20.owl";
+		mvc.perform(MockMvcRequestBuilders.post(String.format("/source/%s/parameter", buffer.getId()))
+				.param("key", "path").param("value", pathValue).accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk());
+		// get source
+		mvc.perform(MockMvcRequestBuilders.get(String.format("/source/%s", buffer.getId()))
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer).andDo(print());
+		assertEquals(pathValue, buffer.getJson().path("parameter").path("path").asText());
 	}
 
 	private static class ResponseBuffer implements ResultHandler {

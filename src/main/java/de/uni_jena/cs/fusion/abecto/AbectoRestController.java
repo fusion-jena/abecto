@@ -140,10 +140,8 @@ public class AbectoRestController {
 					}
 				});
 
-		return processingConfigurationRepository
-				.save(new ProcessingConfiguration(processorClass,
-						processingParameterRepository.save(new ProcessingParameter()),
-						knowledgeBase));
+		return processingConfigurationRepository.save(new ProcessingConfiguration(processorClass,
+				processingParameterRepository.save(new ProcessingParameter()), knowledgeBase));
 	}
 
 	@PostMapping("/processing")
@@ -162,10 +160,19 @@ public class AbectoRestController {
 		Iterable<ProcessingConfiguration> inputConfigurations = processingConfigurationRepository
 				.findAllById(configurationIds);
 
-		return processingConfigurationRepository
-				.save(new ProcessingConfiguration(processorClass,
-						processingParameterRepository.save(new ProcessingParameter()),
-						inputConfigurations));
+		return processingConfigurationRepository.save(new ProcessingConfiguration(processorClass,
+				processingParameterRepository.save(new ProcessingParameter()), inputConfigurations));
+	}
+
+	@GetMapping({ "/source/{uuid}", "/processing/{uuid}" })
+	public ProcessingConfiguration processingConfigurationGet(@PathVariable("uuid") UUID uuid) {
+		Optional<ProcessingConfiguration> configuration = processingConfigurationRepository.findById(uuid);
+		if (configuration.isPresent()) {
+			return configuration.get();
+		} else {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+					String.format("Processing or Source %s not found.", uuid));
+		}
 	}
 
 	@PostMapping({ "/source/{configuration}/parameter", "/processing/{configuration}/parameter" })
@@ -177,8 +184,7 @@ public class AbectoRestController {
 				.orElseThrow(new Supplier<ResponseStatusException>() {
 					@Override
 					public ResponseStatusException get() {
-						return new ResponseStatusException(HttpStatus.BAD_REQUEST,
-								"Processing or Source not found.");
+						return new ResponseStatusException(HttpStatus.BAD_REQUEST, "Processing or Source not found.");
 					}
 				});
 
@@ -198,8 +204,7 @@ public class AbectoRestController {
 			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 					| InvocationTargetException | NoSuchMethodException | SecurityException e) {
 				log.error("Failed to copy ProcessingParameter.", e);
-				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-						"Failed to copy parameter.");
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to copy parameter.");
 			}
 		}
 	}
