@@ -13,9 +13,11 @@ import java.util.function.Supplier;
 
 import javax.persistence.Convert;
 import javax.persistence.Entity;
+import javax.persistence.ManyToOne;
 
 import org.apache.commons.lang3.reflect.TypeLiteral;
 
+import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfiguration;
 import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
 
 @Entity
@@ -28,6 +30,9 @@ public class ProcessingParameter extends AbstractEntityWithUUID {
 
 	@Convert(converter = ProcessingParameterConverter.class)
 	private Map<String, Object> parameter = new HashMap<String, Object>();
+	
+	@ManyToOne
+	private ProcessingConfiguration configuration;
 
 	public ProcessingParameter() {}
 

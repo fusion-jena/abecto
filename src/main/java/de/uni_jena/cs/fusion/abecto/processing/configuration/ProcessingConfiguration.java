@@ -1,16 +1,19 @@
 package de.uni_jena.cs.fusion.abecto.processing.configuration;
 
-import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -31,7 +34,7 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 	/**
 	 * The {@link KnowledgeBase} this {@link ProcessingConfiguration} of a
 	 * {@link SourceProcessor} belongs to or {@code null}, if this does not belong
-	 * toa {@link SourceProcessor}.
+	 * to a {@link SourceProcessor}.
 	 */
 	@ManyToOne(fetch = FetchType.LAZY)
 	protected KnowledgeBase knowledgeBase;
@@ -43,11 +46,11 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 
 	@ManyToMany(fetch = FetchType.LAZY)
 	protected Collection<ProcessingConfiguration> inputProcessingConfigurations = new HashSet<>();
-	@ManyToOne(fetch = FetchType.LAZY)
-	protected ProcessingParameter parameter;
+	@OneToOne
+	protected ProcessingParameter currentParameter;
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "configuration", cascade = CascadeType.REMOVE)
+	protected List<ProcessingParameter> parameter;
 	protected Class<? extends Processor> processor;
-
-	protected LocalDateTime lastChange;
 
 	protected ProcessingConfiguration() {}
 
@@ -100,9 +103,8 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 	 * @param processor
 	 */
 	protected ProcessingConfiguration(ProcessingParameter parameter, Class<? extends Processor> processor) {
-		this.parameter = parameter;
+		this.currentParameter = parameter;
 		this.processor = processor;
-		this.lastChange = LocalDateTime.now();
 	}
 
 	@JsonIgnore
@@ -125,17 +127,12 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 	}
 
 	@JsonIgnore
-	public LocalDateTime getLastChange() {
-		return this.lastChange;
-	}
-
-	@JsonIgnore
 	public ProcessingParameter getProcessingParameter() {
-		return this.parameter;
+		return this.currentParameter;
 	}
 
 	public Map<String, Object> getParameter() {
-		return this.parameter.getMap();
+		return this.currentParameter.getMap();
 	}
 
 	public Class<? extends Processor> getProcessorClass() {
@@ -192,7 +189,7 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 	}
 
 	public void setParameter(ProcessingParameter parameter) {
-		this.parameter = parameter;
+		this.currentParameter = parameter;
 	}
 
 	@Override
