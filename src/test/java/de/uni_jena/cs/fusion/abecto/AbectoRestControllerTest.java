@@ -34,7 +34,7 @@ public class AbectoRestControllerTest {
 
 	private final static ObjectMapper JACKSON = new ObjectMapper();
 
-	// TODO delete cascade @After
+	@After
 	public void cleanup() throws IOException, Exception {
 		List<String> projectIds = getResultIds(
 				mvc.perform(MockMvcRequestBuilders.get("/project").accept(MediaType.APPLICATION_JSON))

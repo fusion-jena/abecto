@@ -85,7 +85,7 @@ public class ProjectRunner {
 				Processing processing = processingsMap.get(configuration);
 				try {
 					Processor processor = processing.getProcessorInsance();
-					processor.setParameters(configuration.getProcessingParameter().getAll());
+					processor.setParameters(configuration.getProcessingParameter().getMap());
 					processorsMap.put(configuration, processor);
 				} catch (Throwable t) {
 					if (processing.isNotStarted()) {

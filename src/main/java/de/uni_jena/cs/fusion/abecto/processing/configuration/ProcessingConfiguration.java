@@ -12,8 +12,6 @@ import javax.persistence.FetchType;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 
-import org.apache.commons.lang3.reflect.TypeLiteral;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameter;
@@ -107,10 +105,12 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 		this.lastChange = LocalDateTime.now();
 	}
 
+	@JsonIgnore
 	public void addInputProcessingConfiguration(ProcessingConfiguration inputProcessingConfiguration) {
 		this.inputProcessingConfigurations.add(inputProcessingConfiguration);
 	}
-
+	
+	@JsonIgnore
 	public Collection<ProcessingConfiguration> getInputProcessingConfigurations() {
 		return this.inputProcessingConfigurations;
 	}
@@ -135,7 +135,7 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 	}
 
 	public Map<String, Object> getParameter() {
-		return this.parameter.get("", new TypeLiteral<Map<String,Object>>() {});
+		return this.parameter.getMap();
 	}
 
 	public Class<? extends Processor> getProcessorClass() {
@@ -155,7 +155,7 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 	 * @return {@code true} if this is the configuration of a
 	 *         {@link MappingProcessor}, otherwise {@code false}
 	 */
-	public boolean isMappingProcessingConfiguration() {
+	public boolean isMapping() {
 		return MappingProcessor.class.isAssignableFrom(this.processor);
 	}
 
@@ -163,7 +163,7 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 	 * @return {@code true} if this is the configuration of a {@link MetaProcessor},
 	 *         otherwise {@code false}
 	 */
-	public boolean isMetaProcessingConfiguration() {
+	public boolean isMeta() {
 		return MetaProcessor.class.isAssignableFrom(this.processor);
 	}
 
@@ -171,7 +171,7 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 	 * @return {@code true} if this is the configuration of a
 	 *         {@link RefinementProcessor}, otherwise {@code false}
 	 */
-	public boolean isRefinementProcessingConfiguration() {
+	public boolean isRefinement() {
 		return RefinementProcessor.class.isAssignableFrom(this.processor);
 	}
 
@@ -179,7 +179,7 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 	 * @return {@code true} if this is the configuration of a
 	 *         {@link SourceProcessor}, otherwise {@code false}
 	 */
-	public boolean isSourceProcessingConfiguration() {
+	public boolean isSource() {
 		return SourceProcessor.class.isAssignableFrom(this.processor);
 	}
 
@@ -187,7 +187,7 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 	 * @return {@code true} if this is the configuration of a
 	 *         {@link TransformationProcessor}, otherwise {@code false}
 	 */
-	public boolean isTransformationProcessingConfiguration() {
+	public boolean isTransformation() {
 		return TransformationProcessor.class.isAssignableFrom(this.processor);
 	}
 
@@ -197,8 +197,7 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 
 	@Override
 	public String toString() {
-		return String.format("ProcessingConfiguration[id=%s, project=%s, parameter=%s]", this.id, this.project.getId(),
-				this.parameter.getId());
+		return String.format("ProcessingConfiguration[id=%s, project=%s]", this.id, this.project.getId());
 	}
 
 }

@@ -21,6 +21,11 @@ import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
 @Entity
 public class ProcessingParameter extends AbstractEntityWithUUID {
 
+	public final static TypeLiteral<List<Object>> LIST_TYPE = new TypeLiteral<List<Object>>() {};
+	public final static TypeLiteral<Long> LONG_TYPE = new TypeLiteral<Long>() {};
+	public final static TypeLiteral<Map<String, Object>> MAP_TYPE = new TypeLiteral<Map<String, Object>>() {};
+	public final static TypeLiteral<String> STRING_TYPE = new TypeLiteral<String>() {};
+
 	@Convert(converter = ProcessingParameterConverter.class)
 	private Map<String, Object> parameter = new HashMap<String, Object>();
 
@@ -36,7 +41,7 @@ public class ProcessingParameter extends AbstractEntityWithUUID {
 	 * @return {@code true}, iff a parameter with the given path is set
 	 */
 	public boolean containsKey(String path) {
-		return containsKey(path.split("\\."));
+		return containsKey(splitPath(path));
 	}
 
 	/**
@@ -95,34 +100,62 @@ public class ProcessingParameter extends AbstractEntityWithUUID {
 	}
 
 	public <T> T get(String path, TypeLiteral<T> type) {
-		return get(path.split("\\."), type);
+		return get(splitPath(path), type);
 	}
 
 	@SuppressWarnings("unchecked")
 	public <T> T get(String[] keys, TypeLiteral<T> type) {
-		Map<String, Object> leafLevel = traverse(this.parameter, Arrays.copyOf(keys, keys.length - 1), true);
-		Object value = leafLevel.get(keys[keys.length - 1]);
-		Objects.requireNonNull(value, new Supplier<String>() {
-			@Override
-			public String get() {
-				return String.format("Missing value of parameter \"%s\".", String.join(".", keys));
-			}
-		});
-		return (T) value;
+		if (keys.length == 0 && type.equals(MAP_TYPE)) {
+			return (T) this.parameter;
+		} else {
+			Map<String, Object> leafLevel = traverse(this.parameter, Arrays.copyOf(keys, keys.length - 1), true);
+			Object value = leafLevel.get(keys[keys.length - 1]);
+			Objects.requireNonNull(value, new Supplier<String>() {
+				@Override
+				public String get() {
+					return String.format("Missing value of parameter \"%s\".", String.join(".", keys));
+				}
+			});
+			return (T) value;
+		}
 	}
 
-	public Map<String, Object> getAll() {
+	public List<Object> getList(String path) {
+		return get(splitPath(path), LIST_TYPE);
+	}
+
+	public Long getLong(String path) {
+		return get(splitPath(path), LONG_TYPE);
+	}
+
+	public Map<String, Object> getMap() {
 		return this.parameter;
 	}
 
+	public Map<String, Object> getMap(String path) {
+		return get(splitPath(path), MAP_TYPE);
+	}
+
+	public String getString(String path) {
+		return get(splitPath(path), STRING_TYPE);
+	}
+
 	public ProcessingParameter put(String path, Object value) {
-		return put(path.split("\\."), value);
+		return put(splitPath(path), value);
 	}
 
 	public ProcessingParameter put(String[] keys, Object value) {
 		Map<String, Object> leafLevel = traverse(this.parameter, Arrays.copyOf(keys, keys.length - 1), true);
 		leafLevel.put(keys[keys.length - 1], value);
 		return this;
+	}
+
+	private String[] splitPath(String path) {
+		if (path.isEmpty()) {
+			return new String[] {};
+		} else {
+			return path.split("\\.");
+		}
 	}
 
 	@Override

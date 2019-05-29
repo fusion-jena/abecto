@@ -12,10 +12,10 @@ public class ProcessingParameterTest {
 	@Test
 	public void test() {
 		ProcessingParameter processingParameter = new ProcessingParameter();
-		assertTrue(processingParameter.getAll().isEmpty());
+		assertTrue(processingParameter.getMap().isEmpty());
 		processingParameter.put("key", "value");
 		assertEquals("value", processingParameter.get("key", new TypeLiteral<String>() {}));
-		Map<String, Object> map = processingParameter.getAll();
+		Map<String, Object> map = processingParameter.getMap();
 		assertTrue(map.containsKey("key"));
 		assertEquals("value", (String) map.get("key"));
 	}

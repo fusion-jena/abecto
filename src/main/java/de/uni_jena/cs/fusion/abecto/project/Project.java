@@ -2,6 +2,7 @@ package de.uni_jena.cs.fusion.abecto.project;
 
 import java.util.Collection;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.OneToMany;
 
@@ -12,7 +13,7 @@ import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
 public class Project extends AbstractEntityWithUUID {
 
 	protected String label;
-	@OneToMany(mappedBy = "project")
+	@OneToMany(mappedBy = "project", cascade = CascadeType.REMOVE)
 	protected Collection<KnowledgeBase> knowledgeBases;
 
 	protected Project() {}
