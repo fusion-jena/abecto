@@ -2,9 +2,9 @@ package de.uni_jena.cs.fusion.abecto;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
 import java.io.IOException;
 import java.util.List;
@@ -18,7 +18,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultHandler;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -34,12 +35,13 @@ public class AbectoRestControllerTest {
 
 	private final static ObjectMapper JACKSON = new ObjectMapper();
 
+	private final ResponseBuffer buffer = new ResponseBuffer();
+
 	@After
 	public void cleanup() throws IOException, Exception {
-		List<String> projectIds = getResultIds(
-				mvc.perform(MockMvcRequestBuilders.get("/project").accept(MediaType.APPLICATION_JSON))
-						.andExpect(status().isOk()));
-		for (String projectId : projectIds) {
+		mvc.perform(MockMvcRequestBuilders.get("/project").accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andDo(buffer);
+		for (String projectId : buffer.getIds()) {
 			mvc.perform(MockMvcRequestBuilders.delete("/project/" + projectId).accept(MediaType.APPLICATION_JSON));
 		}
 	}
@@ -53,25 +55,24 @@ public class AbectoRestControllerTest {
 				.andExpect(status().isOk()).andExpect(content().json("[]"));
 
 		// return created project
-		JsonNode projectJson = getResultJson(mvc.perform(
+		mvc.perform(
 				MockMvcRequestBuilders.post("/project").param("label", projectLabel).accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk()));
-		assertEquals(projectLabel, projectJson.path("label").asText());
-		String projectId = projectJson.path("id").asText();
+				.andExpect(status().isOk()).andDo(buffer);
+		assertEquals(projectLabel, buffer.getJson().path("label").asText());
+		String projectId = buffer.getId();
 
 		// return selected project
-		projectJson = getResultJson(
-				mvc.perform(MockMvcRequestBuilders.get("/project/" + projectId).accept(MediaType.APPLICATION_JSON))
-						.andExpect(status().isOk()));
-		assertEquals(projectLabel, projectJson.path("label").asText());
-		assertEquals(projectId, projectJson.path("id").asText());
+		mvc.perform(MockMvcRequestBuilders.get("/project/" + projectId).accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andDo(buffer);
+		assertEquals(projectLabel, buffer.getJson().path("label").asText());
+		assertEquals(projectId, buffer.getId());
 
 		// return not empty project list
-		projectJson = getResultJson(
-				mvc.perform(MockMvcRequestBuilders.get("/project").accept(MediaType.APPLICATION_JSON))
-						.andExpect(status().isOk()));
-		assertTrue(projectJson.findValuesAsText("label").contains(projectLabel));
-		assertTrue(projectJson.findValuesAsText("id").contains(projectId));
+
+		mvc.perform(MockMvcRequestBuilders.get("/project").accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andDo(buffer);
+		assertTrue(buffer.getJson().findValuesAsText("label").contains(projectLabel));
+		assertTrue(buffer.getIds().contains(projectId));
 
 		// delete project
 		mvc.perform(MockMvcRequestBuilders.delete("/project/" + projectId).accept(MediaType.APPLICATION_JSON))
@@ -83,13 +84,15 @@ public class AbectoRestControllerTest {
 	}
 
 	private String getNewProject() throws IOException, Exception {
-		return getResultId(mvc.perform(MockMvcRequestBuilders.post("/project").accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk()));
+		mvc.perform(MockMvcRequestBuilders.post("/project").accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andDo(buffer);
+		return buffer.getId();
 	}
 
 	private String getNewKowledgBase() throws IOException, Exception {
-		return getResultId(mvc.perform(MockMvcRequestBuilders.post("/knowledgebase").param("project", getNewProject())
-				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()));
+		mvc.perform(MockMvcRequestBuilders.post("/knowledgebase").param("project", getNewProject())
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
+		return buffer.getId();
 	}
 
 	@Test
@@ -108,34 +111,33 @@ public class AbectoRestControllerTest {
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andExpect(content().json("[]"));
 
 		// return created knowledgeBase
-		JsonNode knowledgeBaseJson = getResultJson(mvc
-				.perform(MockMvcRequestBuilders.post("/knowledgebase").param("project", projectId)
-						.param("label", kowledgBaseLabel).accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk()));
-		assertEquals(kowledgBaseLabel, knowledgeBaseJson.path("label").asText());
-		String knowledgeBaseId = knowledgeBaseJson.path("id").asText();
+		mvc.perform(MockMvcRequestBuilders.post("/knowledgebase").param("project", projectId)
+				.param("label", kowledgBaseLabel).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
+				.andDo(buffer);
+		assertEquals(kowledgBaseLabel, buffer.getJson().path("label").asText());
+		String knowledgeBaseId = buffer.getId();
 
 		// return selected project
-		knowledgeBaseJson = getResultJson(mvc.perform(
-				MockMvcRequestBuilders.get("/knowledgebase/" + knowledgeBaseId).accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk()));
-		assertEquals(kowledgBaseLabel, knowledgeBaseJson.path("label").asText());
-		assertEquals(knowledgeBaseId, knowledgeBaseJson.path("id").asText());
+		mvc.perform(MockMvcRequestBuilders.get("/knowledgebase/" + knowledgeBaseId).accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andDo(buffer);
+		assertEquals(kowledgBaseLabel, buffer.getJson().path("label").asText());
+		assertEquals(knowledgeBaseId, buffer.getId());
 
 		// return not empty project list
-		knowledgeBaseJson = getResultJson(
-				mvc.perform(MockMvcRequestBuilders.get("/knowledgebase").accept(MediaType.APPLICATION_JSON))
-						.andExpect(status().isOk()));
-		assertTrue(knowledgeBaseJson.findValuesAsText("label").contains(kowledgBaseLabel));
-		assertTrue(knowledgeBaseJson.findValuesAsText("projectId").contains(projectId));
-		assertTrue(knowledgeBaseJson.findValuesAsText("id").contains(knowledgeBaseId));
+
+		mvc.perform(MockMvcRequestBuilders.get("/knowledgebase").accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andDo(buffer);
+		assertTrue(buffer.getJson().findValuesAsText("label").contains(kowledgBaseLabel));
+		assertTrue(buffer.getJson().findValuesAsText("projectId").contains(projectId));
+		assertTrue(buffer.getIds().contains(knowledgeBaseId));
 
 		// return not empty knowledgeBase list by project
-		knowledgeBaseJson = getResultJson(mvc.perform(MockMvcRequestBuilders.get("/knowledgebase")
-				.param("project", projectId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()));
-		assertTrue(knowledgeBaseJson.findValuesAsText("label").contains(kowledgBaseLabel));
-		assertTrue(knowledgeBaseJson.findValuesAsText("projectId").contains(projectId));
-		assertTrue(knowledgeBaseJson.findValuesAsText("id").contains(knowledgeBaseId));
+
+		mvc.perform(MockMvcRequestBuilders.get("/knowledgebase").param("project", projectId)
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
+		assertTrue(buffer.getJson().findValuesAsText("label").contains(kowledgBaseLabel));
+		assertTrue(buffer.getJson().findValuesAsText("projectId").contains(projectId));
+		assertTrue(buffer.getIds().contains(knowledgeBaseId));
 
 		// delete project
 		mvc.perform(
@@ -158,25 +160,36 @@ public class AbectoRestControllerTest {
 
 		// use invalid processor class name
 		mvc.perform(MockMvcRequestBuilders.post("/processing").param("class", "Qwert")
-				.param("input",
-						new String[] { "550e8400-e29b-11d4-a716-446655440000", "550e8400-e29b-11d4-a716-446655440001" })
+				.param("input", new String[] { "550e8400-e29b-11d4-a716-446655440000" })
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
 		// create new source
-		// TODO causes error
 		mvc.perform(MockMvcRequestBuilders.post("/source").param("class", "PathSourceProcessor")
-				.param("knowledgebase", kowledgBaseId).accept(MediaType.APPLICATION_JSON)).andDo(print());
+				.param("knowledgebase", kowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
+				.andDo(buffer);
+//		mvc.perform(MockMvcRequestBuilders.post(String.format("/source/%s/parameter", buffer.getId()))
+//				.param("class", "PathSourceProcessor").param("knowledgebase", kowledgBaseId)
+//				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer).andDo(print());
 	}
 
-	public static JsonNode getResultJson(ResultActions resultActions) throws IOException {
-		return JACKSON.readTree(resultActions.andReturn().getResponse().getContentAsByteArray());
-	}
+	private static class ResponseBuffer implements ResultHandler {
 
-	public static String getResultId(ResultActions resultActions) throws IOException {
-		return getResultJson(resultActions).path("id").asText();
-	}
+		byte[] bytes;
 
-	public static List<String> getResultIds(ResultActions resultActions) throws IOException {
-		return getResultJson(resultActions).findValuesAsText("id");
-	}
+		@Override
+		public void handle(MvcResult result) throws Exception {
+			this.bytes = result.getResponse().getContentAsByteArray();
+		}
 
+		public JsonNode getJson() throws IOException {
+			return JACKSON.readTree(bytes);
+		}
+
+		public String getId() throws IOException {
+			return JACKSON.readTree(bytes).path("id").asText();
+		}
+
+		public List<String> getIds() throws IOException {
+			return JACKSON.readTree(bytes).findValuesAsText("id");
+		}
+	}
 }
