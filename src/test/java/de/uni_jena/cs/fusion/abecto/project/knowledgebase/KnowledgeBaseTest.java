@@ -32,7 +32,7 @@ public class KnowledgeBaseTest {
 		KnowledgeBase kb = new KnowledgeBase(p, "label");
 		assertTrue(kb.toString().contains("label"));
 		assertTrue(kb.toString().contains(kb.getId().toString()));
-		assertTrue(kb.toString().contains(p.toString()));
+		assertTrue(kb.toString().contains(p.getId().toString()));
 	}
 
 	@Test
