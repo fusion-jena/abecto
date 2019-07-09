@@ -25,6 +25,8 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
+
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -32,6 +34,8 @@ public class AbectoRestControllerTest {
 
 	@Autowired
 	private MockMvc mvc;
+	@Autowired
+	ProjectRepository projectRepository;
 
 	private final static ObjectMapper JACKSON = new ObjectMapper();
 
@@ -39,11 +43,7 @@ public class AbectoRestControllerTest {
 
 	@After
 	public void cleanup() throws IOException, Exception {
-		mvc.perform(MockMvcRequestBuilders.get("/project").accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk()).andDo(buffer);
-		for (String projectId : buffer.getIds()) {
-			mvc.perform(MockMvcRequestBuilders.delete("/project/" + projectId).accept(MediaType.APPLICATION_JSON));
-		}
+		projectRepository.deleteAll();
 	}
 
 	@Test
