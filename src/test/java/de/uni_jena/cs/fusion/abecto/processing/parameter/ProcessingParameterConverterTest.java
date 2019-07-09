@@ -1,12 +1,12 @@
 package de.uni_jena.cs.fusion.abecto.processing.parameter;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Map;
 import java.util.Map.Entry;
 
 import org.json.JSONException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
 
 public class ProcessingParameterConverterTest {
@@ -25,8 +25,8 @@ public class ProcessingParameterConverterTest {
 		assertEquals(map, actualMap);
 		assertEquals(map.size(), actualMap.size());
 		for (Entry<String, Object> entry : map.entrySet()) {
-			assertEquals("Different values for key \"" + entry.getValue() + "\"", entry.getValue(),
-					actualMap.get(entry.getKey()));
+			assertEquals(entry.getValue(), actualMap.get(entry.getKey()),
+					"Different values for key \"" + entry.getValue() + "\"");
 		}
 	}
 

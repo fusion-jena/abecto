@@ -1,7 +1,7 @@
 package de.uni_jena.cs.fusion.abecto.processor;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
@@ -14,8 +14,8 @@ import java.util.UUID;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import de.uni_jena.cs.fusion.abecto.processor.AbstractMappingProcessor.Mapping;
 import de.uni_jena.cs.fusion.abecto.util.ModelUtils;
@@ -26,7 +26,7 @@ public class JaroWinklerMappingProcessorTest {
 	private static Model FIRST_GRAPH;
 	private static Model SECOND_GRAPH;
 
-	@BeforeClass
+	@BeforeAll
 	public static void setUpBeforeClass() throws Exception {
 		FIRST_GRAPH = ModelUtils.load(new ByteArrayInputStream(("" + //
 				"@base <http://example.org/> .\r\n" + //

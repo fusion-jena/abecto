@@ -7,7 +7,7 @@ import java.util.UUID;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ResourceFactory;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import de.uni_jena.cs.fusion.abecto.util.ModelUtils;
 
