@@ -8,11 +8,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.platform.commons.annotation.Testable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -42,12 +42,14 @@ public class AbectoRestControllerTest {
 
 	private final ResponseBuffer buffer = new ResponseBuffer();
 
+	private final String unknownUuid = UUID.randomUUID().toString();
+
 	@AfterEach
 	public void cleanup() throws IOException, Exception {
 		projectRepository.deleteAll();
 	}
 
-	@Testable
+	@Test
 	public void project() throws Exception {
 		String projectLabel = "project label";
 
@@ -82,6 +84,12 @@ public class AbectoRestControllerTest {
 		// return empty project list
 		mvc.perform(MockMvcRequestBuilders.get("/project").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andExpect(content().json("[]"));
+
+		// use unknown project id
+		mvc.perform(MockMvcRequestBuilders.get("/project/" + unknownUuid).accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isNotFound());
+		mvc.perform(MockMvcRequestBuilders.delete("/project/" + unknownUuid).accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isNotFound());
 	}
 
 	private String getNewProject() throws IOException, Exception {
@@ -118,14 +126,13 @@ public class AbectoRestControllerTest {
 		assertEquals(kowledgBaseLabel, buffer.getJson().path("label").asText());
 		String knowledgeBaseId = buffer.getId();
 
-		// return selected project
+		// return selected knowledgeBase
 		mvc.perform(MockMvcRequestBuilders.get("/knowledgebase/" + knowledgeBaseId).accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(buffer);
 		assertEquals(kowledgBaseLabel, buffer.getJson().path("label").asText());
 		assertEquals(knowledgeBaseId, buffer.getId());
 
-		// return not empty project list
-
+		// return not empty knowledgeBase list
 		mvc.perform(MockMvcRequestBuilders.get("/knowledgebase").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(buffer);
 		assertTrue(buffer.getJson().findValuesAsText("label").contains(kowledgBaseLabel));
@@ -133,14 +140,13 @@ public class AbectoRestControllerTest {
 		assertTrue(buffer.getIds().contains(knowledgeBaseId));
 
 		// return not empty knowledgeBase list by project
-
 		mvc.perform(MockMvcRequestBuilders.get("/knowledgebase").param("project", projectId)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		assertTrue(buffer.getJson().findValuesAsText("label").contains(kowledgBaseLabel));
 		assertTrue(buffer.getJson().findValuesAsText("projectId").contains(projectId));
 		assertTrue(buffer.getIds().contains(knowledgeBaseId));
 
-		// delete project
+		// delete knowledgeBase
 		mvc.perform(
 				MockMvcRequestBuilders.delete("/knowledgebase/" + knowledgeBaseId).accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isNoContent());
@@ -152,6 +158,18 @@ public class AbectoRestControllerTest {
 		// return empty knowledgeBase list by project
 		mvc.perform(MockMvcRequestBuilders.get("/knowledgebase").param("project", projectId)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andExpect(content().json("[]"));
+
+		// use unknown project id
+		mvc.perform(MockMvcRequestBuilders.get("/knowledgebase").param("project", unknownUuid)
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
+		mvc.perform(MockMvcRequestBuilders.post("/knowledgebase").param("project", unknownUuid).param("label", "")
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
+
+		// use unknown knowledgeBase id
+		mvc.perform(MockMvcRequestBuilders.delete("/knowledgebase/" + unknownUuid).accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isNotFound());
+		mvc.perform(MockMvcRequestBuilders.get("/knowledgebase/" + unknownUuid).accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isNotFound());
 	}
 
 	@Test
@@ -159,23 +177,44 @@ public class AbectoRestControllerTest {
 		// create a KowledgBase
 		String kowledgBaseId = getNewKowledgBase();
 
-		// use invalid processor class name
+		// use unknown processor class name
 		mvc.perform(MockMvcRequestBuilders.post("/processing").param("class", "Qwert")
 				.param("input", new String[] { "550e8400-e29b-11d4-a716-446655440000" })
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
+
 		// create new source
 		mvc.perform(MockMvcRequestBuilders.post("/source").param("class", "PathSourceProcessor")
 				.param("knowledgebase", kowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
+
 		// set path parameter
-		String pathValue = "C:\\Users\\admin\\Documents\\Workspace\\unit-ontologies\\qu\\qu-rec20.owl";
+		String pathValue = "C:\\Users\\admin\\Documents\\Workspace\\unit-ontologies\\qu\\qu-rec20.owl"; // TODO replace
 		mvc.perform(MockMvcRequestBuilders.post(String.format("/source/%s/parameter", buffer.getId()))
 				.param("key", "path").param("value", pathValue).accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk());
+
 		// get source
 		mvc.perform(MockMvcRequestBuilders.get(String.format("/source/%s", buffer.getId()))
+				// TODO remove print
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer).andDo(print());
 		assertEquals(pathValue, buffer.getJson().path("parameter").path("path").asText());
+
+		// use unknown knowledgeBase id
+		mvc.perform(MockMvcRequestBuilders.post("/source").param("class", "PathSourceProcessor")
+				.param("knowledgebase", unknownUuid).accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isBadRequest());
+
+		// use unknown processing or source id
+		mvc.perform(MockMvcRequestBuilders.post(String.format("/processing/%s/parameter", unknownUuid))
+				.param("key", "path").param("value", "some value").accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isBadRequest());
+		mvc.perform(MockMvcRequestBuilders.post(String.format("/source/%s/parameter", unknownUuid)).param("key", "path")
+				.param("value", "some value").accept(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
+		mvc.perform(MockMvcRequestBuilders.get(String.format("/processing/%s", unknownUuid))
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isNotFound());
+		mvc.perform(
+				MockMvcRequestBuilders.get(String.format("/source/%s", unknownUuid)).accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isNotFound());
 	}
 
 	private static class ResponseBuffer implements ResultHandler {
