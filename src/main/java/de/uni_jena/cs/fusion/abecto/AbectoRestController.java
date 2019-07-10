@@ -48,8 +48,8 @@ public class AbectoRestController {
 	ProjectRepository projectRepository;
 
 	@PostMapping("/knowledgebase")
-	public KnowledgeBase knowledgeBaseCreate(@RequestParam(value = "project") UUID projectId,
-			@RequestParam(value = "label", defaultValue = "") String label) {
+	public KnowledgeBase knowledgeBaseCreate(@RequestParam(name = "project") UUID projectId,
+			@RequestParam(name = "label", defaultValue = "") String label) {
 		Optional<Project> project = projectRepository.findById(projectId);
 		if (project.isPresent()) {
 			return knowledgeBaseRepository.save(new KnowledgeBase(project.get(), label));
@@ -59,7 +59,7 @@ public class AbectoRestController {
 	}
 
 	@DeleteMapping("/knowledgebase/{uuid}")
-	@ResponseStatus(value = HttpStatus.NO_CONTENT)
+	@ResponseStatus(code = HttpStatus.NO_CONTENT)
 	public void knowledgeBaseDelete(@PathVariable("uuid") UUID uuid) {
 		Optional<KnowledgeBase> knowledgeBase = knowledgeBaseRepository.findById(uuid);
 		if (knowledgeBase.isPresent()) {
@@ -80,8 +80,7 @@ public class AbectoRestController {
 	}
 
 	@GetMapping("/knowledgebase")
-	public Iterable<KnowledgeBase> knowledgeBaseList(
-			@RequestParam(value = "project", required = false) UUID projectId) {
+	public Iterable<KnowledgeBase> knowledgeBaseList(@RequestParam(name = "project", required = false) UUID projectId) {
 		if (projectId != null) {
 			Optional<Project> project = projectRepository.findById(projectId);
 			if (project.isPresent()) {
@@ -95,12 +94,12 @@ public class AbectoRestController {
 	}
 
 	@PostMapping("/project")
-	public Project projectCreate(@RequestParam(value = "label", defaultValue = "") String label) {
+	public Project projectCreate(@RequestParam(name = "label", defaultValue = "") String label) {
 		return projectRepository.save(new Project(label));
 	}
 
 	@DeleteMapping("/project/{uuid}")
-	@ResponseStatus(value = HttpStatus.NO_CONTENT)
+	@ResponseStatus(code = HttpStatus.NO_CONTENT)
 	public void projectDelete(@PathVariable("uuid") UUID uuid) {
 		Optional<Project> project = projectRepository.findById(uuid);
 		if (project.isPresent()) {
@@ -127,8 +126,8 @@ public class AbectoRestController {
 
 	@PostMapping("/source")
 	public ProcessingConfiguration processingConfigurationCreateSource(
-			@RequestParam(value = "class") String processorClassName,
-			@RequestParam(value = "knowledgebase") UUID knowledgebaseId) {
+			@RequestParam(name = "class") String processorClassName,
+			@RequestParam(name = "knowledgebase") UUID knowledgebaseId) {
 
 		Class<SourceProcessor> processorClass = getProcessorClass(processorClassName, SourceProcessor.class);
 
@@ -146,8 +145,8 @@ public class AbectoRestController {
 
 	@PostMapping("/processing")
 	public ProcessingConfiguration processingConfigurationCreateProcessing(
-			@RequestParam(value = "class") String processorClassName,
-			@RequestParam(value = "input") Collection<UUID> configurationIds) {
+			@RequestParam(name = "class") String processorClassName,
+			@RequestParam(name = "input") Collection<UUID> configurationIds) {
 
 		Class<RefinementProcessor> processorClass = getProcessorClass(processorClassName, RefinementProcessor.class);
 
@@ -177,8 +176,8 @@ public class AbectoRestController {
 
 	@PostMapping({ "/source/{configuration}/parameter", "/processing/{configuration}/parameter" })
 	public void processingConfigurationAddParameter(@PathVariable("configuration") UUID configurationId,
-			@RequestParam(value = "key", required = false) String parameterPath,
-			@RequestParam(value = "value", required = false) String parameterValue) {
+			@RequestParam(name = "key", required = false) String parameterPath,
+			@RequestParam(name = "value", required = false) String parameterValue) {
 
 		ProcessingConfiguration configuration = processingConfigurationRepository.findById(configurationId)
 				.orElseThrow(new Supplier<ResponseStatusException>() {
