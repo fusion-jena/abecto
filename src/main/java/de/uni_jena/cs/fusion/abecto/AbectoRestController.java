@@ -48,7 +48,7 @@ public class AbectoRestController {
 	ProjectRepository projectRepository;
 
 	@PostMapping("/knowledgebase")
-	public KnowledgeBase knowledgeBaseCreate(@RequestParam(name = "project") UUID projectId,
+	public KnowledgeBase knowledgeBaseCreate(@RequestParam("project") UUID projectId,
 			@RequestParam(name = "label", defaultValue = "") String label) {
 		Optional<Project> project = projectRepository.findById(projectId);
 		if (project.isPresent()) {
@@ -126,8 +126,8 @@ public class AbectoRestController {
 
 	@PostMapping("/source")
 	public ProcessingConfiguration processingConfigurationCreateSource(
-			@RequestParam(name = "class") String processorClassName,
-			@RequestParam(name = "knowledgebase") UUID knowledgebaseId) {
+			@RequestParam("class") String processorClassName,
+			@RequestParam("knowledgebase") UUID knowledgebaseId) {
 
 		Class<SourceProcessor> processorClass = getProcessorClass(processorClassName, SourceProcessor.class);
 
@@ -145,8 +145,8 @@ public class AbectoRestController {
 
 	@PostMapping("/processing")
 	public ProcessingConfiguration processingConfigurationCreateProcessing(
-			@RequestParam(name = "class") String processorClassName,
-			@RequestParam(name = "input") Collection<UUID> configurationIds) {
+			@RequestParam("class") String processorClassName,
+			@RequestParam("input") Collection<UUID> configurationIds) {
 
 		Class<RefinementProcessor> processorClass = getProcessorClass(processorClassName, RefinementProcessor.class);
 
