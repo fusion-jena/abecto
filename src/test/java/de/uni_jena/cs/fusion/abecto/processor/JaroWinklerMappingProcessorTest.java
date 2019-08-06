@@ -17,7 +17,7 @@ import org.apache.jena.rdf.model.Statement;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import de.uni_jena.cs.fusion.abecto.processor.AbstractMappingProcessor.Mapping;
+import de.uni_jena.cs.fusion.abecto.processor.api.AbstractMappingProcessor.Mapping;
 import de.uni_jena.cs.fusion.abecto.util.ModelUtils;
 import de.uni_jena.cs.fusion.abecto.util.Vocabulary;
 

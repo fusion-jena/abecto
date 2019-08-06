@@ -1,5 +1,6 @@
 package de.uni_jena.cs.fusion.abecto;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Optional;
@@ -21,13 +22,15 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfiguration;
 import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfigurationRepository;
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameter;
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameterRepository;
-import de.uni_jena.cs.fusion.abecto.processor.Processor;
-import de.uni_jena.cs.fusion.abecto.processor.RefinementProcessor;
-import de.uni_jena.cs.fusion.abecto.processor.SourceProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.api.Processor;
+import de.uni_jena.cs.fusion.abecto.processor.api.RefinementProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.api.SourceProcessor;
 import de.uni_jena.cs.fusion.abecto.project.Project;
 import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
 import de.uni_jena.cs.fusion.abecto.project.knowledgebase.KnowledgeBase;
@@ -37,6 +40,7 @@ import de.uni_jena.cs.fusion.abecto.project.knowledgebase.KnowledgeBaseRepositor
 @Transactional
 public class AbectoRestController {
 	private static final Logger log = LoggerFactory.getLogger(Abecto.class);
+	private static final ObjectMapper JSON = new ObjectMapper();
 
 	@Autowired
 	KnowledgeBaseRepository knowledgeBaseRepository;
@@ -125,11 +129,11 @@ public class AbectoRestController {
 	}
 
 	@PostMapping("/source")
-	public ProcessingConfiguration processingConfigurationCreateSource(
-			@RequestParam("class") String processorClassName,
-			@RequestParam("knowledgebase") UUID knowledgebaseId) {
+	public ProcessingConfiguration processingConfigurationCreateForSource(
+			@RequestParam("class") String processorClassName, @RequestParam("knowledgebase") UUID knowledgebaseId) {
 
-		Class<SourceProcessor> processorClass = getProcessorClass(processorClassName, SourceProcessor.class);
+		@SuppressWarnings("rawtypes")
+		Class<? extends SourceProcessor> processorClass = getProcessorClass(processorClassName, SourceProcessor.class);
 
 		KnowledgeBase knowledgeBase = knowledgeBaseRepository.findById(knowledgebaseId)
 				.orElseThrow(new Supplier<ResponseStatusException>() {
@@ -143,11 +147,19 @@ public class AbectoRestController {
 				processingParameterRepository.save(new ProcessingParameter()), knowledgeBase));
 	}
 
+	/**
+	 * Creates a new Refinement Processor Node in the processing pipeline.
+	 * 
+	 * @param processorClassName
+	 * @param configurationIds
+	 * @return
+	 */
 	@PostMapping("/processing")
-	public ProcessingConfiguration processingConfigurationCreateProcessing(
+	public ProcessingConfiguration processingConfigurationCreateForProcessing(
 			@RequestParam("class") String processorClassName,
 			@RequestParam("input") Collection<UUID> configurationIds) {
 
+		@SuppressWarnings("rawtypes")
 		Class<RefinementProcessor> processorClass = getProcessorClass(processorClassName, RefinementProcessor.class);
 
 		for (UUID configurationId : configurationIds) {
@@ -187,24 +199,39 @@ public class AbectoRestController {
 					}
 				});
 
-		if (configuration.getProcessingParameter().containsKey(parameterPath)) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Parameter already set.");
-		} else {
-			try {
-				// copy parameter
-				ProcessingParameter newParameter = configuration.getProcessingParameter().copy();
-				// update parameter
-				newParameter.put(parameterPath, parameterValue);
-				// update configuration
-				configuration.setParameter(newParameter);
-				// persist changes
-				processingConfigurationRepository.save(configuration);
-				processingParameterRepository.save(newParameter);
-			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-					| InvocationTargetException | NoSuchMethodException | SecurityException e) {
-				log.error("Failed to copy ProcessingParameter.", e);
-				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to copy parameter.");
+		try {
+			if (configuration.getProcessingParameter().containsKey(parameterPath)) {
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Parameter already set.");
+			} else {
+				try {
+					// copy parameters
+					ProcessingParameter newParameter = configuration.getProcessingParameter().copy();
+					// get type of changed parameter
+					Class<?> type = newParameter.getType(parameterPath);
+					try {
+						// pares new value
+						Object value = JSON.readValue(parameterValue, type);
+						// update parameters
+						newParameter.put(parameterPath, value);
+					} catch (IOException e) {
+						log.error("Failed to parse input value.", e);
+						throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+								String.format("Failed to pares value of type \"%s\".", type));
+					}
+					// update configuration
+					configuration.setParameter(newParameter);
+					// persist changes
+					processingConfigurationRepository.save(configuration);
+					processingParameterRepository.save(newParameter);
+				} catch (SecurityException | InstantiationException | IllegalArgumentException
+						| InvocationTargetException | NoSuchMethodException e) {
+					log.error("Failed to copy ProcessingParameter.", e);
+					throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to copy parameters.");
+				}
 			}
+		} catch (IllegalAccessException | NoSuchFieldException | SecurityException e) {
+			log.error("Failed to check parameter status.", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to check parameter status.");
 		}
 	}
 
@@ -220,7 +247,7 @@ public class AbectoRestController {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T extends Processor> Class<T> getProcessorClass(String processorClassName, Class<T> processorInterface)
+	private <T extends Processor<?>> Class<T> getProcessorClass(String processorClassName, Class<T> processorInterface)
 			throws ResponseStatusException {
 		try {
 			if (!processorClassName.contains(".")) {

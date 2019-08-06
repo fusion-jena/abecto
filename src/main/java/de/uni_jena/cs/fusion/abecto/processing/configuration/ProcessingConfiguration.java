@@ -3,7 +3,6 @@ package de.uni_jena.cs.fusion.abecto.processing.configuration;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
@@ -18,12 +17,12 @@ import javax.persistence.OneToOne;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameter;
-import de.uni_jena.cs.fusion.abecto.processor.MappingProcessor;
-import de.uni_jena.cs.fusion.abecto.processor.MetaProcessor;
-import de.uni_jena.cs.fusion.abecto.processor.Processor;
-import de.uni_jena.cs.fusion.abecto.processor.RefinementProcessor;
-import de.uni_jena.cs.fusion.abecto.processor.SourceProcessor;
-import de.uni_jena.cs.fusion.abecto.processor.TransformationProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.api.MappingProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.api.MetaProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.api.Processor;
+import de.uni_jena.cs.fusion.abecto.processor.api.RefinementProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.api.SourceProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.api.TransformationProcessor;
 import de.uni_jena.cs.fusion.abecto.project.Project;
 import de.uni_jena.cs.fusion.abecto.project.knowledgebase.KnowledgeBase;
 import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
@@ -50,6 +49,7 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 	protected ProcessingParameter currentParameter;
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "configuration", cascade = CascadeType.REMOVE)
 	protected List<ProcessingParameter> parameter;
+	@SuppressWarnings("rawtypes")
 	protected Class<? extends Processor> processor;
 
 	protected ProcessingConfiguration() {}
@@ -61,10 +61,10 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 	 * @param inputProcessingConfigurations The {@link ProcessingConfiguration}s
 	 *                                      whose result to use as input.
 	 */
-	public ProcessingConfiguration(Class<? extends RefinementProcessor> processor, ProcessingParameter parameter,
+	public ProcessingConfiguration(@SuppressWarnings("rawtypes") Class<? extends RefinementProcessor> processor, ProcessingParameter parameter,
 			Iterable<ProcessingConfiguration> inputProcessingConfigurations)
 			throws NoSuchElementException, IllegalArgumentException, IllegalStateException {
-		this(parameter, processor);
+		this(processor, parameter);
 
 		// add associations between ProcessingConfigurations
 		for (ProcessingConfiguration inputProcessingConfiguration : inputProcessingConfigurations) {
@@ -88,9 +88,9 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 	 * @param knowledgeBaseModule The {@link KnowledgeBaseModule} to assign the
 	 *                            configuration to.
 	 */
-	public ProcessingConfiguration(Class<? extends SourceProcessor> processor, ProcessingParameter parameter,
+	public ProcessingConfiguration(@SuppressWarnings("rawtypes") Class<? extends SourceProcessor> processor, ProcessingParameter parameter,
 			KnowledgeBase knowledgeBase) {
-		this(parameter, processor);
+		this(processor, parameter);
 		this.knowledgeBase = knowledgeBase;
 		this.project = knowledgeBase.getProject();
 	}
@@ -102,7 +102,7 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 	 * @param parameter
 	 * @param processor
 	 */
-	protected ProcessingConfiguration(ProcessingParameter parameter, Class<? extends Processor> processor) {
+	protected ProcessingConfiguration(@SuppressWarnings("rawtypes") Class<? extends Processor> processor, ProcessingParameter parameter) {
 		this.currentParameter = parameter;
 		this.processor = processor;
 	}
@@ -131,10 +131,7 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 		return this.currentParameter;
 	}
 
-	public Map<String, Object> getParameter() {
-		return this.currentParameter.getMap();
-	}
-
+	@SuppressWarnings("rawtypes")
 	public Class<? extends Processor> getProcessorClass() {
 		return this.processor;
 	}

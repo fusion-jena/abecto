@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.processor;
+package de.uni_jena.cs.fusion.abecto.processor.api;
 
 import java.util.Collection;
 import java.util.Map;
@@ -13,7 +13,7 @@ import org.apache.jena.rdf.model.Model;
  * {@link #setParameters(Map)}.
  * @param <P> Parameter Model Type
  */
-public interface Processor<P> extends Callable<Model> {
+public interface Processor<P extends ProcessorParameters> extends Callable<Model> {
 
 	/**
 	 * {@link Status} of the {@link Processor}
@@ -118,9 +118,9 @@ public interface Processor<P> extends Callable<Model> {
 	 * Set the parameters for this processor. Earlier parameter configurations will
 	 * be overwritten.
 	 * 
-	 * @param parameters {@link Map} of parameter keys and parameter values.
+	 * @param parameters TODO
 	 */
-	public void setParameters(P parameters);
+	public void setParameters(ProcessorParameters parameters);
 
 	/**
 	 * Set the result {@link Model} for this {@link Processor}.

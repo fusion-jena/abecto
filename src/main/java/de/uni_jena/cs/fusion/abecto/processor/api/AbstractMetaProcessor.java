@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.processor;
+package de.uni_jena.cs.fusion.abecto.processor.api;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -8,7 +8,7 @@ import java.util.UUID;
 
 import org.apache.jena.rdf.model.Model;
 
-public abstract class AbstractMetaProcessor<P> extends AbstractRefinementProcessor<P> implements MetaProcessor<P> {
+public abstract class AbstractMetaProcessor<P extends ProcessorParameters> extends AbstractRefinementProcessor<P> implements MetaProcessor<P> {
 
 	@Override
 	public Map<UUID, Collection<Model>> getDataModels() {

@@ -1,10 +1,10 @@
-package de.uni_jena.cs.fusion.abecto.processor;
+package de.uni_jena.cs.fusion.abecto.processor.api;
 
 import java.util.Objects;
 
 import org.apache.jena.rdf.model.Model;
 
-public abstract class AbstractProcessor<P> implements Processor<P> {
+public abstract class AbstractProcessor<P extends ProcessorParameters> implements Processor<P> {
 
 	private Model resultModel;
 
@@ -97,8 +97,9 @@ public abstract class AbstractProcessor<P> implements Processor<P> {
 	protected abstract void prepare() throws Exception;
 
 	@Override
-	public void setParameters(P parameters) {
-		this.parameters = parameters;
+	@SuppressWarnings("unchecked")
+	public void setParameters(ProcessorParameters parameters) {
+		this.parameters = (P) parameters;
 	}
 
 	@Override

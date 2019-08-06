@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.processor;
+package de.uni_jena.cs.fusion.abecto.processor.api;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -8,7 +8,7 @@ import java.util.UUID;
 
 import org.apache.jena.rdf.model.Model;
 
-public abstract class AbstractTransformationProcessor<P> extends AbstractRefinementProcessor<P>
+public abstract class AbstractTransformationProcessor<P extends ProcessorParameters> extends AbstractRefinementProcessor<P>
 		implements TransformationProcessor<P> {
 
 	@Override

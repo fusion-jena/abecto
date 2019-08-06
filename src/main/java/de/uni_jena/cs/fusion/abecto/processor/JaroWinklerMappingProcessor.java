@@ -16,6 +16,7 @@ import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.vocabulary.RDFS;
 
+import de.uni_jena.cs.fusion.abecto.processor.api.AbstractMappingProcessor;
 import de.uni_jena.cs.fusion.similarity.jarowinkler.JaroWinklerSimilarity;
 
 public class JaroWinklerMappingProcessor extends AbstractMappingProcessor<JaroWinklerMappingProcessorParameter> {
@@ -43,7 +44,7 @@ public class JaroWinklerMappingProcessor extends AbstractMappingProcessor<JaroWi
 	}
 
 	@Override
-	protected Collection<Mapping> computeMapping(Model firstModel, Model secondModel) {
+	public Collection<Mapping> computeMapping(Model firstModel, Model secondModel) {
 
 		// get parameters
 		JaroWinklerMappingProcessorParameter parameters = this.getParameters();

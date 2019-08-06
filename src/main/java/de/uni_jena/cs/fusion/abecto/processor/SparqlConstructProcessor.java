@@ -6,6 +6,8 @@ import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Model;
 
+import de.uni_jena.cs.fusion.abecto.processor.api.AbstractTransformationProcessor;
+
 public class SparqlConstructProcessor extends AbstractTransformationProcessor<SparqlConstructProcessorParameter> {
 
 	@Override

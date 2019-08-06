@@ -2,6 +2,8 @@ package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.io.InputStream;
 
-public class StreamSourceProcessorParameter {
+import de.uni_jena.cs.fusion.abecto.processor.api.ProcessorParameters;
+
+public class StreamSourceProcessorParameter implements ProcessorParameters {
 	InputStream stream;
 }

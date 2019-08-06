@@ -21,9 +21,9 @@ import org.apache.jena.rdf.model.Model;
 
 import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfiguration;
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameter;
-import de.uni_jena.cs.fusion.abecto.processor.Processor;
-import de.uni_jena.cs.fusion.abecto.processor.SourceProcessor;
-import de.uni_jena.cs.fusion.abecto.processor.Processor.Status;
+import de.uni_jena.cs.fusion.abecto.processor.api.Processor;
+import de.uni_jena.cs.fusion.abecto.processor.api.SourceProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.api.Processor.Status;
 import de.uni_jena.cs.fusion.abecto.rdfModel.RdfModel;
 import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
 
@@ -46,6 +46,7 @@ public class Processing extends AbstractEntityWithUUID {
 	/**
 	 * {@link Processor} used to produce the result {@link RdfModel}.
 	 */
+	@SuppressWarnings("rawtypes")
 	private Class<? extends Processor> processor;
 	/**
 	 * {@link ProcessingParameter} used to produce the result {@link RdfModel}.
@@ -101,6 +102,7 @@ public class Processing extends AbstractEntityWithUUID {
 		return this.parameter;
 	}
 
+	@SuppressWarnings("rawtypes")
 	public Class<? extends Processor> getProcessorClass() {
 		return this.processor;
 	}
@@ -117,11 +119,11 @@ public class Processing extends AbstractEntityWithUUID {
 	 * @throws NoSuchMethodException
 	 * @throws SecurityException
 	 */
-	public Processor getProcessorInsance() throws InstantiationException, IllegalAccessException,
+	public Processor<?> getProcessorInsance() throws InstantiationException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
-		Processor processor = this.processor.getDeclaredConstructor().newInstance();
+		Processor<?> processor = this.processor.getDeclaredConstructor().newInstance();
 		if (processor instanceof SourceProcessor) {
-			((SourceProcessor) processor).setKnowledgBase(this.configuration.getKnowledgeBase().getId());
+			((SourceProcessor<?>) processor).setKnowledgBase(this.configuration.getKnowledgeBase().getId());
 		}
 		processor.setStatus(this.status);
 		if (this.isSucceeded()) {

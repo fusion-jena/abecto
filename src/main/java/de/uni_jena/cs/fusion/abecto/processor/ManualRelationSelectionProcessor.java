@@ -25,6 +25,7 @@ import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.Template;
 import org.slf4j.LoggerFactory;
 
+import de.uni_jena.cs.fusion.abecto.processor.api.AbstractMetaProcessor;
 import de.uni_jena.cs.fusion.abecto.util.SparqlUtil;
 import de.uni_jena.cs.fusion.abecto.util.Vocabulary;
 

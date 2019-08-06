@@ -2,6 +2,8 @@ package de.uni_jena.cs.fusion.abecto.processor;
 
 import org.apache.jena.rdf.model.Model;
 
+import de.uni_jena.cs.fusion.abecto.processor.api.AbstractMetaProcessor;
+
 public class CountByCategoryAndRelationProcessor extends AbstractMetaProcessor<CountByCategoryAndRelationProcessorParameter> {
 
 	// TODO black- or whitelist

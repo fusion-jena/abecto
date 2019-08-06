@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.processor;
+package de.uni_jena.cs.fusion.abecto.processor.api;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -7,7 +7,7 @@ import java.util.UUID;
 
 import org.apache.jena.rdf.model.Model;
 
-public abstract class AbstractSourceProcessor<P> extends AbstractProcessor<P> implements SourceProcessor<P> {
+public abstract class AbstractSourceProcessor<P extends ProcessorParameters> extends AbstractProcessor<P> implements SourceProcessor<P> {
 
 	protected UUID knowledgBase;
 

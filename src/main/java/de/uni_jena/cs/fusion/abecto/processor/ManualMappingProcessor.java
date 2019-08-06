@@ -7,10 +7,12 @@ import java.util.HashSet;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ResourceFactory;
 
+import de.uni_jena.cs.fusion.abecto.processor.api.AbstractMappingProcessor;
+
 public class ManualMappingProcessor extends AbstractMappingProcessor<ManualMappingProcessorParameter> {
 
 	@Override
-	protected Collection<Mapping> computeMapping(Model firstModel, Model secondModel) {
+	public Collection<Mapping> computeMapping(Model firstModel, Model secondModel) {
 		Collection<Mapping> mappings = new HashSet<>();
 
 		for (Collection<String> allEquivalent : this.getParameters().mappings.orElse(Collections.emptyList())) {

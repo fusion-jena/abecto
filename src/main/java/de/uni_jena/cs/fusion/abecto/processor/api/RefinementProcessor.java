@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.processor;
+package de.uni_jena.cs.fusion.abecto.processor.api;
 
 import java.util.Collection;
 import java.util.Map;
@@ -7,7 +7,7 @@ import java.util.UUID;
 
 import org.apache.jena.rdf.model.Model;
 
-public interface RefinementProcessor<P> extends Processor<P> {
+public interface RefinementProcessor<P extends ProcessorParameters> extends Processor<P> {
 
 	/**
 	 * Add a {@link Model} to process.

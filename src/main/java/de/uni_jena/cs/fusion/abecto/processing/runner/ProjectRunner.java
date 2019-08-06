@@ -17,8 +17,8 @@ import de.uni_jena.cs.fusion.abecto.processing.ProcessingException;
 import de.uni_jena.cs.fusion.abecto.processing.ProcessingRepository;
 import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfiguration;
 import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfigurationRepository;
-import de.uni_jena.cs.fusion.abecto.processor.Processor;
-import de.uni_jena.cs.fusion.abecto.processor.RefinementProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.api.Processor;
+import de.uni_jena.cs.fusion.abecto.processor.api.RefinementProcessor;
 import de.uni_jena.cs.fusion.abecto.project.Project;
 import de.uni_jena.cs.fusion.abecto.rdfModel.RdfModelRepository;
 
@@ -77,15 +77,15 @@ public class ProjectRunner {
 			// save processings
 			this.processingRepository.saveAll(processingsMap.values());
 
-			Map<ProcessingConfiguration, Processor> processorsMap = new HashMap<>();
+			Map<ProcessingConfiguration, Processor<?>> processorsMap = new HashMap<>();
 
 			log.info("initialize processors for not startet processings");
-			// initialize processors for not startet processings
+			// initialize processors for not started processings
 			for (ProcessingConfiguration configuration : configurations) {
 				Processing processing = processingsMap.get(configuration);
 				try {
-					Processor processor = processing.getProcessorInsance();
-					processor.setParameters(configuration.getProcessingParameter().getMap());
+					Processor<?> processor = processing.getProcessorInsance();
+					processor.setParameters(configuration.getProcessingParameter().getParameters());
 					processorsMap.put(configuration, processor);
 				} catch (Throwable t) {
 					if (processing.isNotStarted()) {
@@ -98,10 +98,10 @@ public class ProjectRunner {
 			log.info("add dependent processors or input graphs to processors");
 			// add dependent processors
 			for (ProcessingConfiguration configuration : processorsMap.keySet()) {
-				Processor processor = processorsMap.get(configuration);
+				Processor<?> processor = processorsMap.get(configuration);
 				for (ProcessingConfiguration inputConfiguration : configuration.getInputProcessingConfigurations()) {
 					if (processor instanceof RefinementProcessor) {
-						((RefinementProcessor) processor).addInputProcessor(processorsMap.get(inputConfiguration));
+						((RefinementProcessor<?>) processor).addInputProcessor(processorsMap.get(inputConfiguration));
 					}
 				}
 			}

@@ -1,5 +1,7 @@
 package de.uni_jena.cs.fusion.abecto.processor;
 
-public class SparqlConstructProcessorParameter {
+import de.uni_jena.cs.fusion.abecto.processor.api.ProcessorParameters;
+
+public class SparqlConstructProcessorParameter implements ProcessorParameters {
 	String query;
 }

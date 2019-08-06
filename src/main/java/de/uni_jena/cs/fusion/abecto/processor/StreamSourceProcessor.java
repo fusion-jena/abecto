@@ -4,6 +4,7 @@ import java.io.InputStream;
 
 import org.apache.jena.rdf.model.Model;
 
+import de.uni_jena.cs.fusion.abecto.processor.api.AbstractSourceProcessor;
 import de.uni_jena.cs.fusion.abecto.util.ModelUtils;
 
 public class StreamSourceProcessor extends AbstractSourceProcessor<StreamSourceProcessorParameter> {

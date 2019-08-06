@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.processor;
+package de.uni_jena.cs.fusion.abecto.processor.api;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -15,10 +15,10 @@ import org.apache.jena.rdf.model.Statement;
 
 import de.uni_jena.cs.fusion.abecto.util.Vocabulary;
 
-public abstract class AbstractMappingProcessor<P> extends AbstractMetaProcessor<P> implements MappingProcessor<P> {
+public abstract class AbstractMappingProcessor<P extends ProcessorParameters> extends AbstractMetaProcessor<P> implements MappingProcessor<P> {
 
 	@Override
-	protected Model computeResultModel() {
+	public Model computeResultModel() {
 		// collect known mappings
 		Collection<Mapping> knownMappings = new HashSet<>();
 		Iterator<Statement> knownMappingsIterator = this.metaModel.listStatements(null, Vocabulary.MAPPING,
@@ -67,9 +67,9 @@ public abstract class AbstractMappingProcessor<P> extends AbstractMetaProcessor<
 	 * @param secondModel second model to process
 	 * @return computed mapping
 	 */
-	protected abstract Collection<Mapping> computeMapping(Model firstModel, Model secondModel);
+	public abstract Collection<Mapping> computeMapping(Model firstModel, Model secondModel);
 
-	protected final static class Mapping {
+	public final static class Mapping {
 		public final Resource first;
 		public final Resource second;
 		public final boolean isAntiMapping;

@@ -1,35 +1,50 @@
 package de.uni_jena.cs.fusion.abecto.processing.parameter;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.io.StringWriter;
 
 import javax.persistence.AttributeConverter;
+import javax.persistence.Converter;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class ProcessingParameterConverter implements AttributeConverter<Map<String, Object>, String> {
+import de.uni_jena.cs.fusion.abecto.processor.api.ProcessorParameters;
 
-	private final static ObjectMapper objectMapper = new ObjectMapper();
+@Converter
+public class ProcessingParameterConverter implements AttributeConverter<ProcessorParameters, String> {
 
-	@Override
-	public String convertToDatabaseColumn(Map<String, Object> attribute) {
-		try {
-			return objectMapper.writeValueAsString(attribute);
-		} catch (JsonProcessingException e) {
-			throw new IllegalArgumentException("Failed to convert Map to JSON.", e);
-		}
-	}
+	private final static ObjectMapper JSON = new ObjectMapper();
+	protected final static char SEPARATOR = ':';
 
 	@Override
-	public Map<String, Object> convertToEntityAttribute(String dbData) {
+	public String convertToDatabaseColumn(ProcessorParameters parametersObject) {
+		StringWriter writer = new StringWriter();
+		// append parameter object class name
+		writer.append(parametersObject.getClass().getName());
+		// append separator
+		writer.append(SEPARATOR);
+		// append parameter JSON
 		try {
-			return objectMapper.readValue(dbData, new TypeReference<HashMap<String, Object>>() {});
+			JSON.writeValue(writer, parametersObject);
 		} catch (IOException e) {
-			throw new IllegalArgumentException("Failed to convert JSON to Map.", e);
+			throw new RuntimeException("Failed to serialize parameters to JSON.", e);
 		}
+		return writer.toString();
 	}
 
+	@Override
+	public ProcessorParameters convertToEntityAttribute(String dbData) {
+		// split attribute into class name and JSON
+		int separatorIndex = dbData.indexOf(SEPARATOR);
+		String parameterObjectClassName = dbData.substring(0, separatorIndex);
+		String parameterJSON = dbData.substring(separatorIndex + 1);
+		try {
+			@SuppressWarnings("unchecked")
+			Class<? extends ProcessorParameters> parameterObejctClass = (Class<? extends ProcessorParameters>) Class
+					.forName(parameterObjectClassName);
+			return JSON.readValue(parameterJSON, parameterObejctClass);
+		} catch (ClassNotFoundException | IOException e) {
+			throw new RuntimeException("Failed to deserialize JSON to parameters.", e);
+		}
+	}
 }

@@ -4,9 +4,10 @@ import org.apache.jena.rdf.model.InfModel;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 
+import de.uni_jena.cs.fusion.abecto.processor.api.AbstractTransformationProcessor;
 import openllet.jena.PelletReasoner;
 
-public class OpenlletReasoningProcessor extends AbstractTransformationProcessor<WithoutParameter> {
+public class OpenlletReasoningProcessor extends AbstractTransformationProcessor<WithoutParameters> {
 	
 	@Override
 	public Model computeResultModel() {
@@ -21,8 +22,8 @@ public class OpenlletReasoningProcessor extends AbstractTransformationProcessor<
 	}
 
 	@Override
-	public Class<WithoutParameter> getParameterModel() {
-		return WithoutParameter.class;
+	public Class<WithoutParameters> getParameterModel() {
+		return WithoutParameters.class;
 	}
 
 }
