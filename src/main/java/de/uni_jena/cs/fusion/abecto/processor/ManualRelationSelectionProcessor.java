@@ -5,7 +5,6 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.apache.commons.lang3.reflect.TypeLiteral;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -29,14 +28,7 @@ import org.slf4j.LoggerFactory;
 import de.uni_jena.cs.fusion.abecto.util.SparqlUtil;
 import de.uni_jena.cs.fusion.abecto.util.Vocabulary;
 
-public class ManualRelationSelectionProcessor extends AbstractMetaProcessor {
-
-	private static final TypeLiteral<Map<String, String>> parameterTypeLiteral = new TypeLiteral<>() {};
-
-	@Override
-	public Map<String, TypeLiteral<?>> getPropertyTypes() {
-		return Map.of("relations", parameterTypeLiteral, "suppressed_relations", parameterTypeLiteral);
-	}
+public class ManualRelationSelectionProcessor extends AbstractMetaProcessor<ManualRelationSelectionProcessorParameter> {
 
 	@Override
 	protected Model computeResultModel() throws Exception {
@@ -71,8 +63,7 @@ public class ManualRelationSelectionProcessor extends AbstractMetaProcessor {
 		values.add(enabledVar);
 		pattern.addElement(values);
 
-		Optional<Map<String, String>> categoriesParameterOptional = this.getOptionalParameter("relations",
-				parameterTypeLiteral);
+		Optional<Map<String, String>> categoriesParameterOptional = this.getParameters().relations;
 		if (categoriesParameterOptional.isPresent()) {
 			for (Entry<String, String> categoryEntry : categoriesParameterOptional.orElseThrow().entrySet()) {
 				String categoryName = categoryEntry.getKey();
@@ -89,7 +80,7 @@ public class ManualRelationSelectionProcessor extends AbstractMetaProcessor {
 		}
 
 		Optional<Map<String, String>> suppressedCategoriesParameterOptional = this
-				.getOptionalParameter("suppressed-relations", parameterTypeLiteral);
+				.getParameters().suppressed_relations;
 		if (suppressedCategoriesParameterOptional.isPresent()) {
 			for (Entry<String, String> categoryEntry : suppressedCategoriesParameterOptional.orElseThrow().entrySet()) {
 				String categoryName = categoryEntry.getKey();
@@ -112,6 +103,11 @@ public class ManualRelationSelectionProcessor extends AbstractMetaProcessor {
 
 		// execute and return result
 		return queryExecution.execConstruct();
+	}
+
+	@Override
+	public Class<ManualRelationSelectionProcessorParameter> getParameterModel() {
+		return ManualRelationSelectionProcessorParameter.class;
 	}
 
 }

@@ -22,7 +22,7 @@ public class ProcessorRunner {
 	RdfModelRepository rdfModelRepository;
 
 	@Async
-	public void execute(Processing processing, Processor processor) {
+	public void execute(Processing processing, Processor<?> processor) {
 		Logger log = LoggerFactory.getLogger(this.getClass());
 		try {
 			log.info("Running processor " + processor);

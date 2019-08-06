@@ -1,17 +1,10 @@
 package de.uni_jena.cs.fusion.abecto.processor;
 
-import java.util.Map;
-
-import org.apache.commons.lang3.reflect.TypeLiteral;
 import org.apache.jena.rdf.model.Model;
 
-public class CountByCategoryAndRelationProcessor extends AbstractMetaProcessor {
+public class CountByCategoryAndRelationProcessor extends AbstractMetaProcessor<CountByCategoryAndRelationProcessorParameter> {
 
-	@Override
-	public Map<String, TypeLiteral<?>> getPropertyTypes() {
-		// TODO black- or whitelist
-		return null;
-	}
+	// TODO black- or whitelist
 
 	@Override
 	protected Model computeResultModel() throws Exception {
@@ -19,6 +12,11 @@ public class CountByCategoryAndRelationProcessor extends AbstractMetaProcessor {
 		// TODO get category IRIs per KB
 		// TODO construct model containing count per relation path, IRI and KB
 		return null;
+	}
+
+	@Override
+	public Class<CountByCategoryAndRelationProcessorParameter> getParameterModel() {
+		return CountByCategoryAndRelationProcessorParameter.class;
 	}
 
 }

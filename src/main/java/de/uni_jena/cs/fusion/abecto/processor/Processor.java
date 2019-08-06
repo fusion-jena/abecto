@@ -5,15 +5,15 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 
-import org.apache.commons.lang3.reflect.TypeLiteral;
 import org.apache.jena.graph.compose.MultiUnion;
 import org.apache.jena.rdf.model.Model;
 
 /**
  * A task that returns a new {@link Model} based on given properties using
  * {@link #setParameters(Map)}.
+ * @param <P> Parameter Model Type
  */
-public interface Processor extends Callable<Model> {
+public interface Processor<P> extends Callable<Model> {
 
 	/**
 	 * {@link Status} of the {@link Processor}
@@ -59,12 +59,18 @@ public interface Processor extends Callable<Model> {
 	public Collection<Model> getMetaModel();
 
 	/**
-	 * Returns a map of allowed properties for this processor and the required data
-	 * type of the parameter
+	 * Returns the parameter model class of this processor.
 	 * 
-	 * @return Map of allowed properties and the required data type.
+	 * @return Parameter model class of this processor.
 	 */
-	public Map<String, TypeLiteral<?>> getPropertyTypes();
+	public Class<P> getParameterModel();
+
+	/**
+	 * Returns the parameters of this processor.
+	 *  
+	 * @return Parameters of this processor.
+	 */
+	public P getParameters();
 
 	/**
 	 * Returns the result {@link Model} produced by this {@link Processor}. The
@@ -114,7 +120,7 @@ public interface Processor extends Callable<Model> {
 	 * 
 	 * @param parameters {@link Map} of parameter keys and parameter values.
 	 */
-	public void setParameters(Map<String, Object> parameters);
+	public void setParameters(P parameters);
 
 	/**
 	 * Set the result {@link Model} for this {@link Processor}.

@@ -2,7 +2,7 @@ package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.util.UUID;
 
-public interface SourceProcessor extends Processor {
+public interface SourceProcessor<P> extends Processor<P> {
 	
 	/**
 	 * @param uuid {@link UUID} of the knowledge base

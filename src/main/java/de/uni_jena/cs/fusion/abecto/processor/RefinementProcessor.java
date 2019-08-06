@@ -7,7 +7,7 @@ import java.util.UUID;
 
 import org.apache.jena.rdf.model.Model;
 
-public interface RefinementProcessor extends Processor {
+public interface RefinementProcessor<P> extends Processor<P> {
 
 	/**
 	 * Add a {@link Model} to process.
@@ -32,7 +32,7 @@ public interface RefinementProcessor extends Processor {
 	 * 
 	 * @param processor {@link Processor} this {@link Processor} depends on
 	 */
-	public void addInputProcessor(Processor processor);
+	public void addInputProcessor(Processor<?> processor);
 
 	/**
 	 * Add the previous meta {@link Model}.

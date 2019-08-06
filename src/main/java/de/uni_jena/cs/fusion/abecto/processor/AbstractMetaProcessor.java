@@ -8,7 +8,7 @@ import java.util.UUID;
 
 import org.apache.jena.rdf.model.Model;
 
-public abstract class AbstractMetaProcessor extends AbstractRefinementProcessor implements MetaProcessor {
+public abstract class AbstractMetaProcessor<P> extends AbstractRefinementProcessor<P> implements MetaProcessor<P> {
 
 	@Override
 	public Map<UUID, Collection<Model>> getDataModels() {

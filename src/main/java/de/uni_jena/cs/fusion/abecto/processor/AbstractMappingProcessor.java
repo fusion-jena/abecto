@@ -15,7 +15,7 @@ import org.apache.jena.rdf.model.Statement;
 
 import de.uni_jena.cs.fusion.abecto.util.Vocabulary;
 
-public abstract class AbstractMappingProcessor extends AbstractMetaProcessor implements MappingProcessor {
+public abstract class AbstractMappingProcessor<P> extends AbstractMetaProcessor<P> implements MappingProcessor<P> {
 
 	@Override
 	protected Model computeResultModel() {

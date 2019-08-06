@@ -8,8 +8,8 @@ import java.util.UUID;
 
 import org.apache.jena.rdf.model.Model;
 
-public abstract class AbstractTransformationProcessor extends AbstractRefinementProcessor
-		implements TransformationProcessor {
+public abstract class AbstractTransformationProcessor<P> extends AbstractRefinementProcessor<P>
+		implements TransformationProcessor<P> {
 
 	@Override
 	public Map<UUID, Collection<Model>> getDataModels() {

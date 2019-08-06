@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.commons.lang3.reflect.TypeLiteral;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
@@ -19,14 +18,13 @@ import org.apache.jena.vocabulary.RDFS;
 
 import de.uni_jena.cs.fusion.similarity.jarowinkler.JaroWinklerSimilarity;
 
-public class JaroWinklerMappingProcessor extends AbstractMappingProcessor {
+public class JaroWinklerMappingProcessor extends AbstractMappingProcessor<JaroWinklerMappingProcessorParameter> {
 
 	// TODO add language handling parameter
 
 	@Override
-	public Map<String, TypeLiteral<?>> getPropertyTypes() {
-		return Map.of("threshold", new TypeLiteral<Double>() {}, "case_sensitive", new TypeLiteral<Boolean>() {},
-				"property", new TypeLiteral<String>() {});
+	public Class<JaroWinklerMappingProcessorParameter> getParameterModel() {
+		return JaroWinklerMappingProcessorParameter.class;
 	}
 
 	private Map<String, Collection<Resource>> getLabels(Model model, Property property, boolean caseSensitive) {
@@ -46,11 +44,12 @@ public class JaroWinklerMappingProcessor extends AbstractMappingProcessor {
 
 	@Override
 	protected Collection<Mapping> computeMapping(Model firstModel, Model secondModel) {
-		boolean caseSensitive = this.getParameter("case_sensitive", new TypeLiteral<Boolean>() {});
-		double threshold = this.getParameter("threshold", new TypeLiteral<Double>() {});
-		Property property = this
-				.getOptionalParameter("property", new TypeLiteral<String>() {}, ResourceFactory::createProperty)
-				.orElse(RDFS.label);
+
+		// get parameters
+		JaroWinklerMappingProcessorParameter parameters = this.getParameters();
+		boolean caseSensitive = parameters.case_sensitive;
+		double threshold = parameters.threshold;
+		Property property = parameters.property.map(ResourceFactory::createProperty).orElse(RDFS.label);
 
 		// get label maps
 		Map<String, Collection<Resource>> firstModelLabels = getLabels(firstModel, property, caseSensitive);
@@ -97,4 +96,5 @@ public class JaroWinklerMappingProcessor extends AbstractMappingProcessor {
 
 		return mappings;
 	}
+
 }

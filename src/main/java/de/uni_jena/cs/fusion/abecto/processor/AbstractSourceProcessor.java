@@ -7,7 +7,7 @@ import java.util.UUID;
 
 import org.apache.jena.rdf.model.Model;
 
-public abstract class AbstractSourceProcessor extends AbstractProcessor implements SourceProcessor {
+public abstract class AbstractSourceProcessor<P> extends AbstractProcessor<P> implements SourceProcessor<P> {
 
 	protected UUID knowledgBase;
 

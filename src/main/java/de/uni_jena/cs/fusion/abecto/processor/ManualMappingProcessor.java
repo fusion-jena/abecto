@@ -3,27 +3,17 @@ package de.uni_jena.cs.fusion.abecto.processor;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
 
-import org.apache.commons.lang3.reflect.TypeLiteral;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ResourceFactory;
 
-public class ManualMappingProcessor extends AbstractMappingProcessor {
-
-	@Override
-	public Map<String, TypeLiteral<?>> getPropertyTypes() {
-		return Map.of("mappings", new TypeLiteral<Collection<Collection<String>>>() {}, "suppressed-mappings",
-				new TypeLiteral<Collection<Collection<String>>>() {});
-	}
+public class ManualMappingProcessor extends AbstractMappingProcessor<ManualMappingProcessorParameter> {
 
 	@Override
 	protected Collection<Mapping> computeMapping(Model firstModel, Model secondModel) {
 		Collection<Mapping> mappings = new HashSet<>();
 
-		for (Collection<String> allEquivalent : this
-				.getOptionalParameter("mappings", new TypeLiteral<Collection<Collection<String>>>() {})
-				.orElse(Collections.emptyList())) {
+		for (Collection<String> allEquivalent : this.getParameters().mappings.orElse(Collections.emptyList())) {
 			for (String firstEntity : allEquivalent) {
 				for (String secondEntity : allEquivalent) {
 					if (!firstEntity.equals(secondEntity)) {
@@ -33,9 +23,7 @@ public class ManualMappingProcessor extends AbstractMappingProcessor {
 				}
 			}
 		}
-		for (Collection<String> allEquivalent : this
-				.getOptionalParameter("suppressed-mappings", new TypeLiteral<Collection<Collection<String>>>() {})
-				.orElse(Collections.emptyList())) {
+		for (Collection<String> allEquivalent : this.getParameters().suppressed_mappings.orElse(Collections.emptyList())) {
 			for (String firstEntity : allEquivalent) {
 				for (String secondEntity : allEquivalent) {
 					if (!firstEntity.equals(secondEntity)) {
@@ -46,6 +34,11 @@ public class ManualMappingProcessor extends AbstractMappingProcessor {
 			}
 		}
 		return mappings;
+	}
+
+	@Override
+	public Class<ManualMappingProcessorParameter> getParameterModel() {
+		return ManualMappingProcessorParameter.class;
 	}
 
 }

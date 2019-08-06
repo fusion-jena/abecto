@@ -1,33 +1,19 @@
 package de.uni_jena.cs.fusion.abecto.processor;
 
-import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.function.Function;
 
-import org.apache.commons.lang3.reflect.TypeLiteral;
 import org.apache.jena.rdf.model.Model;
 
-public abstract class AbstractProcessor implements Processor {
+public abstract class AbstractProcessor<P> implements Processor<P> {
 
 	private Model resultModel;
 
 	private Status status = Status.NOT_STARTED;
 
 	/**
-	 * <p>
 	 * The current configuration parameters of this processor.
-	 * </p>
-	 * 
-	 * <p>
-	 * Use {@link #getParameter(String, Class)},
-	 * {@link #getParameter(String, TypeLiteral, Function)},
-	 * {@link #getOptionalParameter(String, Class)} or
-	 * {@link #getOptionalParameter(String, TypeLiteral, Function) for type safe
-	 * access without need of missing error exception handling.
-	 * </p>
 	 */
-	private Map<String, Object> parameters;
+	private P parameters;
 
 	@Override
 	public synchronized void alert() {
@@ -67,84 +53,9 @@ public abstract class AbstractProcessor implements Processor {
 		this.alert();
 	}
 
-	/**
-	 * Get an optional parameter value as {@link Optional}.
-	 * 
-	 * @param key  parameter name
-	 * @param type expected type of the parameter value
-	 * @return parameter value
-	 * 
-	 * @throws ClassCastException if the parameter can not be casted to the specified
-	 *                            type.
-	 */
-	@SuppressWarnings("unchecked")
-	protected <T> Optional<T> getOptionalParameter(String key, TypeLiteral<T> type) {
-		Object value = this.parameters.get(key);
-		if (Objects.isNull(value)) {
-			return Optional.empty();
-		} else {
-			return Optional.of((T) value);
-		}
-	}
-
-	/**
-	 * Get an optional parameter value as {@link Optional}.
-	 * 
-	 * @param key       parameter name
-	 * @param type      expected type of the parameter value
-	 * @param converter
-	 * @return parameter value
-	 * 
-	 * @throws ClassCastException if the parameter can not be casted to the specified
-	 *                            type.
-	 */
-	@SuppressWarnings("unchecked")
-	protected <T, R> Optional<R> getOptionalParameter(String key, TypeLiteral<T> type, Function<T, R> converter) {
-		Object value = this.parameters.get(key);
-		if (Objects.isNull(value)) {
-			return Optional.empty();
-		} else {
-			return Optional.of(converter.apply((T) value));
-		}
-	}
-
-	/**
-	 * 
-	 * Get an parameter value.
-	 * 
-	 * @param key  parameter name
-	 * @param type expected type of the parameter value
-	 * @return parameter value
-	 * 
-	 * @throws ClassCastException   if the parameter can not be casted to the
-	 *                              specified type.
-	 * @throws NullPointerException if the parameter has not been set.
-	 */
-	@SuppressWarnings("unchecked")
-	protected <T> T getParameter(String key, TypeLiteral<T> type) {
-		Object value = this.parameters.get(key);
-		Objects.requireNonNull(value, "Missing value of parameter \"" + key + "\".");
-		return (T) value;
-	}
-
-	/**
-	 * 
-	 * Get an parameter value.
-	 * 
-	 * @param key       parameter name
-	 * @param type      expected type of the parameter value
-	 * @param converter
-	 * @return parameter value
-	 * 
-	 * @throws ClassCastException   if the parameter can not be casted to the
-	 *                              specified type.
-	 * @throws NullPointerException if the parameter has not been set.
-	 */
-	@SuppressWarnings("unchecked")
-	protected <T, R> R getParameter(String key, TypeLiteral<T> type, Function<T, R> converter) {
-		Object value = this.parameters.get(key);
-		Objects.requireNonNull(value, "Missing value of parameter \"" + key + "\".");
-		return converter.apply((T) value);
+	@Override
+	public P getParameters() {
+		return this.parameters;
 	}
 
 	@Override
@@ -186,7 +97,7 @@ public abstract class AbstractProcessor implements Processor {
 	protected abstract void prepare() throws Exception;
 
 	@Override
-	public void setParameters(Map<String, Object> parameters) {
+	public void setParameters(P parameters) {
 		this.parameters = parameters;
 	}
 

@@ -15,12 +15,12 @@ import org.apache.jena.rdf.model.ModelFactory;
 
 import de.uni_jena.cs.fusion.abecto.util.ModelUtils;
 
-public abstract class AbstractRefinementProcessor extends AbstractProcessor implements RefinementProcessor {
+public abstract class AbstractRefinementProcessor<P> extends AbstractProcessor<P> implements RefinementProcessor<P> {
 
 	/**
 	 * {@link Processor}s this {@link Processor} depends on.
 	 */
-	protected final Collection<Processor> inputProcessors = new ArrayList<>();
+	protected final Collection<Processor<?>> inputProcessors = new ArrayList<>();
 
 	/**
 	 * TODO The previous meta result graph that is a {@link MultiUnion} of all
@@ -58,7 +58,7 @@ public abstract class AbstractRefinementProcessor extends AbstractProcessor impl
 	}
 
 	@Override
-	public void addInputProcessor(Processor processor) {
+	public void addInputProcessor(Processor<?> processor) {
 		this.inputProcessors.add(processor);
 	}
 
@@ -70,7 +70,7 @@ public abstract class AbstractRefinementProcessor extends AbstractProcessor impl
 
 	@Override
 	protected void prepare() throws InterruptedException {
-		for (Processor dependedProcessor : this.inputProcessors) {
+		for (Processor<?> dependedProcessor : this.inputProcessors) {
 			while (!dependedProcessor.isSucceeded()) {
 				if (dependedProcessor.isFailed()) {
 					this.fail();
