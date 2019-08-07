@@ -16,7 +16,7 @@ import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
 public class ProcessingParameter extends AbstractEntityWithUUID {
 
 	@Convert(converter = ProcessingParameterConverter.class)
-	private ProcessorParameters parameters; // TODO empty or null?
+	private ProcessorParameters parameters;
 
 	@ManyToOne
 	private ProcessingConfiguration configuration;
