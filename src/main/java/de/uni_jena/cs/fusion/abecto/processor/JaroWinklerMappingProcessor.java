@@ -23,11 +23,6 @@ public class JaroWinklerMappingProcessor extends AbstractMappingProcessor<JaroWi
 
 	// TODO add language handling parameter
 
-	@Override
-	public Class<JaroWinklerMappingProcessorParameter> getParameterModel() {
-		return JaroWinklerMappingProcessorParameter.class;
-	}
-
 	private Map<String, Collection<Resource>> getLabels(Model model, Property property, boolean caseSensitive) {
 		Iterator<Statement> labelStatements = model.listStatements(null, property, (String) null);
 		Map<String, Collection<Resource>> labels = new HashMap<>();

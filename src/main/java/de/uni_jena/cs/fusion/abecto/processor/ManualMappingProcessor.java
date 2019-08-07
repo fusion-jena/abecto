@@ -38,9 +38,4 @@ public class ManualMappingProcessor extends AbstractMappingProcessor<ManualMappi
 		return mappings;
 	}
 
-	@Override
-	public Class<ManualMappingProcessorParameter> getParameterModel() {
-		return ManualMappingProcessorParameter.class;
-	}
-
 }

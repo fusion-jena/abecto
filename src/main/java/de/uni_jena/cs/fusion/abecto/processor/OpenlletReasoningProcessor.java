@@ -21,9 +21,4 @@ public class OpenlletReasoningProcessor extends AbstractTransformationProcessor<
 		return inferences;
 	}
 
-	@Override
-	public Class<WithoutParameters> getParameterModel() {
-		return WithoutParameters.class;
-	}
-
 }

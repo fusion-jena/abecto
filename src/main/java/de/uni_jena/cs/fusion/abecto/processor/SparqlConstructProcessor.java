@@ -23,9 +23,4 @@ public class SparqlConstructProcessor extends AbstractTransformationProcessor<Sp
 		return constructedModel;
 	}
 
-	@Override
-	public Class<SparqlConstructProcessorParameter> getParameterModel() {
-		return SparqlConstructProcessorParameter.class;
-	}
-
 }

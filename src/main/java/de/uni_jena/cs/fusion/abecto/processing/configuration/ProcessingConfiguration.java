@@ -52,19 +52,22 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 	@SuppressWarnings("rawtypes")
 	protected Class<? extends Processor> processor;
 
-	protected ProcessingConfiguration() {}
+	protected ProcessingConfiguration() {
+	}
 
 	/**
+	 * Creates a {@link ProcessingConfiguration} for a {@link RefinementProcessor}.
+	 * 
 	 * @param parameter                     The {@link ProcessingParameter} to use.
-	 * @param processor                     The {@link Processor} to use.
+	 * @param processorClass                The {@link Processor} to use.
 	 *                                      {@link SourceProcessor} are not allowed.
 	 * @param inputProcessingConfigurations The {@link ProcessingConfiguration}s
 	 *                                      whose result to use as input.
 	 */
-	public ProcessingConfiguration(@SuppressWarnings("rawtypes") Class<? extends RefinementProcessor> processor, ProcessingParameter parameter,
+	public ProcessingConfiguration(Class<Processor<?>> processorClass, ProcessingParameter parameter,
 			Iterable<ProcessingConfiguration> inputProcessingConfigurations)
 			throws NoSuchElementException, IllegalArgumentException, IllegalStateException {
-		this(processor, parameter);
+		this(processorClass, parameter);
 
 		// add associations between ProcessingConfigurations
 		for (ProcessingConfiguration inputProcessingConfiguration : inputProcessingConfigurations) {
@@ -88,7 +91,7 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 	 * @param knowledgeBaseModule The {@link KnowledgeBaseModule} to assign the
 	 *                            configuration to.
 	 */
-	public ProcessingConfiguration(@SuppressWarnings("rawtypes") Class<? extends SourceProcessor> processor, ProcessingParameter parameter,
+	public ProcessingConfiguration(Class<Processor<?>> processor, ProcessingParameter parameter,
 			KnowledgeBase knowledgeBase) {
 		this(processor, parameter);
 		this.knowledgeBase = knowledgeBase;
@@ -102,7 +105,7 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 	 * @param parameter
 	 * @param processor
 	 */
-	protected ProcessingConfiguration(@SuppressWarnings("rawtypes") Class<? extends Processor> processor, ProcessingParameter parameter) {
+	protected ProcessingConfiguration(Class<Processor<?>> processor, ProcessingParameter parameter) {
 		this.currentParameter = parameter;
 		this.processor = processor;
 	}
@@ -111,7 +114,7 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 	public void addInputProcessingConfiguration(ProcessingConfiguration inputProcessingConfiguration) {
 		this.inputProcessingConfigurations.add(inputProcessingConfiguration);
 	}
-	
+
 	@JsonIgnore
 	public Collection<ProcessingConfiguration> getInputProcessingConfigurations() {
 		return this.inputProcessingConfigurations;

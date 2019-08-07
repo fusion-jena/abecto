@@ -15,9 +15,4 @@ public class StreamSourceProcessor extends AbstractSourceProcessor<StreamSourceP
 		return ModelUtils.load(stream);
 	}
 
-	@Override
-	public Class<StreamSourceProcessorParameter> getParameterModel() {
-		return StreamSourceProcessorParameter.class;
-	}
-
 }

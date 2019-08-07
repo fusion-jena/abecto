@@ -8,7 +8,7 @@ import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 
 import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfiguration;
-import de.uni_jena.cs.fusion.abecto.processor.WithoutParameters;
+import de.uni_jena.cs.fusion.abecto.processor.api.Processor;
 import de.uni_jena.cs.fusion.abecto.processor.api.ProcessorParameters;
 import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
 
@@ -16,12 +16,17 @@ import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
 public class ProcessingParameter extends AbstractEntityWithUUID {
 
 	@Convert(converter = ProcessingParameterConverter.class)
-	private ProcessorParameters parameters = new WithoutParameters(); // TODO or null?
+	private ProcessorParameters parameters; // TODO empty or null?
 
 	@ManyToOne
 	private ProcessingConfiguration configuration;
 
 	public ProcessingParameter() {
+	}
+
+	public ProcessingParameter(Class<Processor<?>> processorClass) throws InstantiationException,
+			IllegalAccessException, InvocationTargetException, NoSuchMethodException, SecurityException {
+		this.parameters = Processor.getDefaultParameters(processorClass);
 	}
 
 	private ProcessingParameter(ProcessingParameter original) {
@@ -69,12 +74,12 @@ public class ProcessingParameter extends AbstractEntityWithUUID {
 			throws NoSuchFieldException, IllegalAccessException, SecurityException {
 		return returnType.cast(get(splitPath(path), 0));
 	}
-	
+
 	public Class<?> getType(String path) throws NoSuchFieldException, SecurityException {
 		return getType(splitPath(path));
 	}
-	
-	public Class<?> getType(String[] keys) throws NoSuchFieldException, SecurityException{
+
+	public Class<?> getType(String[] keys) throws NoSuchFieldException, SecurityException {
 		Class<?> type = this.parameters.getClass();
 		for (int i = 0; i < keys.length - 1; i++) {
 			type = type.getClass().getDeclaredField(keys[i]).getType();

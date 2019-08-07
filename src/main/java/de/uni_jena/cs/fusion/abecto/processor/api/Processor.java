@@ -1,5 +1,6 @@
 package de.uni_jena.cs.fusion.abecto.processor.api;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
@@ -7,10 +8,12 @@ import java.util.concurrent.Callable;
 
 import org.apache.jena.graph.compose.MultiUnion;
 import org.apache.jena.rdf.model.Model;
+import org.springframework.core.GenericTypeResolver;
 
 /**
  * A task that returns a new {@link Model} based on given properties using
  * {@link #setParameters(Map)}.
+ * 
  * @param <P> Parameter Model Type
  */
 public interface Processor<P extends ProcessorParameters> extends Callable<Model> {
@@ -53,21 +56,45 @@ public interface Processor<P extends ProcessorParameters> extends Callable<Model
 	public Map<UUID, Collection<Model>> getDataModels();
 
 	/**
+	 * @param processorClass {@link Processor} implementation to determine the
+	 *                       {@link ProcessorParameters} class for.
+	 * @return {@link ProcessorParameters} class belonging to the given
+	 *         {@link Processor} implementation.
+	 */
+	@SuppressWarnings("unchecked")
+	public static Class<? extends ProcessorParameters> getParameterClass(Class<? extends Processor<?>> processorClass) {
+		return (Class<? extends ProcessorParameters>) GenericTypeResolver.resolveTypeArgument(processorClass,
+				Processor.class);
+	}
+
+	/**
+	 * 
+	 * @param processorClass {@link Processor} implementation to instantiate
+	 *                       {@link ProcessorParameters} for.
+	 * @return {@link ProcessorParameters} instance with default values for a given
+	 *         {@link Processor} implementation.
+	 * @throws InstantiationException if the processor is abstract.
+	 * @throws IllegalAccessException if the processor constructor without parameter is not accessible.
+	 * @throws InvocationTargetException if the processor constructor throws an exception.
+	 * @throws NoSuchMethodException if the processor constructor without parameter is not available.
+	 * @throws SecurityException
+	 */
+	public static ProcessorParameters getDefaultParameters(Class<? extends Processor<?>> processorClass)
+			throws InstantiationException, IllegalAccessException, InvocationTargetException,
+			NoSuchMethodException, SecurityException {
+		return (ProcessorParameters) getParameterClass(processorClass).getConstructor(new Class[0])
+				.newInstance(new Object[0]);
+	}
+
+	/**
 	 * @return {@link MultiUnion} of result meta {@link Model}s of this
 	 *         {@link Processor} and its input {@link Processor}s
 	 */
 	public Collection<Model> getMetaModel();
 
 	/**
-	 * Returns the parameter model class of this processor.
-	 * 
-	 * @return Parameter model class of this processor.
-	 */
-	public Class<P> getParameterModel();
-
-	/**
 	 * Returns the parameters of this processor.
-	 *  
+	 * 
 	 * @return Parameters of this processor.
 	 */
 	public P getParameters();

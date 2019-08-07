@@ -106,9 +106,4 @@ public class ManualRelationSelectionProcessor extends AbstractMetaProcessor<Manu
 		return queryExecution.execConstruct();
 	}
 
-	@Override
-	public Class<ManualRelationSelectionProcessorParameter> getParameterModel() {
-		return ManualRelationSelectionProcessorParameter.class;
-	}
-
 }

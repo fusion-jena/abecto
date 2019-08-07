@@ -29,8 +29,6 @@ import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfigura
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameter;
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameterRepository;
 import de.uni_jena.cs.fusion.abecto.processor.api.Processor;
-import de.uni_jena.cs.fusion.abecto.processor.api.RefinementProcessor;
-import de.uni_jena.cs.fusion.abecto.processor.api.SourceProcessor;
 import de.uni_jena.cs.fusion.abecto.project.Project;
 import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
 import de.uni_jena.cs.fusion.abecto.project.knowledgebase.KnowledgeBase;
@@ -132,8 +130,7 @@ public class AbectoRestController {
 	public ProcessingConfiguration processingConfigurationCreateForSource(
 			@RequestParam("class") String processorClassName, @RequestParam("knowledgebase") UUID knowledgebaseId) {
 
-		@SuppressWarnings("rawtypes")
-		Class<? extends SourceProcessor> processorClass = getProcessorClass(processorClassName, SourceProcessor.class);
+		Class<Processor<?>> processorClass = getProcessorClass(processorClassName);
 
 		KnowledgeBase knowledgeBase = knowledgeBaseRepository.findById(knowledgebaseId)
 				.orElseThrow(new Supplier<ResponseStatusException>() {
@@ -143,8 +140,16 @@ public class AbectoRestController {
 					}
 				});
 
-		return processingConfigurationRepository.save(new ProcessingConfiguration(processorClass,
-				processingParameterRepository.save(new ProcessingParameter()), knowledgeBase));
+		try {
+			ProcessingParameter defaultParameter = processingParameterRepository
+					.save(new ProcessingParameter(processorClass));
+
+			return processingConfigurationRepository
+					.save(new ProcessingConfiguration(processorClass, defaultParameter, knowledgeBase));
+		} catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException
+				| SecurityException e) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Failed to load requested processor.", e);
+		}
 	}
 
 	/**
@@ -159,8 +164,7 @@ public class AbectoRestController {
 			@RequestParam("class") String processorClassName,
 			@RequestParam("input") Collection<UUID> configurationIds) {
 
-		@SuppressWarnings("rawtypes")
-		Class<RefinementProcessor> processorClass = getProcessorClass(processorClassName, RefinementProcessor.class);
+		Class<Processor<?>> processorClass = getProcessorClass(processorClassName);
 
 		for (UUID configurationId : configurationIds) {
 			if (!processingConfigurationRepository.existsById(configurationId)) {
@@ -170,9 +174,16 @@ public class AbectoRestController {
 		}
 		Iterable<ProcessingConfiguration> inputConfigurations = processingConfigurationRepository
 				.findAllById(configurationIds);
+		try {
+			ProcessingParameter defaultParameter = processingParameterRepository
+					.save(new ProcessingParameter(processorClass));
 
-		return processingConfigurationRepository.save(new ProcessingConfiguration(processorClass,
-				processingParameterRepository.save(new ProcessingParameter()), inputConfigurations));
+			return processingConfigurationRepository
+					.save(new ProcessingConfiguration(processorClass, defaultParameter, inputConfigurations));
+		} catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException
+				| SecurityException e) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Failed to load requested processor.", e);
+		}
 	}
 
 	@GetMapping({ "/source/{uuid}", "/processing/{uuid}" })
@@ -247,19 +258,15 @@ public class AbectoRestController {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T extends Processor<?>> Class<T> getProcessorClass(String processorClassName, Class<T> processorInterface)
-			throws ResponseStatusException {
+	private Class<Processor<?>> getProcessorClass(String processorClassName) throws ResponseStatusException {
 		try {
 			if (!processorClassName.contains(".")) {
 				processorClassName = "de.uni_jena.cs.fusion.abecto.processor." + processorClassName;
 			}
 
-			return (Class<T>) Class.forName(processorClassName);
+			return (Class<Processor<?>>) Class.forName(processorClassName);
 		} catch (ClassNotFoundException e) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Processor class unknown.");
-		} catch (ClassCastException e) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, String
-					.format("Processor class not appropriate: Expected implementation of \"%s\".", processorInterface));
 		}
 	}
 }

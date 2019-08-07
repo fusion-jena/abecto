@@ -15,9 +15,4 @@ public class PathSourceProcessor extends AbstractSourceProcessor<PathSourceProce
 		return ModelUtils.load(new FileInputStream(path));
 	}
 
-	@Override
-	public Class<PathSourceProcessorParameter> getParameterModel() {
-		return PathSourceProcessorParameter.class;
-	}
-
 }

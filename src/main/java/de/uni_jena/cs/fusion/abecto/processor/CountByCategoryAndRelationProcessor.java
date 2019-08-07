@@ -16,9 +16,4 @@ public class CountByCategoryAndRelationProcessor extends AbstractMetaProcessor<C
 		return null;
 	}
 
-	@Override
-	public Class<CountByCategoryAndRelationProcessorParameter> getParameterModel() {
-		return CountByCategoryAndRelationProcessorParameter.class;
-	}
-
 }
