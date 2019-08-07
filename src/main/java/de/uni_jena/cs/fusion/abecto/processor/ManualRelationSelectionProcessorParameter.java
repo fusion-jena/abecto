@@ -6,6 +6,6 @@ import java.util.Optional;
 import de.uni_jena.cs.fusion.abecto.processor.api.ProcessorParameters;
 
 public class ManualRelationSelectionProcessorParameter implements ProcessorParameters {
-	Optional<Map<String, String>> relations = Optional.empty();
-	Optional<Map<String, String>> suppressed_relations = Optional.empty();
+	public Optional<Map<String, String>> relations = Optional.empty();
+	public Optional<Map<String, String>> suppressed_relations = Optional.empty();
 }

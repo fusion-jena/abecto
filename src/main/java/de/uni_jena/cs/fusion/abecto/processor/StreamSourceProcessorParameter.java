@@ -5,5 +5,5 @@ import java.io.InputStream;
 import de.uni_jena.cs.fusion.abecto.processor.api.ProcessorParameters;
 
 public class StreamSourceProcessorParameter implements ProcessorParameters {
-	InputStream stream;
+	public InputStream stream;
 }

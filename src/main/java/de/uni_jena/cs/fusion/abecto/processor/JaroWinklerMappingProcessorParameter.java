@@ -5,7 +5,7 @@ import java.util.Optional;
 import de.uni_jena.cs.fusion.abecto.processor.api.ProcessorParameters;
 
 public class JaroWinklerMappingProcessorParameter implements ProcessorParameters {
-	double threshold;
-	boolean case_sensitive;
-	Optional<String> property = Optional.empty();
+	public double threshold;
+	public boolean case_sensitive;
+	public Optional<String> property = Optional.empty();
 }
