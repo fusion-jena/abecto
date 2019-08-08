@@ -11,8 +11,10 @@ import org.apache.jena.rdf.model.Model;
 import org.springframework.core.GenericTypeResolver;
 
 /**
- * A task that returns a new {@link Model} based on given properties using
- * {@link #setParameters(Map)}.
+ * {@link Processor} is an interface for a task that outputs a new {@link Model}
+ * based on given input {@link Model}s and parameters provided with by an
+ * {@link ParameterModel} object. A {@link Processor} implementation is linked
+ * to the appropriate {@link ParameterModel} using the type parameter {@link P}.
  * 
  * @param <P> Parameter Model Type
  */
@@ -58,8 +60,8 @@ public interface Processor<P extends ParameterModel> extends Callable<Model> {
 	/**
 	 * @param processorClass {@link Processor} implementation to determine the
 	 *                       {@link ParameterModel} class for.
-	 * @return {@link ParameterModel} class belonging to the given
-	 *         {@link Processor} implementation.
+	 * @return {@link ParameterModel} class belonging to the given {@link Processor}
+	 *         implementation.
 	 */
 	@SuppressWarnings("unchecked")
 	public static Class<? extends ParameterModel> getParameterClass(Class<? extends Processor<?>> processorClass) {
@@ -73,15 +75,18 @@ public interface Processor<P extends ParameterModel> extends Callable<Model> {
 	 *                       {@link ParameterModel} for.
 	 * @return {@link ParameterModel} instance with default values for a given
 	 *         {@link Processor} implementation.
-	 * @throws InstantiationException if the processor is abstract.
-	 * @throws IllegalAccessException if the processor constructor without parameter is not accessible.
-	 * @throws InvocationTargetException if the processor constructor throws an exception.
-	 * @throws NoSuchMethodException if the processor constructor without parameter is not available.
+	 * @throws InstantiationException    if the processor is abstract.
+	 * @throws IllegalAccessException    if the processor constructor without
+	 *                                   parameter is not accessible.
+	 * @throws InvocationTargetException if the processor constructor throws an
+	 *                                   exception.
+	 * @throws NoSuchMethodException     if the processor constructor without
+	 *                                   parameter is not available.
 	 * @throws SecurityException
 	 */
 	public static ParameterModel getDefaultParameters(Class<? extends Processor<?>> processorClass)
-			throws InstantiationException, IllegalAccessException, InvocationTargetException,
-			NoSuchMethodException, SecurityException {
+			throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException,
+			SecurityException {
 		return (ParameterModel) getParameterClass(processorClass).getConstructor(new Class[0])
 				.newInstance(new Object[0]);
 	}
