@@ -26,16 +26,13 @@ import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfigura
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameter;
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameterRepository;
 import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
-import de.uni_jena.cs.fusion.abecto.project.knowledgebase.KnowledgeBaseRepository;
 
 @RestController
 @Transactional
-public class AbectoRestController {
+public class ProcessingParameterRestController {
 	private static final Logger log = LoggerFactory.getLogger(Abecto.class);
 	private static final ObjectMapper JSON = new ObjectMapper();
 
-	@Autowired
-	KnowledgeBaseRepository knowledgeBaseRepository;
 	@Autowired
 	ProcessingConfigurationRepository processingConfigurationRepository;
 	@Autowired
@@ -43,9 +40,8 @@ public class AbectoRestController {
 	@Autowired
 	ProjectRepository projectRepository;
 
-
 	@PostMapping({ "/source/{configuration}/parameter", "/processing/{configuration}/parameter" })
-	public void processingConfigurationAddParameter(@PathVariable("configuration") UUID configurationId,
+	public void add(@PathVariable("configuration") UUID configurationId,
 			@RequestParam(name = "key", required = false) String parameterPath,
 			@RequestParam(name = "value", required = false) String parameterValue) {
 
@@ -94,21 +90,19 @@ public class AbectoRestController {
 	}
 
 	@DeleteMapping({ "/source/{configuration}/parameter", "/processing/{configuration}/parameter" })
-	public void processingConfigurationDeleteParameter(@PathVariable("configuration") UUID configurationId) {
+	public void delete(@PathVariable("configuration") UUID configurationId) {
 		// TODO
 	}
 
 	@GetMapping({ "/source/{configuration}/parameter", "/processing/{configuration}/parameter" })
-	public void processingConfigurationGetParameter(@PathVariable("configuration") UUID configurationId,
+	public void get(@PathVariable("configuration") UUID configurationId,
 			@RequestParam(name = "key", required = false) String parameterPath) {
 
 	}
 
 	@PutMapping({ "/source/{configuration}/parameter", "/processing/{configuration}/parameter" })
-	public void processingConfigurationUpdateParameter(@PathVariable("configuration") UUID configurationId) {
-
+	public void update(@PathVariable("configuration") UUID configurationId) {
 		// TODO
 	}
-
 
 }

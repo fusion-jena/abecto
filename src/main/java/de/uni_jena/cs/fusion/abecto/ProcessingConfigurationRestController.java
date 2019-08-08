@@ -36,8 +36,8 @@ public class ProcessingConfigurationRestController {
 	ProcessingParameterRepository processingParameterRepository;
 
 	@PostMapping("/source")
-	public ProcessingConfiguration processingConfigurationCreateForSource(
-			@RequestParam("class") String processorClassName, @RequestParam("knowledgebase") UUID knowledgebaseId) {
+	public ProcessingConfiguration createForSource(@RequestParam("class") String processorClassName,
+			@RequestParam("knowledgebase") UUID knowledgebaseId) {
 
 		Class<Processor<?>> processorClass = getProcessorClass(processorClassName);
 
@@ -69,8 +69,7 @@ public class ProcessingConfigurationRestController {
 	 * @return
 	 */
 	@PostMapping("/processing")
-	public ProcessingConfiguration processingConfigurationCreateForProcessing(
-			@RequestParam("class") String processorClassName,
+	public ProcessingConfiguration createForProcessing(@RequestParam("class") String processorClassName,
 			@RequestParam("input") Collection<UUID> configurationIds) {
 
 		Class<Processor<?>> processorClass = getProcessorClass(processorClassName);
@@ -96,7 +95,7 @@ public class ProcessingConfigurationRestController {
 	}
 
 	@GetMapping({ "/source/{uuid}", "/processing/{uuid}" })
-	public ProcessingConfiguration processingConfigurationGet(@PathVariable("uuid") UUID uuid) {
+	public ProcessingConfiguration get(@PathVariable("uuid") UUID uuid) {
 		Optional<ProcessingConfiguration> configuration = processingConfigurationRepository.findById(uuid);
 		if (configuration.isPresent()) {
 			return configuration.get();

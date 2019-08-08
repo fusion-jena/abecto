@@ -30,7 +30,7 @@ public class KnowledgeBaseRestController {
 	ProjectRepository projectRepository;
 
 	@PostMapping("/knowledgebase")
-	public KnowledgeBase knowledgeBaseCreate(@RequestParam("project") UUID projectId,
+	public KnowledgeBase create(@RequestParam("project") UUID projectId,
 			@RequestParam(name = "label", defaultValue = "") String label) {
 		Optional<Project> project = projectRepository.findById(projectId);
 		if (project.isPresent()) {
@@ -42,7 +42,7 @@ public class KnowledgeBaseRestController {
 
 	@DeleteMapping("/knowledgebase/{uuid}")
 	@ResponseStatus(code = HttpStatus.NO_CONTENT)
-	public void knowledgeBaseDelete(@PathVariable("uuid") UUID uuid) {
+	public void delete(@PathVariable("uuid") UUID uuid) {
 		Optional<KnowledgeBase> knowledgeBase = knowledgeBaseRepository.findById(uuid);
 		if (knowledgeBase.isPresent()) {
 			knowledgeBaseRepository.delete(knowledgeBase.get());
@@ -52,7 +52,7 @@ public class KnowledgeBaseRestController {
 	}
 
 	@GetMapping("/knowledgebase/{uuid}")
-	public KnowledgeBase knowledgeBaseGet(@PathVariable("uuid") UUID uuid) {
+	public KnowledgeBase get(@PathVariable("uuid") UUID uuid) {
 		Optional<KnowledgeBase> knowledgeBase = knowledgeBaseRepository.findById(uuid);
 		if (knowledgeBase.isPresent()) {
 			return knowledgeBase.get();
@@ -62,7 +62,7 @@ public class KnowledgeBaseRestController {
 	}
 
 	@GetMapping("/knowledgebase")
-	public Iterable<KnowledgeBase> knowledgeBaseList(@RequestParam(name = "project", required = false) UUID projectId) {
+	public Iterable<KnowledgeBase> list(@RequestParam(name = "project", required = false) UUID projectId) {
 		if (projectId != null) {
 			Optional<Project> project = projectRepository.findById(projectId);
 			if (project.isPresent()) {

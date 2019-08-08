@@ -25,13 +25,13 @@ public class ProjectRestControler {
 	ProjectRepository projectRepository;
 
 	@PostMapping("/project")
-	public Project projectCreate(@RequestParam(name = "label", defaultValue = "") String label) {
+	public Project create(@RequestParam(name = "label", defaultValue = "") String label) {
 		return projectRepository.save(new Project(label));
 	}
 
 	@DeleteMapping("/project/{uuid}")
 	@ResponseStatus(code = HttpStatus.NO_CONTENT)
-	public void projectDelete(@PathVariable("uuid") UUID uuid) {
+	public void delete(@PathVariable("uuid") UUID uuid) {
 		Optional<Project> project = projectRepository.findById(uuid);
 		if (project.isPresent()) {
 			projectRepository.delete(project.get());
@@ -41,7 +41,7 @@ public class ProjectRestControler {
 	}
 
 	@GetMapping("/project/{uuid}")
-	public Project projectGet(@PathVariable("uuid") UUID uuid) {
+	public Project get(@PathVariable("uuid") UUID uuid) {
 		Optional<Project> project = projectRepository.findById(uuid);
 		if (project.isPresent()) {
 			return project.get();
@@ -51,7 +51,7 @@ public class ProjectRestControler {
 	}
 
 	@GetMapping("/project")
-	public Iterable<Project> projectList() {
+	public Iterable<Project> list() {
 		return projectRepository.findAll();
 	}
 }
