@@ -4,7 +4,7 @@ import java.util.Objects;
 
 import org.apache.jena.rdf.model.Model;
 
-public abstract class AbstractProcessor<P extends ProcessorParameters> implements Processor<P> {
+public abstract class AbstractProcessor<P extends ParameterModel> implements Processor<P> {
 
 	private Model resultModel;
 
@@ -98,7 +98,7 @@ public abstract class AbstractProcessor<P extends ProcessorParameters> implement
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public void setParameters(ProcessorParameters parameters) {
+	public void setParameters(ParameterModel parameters) {
 		this.parameters = (P) parameters;
 	}
 

@@ -14,7 +14,7 @@ public class ProcessorTest {
 	@Test
 	public void getParameterModel() throws InstantiationException, IllegalAccessException, IllegalArgumentException,
 			InvocationTargetException, NoSuchMethodException, SecurityException {
-		Class<? extends ProcessorParameters> modelClass;
+		Class<? extends ParameterModel> modelClass;
 		
 		modelClass = Processor.getParameterClass(DummySuperProcessor.class);
 		Assertions.assertEquals(DummyParameters.class, modelClass);
@@ -26,7 +26,7 @@ public class ProcessorTest {
 	@Test
 	public void getDefaultParameters() throws InstantiationException, IllegalAccessException, IllegalArgumentException,
 			InvocationTargetException, NoSuchMethodException, SecurityException {
-		ProcessorParameters parameters;
+		ParameterModel parameters;
 		
 		parameters = Processor.getDefaultParameters(DummySuperProcessor.class);
 		Assertions.assertTrue(parameters instanceof DummyParameters);
@@ -37,7 +37,7 @@ public class ProcessorTest {
 		Assertions.assertEquals("default", ((DummyParameters) parameters).test);
 	}
 
-	public static class DummyParameters implements ProcessorParameters {
+	public static class DummyParameters implements ParameterModel {
 		String test = "default";
 	}
 

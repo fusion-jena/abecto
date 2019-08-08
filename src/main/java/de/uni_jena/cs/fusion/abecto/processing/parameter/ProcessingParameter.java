@@ -9,14 +9,14 @@ import javax.persistence.ManyToOne;
 
 import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfiguration;
 import de.uni_jena.cs.fusion.abecto.processor.api.Processor;
-import de.uni_jena.cs.fusion.abecto.processor.api.ProcessorParameters;
+import de.uni_jena.cs.fusion.abecto.processor.api.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
 
 @Entity
 public class ProcessingParameter extends AbstractEntityWithUUID {
 
 	@Convert(converter = ProcessingParameterConverter.class)
-	private ProcessorParameters parameters;
+	private ParameterModel parameters;
 
 	@ManyToOne
 	private ProcessingConfiguration configuration;
@@ -33,16 +33,16 @@ public class ProcessingParameter extends AbstractEntityWithUUID {
 		this.parameters = original.parameters; // TODO deep copy required?
 	}
 
-	public ProcessorParameters getParameters() {
+	public ParameterModel getParameters() {
 		return parameters;
 	}
 
 	@SuppressWarnings("unchecked")
-	public <P extends ProcessorParameters> P getParameters(Class<P> processorParametersClass) {
+	public <P extends ParameterModel> P getParameters(Class<P> processorParametersClass) {
 		return (P) parameters;
 	}
 
-	public void setParameters(ProcessorParameters processorParameters) {
+	public void setParameters(ParameterModel processorParameters) {
 		this.parameters = processorParameters;
 	}
 

@@ -8,16 +8,16 @@ import javax.persistence.Converter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.uni_jena.cs.fusion.abecto.processor.api.ProcessorParameters;
+import de.uni_jena.cs.fusion.abecto.processor.api.ParameterModel;
 
 @Converter
-public class ProcessingParameterConverter implements AttributeConverter<ProcessorParameters, String> {
+public class ProcessingParameterConverter implements AttributeConverter<ParameterModel, String> {
 
 	private final static ObjectMapper JSON = new ObjectMapper();
 	protected final static char SEPARATOR = ':';
 
 	@Override
-	public String convertToDatabaseColumn(ProcessorParameters parametersObject) {
+	public String convertToDatabaseColumn(ParameterModel parametersObject) {
 		StringWriter writer = new StringWriter();
 		// append parameter object class name
 		writer.append(parametersObject.getClass().getName());
@@ -33,14 +33,14 @@ public class ProcessingParameterConverter implements AttributeConverter<Processo
 	}
 
 	@Override
-	public ProcessorParameters convertToEntityAttribute(String dbData) {
+	public ParameterModel convertToEntityAttribute(String dbData) {
 		// split attribute into class name and JSON
 		int separatorIndex = dbData.indexOf(SEPARATOR);
 		String parameterObjectClassName = dbData.substring(0, separatorIndex);
 		String parameterJSON = dbData.substring(separatorIndex + 1);
 		try {
 			@SuppressWarnings("unchecked")
-			Class<? extends ProcessorParameters> parameterObejctClass = (Class<? extends ProcessorParameters>) Class
+			Class<? extends ParameterModel> parameterObejctClass = (Class<? extends ParameterModel>) Class
 					.forName(parameterObjectClassName);
 			return JSON.readValue(parameterJSON, parameterObejctClass);
 		} catch (ClassNotFoundException | IOException e) {

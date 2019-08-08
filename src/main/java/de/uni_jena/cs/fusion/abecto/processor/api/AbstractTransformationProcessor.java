@@ -8,7 +8,7 @@ import java.util.UUID;
 
 import org.apache.jena.rdf.model.Model;
 
-public abstract class AbstractTransformationProcessor<P extends ProcessorParameters> extends AbstractRefinementProcessor<P>
+public abstract class AbstractTransformationProcessor<P extends ParameterModel> extends AbstractRefinementProcessor<P>
 		implements TransformationProcessor<P> {
 
 	@Override

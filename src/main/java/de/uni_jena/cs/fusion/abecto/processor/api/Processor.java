@@ -16,7 +16,7 @@ import org.springframework.core.GenericTypeResolver;
  * 
  * @param <P> Parameter Model Type
  */
-public interface Processor<P extends ProcessorParameters> extends Callable<Model> {
+public interface Processor<P extends ParameterModel> extends Callable<Model> {
 
 	/**
 	 * {@link Status} of the {@link Processor}
@@ -57,21 +57,21 @@ public interface Processor<P extends ProcessorParameters> extends Callable<Model
 
 	/**
 	 * @param processorClass {@link Processor} implementation to determine the
-	 *                       {@link ProcessorParameters} class for.
-	 * @return {@link ProcessorParameters} class belonging to the given
+	 *                       {@link ParameterModel} class for.
+	 * @return {@link ParameterModel} class belonging to the given
 	 *         {@link Processor} implementation.
 	 */
 	@SuppressWarnings("unchecked")
-	public static Class<? extends ProcessorParameters> getParameterClass(Class<? extends Processor<?>> processorClass) {
-		return (Class<? extends ProcessorParameters>) GenericTypeResolver.resolveTypeArgument(processorClass,
+	public static Class<? extends ParameterModel> getParameterClass(Class<? extends Processor<?>> processorClass) {
+		return (Class<? extends ParameterModel>) GenericTypeResolver.resolveTypeArgument(processorClass,
 				Processor.class);
 	}
 
 	/**
 	 * 
 	 * @param processorClass {@link Processor} implementation to instantiate
-	 *                       {@link ProcessorParameters} for.
-	 * @return {@link ProcessorParameters} instance with default values for a given
+	 *                       {@link ParameterModel} for.
+	 * @return {@link ParameterModel} instance with default values for a given
 	 *         {@link Processor} implementation.
 	 * @throws InstantiationException if the processor is abstract.
 	 * @throws IllegalAccessException if the processor constructor without parameter is not accessible.
@@ -79,10 +79,10 @@ public interface Processor<P extends ProcessorParameters> extends Callable<Model
 	 * @throws NoSuchMethodException if the processor constructor without parameter is not available.
 	 * @throws SecurityException
 	 */
-	public static ProcessorParameters getDefaultParameters(Class<? extends Processor<?>> processorClass)
+	public static ParameterModel getDefaultParameters(Class<? extends Processor<?>> processorClass)
 			throws InstantiationException, IllegalAccessException, InvocationTargetException,
 			NoSuchMethodException, SecurityException {
-		return (ProcessorParameters) getParameterClass(processorClass).getConstructor(new Class[0])
+		return (ParameterModel) getParameterClass(processorClass).getConstructor(new Class[0])
 				.newInstance(new Object[0]);
 	}
 
@@ -147,7 +147,7 @@ public interface Processor<P extends ProcessorParameters> extends Callable<Model
 	 * 
 	 * @param parameters TODO
 	 */
-	public void setParameters(ProcessorParameters parameters);
+	public void setParameters(ParameterModel parameters);
 
 	/**
 	 * Set the result {@link Model} for this {@link Processor}.

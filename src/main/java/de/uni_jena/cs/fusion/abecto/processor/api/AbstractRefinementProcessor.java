@@ -15,7 +15,7 @@ import org.apache.jena.rdf.model.ModelFactory;
 
 import de.uni_jena.cs.fusion.abecto.util.ModelUtils;
 
-public abstract class AbstractRefinementProcessor<P extends ProcessorParameters> extends AbstractProcessor<P> implements RefinementProcessor<P> {
+public abstract class AbstractRefinementProcessor<P extends ParameterModel> extends AbstractProcessor<P> implements RefinementProcessor<P> {
 
 	/**
 	 * {@link Processor}s this {@link Processor} depends on.

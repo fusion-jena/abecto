@@ -6,13 +6,13 @@ import org.json.JSONException;
 import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
 
-import de.uni_jena.cs.fusion.abecto.processor.api.ProcessorParameters;
+import de.uni_jena.cs.fusion.abecto.processor.api.ParameterModel;
 
 public class ProcessingParameterConverterTest {
 	
 	private String parameterClass = ProcessingParameterConverterTestParameterClass.class.getName();
 	private String parameterJson = "{\"keyA\":\"valueA\",\"keyB\":\"valueB\"}";
-	private ProcessorParameters parameterObject = new ProcessingParameterConverterTestParameterClass();
+	private ParameterModel parameterObject = new ProcessingParameterConverterTestParameterClass();
 
 	@Test
 	public void testConvertToDatabaseColumn() throws JSONException {
