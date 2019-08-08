@@ -2,8 +2,6 @@ package de.uni_jena.cs.fusion.abecto;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Collection;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
 
@@ -18,7 +16,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -28,10 +25,7 @@ import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfigura
 import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfigurationRepository;
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameter;
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameterRepository;
-import de.uni_jena.cs.fusion.abecto.processor.api.Processor;
-import de.uni_jena.cs.fusion.abecto.project.Project;
 import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
-import de.uni_jena.cs.fusion.abecto.project.knowledgebase.KnowledgeBase;
 import de.uni_jena.cs.fusion.abecto.project.knowledgebase.KnowledgeBaseRepository;
 
 @RestController
@@ -49,76 +43,6 @@ public class AbectoRestController {
 	@Autowired
 	ProjectRepository projectRepository;
 
-	@PostMapping("/source")
-	public ProcessingConfiguration processingConfigurationCreateForSource(
-			@RequestParam("class") String processorClassName, @RequestParam("knowledgebase") UUID knowledgebaseId) {
-
-		Class<Processor<?>> processorClass = getProcessorClass(processorClassName);
-
-		KnowledgeBase knowledgeBase = knowledgeBaseRepository.findById(knowledgebaseId)
-				.orElseThrow(new Supplier<ResponseStatusException>() {
-					@Override
-					public ResponseStatusException get() {
-						return new ResponseStatusException(HttpStatus.BAD_REQUEST, "KnowledgeBase not found.");
-					}
-				});
-
-		try {
-			ProcessingParameter defaultParameter = processingParameterRepository
-					.save(new ProcessingParameter(processorClass));
-
-			return processingConfigurationRepository
-					.save(new ProcessingConfiguration(processorClass, defaultParameter, knowledgeBase));
-		} catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException
-				| SecurityException e) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Failed to load requested processor.", e);
-		}
-	}
-
-	/**
-	 * Creates a new Refinement Processor Node in the processing pipeline.
-	 * 
-	 * @param processorClassName
-	 * @param configurationIds
-	 * @return
-	 */
-	@PostMapping("/processing")
-	public ProcessingConfiguration processingConfigurationCreateForProcessing(
-			@RequestParam("class") String processorClassName,
-			@RequestParam("input") Collection<UUID> configurationIds) {
-
-		Class<Processor<?>> processorClass = getProcessorClass(processorClassName);
-
-		for (UUID configurationId : configurationIds) {
-			if (!processingConfigurationRepository.existsById(configurationId)) {
-				throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-						String.format("Processing configuration %s not found.", configurationId));
-			}
-		}
-		Iterable<ProcessingConfiguration> inputConfigurations = processingConfigurationRepository
-				.findAllById(configurationIds);
-		try {
-			ProcessingParameter defaultParameter = processingParameterRepository
-					.save(new ProcessingParameter(processorClass));
-
-			return processingConfigurationRepository
-					.save(new ProcessingConfiguration(processorClass, defaultParameter, inputConfigurations));
-		} catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException
-				| SecurityException e) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Failed to load requested processor.", e);
-		}
-	}
-
-	@GetMapping({ "/source/{uuid}", "/processing/{uuid}" })
-	public ProcessingConfiguration processingConfigurationGet(@PathVariable("uuid") UUID uuid) {
-		Optional<ProcessingConfiguration> configuration = processingConfigurationRepository.findById(uuid);
-		if (configuration.isPresent()) {
-			return configuration.get();
-		} else {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-					String.format("Processing or Source %s not found.", uuid));
-		}
-	}
 
 	@PostMapping({ "/source/{configuration}/parameter", "/processing/{configuration}/parameter" })
 	public void processingConfigurationAddParameter(@PathVariable("configuration") UUID configurationId,
@@ -186,16 +110,5 @@ public class AbectoRestController {
 		// TODO
 	}
 
-	@SuppressWarnings("unchecked")
-	private Class<Processor<?>> getProcessorClass(String processorClassName) throws ResponseStatusException {
-		try {
-			if (!processorClassName.contains(".")) {
-				processorClassName = "de.uni_jena.cs.fusion.abecto.processor." + processorClassName;
-			}
 
-			return (Class<Processor<?>>) Class.forName(processorClassName);
-		} catch (ClassNotFoundException e) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Processor class unknown.");
-		}
-	}
 }
