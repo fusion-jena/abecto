@@ -49,51 +49,7 @@ public class AbectoRestController {
 	@Autowired
 	ProjectRepository projectRepository;
 
-	@PostMapping("/knowledgebase")
-	public KnowledgeBase knowledgeBaseCreate(@RequestParam("project") UUID projectId,
-			@RequestParam(name = "label", defaultValue = "") String label) {
-		Optional<Project> project = projectRepository.findById(projectId);
-		if (project.isPresent()) {
-			return knowledgeBaseRepository.save(new KnowledgeBase(project.get(), label));
-		} else {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Project not found.");
-		}
-	}
-
-	@DeleteMapping("/knowledgebase/{uuid}")
-	@ResponseStatus(code = HttpStatus.NO_CONTENT)
-	public void knowledgeBaseDelete(@PathVariable("uuid") UUID uuid) {
-		Optional<KnowledgeBase> knowledgeBase = knowledgeBaseRepository.findById(uuid);
-		if (knowledgeBase.isPresent()) {
-			knowledgeBaseRepository.delete(knowledgeBase.get());
-		} else {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "KnowledgeBase not found.");
-		}
-	}
-
-	@GetMapping("/knowledgebase/{uuid}")
-	public KnowledgeBase knowledgeBaseGet(@PathVariable("uuid") UUID uuid) {
-		Optional<KnowledgeBase> knowledgeBase = knowledgeBaseRepository.findById(uuid);
-		if (knowledgeBase.isPresent()) {
-			return knowledgeBase.get();
-		} else {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "KnowledgeBase not found.");
-		}
-	}
-
-	@GetMapping("/knowledgebase")
-	public Iterable<KnowledgeBase> knowledgeBaseList(@RequestParam(name = "project", required = false) UUID projectId) {
-		if (projectId != null) {
-			Optional<Project> project = projectRepository.findById(projectId);
-			if (project.isPresent()) {
-				return knowledgeBaseRepository.findAllByProject(project.get());
-			} else {
-				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Project not found.");
-			}
-		} else {
-			return knowledgeBaseRepository.findAll();
-		}
-	}
+	
 
 	@PostMapping("/project")
 	public Project projectCreate(@RequestParam(name = "label", defaultValue = "") String label) {
