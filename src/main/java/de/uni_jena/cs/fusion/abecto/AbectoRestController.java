@@ -211,12 +211,12 @@ public class AbectoRestController {
 				});
 
 		try {
-			if (configuration.getProcessingParameter().containsKey(parameterPath)) {
+			if (configuration.getParameter().containsKey(parameterPath)) {
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Parameter already set.");
 			} else {
 				try {
 					// copy parameters
-					ProcessingParameter newParameter = configuration.getProcessingParameter().copy();
+					ProcessingParameter newParameter = configuration.getParameter().copy();
 					// get type of changed parameter
 					Class<?> type = newParameter.getType(parameterPath);
 					try {
@@ -251,7 +251,7 @@ public class AbectoRestController {
 		// TODO
 	}
 
-	@PostMapping({ "/source/{configuration}/parameter", "/processing/{configuration}/parameter" })
+	@GetMapping({ "/source/{configuration}/parameter", "/processing/{configuration}/parameter" })
 	public void processingConfigurationGetParameter(@PathVariable("configuration") UUID configurationId,
 			@RequestParam(name = "key", required = false) String parameterPath) {
 

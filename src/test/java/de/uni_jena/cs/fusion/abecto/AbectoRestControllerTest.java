@@ -38,7 +38,7 @@ public class AbectoRestControllerTest {
 	@Autowired
 	ProjectRepository projectRepository;
 
-	private final static ObjectMapper JACKSON = new ObjectMapper();
+	private final static ObjectMapper JSON = new ObjectMapper();
 
 	private final ResponseBuffer buffer = new ResponseBuffer();
 
@@ -188,16 +188,16 @@ public class AbectoRestControllerTest {
 				.andDo(buffer);
 
 		// set path parameter
-		String pathValue = "\"C:\\\\Users\\\\admin\\\\Documents\\\\Workspace\\\\unit-ontologies\\\\qu\\\\qu-rec20.owl\""; // TODO replace
+		String pathValue = "C:\\Users\\admin\\Documents\\Workspace\\unit-ontologies\\qu\\qu-rec20.owl"; // TODO replace
 		mvc.perform(MockMvcRequestBuilders.post(String.format("/source/%s/parameter", buffer.getId()))
-				.param("key", "path").param("value", pathValue).accept(MediaType.APPLICATION_JSON))
+				.param("key", "path").param("value", JSON.writeValueAsString(pathValue)).accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk());
 
 		// get source
 		mvc.perform(MockMvcRequestBuilders.get(String.format("/source/%s", buffer.getId()))
 				// TODO remove print
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer).andDo(print());
-		assertEquals(pathValue, buffer.getJson().path("parameter").path("path").asText());
+		assertEquals(pathValue, buffer.getJson().path("parameter").path("parameters").path("path").asText());
 
 		// use unknown knowledgeBase id
 		mvc.perform(MockMvcRequestBuilders.post("/source").param("class", "PathSourceProcessor")
@@ -227,15 +227,15 @@ public class AbectoRestControllerTest {
 		}
 
 		public JsonNode getJson() throws IOException {
-			return JACKSON.readTree(bytes);
+			return JSON.readTree(bytes);
 		}
 
 		public String getId() throws IOException {
-			return JACKSON.readTree(bytes).path("id").asText();
+			return JSON.readTree(bytes).path("id").asText();
 		}
 
 		public List<String> getIds() throws IOException {
-			return JACKSON.readTree(bytes).findValuesAsText("id");
+			return JSON.readTree(bytes).findValuesAsText("id");
 		}
 	}
 }

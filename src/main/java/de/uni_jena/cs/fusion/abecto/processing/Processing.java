@@ -75,13 +75,13 @@ public class Processing extends AbstractEntityWithUUID {
 
 	public Processing(ProcessingConfiguration configuration) {
 		this.configuration = configuration;
-		this.parameter = configuration.getProcessingParameter();
+		this.parameter = configuration.getParameter();
 		this.processor = configuration.getProcessorClass();
 	}
 
 	protected Processing(ProcessingConfiguration configuration, Collection<Processing> inputProcessings) {
 		this.configuration = configuration;
-		this.parameter = configuration.getProcessingParameter();
+		this.parameter = configuration.getParameter();
 		this.processor = configuration.getProcessorClass();
 		this.inputProcessings.addAll(inputProcessings);
 	}

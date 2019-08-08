@@ -2,16 +2,13 @@ package de.uni_jena.cs.fusion.abecto.processing.configuration;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -46,9 +43,7 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 	@ManyToMany(fetch = FetchType.LAZY)
 	protected Collection<ProcessingConfiguration> inputProcessingConfigurations = new HashSet<>();
 	@OneToOne
-	protected ProcessingParameter currentParameter;
-	@OneToMany(fetch = FetchType.LAZY, mappedBy = "configuration", cascade = CascadeType.REMOVE)
-	protected List<ProcessingParameter> parameter;
+	protected ProcessingParameter parameter;
 	@SuppressWarnings("rawtypes")
 	protected Class<? extends Processor> processor;
 
@@ -106,7 +101,7 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 	 * @param processor
 	 */
 	protected ProcessingConfiguration(Class<Processor<?>> processor, ProcessingParameter parameter) {
-		this.currentParameter = parameter;
+		this.parameter = parameter;
 		this.processor = processor;
 	}
 
@@ -129,9 +124,8 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 		return this.knowledgeBase.getId();
 	}
 
-	@JsonIgnore
-	public ProcessingParameter getProcessingParameter() {
-		return this.currentParameter;
+	public ProcessingParameter getParameter() {
+		return this.parameter;
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -189,7 +183,7 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 	}
 
 	public void setParameter(ProcessingParameter parameter) {
-		this.currentParameter = parameter;
+		this.parameter = parameter;
 	}
 
 	@Override
