@@ -56,7 +56,7 @@ public class ProcessingParameter extends AbstractEntityWithUUID {
 	 */
 	private Object get(String[] keys, int gap) throws NoSuchFieldException, IllegalAccessException, SecurityException {
 		Object object = this.parameters;
-		for (int i = 0; i < keys.length - 1 - gap; i++) {
+		for (int i = 0; i < keys.length - gap; i++) {
 			object = object.getClass().getDeclaredField(keys[i]).get(object);
 		}
 		return object;
@@ -81,8 +81,8 @@ public class ProcessingParameter extends AbstractEntityWithUUID {
 
 	public Class<?> getType(String[] keys) throws NoSuchFieldException, SecurityException {
 		Class<?> type = this.parameters.getClass();
-		for (int i = 0; i < keys.length - 1; i++) {
-			type = type.getClass().getDeclaredField(keys[i]).getType();
+		for (int i = 0; i < keys.length; i++) {
+			type = type.getDeclaredField(keys[i]).getType();
 		}
 		return type;
 	}
@@ -95,8 +95,7 @@ public class ProcessingParameter extends AbstractEntityWithUUID {
 	 */
 	public boolean containsKey(String path) throws IllegalAccessException, SecurityException {
 		try {
-			get(splitPath(path), 0);
-			return true;
+			return get(splitPath(path), 0) != null;
 		} catch (NoSuchFieldException | NullPointerException e) {
 			return false;
 		}

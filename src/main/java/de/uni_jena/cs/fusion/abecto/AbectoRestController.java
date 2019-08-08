@@ -224,7 +224,7 @@ public class AbectoRestController {
 						Object value = JSON.readValue(parameterValue, type);
 						// update parameters
 						newParameter.put(parameterPath, value);
-					} catch (IOException e) {
+					} catch (IllegalArgumentException | IOException e) {
 						log.error("Failed to parse input value.", e);
 						throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
 								String.format("Failed to pares value of type \"%s\".", type));
@@ -246,14 +246,20 @@ public class AbectoRestController {
 		}
 	}
 
-	@PutMapping({ "/source/{configuration}/parameter", "/processing/{configuration}/parameter" })
-	public void processingConfigurationUpdateParameter(@PathVariable("configuration") UUID configurationId) {
-
+	@DeleteMapping({ "/source/{configuration}/parameter", "/processing/{configuration}/parameter" })
+	public void processingConfigurationDeleteParameter(@PathVariable("configuration") UUID configurationId) {
 		// TODO
 	}
 
-	@DeleteMapping({ "/source/{configuration}/parameter", "/processing/{configuration}/parameter" })
-	public void processingConfigurationDeleteParameter(@PathVariable("configuration") UUID configurationId) {
+	@PostMapping({ "/source/{configuration}/parameter", "/processing/{configuration}/parameter" })
+	public void processingConfigurationGetParameter(@PathVariable("configuration") UUID configurationId,
+			@RequestParam(name = "key", required = false) String parameterPath) {
+
+	}
+
+	@PutMapping({ "/source/{configuration}/parameter", "/processing/{configuration}/parameter" })
+	public void processingConfigurationUpdateParameter(@PathVariable("configuration") UUID configurationId) {
+
 		// TODO
 	}
 

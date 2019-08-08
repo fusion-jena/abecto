@@ -188,7 +188,7 @@ public class AbectoRestControllerTest {
 				.andDo(buffer);
 
 		// set path parameter
-		String pathValue = "C:\\Users\\admin\\Documents\\Workspace\\unit-ontologies\\qu\\qu-rec20.owl"; // TODO replace
+		String pathValue = "\"C:\\\\Users\\\\admin\\\\Documents\\\\Workspace\\\\unit-ontologies\\\\qu\\\\qu-rec20.owl\""; // TODO replace
 		mvc.perform(MockMvcRequestBuilders.post(String.format("/source/%s/parameter", buffer.getId()))
 				.param("key", "path").param("value", pathValue).accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk());
