@@ -8,8 +8,8 @@ import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 
 import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfiguration;
-import de.uni_jena.cs.fusion.abecto.processor.api.Processor;
 import de.uni_jena.cs.fusion.abecto.processor.api.ParameterModel;
+import de.uni_jena.cs.fusion.abecto.processor.api.Processor;
 import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
 
 @Entity
@@ -60,19 +60,6 @@ public class ProcessingParameter extends AbstractEntityWithUUID {
 			object = object.getClass().getDeclaredField(keys[i]).get(object);
 		}
 		return object;
-	}
-
-	/**
-	 * @param path       path of keys to traverse
-	 * @param returnType type of the returned instance
-	 * @return value of addressed object
-	 * @throws NoSuchFieldException   if a given key was not found
-	 * @throws IllegalAccessException if access to a given key was not permitted
-	 * @throws SecurityException
-	 */
-	public <T> T get(String path, Class<T> returnType)
-			throws NoSuchFieldException, IllegalAccessException, SecurityException {
-		return returnType.cast(get(splitPath(path), 0));
 	}
 
 	/**
