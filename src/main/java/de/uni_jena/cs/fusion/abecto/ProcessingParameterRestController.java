@@ -95,9 +95,26 @@ public class ProcessingParameterRestController {
 	}
 
 	@GetMapping({ "/source/{configuration}/parameter", "/processing/{configuration}/parameter" })
-	public void get(@PathVariable("configuration") UUID configurationId,
+	public Object get(@PathVariable("configuration") UUID configurationId,
 			@RequestParam(name = "key", required = false) String parameterPath) {
+		ProcessingParameter parameter = processingConfigurationRepository.findById(configurationId)
+				.orElseThrow(new Supplier<ResponseStatusException>() {
+					@Override
+					public ResponseStatusException get() {
+						return new ResponseStatusException(HttpStatus.BAD_REQUEST, "Processing or Source not found.");
+					}
+				}).getParameter();
 
+		if (parameterPath == null) {
+			return parameter;
+		} else {
+			try {
+				return parameter.get(parameterPath);
+			} catch (NoSuchFieldException | IllegalAccessException | SecurityException e) {
+				return new ResponseStatusException(HttpStatus.BAD_REQUEST,
+						String.format("Parameter \"%s\" not found.", parameterPath));
+			}
+		}
 	}
 
 	@PutMapping({ "/source/{configuration}/parameter", "/processing/{configuration}/parameter" })

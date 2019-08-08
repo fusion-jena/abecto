@@ -75,6 +75,17 @@ public class ProcessingParameter extends AbstractEntityWithUUID {
 		return returnType.cast(get(splitPath(path), 0));
 	}
 
+	/**
+	 * @param path path of keys to traverse
+	 * @return value of addressed object
+	 * @throws NoSuchFieldException   if a given key was not found
+	 * @throws IllegalAccessException if access to a given key was not permitted
+	 * @throws SecurityException
+	 */
+	public Object get(String path) throws NoSuchFieldException, IllegalAccessException, SecurityException {
+		return get(splitPath(path), 0);
+	}
+
 	public Class<?> getType(String path) throws NoSuchFieldException, SecurityException {
 		return getType(splitPath(path));
 	}

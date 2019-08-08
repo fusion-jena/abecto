@@ -189,8 +189,9 @@ public class AbectoRestControllerTest {
 
 		// set path parameter
 		String pathValue = "/path/to/a/file.owl";
-		mvc.perform(MockMvcRequestBuilders.post(String.format("/source/%s/parameter", buffer.getId()))
-				.param("key", "path").param("value", JSON.writeValueAsString(pathValue)).accept(MediaType.APPLICATION_JSON))
+		mvc.perform(
+				MockMvcRequestBuilders.post(String.format("/source/%s/parameter", buffer.getId())).param("key", "path")
+						.param("value", JSON.writeValueAsString(pathValue)).accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk());
 
 		// get source
@@ -198,6 +199,12 @@ public class AbectoRestControllerTest {
 				// TODO remove print
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer).andDo(print());
 		assertEquals(pathValue, buffer.getJson().path("parameter").path("parameters").path("path").asText());
+
+		// get parameter value
+		mvc.perform(MockMvcRequestBuilders.get(String.format("/source/%s/parameter", buffer.getId()))
+				.param("key", "path").accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer)
+				.andDo(print());
+		assertEquals(pathValue, buffer.getString());
 
 		// use unknown knowledgeBase id
 		mvc.perform(MockMvcRequestBuilders.post("/source").param("class", "PathSourceProcessor")
@@ -228,6 +235,10 @@ public class AbectoRestControllerTest {
 
 		public JsonNode getJson() throws IOException {
 			return JSON.readTree(bytes);
+		}
+
+		public String getString() throws IOException {
+			return new String(bytes);
 		}
 
 		public String getId() throws IOException {
