@@ -9,7 +9,7 @@ import org.springframework.test.web.servlet.ResultHandler;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-class ResponseBuffer implements ResultHandler {
+public class ResponseBuffer implements ResultHandler {
 
 	byte[] bytes;
 

@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto;
+package de.uni_jena.cs.fusion.abecto.project;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -19,6 +19,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import de.uni_jena.cs.fusion.abecto.ResponseBuffer;
 import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
 
 @ExtendWith(SpringExtension.class)

@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto;
+package de.uni_jena.cs.fusion.abecto.configuration;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -18,6 +18,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import de.uni_jena.cs.fusion.abecto.ResponseBuffer;
 import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
 
 @ExtendWith(SpringExtension.class)
@@ -70,7 +71,8 @@ public class ConfigurationRestControllerTest {
 		mvc.perform(MockMvcRequestBuilders.get(String.format("/source/%s", buffer.getId()))
 				// TODO remove print
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer).andDo(print());
-		JSONAssert.assertEquals(parametersJson, buffer.getJson().path("parameter").path("parameters").toString(), false);
+		JSONAssert.assertEquals(parametersJson, buffer.getJson().path("parameter").path("parameters").toString(),
+				false);
 
 		// use unknown knowledgeBase id
 		mvc.perform(MockMvcRequestBuilders.post("/source").param("class", "PathSourceProcessor")
