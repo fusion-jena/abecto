@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto;
+package de.uni_jena.cs.fusion.abecto.project;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -14,9 +14,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
-
-import de.uni_jena.cs.fusion.abecto.project.Project;
-import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
 
 @RestController
 @Transactional

@@ -16,18 +16,18 @@ public class ProcessingParameterConverterTest {
 
 	@Test
 	public void testConvertToDatabaseColumn() throws JSONException {
-		String parameterSerialization = new ProcessingParameterConverter()
+		String parameterSerialization = new ParameterConverter()
 				.convertToDatabaseColumn(this.parameterObject);
 		Assertions.assertTrue(parameterSerialization.startsWith(this.parameterClass));
 		JSONAssert.assertEquals(parameterJson, parameterSerialization
-				.substring(parameterSerialization.indexOf(ProcessingParameterConverter.SEPARATOR) + 1), false);
+				.substring(parameterSerialization.indexOf(ParameterConverter.SEPARATOR) + 1), false);
 	}
 
 	@Test
 	public void testConvertToEntityAttribute() {
-		ProcessingParameterConverterTestParameterClass actualParameters = (ProcessingParameterConverterTestParameterClass) new ProcessingParameterConverter()
+		ProcessingParameterConverterTestParameterClass actualParameters = (ProcessingParameterConverterTestParameterClass) new ParameterConverter()
 				.convertToEntityAttribute(
-						this.parameterClass + ProcessingParameterConverter.SEPARATOR + this.parameterJson);
+						this.parameterClass + ParameterConverter.SEPARATOR + this.parameterJson);
 		Assertions.assertEquals("valueA", actualParameters.keyA);
 		Assertions.assertEquals("valueB", actualParameters.keyB);
 	}

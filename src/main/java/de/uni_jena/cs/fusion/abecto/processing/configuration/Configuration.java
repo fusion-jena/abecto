@@ -13,7 +13,7 @@ import javax.persistence.OneToOne;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameter;
+import de.uni_jena.cs.fusion.abecto.processing.parameter.Parameter;
 import de.uni_jena.cs.fusion.abecto.processor.api.MappingProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.api.MetaProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.api.Processor;
@@ -25,47 +25,47 @@ import de.uni_jena.cs.fusion.abecto.project.knowledgebase.KnowledgeBase;
 import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
 
 @Entity
-public class ProcessingConfiguration extends AbstractEntityWithUUID {
+public class Configuration extends AbstractEntityWithUUID {
 
 	/**
-	 * The {@link KnowledgeBase} this {@link ProcessingConfiguration} of a
+	 * The {@link KnowledgeBase} this {@link Configuration} of a
 	 * {@link SourceProcessor} belongs to or {@code null}, if this does not belong
 	 * to a {@link SourceProcessor}.
 	 */
 	@ManyToOne(fetch = FetchType.LAZY)
 	protected KnowledgeBase knowledgeBase;
 	/**
-	 * The {@link Project} this {@link ProcessingConfiguration} belongs to.
+	 * The {@link Project} this {@link Configuration} belongs to.
 	 */
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	protected Project project;
 
 	@ManyToMany(fetch = FetchType.LAZY)
-	protected Collection<ProcessingConfiguration> inputProcessingConfigurations = new HashSet<>();
+	protected Collection<Configuration> inputProcessingConfigurations = new HashSet<>();
 	@OneToOne
-	protected ProcessingParameter parameter;
+	protected Parameter parameter;
 	@SuppressWarnings("rawtypes")
 	protected Class<? extends Processor> processor;
 
-	protected ProcessingConfiguration() {
+	protected Configuration() {
 	}
 
 	/**
-	 * Creates a {@link ProcessingConfiguration} for a {@link RefinementProcessor}.
+	 * Creates a {@link Configuration} for a {@link RefinementProcessor}.
 	 * 
-	 * @param parameter                     The {@link ProcessingParameter} to use.
+	 * @param parameter                     The {@link Parameter} to use.
 	 * @param processorClass                The {@link Processor} to use.
 	 *                                      {@link SourceProcessor} are not allowed.
-	 * @param inputProcessingConfigurations The {@link ProcessingConfiguration}s
-	 *                                      whose result to use as input.
+	 * @param inputProcessingConfigurations The {@link Configuration}s whose result
+	 *                                      to use as input.
 	 */
-	public ProcessingConfiguration(Class<Processor<?>> processorClass, ProcessingParameter parameter,
-			Iterable<ProcessingConfiguration> inputProcessingConfigurations)
+	public Configuration(Class<Processor<?>> processorClass, Parameter parameter,
+			Iterable<Configuration> inputProcessingConfigurations)
 			throws NoSuchElementException, IllegalArgumentException, IllegalStateException {
 		this(processorClass, parameter);
 
 		// add associations between ProcessingConfigurations
-		for (ProcessingConfiguration inputProcessingConfiguration : inputProcessingConfigurations) {
+		for (Configuration inputProcessingConfiguration : inputProcessingConfigurations) {
 			this.addInputProcessingConfiguration(inputProcessingConfiguration);
 		}
 
@@ -79,39 +79,38 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 	}
 
 	/**
-	 * Creates a {@link ProcessingConfiguration} for a {@link SourceProcessor}.
+	 * Creates a {@link Configuration} for a {@link SourceProcessor}.
 	 * 
-	 * @param parameter           The {@link ProcessingParameter} to use.
+	 * @param parameter           The {@link Parameter} to use.
 	 * @param processor           The {@link SourceProcessor} to use.
 	 * @param knowledgeBaseModule The {@link KnowledgeBaseModule} to assign the
 	 *                            configuration to.
 	 */
-	public ProcessingConfiguration(Class<Processor<?>> processor, ProcessingParameter parameter,
-			KnowledgeBase knowledgeBase) {
+	public Configuration(Class<Processor<?>> processor, Parameter parameter, KnowledgeBase knowledgeBase) {
 		this(processor, parameter);
 		this.knowledgeBase = knowledgeBase;
 		this.project = knowledgeBase.getProject();
 	}
 
 	/**
-	 * Internal {@link ProcessingConfiguration} constructor for reuse in other
-	 * constructors only.
+	 * Internal {@link Configuration} constructor for reuse in other constructors
+	 * only.
 	 * 
 	 * @param parameter
 	 * @param processor
 	 */
-	protected ProcessingConfiguration(Class<Processor<?>> processor, ProcessingParameter parameter) {
+	protected Configuration(Class<Processor<?>> processor, Parameter parameter) {
 		this.parameter = parameter;
 		this.processor = processor;
 	}
 
 	@JsonIgnore
-	public void addInputProcessingConfiguration(ProcessingConfiguration inputProcessingConfiguration) {
+	public void addInputProcessingConfiguration(Configuration inputProcessingConfiguration) {
 		this.inputProcessingConfigurations.add(inputProcessingConfiguration);
 	}
 
 	@JsonIgnore
-	public Collection<ProcessingConfiguration> getInputProcessingConfigurations() {
+	public Collection<Configuration> getInputProcessingConfigurations() {
 		return this.inputProcessingConfigurations;
 	}
 
@@ -124,7 +123,7 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 		return this.knowledgeBase.getId();
 	}
 
-	public ProcessingParameter getParameter() {
+	public Parameter getParameter() {
 		return this.parameter;
 	}
 
@@ -182,7 +181,7 @@ public class ProcessingConfiguration extends AbstractEntityWithUUID {
 		return TransformationProcessor.class.isAssignableFrom(this.processor);
 	}
 
-	public void setParameter(ProcessingParameter parameter) {
+	public void setParameter(Parameter parameter) {
 		this.parameter = parameter;
 	}
 

@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto;
+package de.uni_jena.cs.fusion.abecto.project.knowledgebase;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -17,8 +17,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.uni_jena.cs.fusion.abecto.project.Project;
 import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
-import de.uni_jena.cs.fusion.abecto.project.knowledgebase.KnowledgeBase;
-import de.uni_jena.cs.fusion.abecto.project.knowledgebase.KnowledgeBaseRepository;
 
 @RestController
 @Transactional

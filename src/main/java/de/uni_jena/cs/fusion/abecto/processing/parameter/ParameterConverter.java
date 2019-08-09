@@ -11,7 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.uni_jena.cs.fusion.abecto.processor.api.ParameterModel;
 
 @Converter
-public class ProcessingParameterConverter implements AttributeConverter<ParameterModel, String> {
+public class ParameterConverter implements AttributeConverter<ParameterModel, String> {
 
 	private final static ObjectMapper JSON = new ObjectMapper();
 	protected final static char SEPARATOR = ':';

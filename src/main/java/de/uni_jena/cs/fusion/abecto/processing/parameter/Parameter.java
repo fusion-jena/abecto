@@ -7,33 +7,33 @@ import javax.persistence.Convert;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 
-import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfiguration;
+import de.uni_jena.cs.fusion.abecto.processing.configuration.Configuration;
 import de.uni_jena.cs.fusion.abecto.processor.api.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.processor.api.Processor;
 import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
 
 @Entity
-public class ProcessingParameter extends AbstractEntityWithUUID {
+public class Parameter extends AbstractEntityWithUUID {
 
-	@Convert(converter = ProcessingParameterConverter.class)
+	@Convert(converter = ParameterConverter.class)
 	private ParameterModel parameters;
 
 	@ManyToOne
-	private ProcessingConfiguration configuration;
+	private Configuration configuration;
 
-	public ProcessingParameter() {
+	public Parameter() {
 	}
 
-	public ProcessingParameter(Class<Processor<?>> processorClass) throws InstantiationException,
+	public Parameter(Class<Processor<?>> processorClass) throws InstantiationException,
 			IllegalAccessException, InvocationTargetException, NoSuchMethodException, SecurityException {
 		this.parameters = Processor.getDefaultParameters(processorClass);
 	}
 
-	public ProcessingParameter(ParameterModel parameters) {
+	public Parameter(ParameterModel parameters) {
 		this.parameters = parameters;
 	}
 
-	private ProcessingParameter(ProcessingParameter original) {
+	private Parameter(Parameter original) {
 		this.parameters = original.parameters; // TODO deep copy required?
 	}
 
@@ -103,17 +103,17 @@ public class ProcessingParameter extends AbstractEntityWithUUID {
 		}
 	}
 
-	public ProcessingParameter copy() throws InstantiationException, IllegalAccessException, IllegalArgumentException,
+	public Parameter copy() throws InstantiationException, IllegalAccessException, IllegalArgumentException,
 			InvocationTargetException, NoSuchMethodException, SecurityException {
-		return new ProcessingParameter(this);
+		return new Parameter(this);
 	}
 
-	public ProcessingParameter put(String path, Object value)
+	public Parameter put(String path, Object value)
 			throws NoSuchFieldException, IllegalAccessException, SecurityException {
 		return put(splitPath(path), value);
 	}
 
-	private ProcessingParameter put(String[] keys, Object value)
+	private Parameter put(String[] keys, Object value)
 			throws NoSuchFieldException, IllegalAccessException, SecurityException {
 		Object object = get(keys, 1);
 		Field field = object.getClass().getDeclaredField(keys[keys.length - 1]);

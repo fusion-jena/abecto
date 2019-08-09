@@ -15,8 +15,8 @@ import org.springframework.stereotype.Component;
 import de.uni_jena.cs.fusion.abecto.processing.Processing;
 import de.uni_jena.cs.fusion.abecto.processing.ProcessingException;
 import de.uni_jena.cs.fusion.abecto.processing.ProcessingRepository;
-import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfiguration;
-import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfigurationRepository;
+import de.uni_jena.cs.fusion.abecto.processing.configuration.Configuration;
+import de.uni_jena.cs.fusion.abecto.processing.configuration.ConfigurationRepository;
 import de.uni_jena.cs.fusion.abecto.processor.api.Processor;
 import de.uni_jena.cs.fusion.abecto.processor.api.RefinementProcessor;
 import de.uni_jena.cs.fusion.abecto.project.Project;
@@ -30,7 +30,7 @@ public class ProjectRunner {
 	@Autowired
 	RdfModelRepository rdfGraphRepository;
 	@Autowired
-	ProcessingConfigurationRepository configurationRepository;
+	ConfigurationRepository configurationRepository;
 	@Autowired
 	ProcessorRunner processorRunner;
 
@@ -56,9 +56,9 @@ public class ProjectRunner {
 
 		log.info("get all configurations of the project");
 		// get all configurations of the project
-		Iterable<ProcessingConfiguration> configurations = this.configurationRepository.findAllByProject(project);
+		Iterable<Configuration> configurations = this.configurationRepository.findAllByProject(project);
 
-		Map<ProcessingConfiguration, Processing> processingsMap = new HashMap<>();
+		Map<Configuration, Processing> processingsMap = new HashMap<>();
 
 		try {
 			log.info("add given processings and their input processings to processingsMap");
@@ -70,18 +70,18 @@ public class ProjectRunner {
 			}
 
 			log.info("add new processings for missing configurations to processingsMap");
-			for (ProcessingConfiguration configuration : configurations) {
+			for (Configuration configuration : configurations) {
 				processingsMap.computeIfAbsent(configuration, (c) -> new Processing(c));
 			}
 
 			// save processings
 			this.processingRepository.saveAll(processingsMap.values());
 
-			Map<ProcessingConfiguration, Processor<?>> processorsMap = new HashMap<>();
+			Map<Configuration, Processor<?>> processorsMap = new HashMap<>();
 
 			log.info("initialize processors for not startet processings");
 			// initialize processors for not started processings
-			for (ProcessingConfiguration configuration : configurations) {
+			for (Configuration configuration : configurations) {
 				Processing processing = processingsMap.get(configuration);
 				try {
 					Processor<?> processor = processing.getProcessorInsance();
@@ -97,9 +97,9 @@ public class ProjectRunner {
 
 			log.info("add dependent processors or input graphs to processors");
 			// add dependent processors
-			for (ProcessingConfiguration configuration : processorsMap.keySet()) {
+			for (Configuration configuration : processorsMap.keySet()) {
 				Processor<?> processor = processorsMap.get(configuration);
-				for (ProcessingConfiguration inputConfiguration : configuration.getInputProcessingConfigurations()) {
+				for (Configuration inputConfiguration : configuration.getInputProcessingConfigurations()) {
 					if (processor instanceof RefinementProcessor) {
 						((RefinementProcessor<?>) processor).addInputProcessor(processorsMap.get(inputConfiguration));
 					}
@@ -107,7 +107,7 @@ public class ProjectRunner {
 			}
 
 			// execute processors
-			for (ProcessingConfiguration configuration : processorsMap.keySet()) {
+			for (Configuration configuration : processorsMap.keySet()) {
 				log.info("Scheduling processor: " + processorsMap.get(configuration));
 				processorRunner.execute(processingsMap.get(configuration), processorsMap.get(configuration));
 			}

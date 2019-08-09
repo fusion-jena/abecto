@@ -6,6 +6,6 @@ import org.springframework.data.repository.CrudRepository;
 
 import de.uni_jena.cs.fusion.abecto.project.Project;
 
-public interface ProcessingConfigurationRepository extends CrudRepository<ProcessingConfiguration, UUID> {
-	public Iterable<ProcessingConfiguration> findAllByProject(Project project);
+public interface ConfigurationRepository extends CrudRepository<Configuration, UUID> {
+	public Iterable<Configuration> findAllByProject(Project project);
 }

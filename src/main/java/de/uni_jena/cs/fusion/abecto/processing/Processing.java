@@ -19,8 +19,8 @@ import javax.persistence.OneToOne;
 
 import org.apache.jena.rdf.model.Model;
 
-import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfiguration;
-import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameter;
+import de.uni_jena.cs.fusion.abecto.processing.configuration.Configuration;
+import de.uni_jena.cs.fusion.abecto.processing.parameter.Parameter;
 import de.uni_jena.cs.fusion.abecto.processor.api.Processor;
 import de.uni_jena.cs.fusion.abecto.processor.api.SourceProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.api.Processor.Status;
@@ -36,23 +36,23 @@ public class Processing extends AbstractEntityWithUUID {
 
 	// configuration
 	/**
-	 * {@link ProcessingConfiguration} of this processing. <b>Note:</b> The
+	 * {@link Configuration} of this processing. <b>Note:</b> The
 	 * configuration might have been changed after processing. To get the actual
 	 * configuration of this processing refer to {@link #processor},
 	 * {@link #parameter}, and {@link #inputProcessings}.
 	 */
 	@ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
-	private ProcessingConfiguration configuration;
+	private Configuration configuration;
 	/**
 	 * {@link Processor} used to produce the result {@link RdfModel}.
 	 */
 	@SuppressWarnings("rawtypes")
 	private Class<? extends Processor> processor;
 	/**
-	 * {@link ProcessingParameter} used to produce the result {@link RdfModel}.
+	 * {@link Parameter} used to produce the result {@link RdfModel}.
 	 */
 	@ManyToOne(fetch = FetchType.LAZY)
-	private ProcessingParameter parameter;
+	private Parameter parameter;
 	/**
 	 * Collection of {@link Processing}s used to produce the result
 	 * {@link RdfModel}.
@@ -73,20 +73,20 @@ public class Processing extends AbstractEntityWithUUID {
 
 	protected Processing() {}
 
-	public Processing(ProcessingConfiguration configuration) {
+	public Processing(Configuration configuration) {
 		this.configuration = configuration;
 		this.parameter = configuration.getParameter();
 		this.processor = configuration.getProcessorClass();
 	}
 
-	protected Processing(ProcessingConfiguration configuration, Collection<Processing> inputProcessings) {
+	protected Processing(Configuration configuration, Collection<Processing> inputProcessings) {
 		this.configuration = configuration;
 		this.parameter = configuration.getParameter();
 		this.processor = configuration.getProcessorClass();
 		this.inputProcessings.addAll(inputProcessings);
 	}
 
-	public ProcessingConfiguration getConfiguration() {
+	public Configuration getConfiguration() {
 		return this.configuration;
 	}
 
@@ -98,7 +98,7 @@ public class Processing extends AbstractEntityWithUUID {
 		return this.inputProcessings;
 	}
 
-	public ProcessingParameter getParameter() {
+	public Parameter getParameter() {
 		return this.parameter;
 	}
 

@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto;
+package de.uni_jena.cs.fusion.abecto.processing.configuration;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -19,10 +19,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfiguration;
-import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfigurationRepository;
-import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameter;
-import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameterRepository;
+import de.uni_jena.cs.fusion.abecto.processing.parameter.Parameter;
+import de.uni_jena.cs.fusion.abecto.processing.parameter.ParameterRepository;
 import de.uni_jena.cs.fusion.abecto.processor.api.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.processor.api.Processor;
 import de.uni_jena.cs.fusion.abecto.project.knowledgebase.KnowledgeBase;
@@ -30,19 +28,19 @@ import de.uni_jena.cs.fusion.abecto.project.knowledgebase.KnowledgeBaseRepositor
 
 @RestController
 @Transactional
-public class ProcessingConfigurationRestController {
+public class ConfigurationRestController {
 
 	@Autowired
 	KnowledgeBaseRepository knowledgeBaseRepository;
 	@Autowired
-	ProcessingConfigurationRepository processingConfigurationRepository;
+	ConfigurationRepository configurationRepository;
 	@Autowired
-	ProcessingParameterRepository processingParameterRepository;
+	ParameterRepository parameterRepository;
 
 	private final static ObjectMapper JSON = new ObjectMapper();
 
 	@PostMapping("/source")
-	public ProcessingConfiguration createForSource(@RequestParam("class") String processorClassName,
+	public Configuration createForSource(@RequestParam("class") String processorClassName,
 			@RequestParam("knowledgebase") UUID knowledgebaseId,
 			@RequestParam(name = "parameters", required = false) String parameterJson) {
 
@@ -56,10 +54,10 @@ public class ProcessingConfigurationRestController {
 					}
 				});
 
-		ProcessingParameter parameter = processingParameterRepository
-				.save(new ProcessingParameter(getParameter(processorClass, parameterJson)));
-		return processingConfigurationRepository
-				.save(new ProcessingConfiguration(processorClass, parameter, knowledgeBase));
+		Parameter parameter = parameterRepository
+				.save(new Parameter(getParameter(processorClass, parameterJson)));
+		return configurationRepository
+				.save(new Configuration(processorClass, parameter, knowledgeBase));
 
 	}
 
@@ -71,30 +69,30 @@ public class ProcessingConfigurationRestController {
 	 * @return
 	 */
 	@PostMapping("/processing")
-	public ProcessingConfiguration createForProcessing(@RequestParam("class") String processorClassName,
+	public Configuration createForProcessing(@RequestParam("class") String processorClassName,
 			@RequestParam("input") Collection<UUID> configurationIds,
 			@RequestParam(name = "parameters", required = false) String parameterJson) {
 
 		Class<Processor<?>> processorClass = getProcessorClass(processorClassName);
 
 		for (UUID configurationId : configurationIds) {
-			if (!processingConfigurationRepository.existsById(configurationId)) {
+			if (!configurationRepository.existsById(configurationId)) {
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
 						String.format("Processing configuration %s not found.", configurationId));
 			}
 		}
-		Iterable<ProcessingConfiguration> inputConfigurations = processingConfigurationRepository
+		Iterable<Configuration> inputConfigurations = configurationRepository
 				.findAllById(configurationIds);
 
-		ProcessingParameter parameter = processingParameterRepository
-				.save(new ProcessingParameter(getParameter(processorClass, parameterJson)));
-		return processingConfigurationRepository
-				.save(new ProcessingConfiguration(processorClass, parameter, inputConfigurations));
+		Parameter parameter = parameterRepository
+				.save(new Parameter(getParameter(processorClass, parameterJson)));
+		return configurationRepository
+				.save(new Configuration(processorClass, parameter, inputConfigurations));
 	}
 
 	@GetMapping({ "/source/{uuid}", "/processing/{uuid}" })
-	public ProcessingConfiguration get(@PathVariable("uuid") UUID uuid) {
-		Optional<ProcessingConfiguration> configuration = processingConfigurationRepository.findById(uuid);
+	public Configuration get(@PathVariable("uuid") UUID uuid) {
+		Optional<Configuration> configuration = configurationRepository.findById(uuid);
 		if (configuration.isPresent()) {
 			return configuration.get();
 		} else {

@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto;
+package de.uni_jena.cs.fusion.abecto.processing.parameter;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -21,22 +21,21 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfiguration;
-import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfigurationRepository;
-import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameter;
-import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameterRepository;
+import de.uni_jena.cs.fusion.abecto.Abecto;
+import de.uni_jena.cs.fusion.abecto.processing.configuration.Configuration;
+import de.uni_jena.cs.fusion.abecto.processing.configuration.ConfigurationRepository;
 import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
 
 @RestController
 @Transactional
-public class ProcessingParameterRestController {
+public class ParameterRestController {
 	private static final Logger log = LoggerFactory.getLogger(Abecto.class);
 	private static final ObjectMapper JSON = new ObjectMapper();
 
 	@Autowired
-	ProcessingConfigurationRepository processingConfigurationRepository;
+	ConfigurationRepository configurationRepository;
 	@Autowired
-	ProcessingParameterRepository processingParameterRepository;
+	ParameterRepository parameterRepository;
 	@Autowired
 	ProjectRepository projectRepository;
 
@@ -45,7 +44,7 @@ public class ProcessingParameterRestController {
 			@RequestParam(name = "key", required = false) String parameterPath,
 			@RequestParam(name = "value", required = false) String parameterValue) {
 
-		ProcessingConfiguration configuration = processingConfigurationRepository.findById(configurationId)
+		Configuration configuration = configurationRepository.findById(configurationId)
 				.orElseThrow(new Supplier<ResponseStatusException>() {
 					@Override
 					public ResponseStatusException get() {
@@ -59,7 +58,7 @@ public class ProcessingParameterRestController {
 			} else {
 				try {
 					// copy parameters
-					ProcessingParameter newParameter = configuration.getParameter().copy();
+					Parameter newParameter = configuration.getParameter().copy();
 					// get type of changed parameter
 					Class<?> type = newParameter.getType(parameterPath);
 					try {
@@ -75,8 +74,8 @@ public class ProcessingParameterRestController {
 					// update configuration
 					configuration.setParameter(newParameter);
 					// persist changes
-					processingConfigurationRepository.save(configuration);
-					processingParameterRepository.save(newParameter);
+					configurationRepository.save(configuration);
+					parameterRepository.save(newParameter);
 				} catch (SecurityException | InstantiationException | IllegalArgumentException
 						| InvocationTargetException | NoSuchMethodException e) {
 					log.error("Failed to copy ProcessingParameter.", e);
@@ -97,7 +96,7 @@ public class ProcessingParameterRestController {
 	@GetMapping({ "/source/{configuration}/parameter", "/processing/{configuration}/parameter" })
 	public Object get(@PathVariable("configuration") UUID configurationId,
 			@RequestParam(name = "key", required = false) String parameterPath) {
-		ProcessingParameter parameter = processingConfigurationRepository.findById(configurationId)
+		Parameter parameter = configurationRepository.findById(configurationId)
 				.orElseThrow(new Supplier<ResponseStatusException>() {
 					@Override
 					public ResponseStatusException get() {
