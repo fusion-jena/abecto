@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.processing.parameter;
+package de.uni_jena.cs.fusion.abecto.parameter;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -22,8 +22,8 @@ import org.springframework.web.server.ResponseStatusException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.uni_jena.cs.fusion.abecto.Abecto;
-import de.uni_jena.cs.fusion.abecto.processing.configuration.Configuration;
-import de.uni_jena.cs.fusion.abecto.processing.configuration.ConfigurationRepository;
+import de.uni_jena.cs.fusion.abecto.configuration.Configuration;
+import de.uni_jena.cs.fusion.abecto.configuration.ConfigurationRepository;
 import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
 
 @RestController

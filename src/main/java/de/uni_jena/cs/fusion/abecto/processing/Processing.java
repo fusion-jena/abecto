@@ -19,8 +19,8 @@ import javax.persistence.OneToOne;
 
 import org.apache.jena.rdf.model.Model;
 
-import de.uni_jena.cs.fusion.abecto.processing.configuration.Configuration;
-import de.uni_jena.cs.fusion.abecto.processing.parameter.Parameter;
+import de.uni_jena.cs.fusion.abecto.configuration.Configuration;
+import de.uni_jena.cs.fusion.abecto.parameter.Parameter;
 import de.uni_jena.cs.fusion.abecto.processor.api.Processor;
 import de.uni_jena.cs.fusion.abecto.processor.api.SourceProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.api.Processor.Status;

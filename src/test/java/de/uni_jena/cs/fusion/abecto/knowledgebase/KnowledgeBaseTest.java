@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.project.knowledgebase;
+package de.uni_jena.cs.fusion.abecto.knowledgebase;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
+import de.uni_jena.cs.fusion.abecto.knowledgebase.KnowledgeBase;
 import de.uni_jena.cs.fusion.abecto.project.Project;
 
 public class KnowledgeBaseTest {

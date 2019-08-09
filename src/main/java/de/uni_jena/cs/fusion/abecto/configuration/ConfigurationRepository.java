@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.processing.configuration;
+package de.uni_jena.cs.fusion.abecto.configuration;
 
 import java.util.UUID;
 

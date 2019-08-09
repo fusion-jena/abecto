@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.processing.parameter;
+package de.uni_jena.cs.fusion.abecto.parameter;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -7,7 +7,7 @@ import javax.persistence.Convert;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 
-import de.uni_jena.cs.fusion.abecto.processing.configuration.Configuration;
+import de.uni_jena.cs.fusion.abecto.configuration.Configuration;
 import de.uni_jena.cs.fusion.abecto.processor.api.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.processor.api.Processor;
 import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;

@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.project.knowledgebase;
+package de.uni_jena.cs.fusion.abecto.knowledgebase;
 
 import java.util.Optional;
 import java.util.UUID;

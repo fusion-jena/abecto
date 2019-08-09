@@ -4,7 +4,7 @@ import java.util.UUID;
 
 import org.springframework.data.repository.CrudRepository;
 
-import de.uni_jena.cs.fusion.abecto.processing.configuration.Configuration;
+import de.uni_jena.cs.fusion.abecto.configuration.Configuration;
 
 public interface ProcessingRepository extends CrudRepository<Processing, UUID> {
 	Processing findTopByConfigurationOrderByStartDateTimeDesc(Configuration configuration);

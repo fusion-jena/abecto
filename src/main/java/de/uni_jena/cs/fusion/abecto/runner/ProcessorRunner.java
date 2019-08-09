@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.processing.runner;
+package de.uni_jena.cs.fusion.abecto.runner;
 
 import org.apache.jena.rdf.model.Model;
 import org.slf4j.Logger;

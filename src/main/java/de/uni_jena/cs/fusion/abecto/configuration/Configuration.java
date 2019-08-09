@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.processing.configuration;
+package de.uni_jena.cs.fusion.abecto.configuration;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -13,7 +13,8 @@ import javax.persistence.OneToOne;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import de.uni_jena.cs.fusion.abecto.processing.parameter.Parameter;
+import de.uni_jena.cs.fusion.abecto.knowledgebase.KnowledgeBase;
+import de.uni_jena.cs.fusion.abecto.parameter.Parameter;
 import de.uni_jena.cs.fusion.abecto.processor.api.MappingProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.api.MetaProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.api.Processor;
@@ -21,7 +22,6 @@ import de.uni_jena.cs.fusion.abecto.processor.api.RefinementProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.api.SourceProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.api.TransformationProcessor;
 import de.uni_jena.cs.fusion.abecto.project.Project;
-import de.uni_jena.cs.fusion.abecto.project.knowledgebase.KnowledgeBase;
 import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
 
 @Entity

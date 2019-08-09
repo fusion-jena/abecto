@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.project.knowledgebase;
+package de.uni_jena.cs.fusion.abecto.knowledgebase;
 
 import java.util.Collection;
 import java.util.UUID;
@@ -11,7 +11,7 @@ import javax.persistence.OneToMany;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import de.uni_jena.cs.fusion.abecto.processing.configuration.Configuration;
+import de.uni_jena.cs.fusion.abecto.configuration.Configuration;
 import de.uni_jena.cs.fusion.abecto.project.Project;
 import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
 

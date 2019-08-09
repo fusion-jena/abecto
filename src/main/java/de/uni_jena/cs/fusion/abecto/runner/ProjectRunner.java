@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.processing.runner;
+package de.uni_jena.cs.fusion.abecto.runner;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -12,11 +12,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import de.uni_jena.cs.fusion.abecto.configuration.Configuration;
+import de.uni_jena.cs.fusion.abecto.configuration.ConfigurationRepository;
 import de.uni_jena.cs.fusion.abecto.processing.Processing;
 import de.uni_jena.cs.fusion.abecto.processing.ProcessingException;
 import de.uni_jena.cs.fusion.abecto.processing.ProcessingRepository;
-import de.uni_jena.cs.fusion.abecto.processing.configuration.Configuration;
-import de.uni_jena.cs.fusion.abecto.processing.configuration.ConfigurationRepository;
 import de.uni_jena.cs.fusion.abecto.processor.api.Processor;
 import de.uni_jena.cs.fusion.abecto.processor.api.RefinementProcessor;
 import de.uni_jena.cs.fusion.abecto.project.Project;
