@@ -1,6 +1,5 @@
 package de.uni_jena.cs.fusion.abecto;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -10,6 +9,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.skyscreamer.jsonassert.JSONAssert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,8 +17,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
 
@@ -29,8 +27,6 @@ public class ConfigurationRestControllerTest {
 
 	@Autowired
 	MockMvc mvc;
-
-	private final static ObjectMapper JSON = new ObjectMapper();
 
 	private final ResponseBuffer buffer = new ResponseBuffer();
 
@@ -59,23 +55,22 @@ public class ConfigurationRestControllerTest {
 				.param("input", new String[] { "550e8400-e29b-11d4-a716-446655440000" })
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
 
-		// create new source
+		// create new source without parameter
 		mvc.perform(MockMvcRequestBuilders.post("/source").param("class", "PathSourceProcessor")
 				.param("knowledgebase", kowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 
-		// set path parameter
-		String pathValue = "/path/to/a/file.owl";
-		mvc.perform(
-				MockMvcRequestBuilders.post(String.format("/source/%s/parameter", buffer.getId())).param("key", "path")
-						.param("value", JSON.writeValueAsString(pathValue)).accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk());
+		// create new source with parameter
+		String parametersJson = "{\"path\":\"/path/to/a/file.owl\"}";
+		mvc.perform(MockMvcRequestBuilders.post("/source").param("class", "PathSourceProcessor")
+				.param("parameters", parametersJson).param("knowledgebase", kowledgBaseId)
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 
 		// get source
 		mvc.perform(MockMvcRequestBuilders.get(String.format("/source/%s", buffer.getId()))
 				// TODO remove print
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer).andDo(print());
-		assertEquals(pathValue, buffer.getJson().path("parameter").path("parameters").path("path").asText());
+		JSONAssert.assertEquals(parametersJson, buffer.getJson().path("parameter").path("parameters").toString(), false);
 
 		// use unknown knowledgeBase id
 		mvc.perform(MockMvcRequestBuilders.post("/source").param("class", "PathSourceProcessor")

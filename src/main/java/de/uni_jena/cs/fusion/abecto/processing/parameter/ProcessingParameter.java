@@ -29,6 +29,10 @@ public class ProcessingParameter extends AbstractEntityWithUUID {
 		this.parameters = Processor.getDefaultParameters(processorClass);
 	}
 
+	public ProcessingParameter(ParameterModel parameters) {
+		this.parameters = parameters;
+	}
+
 	private ProcessingParameter(ProcessingParameter original) {
 		this.parameters = original.parameters; // TODO deep copy required?
 	}

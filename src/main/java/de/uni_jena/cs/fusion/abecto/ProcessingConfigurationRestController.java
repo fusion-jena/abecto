@@ -1,5 +1,6 @@
 package de.uni_jena.cs.fusion.abecto;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Optional;
@@ -16,10 +17,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfiguration;
 import de.uni_jena.cs.fusion.abecto.processing.configuration.ProcessingConfigurationRepository;
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameter;
 import de.uni_jena.cs.fusion.abecto.processing.parameter.ProcessingParameterRepository;
+import de.uni_jena.cs.fusion.abecto.processor.api.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.processor.api.Processor;
 import de.uni_jena.cs.fusion.abecto.project.knowledgebase.KnowledgeBase;
 import de.uni_jena.cs.fusion.abecto.project.knowledgebase.KnowledgeBaseRepository;
@@ -35,9 +39,12 @@ public class ProcessingConfigurationRestController {
 	@Autowired
 	ProcessingParameterRepository processingParameterRepository;
 
+	private final static ObjectMapper JSON = new ObjectMapper();
+
 	@PostMapping("/source")
 	public ProcessingConfiguration createForSource(@RequestParam("class") String processorClassName,
-			@RequestParam("knowledgebase") UUID knowledgebaseId) {
+			@RequestParam("knowledgebase") UUID knowledgebaseId,
+			@RequestParam(name = "parameters", required = false) String parameterJson) {
 
 		Class<Processor<?>> processorClass = getProcessorClass(processorClassName);
 
@@ -49,16 +56,11 @@ public class ProcessingConfigurationRestController {
 					}
 				});
 
-		try {
-			ProcessingParameter defaultParameter = processingParameterRepository
-					.save(new ProcessingParameter(processorClass));
+		ProcessingParameter parameter = processingParameterRepository
+				.save(new ProcessingParameter(getParameter(processorClass, parameterJson)));
+		return processingConfigurationRepository
+				.save(new ProcessingConfiguration(processorClass, parameter, knowledgeBase));
 
-			return processingConfigurationRepository
-					.save(new ProcessingConfiguration(processorClass, defaultParameter, knowledgeBase));
-		} catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException
-				| SecurityException e) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Failed to load requested processor.", e);
-		}
 	}
 
 	/**
@@ -70,7 +72,8 @@ public class ProcessingConfigurationRestController {
 	 */
 	@PostMapping("/processing")
 	public ProcessingConfiguration createForProcessing(@RequestParam("class") String processorClassName,
-			@RequestParam("input") Collection<UUID> configurationIds) {
+			@RequestParam("input") Collection<UUID> configurationIds,
+			@RequestParam(name = "parameters", required = false) String parameterJson) {
 
 		Class<Processor<?>> processorClass = getProcessorClass(processorClassName);
 
@@ -82,16 +85,11 @@ public class ProcessingConfigurationRestController {
 		}
 		Iterable<ProcessingConfiguration> inputConfigurations = processingConfigurationRepository
 				.findAllById(configurationIds);
-		try {
-			ProcessingParameter defaultParameter = processingParameterRepository
-					.save(new ProcessingParameter(processorClass));
 
-			return processingConfigurationRepository
-					.save(new ProcessingConfiguration(processorClass, defaultParameter, inputConfigurations));
-		} catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException
-				| SecurityException e) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Failed to load requested processor.", e);
-		}
+		ProcessingParameter parameter = processingParameterRepository
+				.save(new ProcessingParameter(getParameter(processorClass, parameterJson)));
+		return processingConfigurationRepository
+				.save(new ProcessingConfiguration(processorClass, parameter, inputConfigurations));
 	}
 
 	@GetMapping({ "/source/{uuid}", "/processing/{uuid}" })
@@ -115,6 +113,23 @@ public class ProcessingConfigurationRestController {
 			return (Class<Processor<?>>) Class.forName(processorClassName);
 		} catch (ClassNotFoundException e) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Processor class unknown.");
+		}
+	}
+
+	private ParameterModel getParameter(Class<Processor<?>> processorClass, String parameterJson) {
+		if (parameterJson == null) {
+			try {
+				return Processor.getDefaultParameters(processorClass);
+			} catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException
+					| SecurityException e) {
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Failed to set default parameters.", e);
+			}
+		} else {
+			try {
+				return JSON.readValue(parameterJson, Processor.getParameterClass(processorClass));
+			} catch (IOException e) {
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Failed to read parameters.", e);
+			}
 		}
 	}
 }
