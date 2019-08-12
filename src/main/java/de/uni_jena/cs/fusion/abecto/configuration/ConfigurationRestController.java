@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,8 +24,11 @@ import de.uni_jena.cs.fusion.abecto.knowledgebase.KnowledgeBase;
 import de.uni_jena.cs.fusion.abecto.knowledgebase.KnowledgeBaseRepository;
 import de.uni_jena.cs.fusion.abecto.parameter.Parameter;
 import de.uni_jena.cs.fusion.abecto.parameter.ParameterRepository;
+import de.uni_jena.cs.fusion.abecto.processing.Processing;
 import de.uni_jena.cs.fusion.abecto.processor.api.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.processor.api.Processor;
+import de.uni_jena.cs.fusion.abecto.processor.api.UploadSourceProcessor;
+import de.uni_jena.cs.fusion.abecto.runner.ProcessorRunner;
 
 @RestController
 @Transactional
@@ -36,6 +40,8 @@ public class ConfigurationRestController {
 	ConfigurationRepository configurationRepository;
 	@Autowired
 	ParameterRepository parameterRepository;
+	@Autowired
+	ProcessorRunner processorRunner;
 
 	private final static ObjectMapper JSON = new ObjectMapper();
 
@@ -54,10 +60,8 @@ public class ConfigurationRestController {
 					}
 				});
 
-		Parameter parameter = parameterRepository
-				.save(new Parameter(getParameter(processorClass, parameterJson)));
-		return configurationRepository
-				.save(new Configuration(processorClass, parameter, knowledgeBase));
+		Parameter parameter = parameterRepository.save(new Parameter(getParameter(processorClass, parameterJson)));
+		return configurationRepository.save(new Configuration(processorClass, parameter, knowledgeBase));
 
 	}
 
@@ -81,13 +85,10 @@ public class ConfigurationRestController {
 						String.format("Processing configuration %s not found.", configurationId));
 			}
 		}
-		Iterable<Configuration> inputConfigurations = configurationRepository
-				.findAllById(configurationIds);
+		Iterable<Configuration> inputConfigurations = configurationRepository.findAllById(configurationIds);
 
-		Parameter parameter = parameterRepository
-				.save(new Parameter(getParameter(processorClass, parameterJson)));
-		return configurationRepository
-				.save(new Configuration(processorClass, parameter, inputConfigurations));
+		Parameter parameter = parameterRepository.save(new Parameter(getParameter(processorClass, parameterJson)));
+		return configurationRepository.save(new Configuration(processorClass, parameter, inputConfigurations));
 	}
 
 	@GetMapping({ "/source/{uuid}", "/processing/{uuid}" })
@@ -98,6 +99,42 @@ public class ConfigurationRestController {
 		} else {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND,
 					String.format("Processing or Source %s not found.", uuid));
+		}
+	}
+
+	@PostMapping("/source/{uuid}/load")
+	public void execute(@PathVariable("uuid") UUID uuid) {
+		Configuration configuration = get(uuid);
+		Processing processing = new Processing(configuration);
+		try {
+			Processor<?> processor = processing.getProcessorInsance();
+			processor.setParameters(configuration.getParameter().getParameters());
+		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
+				| NoSuchMethodException | SecurityException e) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Processor execution failed.", e);
+		}
+	}
+
+	@PostMapping("/source/{uuid}/upload")
+	public void execute(@PathVariable("uuid") UUID uuid, @RequestParam("file") MultipartFile file) {
+		Configuration configuration = get(uuid);
+		Processing processing = new Processing(configuration);
+		try {
+			Processor<?> processor = processing.getProcessorInsance();
+			if (processor instanceof UploadSourceProcessor<?>) {
+				try {
+					((UploadSourceProcessor<?>) processor).setUploadStream(file.getInputStream());
+				} catch (IOException e) {
+					throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Upload failed.", e);
+				}
+			} else {
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Source does not accepts uploads.");
+			}
+			processor.setParameters(configuration.getParameter().getParameters());
+			processorRunner.execute(processing, processor);
+		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
+				| NoSuchMethodException | SecurityException e) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Processor execution failed.", e);
 		}
 	}
 

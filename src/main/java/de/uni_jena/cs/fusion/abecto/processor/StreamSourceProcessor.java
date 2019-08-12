@@ -5,14 +5,22 @@ import java.io.InputStream;
 import org.apache.jena.rdf.model.Model;
 
 import de.uni_jena.cs.fusion.abecto.processor.api.AbstractSourceProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.api.UploadSourceProcessor;
 import de.uni_jena.cs.fusion.abecto.util.ModelUtils;
 
-public class StreamSourceProcessor extends AbstractSourceProcessor<StreamSourceProcessorParameter> {
+public class StreamSourceProcessor extends AbstractSourceProcessor<WithoutParameters>
+		implements UploadSourceProcessor<WithoutParameters> {
+	
+	InputStream stream;
 
 	@Override
 	public Model computeResultModel() throws Exception {
-		InputStream stream = this.getParameters().stream;
-		return ModelUtils.load(stream);
+		return ModelUtils.load(this.stream);
+	}
+
+	@Override
+	public void setUploadStream(InputStream stream) {
+		this.stream = stream;
 	}
 
 }
