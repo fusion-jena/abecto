@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.io.IOException;
 
+import org.apache.jena.rdf.model.Model;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,9 +19,13 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import de.uni_jena.cs.fusion.abecto.ResponseBuffer;
+import de.uni_jena.cs.fusion.abecto.processor.api.AbstractSourceProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.api.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
+import de.uni_jena.cs.fusion.abecto.util.ModelUtils;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -49,23 +54,38 @@ public class ParameterRestControllerTest {
 		mvc.perform(MockMvcRequestBuilders.post("/knowledgebase").param("project", projectId)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		String kowledgBaseId = buffer.getId();
-		mvc.perform(MockMvcRequestBuilders.post("/source").param("class", "PathSourceProcessor")
+		mvc.perform(MockMvcRequestBuilders.post("/source")
+				.param("class", "de.uni_jena.cs.fusion.abecto.parameter.ParameterRestControllerTest$ParameterProcessor")
 				.param("knowledgebase", kowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 		String configurationId = buffer.getId();
 
-		// set path parameter
-		String pathValue = "/path/to/a/file.owl";
-		mvc.perform(
-				MockMvcRequestBuilders.post(String.format("/source/%s/parameter", configurationId)).param("key", "path")
-						.param("value", JSON.writeValueAsString(pathValue)).accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk());
+		// set parameter value
+		String parameterValue = "parameterValue";
+		mvc.perform(MockMvcRequestBuilders.post(String.format("/source/%s/parameter", configurationId))
+				.param("key", "parameterName").param("value", JSON.writeValueAsString(parameterValue))
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
 
 		// get parameter value
 		mvc.perform(MockMvcRequestBuilders.get(String.format("/source/%s/parameter", configurationId))
-				.param("key", "path").accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer)
-				.andDo(print());
-		assertEquals(pathValue, buffer.getString());
+				.param("key", "parameterName").accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
+				.andDo(buffer).andDo(print());
+		assertEquals(parameterValue, buffer.getString());
+	}
 
+	public static class ParameterProcessor extends AbstractSourceProcessor<ExampleParameters> {
+
+		public static boolean loaded;
+
+		@Override
+		protected Model computeResultModel() throws Exception {
+			loaded = true;
+			return ModelUtils.getEmptyOntModel();
+		}
+	}
+
+	@JsonSerialize
+	public static class ExampleParameters implements ParameterModel {
+		public String parameterName;
 	}
 }

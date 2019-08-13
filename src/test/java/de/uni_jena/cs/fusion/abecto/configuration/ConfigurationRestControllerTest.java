@@ -24,9 +24,12 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
 import de.uni_jena.cs.fusion.abecto.ResponseBuffer;
 import de.uni_jena.cs.fusion.abecto.processor.WithoutParameters;
 import de.uni_jena.cs.fusion.abecto.processor.api.AbstractSourceProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.api.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.processor.api.UploadSourceProcessor;
 import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
 import de.uni_jena.cs.fusion.abecto.util.ModelUtils;
@@ -68,18 +71,22 @@ public class ConfigurationRestControllerTest {
 	@Test
 	public void processingConfiguration() throws Exception {
 		// use unknown processor class name
-		mvc.perform(MockMvcRequestBuilders.post("/processing").param("class", "Qwert")
+		mvc.perform(MockMvcRequestBuilders.post("/processing").param("class", "UnknownProcessor")
 				.param("input", new String[] { "550e8400-e29b-11d4-a716-446655440000" })
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
 
 		// create new source without parameter
-		mvc.perform(MockMvcRequestBuilders.post("/source").param("class", "PathSourceProcessor")
+		mvc.perform(MockMvcRequestBuilders.post("/source")
+				.param("class",
+						"de.uni_jena.cs.fusion.abecto.configuration.ConfigurationRestControllerTest$ParameterProcessor")
 				.param("knowledgebase", kowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 
 		// create new source with parameter
-		String parametersJson = "{\"path\":\"/path/to/a/file.owl\"}";
-		mvc.perform(MockMvcRequestBuilders.post("/source").param("class", "PathSourceProcessor")
+		String parametersJson = "{\"parameterName\":\"parameterValue\"}";
+		mvc.perform(MockMvcRequestBuilders.post("/source")
+				.param("class",
+						"de.uni_jena.cs.fusion.abecto.configuration.ConfigurationRestControllerTest$ParameterProcessor")
 				.param("parameters", parametersJson).param("knowledgebase", kowledgBaseId)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 
@@ -91,16 +98,18 @@ public class ConfigurationRestControllerTest {
 				false);
 
 		// use unknown knowledgeBase id
-		mvc.perform(MockMvcRequestBuilders.post("/source").param("class", "PathSourceProcessor")
+		mvc.perform(MockMvcRequestBuilders.post("/source")
+				.param("class",
+						"de.uni_jena.cs.fusion.abecto.configuration.ConfigurationRestControllerTest$ParameterProcessor")
 				.param("knowledgebase", unknownUuid).accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isBadRequest());
 
 		// use unknown processing or source id
 		mvc.perform(MockMvcRequestBuilders.post(String.format("/processing/%s/parameter", unknownUuid))
-				.param("key", "path").param("value", "some value").accept(MediaType.APPLICATION_JSON))
+				.param("key", "parameterName").param("value", "some value").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isBadRequest());
-		mvc.perform(MockMvcRequestBuilders.post(String.format("/source/%s/parameter", unknownUuid)).param("key", "path")
-				.param("value", "some value").accept(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
+		mvc.perform(MockMvcRequestBuilders.post(String.format("/source/%s/parameter", unknownUuid)).param("key", "parameterName")
+				.param("value", "parameterValue").accept(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
 		mvc.perform(MockMvcRequestBuilders.get(String.format("/processing/%s", unknownUuid))
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isNotFound());
 		mvc.perform(
@@ -168,5 +177,21 @@ public class ConfigurationRestControllerTest {
 			loaded = true;
 			return ModelUtils.getEmptyOntModel();
 		}
+	}
+
+	public static class ParameterProcessor extends AbstractSourceProcessor<ExampleParameters> {
+
+		public static boolean loaded;
+
+		@Override
+		protected Model computeResultModel() throws Exception {
+			loaded = true;
+			return ModelUtils.getEmptyOntModel();
+		}
+	}
+
+	@JsonSerialize
+	public static class ExampleParameters implements ParameterModel {
+		public String parameterName;
 	}
 }
