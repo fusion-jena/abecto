@@ -25,6 +25,7 @@ import de.uni_jena.cs.fusion.abecto.knowledgebase.KnowledgeBaseRepository;
 import de.uni_jena.cs.fusion.abecto.parameter.Parameter;
 import de.uni_jena.cs.fusion.abecto.parameter.ParameterRepository;
 import de.uni_jena.cs.fusion.abecto.processing.Processing;
+import de.uni_jena.cs.fusion.abecto.processing.ProcessingRepository;
 import de.uni_jena.cs.fusion.abecto.processor.api.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.processor.api.Processor;
 import de.uni_jena.cs.fusion.abecto.processor.api.UploadSourceProcessor;
@@ -40,6 +41,8 @@ public class ConfigurationRestController {
 	ConfigurationRepository configurationRepository;
 	@Autowired
 	ParameterRepository parameterRepository;
+	@Autowired
+	ProcessingRepository processingRepository;
 	@Autowired
 	ProcessorRunner processorRunner;
 
@@ -102,13 +105,14 @@ public class ConfigurationRestController {
 		}
 	}
 
-	@PostMapping("/source/{uuid}/load")
+	@GetMapping("/source/{uuid}/load")
 	public void execute(@PathVariable("uuid") UUID uuid) {
 		Configuration configuration = get(uuid);
-		Processing processing = new Processing(configuration);
+		Processing processing = processingRepository.save(new Processing(configuration));
 		try {
 			Processor<?> processor = processing.getProcessorInsance();
 			processor.setParameters(configuration.getParameter().getParameters());
+			processorRunner.execute(processing, processor);
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
 				| NoSuchMethodException | SecurityException e) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Processor execution failed.", e);
@@ -118,7 +122,7 @@ public class ConfigurationRestController {
 	@PostMapping("/source/{uuid}/upload")
 	public void execute(@PathVariable("uuid") UUID uuid, @RequestParam("file") MultipartFile file) {
 		Configuration configuration = get(uuid);
-		Processing processing = new Processing(configuration);
+		Processing processing = processingRepository.save(new Processing(configuration));
 		try {
 			Processor<?> processor = processing.getProcessorInsance();
 			if (processor instanceof UploadSourceProcessor<?>) {

@@ -29,6 +29,7 @@ import de.uni_jena.cs.fusion.abecto.processor.WithoutParameters;
 import de.uni_jena.cs.fusion.abecto.processor.api.AbstractSourceProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.api.UploadSourceProcessor;
 import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
+import de.uni_jena.cs.fusion.abecto.util.ModelUtils;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -108,10 +109,26 @@ public class ConfigurationRestControllerTest {
 	}
 
 	@Test
+	public void loadSource() throws Exception {
+		// create new source without parameter
+		mvc.perform(MockMvcRequestBuilders.post("/source")
+				.param("class",
+						"de.uni_jena.cs.fusion.abecto.configuration.ConfigurationRestControllerTest$NoUploadProcessor")
+				.param("knowledgebase", kowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
+				.andDo(buffer);
+
+		mvc.perform(MockMvcRequestBuilders.get(String.format("/source/%s/load", buffer.getId()))
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
+
+		Assertions.assertTrue(NoUploadProcessor.loaded);
+	}
+
+	@Test
 	public void uploadSourceStream() throws Exception {
 		// create new source without parameter
-		mvc.perform(MockMvcRequestBuilders.post("/source").param("class",
-				"de.uni_jena.cs.fusion.abecto.configuration.ConfigurationRestControllerTest$StreamProcessor")
+		mvc.perform(MockMvcRequestBuilders.post("/source")
+				.param("class",
+						"de.uni_jena.cs.fusion.abecto.configuration.ConfigurationRestControllerTest$UploadProcessor")
 				.param("knowledgebase", kowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 
@@ -120,14 +137,15 @@ public class ConfigurationRestControllerTest {
 		this.mvc.perform(multipart(String.format("/source/%s/upload", buffer.getId())).file(multipartFile))
 				.andExpect(status().isOk());
 
-		Assertions.assertEquals(content, new String(StreamProcessor.streamData));
-
+		Assertions.assertEquals(content, new String(UploadProcessor.streamData));
+		Assertions.assertTrue(NoUploadProcessor.loaded);
 	}
 
-	public static class StreamProcessor extends AbstractSourceProcessor<WithoutParameters>
+	public static class UploadProcessor extends AbstractSourceProcessor<WithoutParameters>
 			implements UploadSourceProcessor<WithoutParameters> {
 
 		public static byte[] streamData;
+		public static boolean loaded;
 
 		@Override
 		public void setUploadStream(InputStream stream) throws IOException {
@@ -136,7 +154,19 @@ public class ConfigurationRestControllerTest {
 
 		@Override
 		protected Model computeResultModel() throws Exception {
-			return null;
+			loaded = true;
+			return ModelUtils.getEmptyOntModel();
+		}
+	}
+
+	public static class NoUploadProcessor extends AbstractSourceProcessor<WithoutParameters> {
+
+		public static boolean loaded;
+
+		@Override
+		protected Model computeResultModel() throws Exception {
+			loaded = true;
+			return ModelUtils.getEmptyOntModel();
 		}
 	}
 }
