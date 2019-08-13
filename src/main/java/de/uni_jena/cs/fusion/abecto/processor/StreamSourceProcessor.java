@@ -8,8 +8,8 @@ import de.uni_jena.cs.fusion.abecto.processor.api.AbstractSourceProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.api.UploadSourceProcessor;
 import de.uni_jena.cs.fusion.abecto.util.ModelUtils;
 
-public class StreamSourceProcessor extends AbstractSourceProcessor<WithoutParameters>
-		implements UploadSourceProcessor<WithoutParameters> {
+public class StreamSourceProcessor extends AbstractSourceProcessor<EmptyParameters>
+		implements UploadSourceProcessor<EmptyParameters> {
 	
 	InputStream stream;
 

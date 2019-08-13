@@ -27,7 +27,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import de.uni_jena.cs.fusion.abecto.ResponseBuffer;
-import de.uni_jena.cs.fusion.abecto.processor.WithoutParameters;
+import de.uni_jena.cs.fusion.abecto.processor.EmptyParameters;
 import de.uni_jena.cs.fusion.abecto.processor.api.AbstractSourceProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.api.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.processor.api.UploadSourceProcessor;
@@ -150,8 +150,8 @@ public class ConfigurationRestControllerTest {
 		Assertions.assertTrue(NoUploadProcessor.loaded);
 	}
 
-	public static class UploadProcessor extends AbstractSourceProcessor<WithoutParameters>
-			implements UploadSourceProcessor<WithoutParameters> {
+	public static class UploadProcessor extends AbstractSourceProcessor<EmptyParameters>
+			implements UploadSourceProcessor<EmptyParameters> {
 
 		public static byte[] streamData;
 		public static boolean loaded;
@@ -168,7 +168,7 @@ public class ConfigurationRestControllerTest {
 		}
 	}
 
-	public static class NoUploadProcessor extends AbstractSourceProcessor<WithoutParameters> {
+	public static class NoUploadProcessor extends AbstractSourceProcessor<EmptyParameters> {
 
 		public static boolean loaded;
 

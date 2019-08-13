@@ -5,6 +5,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import de.uni_jena.cs.fusion.abecto.processor.api.ParameterModel;
 
 @JsonSerialize
-public class WithoutParameters implements ParameterModel {
+public class EmptyParameters implements ParameterModel {
 
 }

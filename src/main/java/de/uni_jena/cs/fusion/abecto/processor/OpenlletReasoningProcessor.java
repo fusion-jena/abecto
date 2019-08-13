@@ -7,7 +7,7 @@ import org.apache.jena.rdf.model.ModelFactory;
 import de.uni_jena.cs.fusion.abecto.processor.api.AbstractTransformationProcessor;
 import openllet.jena.PelletReasoner;
 
-public class OpenlletReasoningProcessor extends AbstractTransformationProcessor<WithoutParameters> {
+public class OpenlletReasoningProcessor extends AbstractTransformationProcessor<EmptyParameters> {
 	
 	@Override
 	public Model computeResultModel() {
