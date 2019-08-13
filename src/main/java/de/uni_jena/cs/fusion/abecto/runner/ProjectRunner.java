@@ -109,7 +109,7 @@ public class ProjectRunner {
 			// execute processors
 			for (Configuration configuration : processorsMap.keySet()) {
 				log.info("Scheduling processor: " + processorsMap.get(configuration));
-				processorRunner.execute(processingsMap.get(configuration), processorsMap.get(configuration));
+				processorRunner.asyncExecute(processingsMap.get(configuration), processorsMap.get(configuration));
 			}
 
 		} catch (Throwable t) {

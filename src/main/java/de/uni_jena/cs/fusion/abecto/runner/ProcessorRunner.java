@@ -22,6 +22,10 @@ public class ProcessorRunner {
 	RdfModelRepository rdfModelRepository;
 
 	@Async
+	public void asyncExecute(Processing processing, Processor<?> processor) {
+		execute(processing, processor);
+	}
+
 	public void execute(Processing processing, Processor<?> processor) {
 		Logger log = LoggerFactory.getLogger(this.getClass());
 		try {
