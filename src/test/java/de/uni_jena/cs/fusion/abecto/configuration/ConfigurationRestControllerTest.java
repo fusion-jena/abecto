@@ -117,7 +117,7 @@ public class ConfigurationRestControllerTest {
 				.param("knowledgebase", kowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 
-		mvc.perform(MockMvcRequestBuilders.get(String.format("/source/%s/load", buffer.getId()))
+		mvc.perform(MockMvcRequestBuilders.post(String.format("/source/%s/load", buffer.getId()))
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
 
 		Assertions.assertTrue(NoUploadProcessor.loaded);
@@ -134,7 +134,7 @@ public class ConfigurationRestControllerTest {
 
 		String content = "File Content";
 		MockMultipartFile multipartFile = new MockMultipartFile("file", "test.txt", "text/plain", content.getBytes());
-		this.mvc.perform(multipart(String.format("/source/%s/upload", buffer.getId())).file(multipartFile))
+		this.mvc.perform(multipart(String.format("/source/%s/load", buffer.getId())).file(multipartFile))
 				.andExpect(status().isOk());
 
 		Assertions.assertEquals(content, new String(UploadProcessor.streamData));

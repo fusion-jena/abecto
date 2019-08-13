@@ -105,34 +105,29 @@ public class ConfigurationRestController {
 		}
 	}
 
-	@GetMapping("/source/{uuid}/load")
-	public void execute(@PathVariable("uuid") UUID uuid) {
+	@PostMapping("/source/{uuid}/load")
+	public void load(@PathVariable("uuid") UUID uuid,
+			@RequestParam(name = "file", required = false) MultipartFile file) {
 		Configuration configuration = get(uuid);
 		Processing processing = processingRepository.save(new Processing(configuration));
 		try {
 			Processor<?> processor = processing.getProcessorInsance();
-			processor.setParameters(configuration.getParameter().getParameters());
-			processorRunner.execute(processing, processor);
-		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
-				| NoSuchMethodException | SecurityException e) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Processor execution failed.", e);
-		}
-	}
-
-	@PostMapping("/source/{uuid}/upload")
-	public void execute(@PathVariable("uuid") UUID uuid, @RequestParam("file") MultipartFile file) {
-		Configuration configuration = get(uuid);
-		Processing processing = processingRepository.save(new Processing(configuration));
-		try {
-			Processor<?> processor = processing.getProcessorInsance();
-			if (processor instanceof UploadSourceProcessor<?>) {
-				try {
-					((UploadSourceProcessor<?>) processor).setUploadStream(file.getInputStream());
-				} catch (IOException e) {
-					throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Upload failed.", e);
+			if (file == null) {
+				if (processor instanceof UploadSourceProcessor<?>) {
+					throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+							"SourceProcessor requires to upload an input file.");
 				}
 			} else {
-				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Source does not accepts uploads.");
+				if (processor instanceof UploadSourceProcessor<?>) {
+					try {
+						((UploadSourceProcessor<?>) processor).setUploadStream(file.getInputStream());
+					} catch (IOException e) {
+						throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Upload failed.", e);
+					}
+				} else {
+					throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+							"SourceProcessor does not accepts input file uploads.");
+				}
 			}
 			processor.setParameters(configuration.getParameter().getParameters());
 			processorRunner.execute(processing, processor);
