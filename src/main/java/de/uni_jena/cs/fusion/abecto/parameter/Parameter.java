@@ -5,9 +5,7 @@ import java.lang.reflect.InvocationTargetException;
 
 import javax.persistence.Convert;
 import javax.persistence.Entity;
-import javax.persistence.ManyToOne;
 
-import de.uni_jena.cs.fusion.abecto.configuration.Configuration;
 import de.uni_jena.cs.fusion.abecto.processor.api.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.processor.api.Processor;
 import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
@@ -18,14 +16,11 @@ public class Parameter extends AbstractEntityWithUUID {
 	@Convert(converter = ParameterConverter.class)
 	private ParameterModel parameters;
 
-	@ManyToOne
-	private Configuration configuration;
-
 	public Parameter() {
 	}
 
-	public Parameter(Class<Processor<?>> processorClass) throws InstantiationException,
-			IllegalAccessException, InvocationTargetException, NoSuchMethodException, SecurityException {
+	public Parameter(Class<Processor<?>> processorClass) throws InstantiationException, IllegalAccessException,
+			InvocationTargetException, NoSuchMethodException, SecurityException {
 		this.parameters = Processor.getDefaultParameters(processorClass);
 	}
 

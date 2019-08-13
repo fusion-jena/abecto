@@ -5,16 +5,18 @@ import java.util.HashSet;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToOne;
+import javax.persistence.OneToMany;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.uni_jena.cs.fusion.abecto.knowledgebase.KnowledgeBase;
 import de.uni_jena.cs.fusion.abecto.parameter.Parameter;
+import de.uni_jena.cs.fusion.abecto.processing.Processing;
 import de.uni_jena.cs.fusion.abecto.processor.api.MappingProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.api.MetaProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.api.Processor;
@@ -28,24 +30,28 @@ import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
 public class Configuration extends AbstractEntityWithUUID {
 
 	/**
+	 * The {@link Project} this {@link Configuration} belongs to.
+	 */
+	@ManyToOne(fetch = FetchType.LAZY, optional = false)
+	protected Project project;
+	/**
 	 * The {@link KnowledgeBase} this {@link Configuration} of a
 	 * {@link SourceProcessor} belongs to or {@code null}, if this does not belong
 	 * to a {@link SourceProcessor}.
 	 */
 	@ManyToOne(fetch = FetchType.LAZY)
 	protected KnowledgeBase knowledgeBase;
-	/**
-	 * The {@link Project} this {@link Configuration} belongs to.
-	 */
-	@ManyToOne(fetch = FetchType.LAZY, optional = false)
-	protected Project project;
 
-	@ManyToMany(fetch = FetchType.LAZY)
-	protected Collection<Configuration> inputProcessingConfigurations = new HashSet<>();
-	@OneToOne
-	protected Parameter parameter;
 	@SuppressWarnings("rawtypes")
 	protected Class<? extends Processor> processor;
+	@ManyToOne
+	protected Parameter parameter;
+	@ManyToMany(fetch = FetchType.LAZY)
+	protected Collection<Configuration> inputProcessingConfigurations = new HashSet<>();
+	@ManyToMany(fetch = FetchType.LAZY, mappedBy = "inputProcessingConfigurations", cascade = CascadeType.REMOVE)
+	protected Collection<Configuration> outputProcessingConfigurations = new HashSet<>();
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "configuration", cascade = CascadeType.REMOVE)
+	protected Collection<Processing> processings = new HashSet<>();
 
 	protected Configuration() {
 	}

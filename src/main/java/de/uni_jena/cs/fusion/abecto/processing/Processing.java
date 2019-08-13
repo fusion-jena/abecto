@@ -57,7 +57,7 @@ public class Processing extends AbstractEntityWithUUID {
 	 * Collection of {@link Processing}s used to produce the result
 	 * {@link RdfModel}.
 	 */
-	@ManyToMany()
+	@ManyToMany
 	private Set<Processing> inputProcessings = new HashSet<>();
 
 	// status
