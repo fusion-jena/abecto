@@ -74,12 +74,8 @@ public class ParameterRestControllerTest {
 	}
 
 	public static class ParameterProcessor extends AbstractSourceProcessor<ExampleParameters> {
-
-		public static boolean loaded;
-
 		@Override
 		protected Model computeResultModel() throws Exception {
-			loaded = true;
 			return ModelUtils.getEmptyOntModel();
 		}
 	}
