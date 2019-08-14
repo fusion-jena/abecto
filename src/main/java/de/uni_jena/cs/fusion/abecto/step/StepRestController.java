@@ -46,8 +46,8 @@ public class StepRestController {
 	ProcessingRepository processingRepository;
 	@Autowired
 	ProcessorRunner processorRunner;
-
-	private final static ObjectMapper JSON = new ObjectMapper();
+	@Autowired
+	ObjectMapper JSON;
 
 	/**
 	 * Creates a new Refinement Processor Node in the processing pipeline.

@@ -30,8 +30,9 @@ import de.uni_jena.cs.fusion.abecto.step.StepRepository;
 @Transactional
 public class ParameterRestController {
 	private static final Logger log = LoggerFactory.getLogger(Abecto.class);
-	private static final ObjectMapper JSON = new ObjectMapper();
-
+	
+	@Autowired
+	ObjectMapper JSON;
 	@Autowired
 	StepRepository stepRepository;
 	@Autowired

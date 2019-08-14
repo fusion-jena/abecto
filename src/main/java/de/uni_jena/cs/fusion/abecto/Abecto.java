@@ -8,6 +8,9 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+
 @SpringBootApplication
 @EnableScheduling
 @EnableAsync
@@ -25,5 +28,9 @@ public class Abecto {
 		executor.initialize();
 		return executor;
 	}
-
+	
+	@Bean
+	public ObjectMapper objectMapper() {
+		return new ObjectMapper().registerModule(new Jdk8Module());
+	}
 }

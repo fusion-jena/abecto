@@ -6,15 +6,18 @@ import java.io.StringWriter;
 import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 
 import de.uni_jena.cs.fusion.abecto.processor.api.ParameterModel;
 
 @Converter
 public class ParameterConverter implements AttributeConverter<ParameterModel, String> {
-
-	private final static ObjectMapper JSON = new ObjectMapper().registerModule(new Jdk8Module());
+	
+	@Autowired
+	ObjectMapper objectMapper;
+	
 	protected final static char SEPARATOR = ':';
 
 	@Override
@@ -26,7 +29,7 @@ public class ParameterConverter implements AttributeConverter<ParameterModel, St
 		writer.append(SEPARATOR);
 		// append parameter JSON
 		try {
-			JSON.writeValue(writer, parametersObject);
+			objectMapper.writeValue(writer, parametersObject);
 		} catch (IOException e) {
 			throw new RuntimeException("Failed to serialize parameters to JSON.", e);
 		}
@@ -43,7 +46,7 @@ public class ParameterConverter implements AttributeConverter<ParameterModel, St
 			@SuppressWarnings("unchecked")
 			Class<? extends ParameterModel> parameterObejctClass = (Class<? extends ParameterModel>) Class
 					.forName(parameterObjectClassName);
-			return JSON.readValue(parameterJSON, parameterObejctClass);
+			return objectMapper.readValue(parameterJSON, parameterObejctClass);
 		} catch (ClassNotFoundException | IOException e) {
 			throw new RuntimeException("Failed to deserialize JSON to parameters.", e);
 		}
