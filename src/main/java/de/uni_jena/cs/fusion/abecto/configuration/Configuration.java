@@ -126,7 +126,11 @@ public class Configuration extends AbstractEntityWithUUID {
 	}
 
 	public UUID getKnowledgeBaseId() {
-		return this.knowledgeBase.getId();
+		if (this.knowledgeBase != null) {
+			return this.knowledgeBase.getId();
+		} else {
+			return null;
+		}
 	}
 
 	public Parameter getParameter() {
