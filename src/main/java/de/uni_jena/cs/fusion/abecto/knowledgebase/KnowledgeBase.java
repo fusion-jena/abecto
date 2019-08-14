@@ -11,8 +11,8 @@ import javax.persistence.OneToMany;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import de.uni_jena.cs.fusion.abecto.configuration.Configuration;
 import de.uni_jena.cs.fusion.abecto.project.Project;
+import de.uni_jena.cs.fusion.abecto.step.Step;
 import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
 
 @Entity
@@ -23,7 +23,7 @@ public class KnowledgeBase extends AbstractEntityWithUUID {
 	protected Project project;
 
 	@OneToMany(mappedBy = "knowledgeBase", cascade = CascadeType.REMOVE)
-	protected Collection<Configuration> sources;
+	protected Collection<Step> sources;
 
 	protected KnowledgeBase() {}
 

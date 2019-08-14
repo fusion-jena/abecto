@@ -22,9 +22,9 @@ import org.springframework.web.server.ResponseStatusException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.uni_jena.cs.fusion.abecto.Abecto;
-import de.uni_jena.cs.fusion.abecto.configuration.Configuration;
-import de.uni_jena.cs.fusion.abecto.configuration.ConfigurationRepository;
 import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
+import de.uni_jena.cs.fusion.abecto.step.Step;
+import de.uni_jena.cs.fusion.abecto.step.StepRepository;
 
 @RestController
 @Transactional
@@ -33,18 +33,18 @@ public class ParameterRestController {
 	private static final ObjectMapper JSON = new ObjectMapper();
 
 	@Autowired
-	ConfigurationRepository configurationRepository;
+	StepRepository stepRepository;
 	@Autowired
 	ParameterRepository parameterRepository;
 	@Autowired
 	ProjectRepository projectRepository;
 
-	@PostMapping({ "/source/{configuration}/parameter", "/processing/{configuration}/parameter" })
-	public void add(@PathVariable("configuration") UUID configurationId,
+	@PostMapping({ "/source/{step}/parameter", "/processing/{step}/parameter" })
+	public void add(@PathVariable("step") UUID stepId,
 			@RequestParam(name = "key", required = false) String parameterPath,
 			@RequestParam(name = "value", required = false) String parameterValue) {
 
-		Configuration configuration = configurationRepository.findById(configurationId)
+		Step step = stepRepository.findById(stepId)
 				.orElseThrow(new Supplier<ResponseStatusException>() {
 					@Override
 					public ResponseStatusException get() {
@@ -53,12 +53,12 @@ public class ParameterRestController {
 				});
 
 		try {
-			if (configuration.getParameter().containsKey(parameterPath)) {
+			if (step.getParameter().containsKey(parameterPath)) {
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Parameter already set.");
 			} else {
 				try {
 					// copy parameters
-					Parameter newParameter = configuration.getParameter().copy();
+					Parameter newParameter = step.getParameter().copy();
 					// get type of changed parameter
 					Class<?> type = newParameter.getType(parameterPath);
 					try {
@@ -71,10 +71,10 @@ public class ParameterRestController {
 						throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
 								String.format("Failed to pares value of type \"%s\".", type));
 					}
-					// update configuration
-					configuration.setParameter(newParameter);
+					// update step
+					step.setParameter(newParameter);
 					// persist changes
-					configurationRepository.save(configuration);
+					stepRepository.save(step);
 					parameterRepository.save(newParameter);
 				} catch (SecurityException | InstantiationException | IllegalArgumentException
 						| InvocationTargetException | NoSuchMethodException e) {
@@ -88,15 +88,15 @@ public class ParameterRestController {
 		}
 	}
 
-	@DeleteMapping({ "/source/{configuration}/parameter", "/processing/{configuration}/parameter" })
-	public void delete(@PathVariable("configuration") UUID configurationId) {
+	@DeleteMapping({ "/source/{step}/parameter", "/processing/{step}/parameter" })
+	public void delete(@PathVariable("step") UUID stepId) {
 		// TODO
 	}
 
-	@GetMapping({ "/source/{configuration}/parameter", "/processing/{configuration}/parameter" })
-	public Object get(@PathVariable("configuration") UUID configurationId,
+	@GetMapping({ "/source/{step}/parameter", "/processing/{step}/parameter" })
+	public Object get(@PathVariable("step") UUID stepId,
 			@RequestParam(name = "key", required = false) String parameterPath) {
-		Parameter parameter = configurationRepository.findById(configurationId)
+		Parameter parameter = stepRepository.findById(stepId)
 				.orElseThrow(new Supplier<ResponseStatusException>() {
 					@Override
 					public ResponseStatusException get() {
@@ -116,8 +116,8 @@ public class ParameterRestController {
 		}
 	}
 
-	@PutMapping({ "/source/{configuration}/parameter", "/processing/{configuration}/parameter" })
-	public void update(@PathVariable("configuration") UUID configurationId) {
+	@PutMapping({ "/source/{step}/parameter", "/processing/{step}/parameter" })
+	public void update(@PathVariable("step") UUID stepId) {
 		// TODO
 	}
 

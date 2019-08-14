@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.configuration;
+package de.uni_jena.cs.fusion.abecto.step;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -28,17 +28,18 @@ import de.uni_jena.cs.fusion.abecto.processing.Processing;
 import de.uni_jena.cs.fusion.abecto.processing.ProcessingRepository;
 import de.uni_jena.cs.fusion.abecto.processor.api.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.processor.api.Processor;
+import de.uni_jena.cs.fusion.abecto.processor.api.SourceProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.api.UploadSourceProcessor;
 import de.uni_jena.cs.fusion.abecto.runner.ProcessorRunner;
 
 @RestController
 @Transactional
-public class ConfigurationRestController {
+public class StepRestController {
 
 	@Autowired
 	KnowledgeBaseRepository knowledgeBaseRepository;
 	@Autowired
-	ConfigurationRepository configurationRepository;
+	StepRepository stepRepository;
 	@Autowired
 	ParameterRepository parameterRepository;
 	@Autowired
@@ -49,11 +50,16 @@ public class ConfigurationRestController {
 	private final static ObjectMapper JSON = new ObjectMapper();
 
 	@PostMapping("/source")
-	public Configuration createForSource(@RequestParam("class") String processorClassName,
+	public Step createSource(@RequestParam("class") String processorClassName,
 			@RequestParam("knowledgebase") UUID knowledgebaseId,
 			@RequestParam(name = "parameters", required = false) String parameterJson) {
 
 		Class<Processor<?>> processorClass = getProcessorClass(processorClassName);
+
+		if (!SourceProcessor.class.isAssignableFrom(processorClass)) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+					"Parameter \"knowledgebase\" only permited for SourceProcessors.");
+		}
 
 		KnowledgeBase knowledgeBase = knowledgeBaseRepository.findById(knowledgebaseId)
 				.orElseThrow(new Supplier<ResponseStatusException>() {
@@ -64,7 +70,7 @@ public class ConfigurationRestController {
 				});
 
 		Parameter parameter = parameterRepository.save(new Parameter(getParameter(processorClass, parameterJson)));
-		return configurationRepository.save(new Configuration(processorClass, parameter, knowledgeBase));
+		return stepRepository.save(new Step(processorClass, parameter, knowledgeBase));
 
 	}
 
@@ -72,44 +78,49 @@ public class ConfigurationRestController {
 	 * Creates a new Refinement Processor Node in the processing pipeline.
 	 * 
 	 * @param processorClassName
-	 * @param configurationIds
+	 * @param inputStepIds
 	 * @return
 	 */
 	@PostMapping("/processing")
-	public Configuration createForProcessing(@RequestParam("class") String processorClassName,
-			@RequestParam("input") Collection<UUID> configurationIds,
+	public Step createProcessing(@RequestParam("class") String processorClassName,
+			@RequestParam("input") Collection<UUID> inputStepIds,
 			@RequestParam(name = "parameters", required = false) String parameterJson) {
 
 		Class<Processor<?>> processorClass = getProcessorClass(processorClassName);
 
-		for (UUID configurationId : configurationIds) {
-			if (!configurationRepository.existsById(configurationId)) {
+		if (SourceProcessor.class.isAssignableFrom(processorClass)) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+					"Parameter \"input\" not permited for SourceProcessors.");
+		}
+
+		for (UUID inputStepId : inputStepIds) {
+			if (!stepRepository.existsById(inputStepId)) {
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-						String.format("Processing configuration %s not found.", configurationId));
+						String.format("Input step %s not found.", inputStepId));
 			}
 		}
-		Iterable<Configuration> inputConfigurations = configurationRepository.findAllById(configurationIds);
+		Iterable<Step> inputSteps = stepRepository.findAllById(inputStepIds);
 
 		Parameter parameter = parameterRepository.save(new Parameter(getParameter(processorClass, parameterJson)));
-		return configurationRepository.save(new Configuration(processorClass, parameter, inputConfigurations));
+		return stepRepository.save(new Step(processorClass, parameter, inputSteps));
 	}
 
 	@GetMapping({ "/source/{uuid}", "/processing/{uuid}" })
-	public Configuration get(@PathVariable("uuid") UUID uuid) {
-		Optional<Configuration> configuration = configurationRepository.findById(uuid);
-		if (configuration.isPresent()) {
-			return configuration.get();
+	public Step get(@PathVariable("uuid") UUID uuid) {
+		Optional<Step> step = stepRepository.findById(uuid);
+		if (step.isPresent()) {
+			return step.get();
 		} else {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-					String.format("Processing or Source %s not found.", uuid));
+					String.format("Step %s not found.", uuid));
 		}
 	}
 
 	@PostMapping("/source/{uuid}/load")
 	public void load(@PathVariable("uuid") UUID uuid,
 			@RequestParam(name = "file", required = false) MultipartFile file) {
-		Configuration configuration = get(uuid);
-		Processing processing = processingRepository.save(new Processing(configuration));
+		Step step = get(uuid);
+		Processing processing = processingRepository.save(new Processing(step));
 		try {
 			Processor<?> processor = processing.getProcessorInsance();
 			if (file == null) {
@@ -129,7 +140,7 @@ public class ConfigurationRestController {
 							"SourceProcessor does not accepts input file uploads.");
 				}
 			}
-			processor.setParameters(configuration.getParameter().getParameters());
+			processor.setParameters(step.getParameter().getParameters());
 			processorRunner.execute(processing, processor);
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
 				| NoSuchMethodException | SecurityException e) {

@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.configuration;
+package de.uni_jena.cs.fusion.abecto.step;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -37,7 +37,7 @@ import de.uni_jena.cs.fusion.abecto.util.ModelUtils;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @AutoConfigureMockMvc
-public class ConfigurationRestControllerTest {
+public class StepRestControllerTest {
 
 	@Autowired
 	MockMvc mvc;
@@ -69,7 +69,7 @@ public class ConfigurationRestControllerTest {
 	}
 
 	@Test
-	public void processingConfiguration() throws Exception {
+	public void processingStep() throws Exception {
 		// use unknown processor class name
 		mvc.perform(MockMvcRequestBuilders.post("/processing").param("class", "UnknownProcessor")
 				.param("input", new String[] { "550e8400-e29b-11d4-a716-446655440000" })
@@ -78,7 +78,7 @@ public class ConfigurationRestControllerTest {
 		// create new source without parameter
 		mvc.perform(MockMvcRequestBuilders.post("/source")
 				.param("class",
-						"de.uni_jena.cs.fusion.abecto.configuration.ConfigurationRestControllerTest$ParameterProcessor")
+						"de.uni_jena.cs.fusion.abecto.step.StepRestControllerTest$ParameterProcessor")
 				.param("knowledgebase", kowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 
@@ -86,7 +86,7 @@ public class ConfigurationRestControllerTest {
 		String parametersJson = "{\"parameterName\":\"parameterValue\"}";
 		mvc.perform(MockMvcRequestBuilders.post("/source")
 				.param("class",
-						"de.uni_jena.cs.fusion.abecto.configuration.ConfigurationRestControllerTest$ParameterProcessor")
+						"de.uni_jena.cs.fusion.abecto.step.StepRestControllerTest$ParameterProcessor")
 				.param("parameters", parametersJson).param("knowledgebase", kowledgBaseId)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 
@@ -100,7 +100,7 @@ public class ConfigurationRestControllerTest {
 		// use unknown knowledgeBase id
 		mvc.perform(MockMvcRequestBuilders.post("/source")
 				.param("class",
-						"de.uni_jena.cs.fusion.abecto.configuration.ConfigurationRestControllerTest$ParameterProcessor")
+						"de.uni_jena.cs.fusion.abecto.step.StepRestControllerTest$ParameterProcessor")
 				.param("knowledgebase", unknownUuid).accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isBadRequest());
 
@@ -122,7 +122,7 @@ public class ConfigurationRestControllerTest {
 		// create new source without parameter
 		mvc.perform(MockMvcRequestBuilders.post("/source")
 				.param("class",
-						"de.uni_jena.cs.fusion.abecto.configuration.ConfigurationRestControllerTest$NoUploadProcessor")
+						"de.uni_jena.cs.fusion.abecto.step.StepRestControllerTest$NoUploadProcessor")
 				.param("knowledgebase", kowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 
@@ -137,7 +137,7 @@ public class ConfigurationRestControllerTest {
 		// create new source without parameter
 		mvc.perform(MockMvcRequestBuilders.post("/source")
 				.param("class",
-						"de.uni_jena.cs.fusion.abecto.configuration.ConfigurationRestControllerTest$UploadProcessor")
+						"de.uni_jena.cs.fusion.abecto.step.StepRestControllerTest$UploadProcessor")
 				.param("knowledgebase", kowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 

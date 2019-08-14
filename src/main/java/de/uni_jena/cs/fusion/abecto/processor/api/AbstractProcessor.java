@@ -11,7 +11,7 @@ public abstract class AbstractProcessor<P extends ParameterModel> implements Pro
 	private Status status = Status.NOT_STARTED;
 
 	/**
-	 * The current configuration parameters of this processor.
+	 * The current parameters of this processor.
 	 */
 	private P parameters;
 

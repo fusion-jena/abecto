@@ -19,12 +19,12 @@ import javax.persistence.OneToOne;
 
 import org.apache.jena.rdf.model.Model;
 
-import de.uni_jena.cs.fusion.abecto.configuration.Configuration;
 import de.uni_jena.cs.fusion.abecto.parameter.Parameter;
 import de.uni_jena.cs.fusion.abecto.processor.api.Processor;
 import de.uni_jena.cs.fusion.abecto.processor.api.SourceProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.api.Processor.Status;
 import de.uni_jena.cs.fusion.abecto.rdfModel.RdfModel;
+import de.uni_jena.cs.fusion.abecto.step.Step;
 import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
 
 /**
@@ -34,15 +34,14 @@ import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
 @Entity
 public class Processing extends AbstractEntityWithUUID {
 
-	// configuration
 	/**
-	 * {@link Configuration} of this processing. <b>Note:</b> The
-	 * configuration might have been changed after processing. To get the actual
-	 * configuration of this processing refer to {@link #processor},
-	 * {@link #parameter}, and {@link #inputProcessings}.
+	 * {@link Step} of this processing. <b>Note:</b> The {@link Step} might have
+	 * been changed after processing. To get the actual {@link Step} of this
+	 * processing refer to {@link #processor}, {@link #parameter}, and
+	 * {@link #inputProcessings}.
 	 */
 	@ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
-	private Configuration configuration;
+	private Step step;
 	/**
 	 * {@link Processor} used to produce the result {@link RdfModel}.
 	 */
@@ -71,23 +70,24 @@ public class Processing extends AbstractEntityWithUUID {
 	@OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
 	private RdfModel rdfModel;
 
-	protected Processing() {}
-
-	public Processing(Configuration configuration) {
-		this.configuration = configuration;
-		this.parameter = configuration.getParameter();
-		this.processor = configuration.getProcessorClass();
+	protected Processing() {
 	}
 
-	protected Processing(Configuration configuration, Collection<Processing> inputProcessings) {
-		this.configuration = configuration;
-		this.parameter = configuration.getParameter();
-		this.processor = configuration.getProcessorClass();
+	public Processing(Step step) {
+		this.step = step;
+		this.parameter = step.getParameter();
+		this.processor = step.getProcessorClass();
+	}
+
+	protected Processing(Step step, Collection<Processing> inputProcessings) {
+		this.step = step;
+		this.parameter = step.getParameter();
+		this.processor = step.getProcessorClass();
 		this.inputProcessings.addAll(inputProcessings);
 	}
 
-	public Configuration getConfiguration() {
-		return this.configuration;
+	public Step getStep() {
+		return this.step;
 	}
 
 	public ZonedDateTime getEndDateTime() {
@@ -123,7 +123,7 @@ public class Processing extends AbstractEntityWithUUID {
 			IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
 		Processor<?> processor = this.processor.getDeclaredConstructor().newInstance();
 		if (processor instanceof SourceProcessor) {
-			((SourceProcessor<?>) processor).setKnowledgBase(this.configuration.getKnowledgeBase().getId());
+			((SourceProcessor<?>) processor).setKnowledgBase(this.step.getKnowledgeBase().getId());
 		}
 		processor.setStatus(this.status);
 		if (this.isSucceeded()) {
@@ -227,8 +227,8 @@ public class Processing extends AbstractEntityWithUUID {
 	@Override
 	public String toString() {
 		return String.format(
-				"Processing[id=%s, configuration=%s, processor='%s', status=%s, start=%tc, end=%tc, parameter=%s]",
-				this.id, this.configuration.getId(), this.processor.getSimpleName(), this.status, this.startDateTime,
+				"Processing[id=%s, step=%s, processor='%s', status=%s, start=%tc, end=%tc, parameter=%s]",
+				this.id, this.step.getId(), this.processor.getSimpleName(), this.status, this.startDateTime,
 				this.endDateTime, this.parameter.getId());
 	}
 }

@@ -147,7 +147,7 @@ public interface Processor<P extends ParameterModel> extends Callable<Model> {
 	public boolean isSucceeded();
 
 	/**
-	 * Set the parameters for this processor. Earlier parameter configurations will
+	 * Set the parameters for this processor. Earlier parameters will
 	 * be overwritten.
 	 * 
 	 * @param parameters TODO
