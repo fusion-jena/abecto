@@ -61,13 +61,13 @@ public class WorkflowTest {
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		String knowledgBase2Id = buffer.getId();
 
-		// create source 1
+		// add source 1
 		mvc.perform(MockMvcRequestBuilders.post("/source").param("class", "RdfFileSourceProcessor")
 				.param("knowledgebase", knowledgBase1Id).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 		String source1Id = buffer.getId();
 
-		// create source 2
+		// add source 2
 		mvc.perform(MockMvcRequestBuilders.post("/source").param("class", "RdfFileSourceProcessor")
 				.param("knowledgebase", knowledgBase2Id).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
@@ -82,6 +82,27 @@ public class WorkflowTest {
 		MockMultipartFile multipartFileSource2 = new MockMultipartFile("file", sourceFile2.getInputStream());
 		this.mvc.perform(multipart(String.format("/source/%s/load", source2Id)).file(multipartFileSource2))
 				.andExpect(status().isOk());
+
+		String transformationParameter = "{\"query\":\"CONSTRUCT {?s <http://example.org/p> <http://example.org/o>} WHERE {?s ?p ?o. Filter(!isBLANK(?s))}\"}";
+
+		// add transformation 1
+		mvc.perform(MockMvcRequestBuilders.post("/processing").param("class", "SparqlConstructProcessor")
+				.param("input", source1Id).param("parameters", transformationParameter)
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
+		String transformation1Id = buffer.getId();
+
+		// add transformation 2
+		mvc.perform(MockMvcRequestBuilders.post("/processing").param("class", "SparqlConstructProcessor")
+				.param("input", source2Id).param("parameters", transformationParameter)
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
+		String transformation2Id = buffer.getId();
+
+		// add mapping
+		mvc.perform(MockMvcRequestBuilders.post("/processing").param("class", "JaroWinklerMappingProcessor")
+				.param("input", transformation1Id, transformation2Id)
+				.param("parameters", "{\"threshold\":0.9,\"case_sensitive\":false}").accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andDo(buffer);
+		String mappingId = buffer.getId();
 
 	}
 
