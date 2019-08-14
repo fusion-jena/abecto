@@ -7,13 +7,14 @@ import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 
 import de.uni_jena.cs.fusion.abecto.processor.api.ParameterModel;
 
 @Converter
 public class ParameterConverter implements AttributeConverter<ParameterModel, String> {
 
-	private final static ObjectMapper JSON = new ObjectMapper();
+	private final static ObjectMapper JSON = new ObjectMapper().registerModule(new Jdk8Module());
 	protected final static char SEPARATOR = ':';
 
 	@Override
