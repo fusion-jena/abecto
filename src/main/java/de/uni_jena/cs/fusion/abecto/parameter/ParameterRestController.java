@@ -39,7 +39,7 @@ public class ParameterRestController {
 	@Autowired
 	ProjectRepository projectRepository;
 
-	@PostMapping({ "/source/{step}/parameter", "/processing/{step}/parameter" })
+	@PostMapping({ "/step/{step}/parameter" })
 	public void add(@PathVariable("step") UUID stepId,
 			@RequestParam(name = "key", required = false) String parameterPath,
 			@RequestParam(name = "value", required = false) String parameterValue) {
@@ -88,12 +88,12 @@ public class ParameterRestController {
 		}
 	}
 
-	@DeleteMapping({ "/source/{step}/parameter", "/processing/{step}/parameter" })
+	@DeleteMapping({ "/step/{step}/parameter" })
 	public void delete(@PathVariable("step") UUID stepId) {
 		// TODO
 	}
 
-	@GetMapping({ "/source/{step}/parameter", "/processing/{step}/parameter" })
+	@GetMapping({ "/step/{step}/parameter" })
 	public Object get(@PathVariable("step") UUID stepId,
 			@RequestParam(name = "key", required = false) String parameterPath) {
 		Parameter parameter = stepRepository.findById(stepId)
@@ -116,7 +116,7 @@ public class ParameterRestController {
 		}
 	}
 
-	@PutMapping({ "/source/{step}/parameter", "/processing/{step}/parameter" })
+	@PutMapping({ "/step/{step}/parameter" })
 	public void update(@PathVariable("step") UUID stepId) {
 		// TODO
 	}

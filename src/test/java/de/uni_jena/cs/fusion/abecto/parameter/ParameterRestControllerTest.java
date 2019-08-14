@@ -54,7 +54,7 @@ public class ParameterRestControllerTest {
 		mvc.perform(MockMvcRequestBuilders.post("/knowledgebase").param("project", projectId)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		String kowledgBaseId = buffer.getId();
-		mvc.perform(MockMvcRequestBuilders.post("/source")
+		mvc.perform(MockMvcRequestBuilders.post("/step")
 				.param("class", "de.uni_jena.cs.fusion.abecto.parameter.ParameterRestControllerTest$ParameterProcessor")
 				.param("knowledgebase", kowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
@@ -62,12 +62,12 @@ public class ParameterRestControllerTest {
 
 		// set parameter value
 		String parameterValue = "parameterValue";
-		mvc.perform(MockMvcRequestBuilders.post(String.format("/source/%s/parameter", configurationId))
+		mvc.perform(MockMvcRequestBuilders.post(String.format("/step/%s/parameter", configurationId))
 				.param("key", "parameterName").param("value", JSON.writeValueAsString(parameterValue))
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
 
 		// get parameter value
-		mvc.perform(MockMvcRequestBuilders.get(String.format("/source/%s/parameter", configurationId))
+		mvc.perform(MockMvcRequestBuilders.get(String.format("/step/%s/parameter", configurationId))
 				.param("key", "parameterName").accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer).andDo(print());
 		assertEquals(parameterValue, buffer.getString());

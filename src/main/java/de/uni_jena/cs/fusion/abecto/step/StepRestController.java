@@ -49,31 +49,6 @@ public class StepRestController {
 
 	private final static ObjectMapper JSON = new ObjectMapper();
 
-	@PostMapping("/source")
-	public Step createSource(@RequestParam("class") String processorClassName,
-			@RequestParam("knowledgebase") UUID knowledgebaseId,
-			@RequestParam(name = "parameters", required = false) String parameterJson) {
-
-		Class<Processor<?>> processorClass = getProcessorClass(processorClassName);
-
-		if (!SourceProcessor.class.isAssignableFrom(processorClass)) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-					"Parameter \"knowledgebase\" only permited for SourceProcessors.");
-		}
-
-		KnowledgeBase knowledgeBase = knowledgeBaseRepository.findById(knowledgebaseId)
-				.orElseThrow(new Supplier<ResponseStatusException>() {
-					@Override
-					public ResponseStatusException get() {
-						return new ResponseStatusException(HttpStatus.BAD_REQUEST, "KnowledgeBase not found.");
-					}
-				});
-
-		Parameter parameter = parameterRepository.save(new Parameter(getParameter(processorClass, parameterJson)));
-		return stepRepository.save(new Step(processorClass, parameter, knowledgeBase));
-
-	}
-
 	/**
 	 * Creates a new Refinement Processor Node in the processing pipeline.
 	 * 
@@ -81,42 +56,64 @@ public class StepRestController {
 	 * @param inputStepIds
 	 * @return
 	 */
-	@PostMapping("/processing")
-	public Step createProcessing(@RequestParam("class") String processorClassName,
-			@RequestParam("input") Collection<UUID> inputStepIds,
+	@PostMapping("/step")
+	public Step createNotSource(@RequestParam("class") String processorClassName,
+			@RequestParam(name = "knowledgebase", required = false) UUID knowledgebaseId,
+			@RequestParam(name = "input", required = false) Collection<UUID> inputStepIds,
 			@RequestParam(name = "parameters", required = false) String parameterJson) {
 
 		Class<Processor<?>> processorClass = getProcessorClass(processorClassName);
 
 		if (SourceProcessor.class.isAssignableFrom(processorClass)) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-					"Parameter \"input\" not permited for SourceProcessors.");
-		}
-
-		for (UUID inputStepId : inputStepIds) {
-			if (!stepRepository.existsById(inputStepId)) {
+			// check input parameter
+			if (inputStepIds != null) {
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-						String.format("Input step %s not found.", inputStepId));
+						"Parameter \"input\" not permited for SourceProcessors.");
 			}
-		}
-		Iterable<Step> inputSteps = stepRepository.findAllById(inputStepIds);
 
-		Parameter parameter = parameterRepository.save(new Parameter(getParameter(processorClass, parameterJson)));
-		return stepRepository.save(new Step(processorClass, parameter, inputSteps));
+			// check knowledgebase parameter
+			KnowledgeBase knowledgeBase = knowledgeBaseRepository.findById(knowledgebaseId)
+					.orElseThrow(new Supplier<ResponseStatusException>() {
+						@Override
+						public ResponseStatusException get() {
+							return new ResponseStatusException(HttpStatus.BAD_REQUEST, "KnowledgeBase not found.");
+						}
+					});
+			// create step
+			Parameter parameter = parameterRepository.save(new Parameter(getParameter(processorClass, parameterJson)));
+			return stepRepository.save(new Step(processorClass, parameter, knowledgeBase));
+
+		} else {
+			// check knowledgebase parameter
+			if (knowledgebaseId != null) {
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+						"Parameter \"knowledgebase\" only permited for SourceProcessors.");
+			}
+			// check input parameter
+			for (UUID inputStepId : inputStepIds) {
+				if (!stepRepository.existsById(inputStepId)) {
+					throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+							String.format("Input step %s not found.", inputStepId));
+				}
+			}
+			Iterable<Step> inputSteps = stepRepository.findAllById(inputStepIds);
+			// create step
+			Parameter parameter = parameterRepository.save(new Parameter(getParameter(processorClass, parameterJson)));
+			return stepRepository.save(new Step(processorClass, parameter, inputSteps));
+		}
 	}
 
-	@GetMapping({ "/source/{uuid}", "/processing/{uuid}" })
+	@GetMapping({ "/step/{uuid}" })
 	public Step get(@PathVariable("uuid") UUID uuid) {
 		Optional<Step> step = stepRepository.findById(uuid);
 		if (step.isPresent()) {
 			return step.get();
 		} else {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-					String.format("Step %s not found.", uuid));
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Step %s not found.", uuid));
 		}
 	}
 
-	@PostMapping("/source/{uuid}/load")
+	@PostMapping("/step/{uuid}/load")
 	public void load(@PathVariable("uuid") UUID uuid,
 			@RequestParam(name = "file", required = false) MultipartFile file) {
 		Step step = get(uuid);

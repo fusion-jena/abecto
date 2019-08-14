@@ -71,62 +71,54 @@ public class StepRestControllerTest {
 	@Test
 	public void processingStep() throws Exception {
 		// use unknown processor class name
-		mvc.perform(MockMvcRequestBuilders.post("/processing").param("class", "UnknownProcessor")
+		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", "UnknownProcessor")
 				.param("input", new String[] { "550e8400-e29b-11d4-a716-446655440000" })
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
 
-		// create new source without parameter
-		mvc.perform(MockMvcRequestBuilders.post("/source")
-				.param("class",
-						"de.uni_jena.cs.fusion.abecto.step.StepRestControllerTest$ParameterProcessor")
+		// create new step without parameter
+		mvc.perform(MockMvcRequestBuilders.post("/step")
+				.param("class", "de.uni_jena.cs.fusion.abecto.step.StepRestControllerTest$ParameterProcessor")
 				.param("knowledgebase", kowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 
-		// create new source with parameter
+		// create new step with parameter
 		String parametersJson = "{\"parameterName\":\"parameterValue\"}";
-		mvc.perform(MockMvcRequestBuilders.post("/source")
-				.param("class",
-						"de.uni_jena.cs.fusion.abecto.step.StepRestControllerTest$ParameterProcessor")
+		mvc.perform(MockMvcRequestBuilders.post("/step")
+				.param("class", "de.uni_jena.cs.fusion.abecto.step.StepRestControllerTest$ParameterProcessor")
 				.param("parameters", parametersJson).param("knowledgebase", kowledgBaseId)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 
-		// get source
-		mvc.perform(MockMvcRequestBuilders.get(String.format("/source/%s", buffer.getId()))
+		// get step
+		mvc.perform(MockMvcRequestBuilders.get(String.format("/step/%s", buffer.getId()))
 				// TODO remove print
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer).andDo(print());
 		JSONAssert.assertEquals(parametersJson, buffer.getJson().path("parameter").path("parameters").toString(),
 				false);
 
 		// use unknown knowledgeBase id
-		mvc.perform(MockMvcRequestBuilders.post("/source")
-				.param("class",
-						"de.uni_jena.cs.fusion.abecto.step.StepRestControllerTest$ParameterProcessor")
+		mvc.perform(MockMvcRequestBuilders.post("/step")
+				.param("class", "de.uni_jena.cs.fusion.abecto.step.StepRestControllerTest$ParameterProcessor")
 				.param("knowledgebase", unknownUuid).accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isBadRequest());
 
-		// use unknown processing or source id
-		mvc.perform(MockMvcRequestBuilders.post(String.format("/processing/%s/parameter", unknownUuid))
+		// use unknown step id
+		mvc.perform(MockMvcRequestBuilders.post(String.format("/step/%s/parameter", unknownUuid))
 				.param("key", "parameterName").param("value", "some value").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isBadRequest());
-		mvc.perform(MockMvcRequestBuilders.post(String.format("/source/%s/parameter", unknownUuid)).param("key", "parameterName")
-				.param("value", "parameterValue").accept(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
-		mvc.perform(MockMvcRequestBuilders.get(String.format("/processing/%s", unknownUuid))
-				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isNotFound());
 		mvc.perform(
-				MockMvcRequestBuilders.get(String.format("/source/%s", unknownUuid)).accept(MediaType.APPLICATION_JSON))
+				MockMvcRequestBuilders.get(String.format("/step/%s", unknownUuid)).accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isNotFound());
 	}
 
 	@Test
 	public void loadSource() throws Exception {
 		// create new source without parameter
-		mvc.perform(MockMvcRequestBuilders.post("/source")
-				.param("class",
-						"de.uni_jena.cs.fusion.abecto.step.StepRestControllerTest$NoUploadProcessor")
+		mvc.perform(MockMvcRequestBuilders.post("/step")
+				.param("class", "de.uni_jena.cs.fusion.abecto.step.StepRestControllerTest$NoUploadProcessor")
 				.param("knowledgebase", kowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 
-		mvc.perform(MockMvcRequestBuilders.post(String.format("/source/%s/load", buffer.getId()))
+		mvc.perform(MockMvcRequestBuilders.post(String.format("/step/%s/load", buffer.getId()))
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
 
 		Assertions.assertTrue(NoUploadProcessor.loaded);
@@ -135,15 +127,14 @@ public class StepRestControllerTest {
 	@Test
 	public void uploadSourceStream() throws Exception {
 		// create new source without parameter
-		mvc.perform(MockMvcRequestBuilders.post("/source")
-				.param("class",
-						"de.uni_jena.cs.fusion.abecto.step.StepRestControllerTest$UploadProcessor")
+		mvc.perform(MockMvcRequestBuilders.post("/step")
+				.param("class", "de.uni_jena.cs.fusion.abecto.step.StepRestControllerTest$UploadProcessor")
 				.param("knowledgebase", kowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 
 		String content = "File Content";
 		MockMultipartFile multipartFile = new MockMultipartFile("file", "test.txt", "text/plain", content.getBytes());
-		this.mvc.perform(multipart(String.format("/source/%s/load", buffer.getId())).file(multipartFile))
+		this.mvc.perform(multipart(String.format("/step/%s/load", buffer.getId())).file(multipartFile))
 				.andExpect(status().isOk());
 
 		Assertions.assertEquals(content, new String(UploadProcessor.streamData));

@@ -62,43 +62,43 @@ public class WorkflowTest {
 		String knowledgBase2Id = buffer.getId();
 
 		// add source 1
-		mvc.perform(MockMvcRequestBuilders.post("/source").param("class", "RdfFileSourceProcessor")
+		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", "RdfFileSourceProcessor")
 				.param("knowledgebase", knowledgBase1Id).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 		String source1Id = buffer.getId();
 
 		// add source 2
-		mvc.perform(MockMvcRequestBuilders.post("/source").param("class", "RdfFileSourceProcessor")
+		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", "RdfFileSourceProcessor")
 				.param("knowledgebase", knowledgBase2Id).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 		String source2Id = buffer.getId();
 
 		// upload source 1
 		MockMultipartFile multipartFileSource1 = new MockMultipartFile("file", sourceFile1.getInputStream());
-		this.mvc.perform(multipart(String.format("/source/%s/load", source1Id)).file(multipartFileSource1))
+		this.mvc.perform(multipart(String.format("/step/%s/load", source1Id)).file(multipartFileSource1))
 				.andExpect(status().isOk());
 
 		// upload source 2
 		MockMultipartFile multipartFileSource2 = new MockMultipartFile("file", sourceFile2.getInputStream());
-		this.mvc.perform(multipart(String.format("/source/%s/load", source2Id)).file(multipartFileSource2))
+		this.mvc.perform(multipart(String.format("/step/%s/load", source2Id)).file(multipartFileSource2))
 				.andExpect(status().isOk());
 
 		String transformationParameter = "{\"query\":\"CONSTRUCT {?s <http://example.org/p> <http://example.org/o>} WHERE {?s ?p ?o. Filter(!isBLANK(?s))}\"}";
 
 		// add transformation 1
-		mvc.perform(MockMvcRequestBuilders.post("/processing").param("class", "SparqlConstructProcessor")
+		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", "SparqlConstructProcessor")
 				.param("input", source1Id).param("parameters", transformationParameter)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		String transformation1Id = buffer.getId();
 
 		// add transformation 2
-		mvc.perform(MockMvcRequestBuilders.post("/processing").param("class", "SparqlConstructProcessor")
+		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", "SparqlConstructProcessor")
 				.param("input", source2Id).param("parameters", transformationParameter)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		String transformation2Id = buffer.getId();
 
 		// add mapping
-		mvc.perform(MockMvcRequestBuilders.post("/processing").param("class", "JaroWinklerMappingProcessor")
+		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", "JaroWinklerMappingProcessor")
 				.param("input", transformation1Id, transformation2Id)
 				.param("parameters", "{\"threshold\":0.9,\"case_sensitive\":false}").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(buffer);
