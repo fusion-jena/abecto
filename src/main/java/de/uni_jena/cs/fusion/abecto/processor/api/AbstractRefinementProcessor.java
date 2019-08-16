@@ -70,15 +70,15 @@ public abstract class AbstractRefinementProcessor<P extends ParameterModel> exte
 
 	@Override
 	protected void prepare() throws InterruptedException {
-		for (Processor<?> dependedProcessor : this.inputProcessors) {
-			while (!dependedProcessor.isSucceeded()) {
-				if (dependedProcessor.isFailed()) {
+		for (Processor<?> inputProcessor : this.inputProcessors) {
+			while (!inputProcessor.isSucceeded()) {
+				if (inputProcessor.isFailed()) {
 					this.fail();
 				}
-				dependedProcessor.await();
+				inputProcessor.await();
 			}
-			this.addMetaModels(dependedProcessor.getMetaModel());
-			this.addInputModelGroups(dependedProcessor.getDataModels());
+			this.addMetaModels(inputProcessor.getMetaModel());
+			this.addInputModelGroups(inputProcessor.getDataModels());
 		}
 	}
 }
