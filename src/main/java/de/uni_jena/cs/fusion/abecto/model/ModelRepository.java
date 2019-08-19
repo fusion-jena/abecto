@@ -106,13 +106,13 @@ public class ModelRepository {
 	private File tempFile() {
 		File folder = new File(basePath, "temp");
 		folder.mkdir();
-		return new File(folder, UUID.randomUUID().toString());
+		return new File(folder, UUID.randomUUID().toString() + "." + RDF_SERIALIZATION_LANG.getFileExtension() + ".gz");
 	}
 
 	private File file(String hash) {
 		File folder = new File(basePath, hash.substring(0, 2));
 		folder.mkdir();
-		return new File(folder, hash.substring(2));
+		return new File(folder, hash.substring(2) + "." + RDF_SERIALIZATION_LANG.getFileExtension() + ".gz");
 	}
 
 	private void serialize(Model model, OutputStream out) throws IOException {
