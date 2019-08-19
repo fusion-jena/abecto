@@ -9,7 +9,6 @@ import java.util.function.Supplier;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,11 +28,9 @@ import de.uni_jena.cs.fusion.abecto.processing.ProcessingRepository;
 import de.uni_jena.cs.fusion.abecto.processor.api.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.processor.api.Processor;
 import de.uni_jena.cs.fusion.abecto.processor.api.SourceProcessor;
-import de.uni_jena.cs.fusion.abecto.processor.api.UploadSourceProcessor;
 import de.uni_jena.cs.fusion.abecto.runner.ProcessorRunner;
 
 @RestController
-@Transactional
 public class StepRestController {
 
 	@Autowired
@@ -57,7 +54,7 @@ public class StepRestController {
 	 * @return
 	 */
 	@PostMapping("/step")
-	public Step createNotSource(@RequestParam("class") String processorClassName,
+	public Step create(@RequestParam("class") String processorClassName,
 			@RequestParam(name = "knowledgebase", required = false) UUID knowledgebaseId,
 			@RequestParam(name = "input", required = false) Collection<UUID> inputStepIds,
 			@RequestParam(name = "parameters", required = false) String parameterJson) {
@@ -119,29 +116,14 @@ public class StepRestController {
 		Step step = get(uuid);
 		Processing processing = processingRepository.save(new Processing(step));
 		try {
-			Processor<?> processor = processing.getProcessorInsance();
 			if (file == null) {
-				if (processor instanceof UploadSourceProcessor<?>) {
-					throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-							"SourceProcessor requires to upload an input file.");
-				}
+				processorRunner.syncExecute(processing);
 			} else {
-				if (processor instanceof UploadSourceProcessor<?>) {
-					try {
-						((UploadSourceProcessor<?>) processor).setUploadStream(file.getInputStream());
-					} catch (IOException e) {
-						throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Upload failed.", e);
-					}
-				} else {
-					throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-							"SourceProcessor does not accepts input file uploads.");
-				}
+				processorRunner.syncExecute(processing, file.getInputStream());
 			}
-			processor.setParameters(step.getParameter().getParameters());
-			processorRunner.execute(processing, processor);
-		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
-				| NoSuchMethodException | SecurityException e) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Processor execution failed.", e);
+		} catch (IllegalArgumentException | IllegalStateException | IOException e) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+					String.format("Failed to execute Processor for Processing %s.", uuid), e);
 		}
 	}
 

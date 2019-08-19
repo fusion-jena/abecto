@@ -2,7 +2,6 @@ package de.uni_jena.cs.fusion.abecto.processing;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.lang.reflect.InvocationTargetException;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.HashSet;
@@ -15,13 +14,9 @@ import javax.persistence.FetchType;
 import javax.persistence.Lob;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToOne;
-
-import org.apache.jena.rdf.model.Model;
 
 import de.uni_jena.cs.fusion.abecto.parameter.Parameter;
 import de.uni_jena.cs.fusion.abecto.processor.api.Processor;
-import de.uni_jena.cs.fusion.abecto.processor.api.SourceProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.api.Processor.Status;
 import de.uni_jena.cs.fusion.abecto.rdfModel.RdfModel;
 import de.uni_jena.cs.fusion.abecto.step.Step;
@@ -67,8 +62,7 @@ public class Processing extends AbstractEntityWithUUID {
 	private String stackTrace;
 
 	// results
-	@OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-	private RdfModel rdfModel;
+	private String modelHash;
 
 	protected Processing() {
 	}
@@ -106,34 +100,9 @@ public class Processing extends AbstractEntityWithUUID {
 	public Class<? extends Processor> getProcessorClass() {
 		return this.processor;
 	}
-
-	/**
-	 * Returns an instance of the {@link Processor} with the same {@link Status} and
-	 * result {@link Model} (if applicable) as this {@link Processing}.
-	 * 
-	 * @return
-	 * @throws InstantiationException
-	 * @throws IllegalAccessException
-	 * @throws IllegalArgumentException
-	 * @throws InvocationTargetException
-	 * @throws NoSuchMethodException
-	 * @throws SecurityException
-	 */
-	public Processor<?> getProcessorInsance() throws InstantiationException, IllegalAccessException,
-			IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
-		Processor<?> processor = this.processor.getDeclaredConstructor().newInstance();
-		if (processor instanceof SourceProcessor) {
-			((SourceProcessor<?>) processor).setKnowledgBase(this.step.getKnowledgeBase().getId());
-		}
-		processor.setStatus(this.status);
-		if (this.isSucceeded()) {
-			processor.setResultModel(rdfModel.getModel());
-		}
-		return processor;
-	}
-
-	public RdfModel getRdfModel() {
-		return this.rdfModel;
+	
+	public String getModelHash() {
+		return this.modelHash;
 	}
 
 	public String getStackTrace() {
@@ -211,10 +180,10 @@ public class Processing extends AbstractEntityWithUUID {
 		}
 	}
 
-	public Processing setStateSuccess(RdfModel rdfModel) {
+	public Processing setStateSuccess(String modelHash) {
 		if (this.isRunning() || this.isNotStarted()) {
-			Objects.requireNonNull(rdfModel);
-			this.rdfModel = rdfModel;
+			Objects.requireNonNull(modelHash);
+			this.modelHash = modelHash;
 			this.status = Status.SUCCEEDED;
 			this.endDateTime = ZonedDateTime.now();
 			return this;

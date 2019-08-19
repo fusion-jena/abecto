@@ -25,7 +25,8 @@ public class KnowledgeBase extends AbstractEntityWithUUID {
 	@OneToMany(mappedBy = "knowledgeBase", cascade = CascadeType.REMOVE)
 	protected Collection<Step> sources;
 
-	protected KnowledgeBase() {}
+	protected KnowledgeBase() {
+	}
 
 	public KnowledgeBase(Project project, String label) {
 		this.project = project;
@@ -48,5 +49,10 @@ public class KnowledgeBase extends AbstractEntityWithUUID {
 	@Override
 	public String toString() {
 		return String.format("KnowledgeBase[id=%s, label='%s', project=%s]", this.id, this.label, this.project.getId());
+	}
+
+	@JsonIgnore
+	public Collection<Step> getSources() {
+		return this.sources;
 	}
 }

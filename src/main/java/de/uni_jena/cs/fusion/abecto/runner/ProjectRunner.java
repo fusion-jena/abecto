@@ -1,11 +1,15 @@
 package de.uni_jena.cs.fusion.abecto.runner;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Queue;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,12 +17,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import de.uni_jena.cs.fusion.abecto.processing.Processing;
-import de.uni_jena.cs.fusion.abecto.processing.ProcessingException;
 import de.uni_jena.cs.fusion.abecto.processing.ProcessingRepository;
-import de.uni_jena.cs.fusion.abecto.processor.api.Processor;
-import de.uni_jena.cs.fusion.abecto.processor.api.RefinementProcessor;
 import de.uni_jena.cs.fusion.abecto.project.Project;
-import de.uni_jena.cs.fusion.abecto.rdfModel.RdfModelRepository;
+import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
 import de.uni_jena.cs.fusion.abecto.step.Step;
 import de.uni_jena.cs.fusion.abecto.step.StepRepository;
 
@@ -26,100 +27,67 @@ import de.uni_jena.cs.fusion.abecto.step.StepRepository;
 public class ProjectRunner {
 	private static final Logger log = LoggerFactory.getLogger(ProjectRunner.class);
 	@Autowired
-	ProcessingRepository processingRepository;
+	ProjectRepository projectRepository;
 	@Autowired
-	RdfModelRepository rdfGraphRepository;
+	ProcessingRepository processingRepository;
 	@Autowired
 	StepRepository stepRepository;
 	@Autowired
 	ProcessorRunner processorRunner;
 
 	/**
-	 * Executes the processing pipeline of a given {@link Project}.
-	 * 
-	 * @param project {@link Project} to execute the belonging pipeline
-	 */
-	public void execute(Project project) {
-		this.execute(project, Collections.emptyList());
-	}
-
-	/**
-	 * Executes the processing pipeline of a given {@link Project} starting at the
-	 * given {@link Processing}s. The given {@link Processing}s and their dependent
-	 * {@link Processing}s will not be executed.
+	 * Schedules a given {@link Project} starting at the given {@link Processing}s.
+	 * The given {@link Processing}s and their dependent {@link Processing}s will
+	 * not be executed.
 	 * 
 	 * @param project     {@link Project} to execute the belonging pipeline
 	 * @param processings {@link Processing}s to start at
+	 * @throws ExecutionException 
+	 * @throws InterruptedException 
 	 */
-	public void execute(Project project, Collection<Processing> processings) {
-		log.info("execute " + project + " using " + processings);
+	public void execute(UUID projectId, Collection<UUID> startProcessingIds, boolean await) throws InterruptedException, ExecutionException {
+		Project project = projectRepository.findById(projectId).orElseThrow();
+		Iterable<Processing> processings = processingRepository.findAllById(startProcessingIds);
+		Iterable<Step> steps = stepRepository.findAllByProject(project);
 
-		log.info("get all steps of the project");
-		// get all steps of the project
-		Iterable<Step> steps = this.stepRepository.findAllByProject(project);
+		Map<Step, Processing> processingsByStep = new HashMap<>();
 
-		Map<Step, Processing> processingsMap = new HashMap<>();
+		// collect given processings and their input processings
+		Queue<Processing> completedProcessings = new LinkedList<>();
+		processings.forEach(completedProcessings::add);
+		while (!completedProcessings.isEmpty()) {
+			Processing completedProcessing = completedProcessings.poll();
+			processingsByStep.put(completedProcessing.getStep(), completedProcessing);
+			completedProcessings.addAll(completedProcessing.getInputProcessings());
+		}
 
-		try {
-			log.info("add given processings and their input processings to processingsMap");
-			Queue<Processing> completedProcessings = new LinkedList<>(processings);
-			while (!completedProcessings.isEmpty()) {
-				Processing completedProcessing = completedProcessings.poll();
-				processingsMap.put(completedProcessing.getStep(), completedProcessing);
-				completedProcessings.addAll(completedProcessing.getInputProcessings());
-			}
+		// TODO avoid re-execution of steps with same parameters and input
 
-			log.info("add new processings for missing steps to processingsMap");
-			for (Step step : steps) {
-				processingsMap.computeIfAbsent(step, (c) -> new Processing(c));
-			}
+		// create new processing for missing steps
+		for (Step step : steps) {
+			processingsByStep.computeIfAbsent(step, (c) -> new Processing(c));
+		}
 
-			// save processings
-			this.processingRepository.saveAll(processingsMap.values());
+		// save processings
+		Iterable<Processing> processingsToExecute = processingRepository.saveAll(processingsByStep.values());
 
-			Map<Step, Processor<?>> processorsMap = new HashMap<>();
-
-			log.info("initialize processors for not startet processings");
-			// initialize processors for not started processings
-			for (Step step : steps) {
-				Processing processing = processingsMap.get(step);
+		Collection<Future<Processing>> futures = new ArrayList<>();
+		// execute processors
+		for (Processing processingToExecute : processingsToExecute) {
+			if (processingToExecute.isNotStarted()) {
 				try {
-					Processor<?> processor = processing.getProcessorInsance();
-					processor.setParameters(step.getParameter().getParameters());
-					processorsMap.put(step, processor);
-				} catch (Throwable t) {
-					if (processing.isNotStarted()) {
-						this.processingRepository.save(processing.setStateFail(t));
-					}
-				}
-
-			}
-
-			log.info("add dependent processors or input graphs to processors");
-			// add dependent processors
-			for (Step step : processorsMap.keySet()) {
-				Processor<?> processor = processorsMap.get(step);
-				for (Step inputStep : step.getInputSteps()) {
-					if (processor instanceof RefinementProcessor) {
-						((RefinementProcessor<?>) processor).addInputProcessor(processorsMap.get(inputStep));
-					}
-				}
-			}
-
-			// execute processors
-			for (Step step : processorsMap.keySet()) {
-				log.info("Scheduling processor: " + processorsMap.get(step));
-				processorRunner.asyncExecute(processingsMap.get(step), processorsMap.get(step));
-			}
-
-		} catch (Throwable t) {
-			log.error("Error:", t);
-			for (Processing processing : processingsMap.values()) {
-				if (processing.isNotStarted() || processing.isRunning()) {
-					processing.setStateFail(new ProcessingException("Pipeline execution failed.", t));
-					this.processingRepository.save(processing);
+					futures.add(processorRunner.asyncExecute(processingToExecute.getId()));
+				} catch (IllegalStateException | NoSuchElementException e) {
+					log.error(String.format("Failed to execute processing %s.", processingToExecute.getId()), e);
 				}
 			}
 		}
+
+		if (await) {
+			for (Future<Processing> future : futures) {
+				future.get();
+			}
+		}
+
 	}
 }

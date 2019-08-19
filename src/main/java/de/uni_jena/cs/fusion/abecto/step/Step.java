@@ -1,6 +1,8 @@
 package de.uni_jena.cs.fusion.abecto.step;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.NoSuchElementException;
 import java.util.UUID;
@@ -194,6 +196,20 @@ public class Step extends AbstractEntityWithUUID {
 	@Override
 	public String toString() {
 		return String.format("Step[id=%s, project=%s]", this.id, this.project.getId());
+	}
+
+	@JsonIgnore
+	public Processing getLastProcessing() {
+		return Collections.max(this.processings, new Comparator<Processing>() {
+			@Override
+			public int compare(Processing o1, Processing o2) {
+				if (!o1.isFailed() && !o2.isFailed()) {
+					return o1.getStartDateTime().compareTo(o2.getStartDateTime());
+				} else {
+					return Boolean.compare(!o1.isFailed(), !o2.isFailed());
+				}
+			}
+		});
 	}
 
 }
