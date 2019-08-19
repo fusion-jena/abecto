@@ -20,12 +20,16 @@ import java.util.zip.GZIPOutputStream;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import de.uni_jena.cs.fusion.abecto.util.RdfSerializationLanguage;
 
 @Component
 public class ModelRepository {
+	private final static Logger log = LoggerFactory.getLogger(ModelRepository.class);
+
 	private final static RdfSerializationLanguage RDF_SERIALIZATION_LANG = RdfSerializationLanguage.NTRIPLES;
 
 	private final File basePath;
@@ -56,11 +60,14 @@ public class ModelRepository {
 		try {
 			MessageDigest digest = MessageDigest.getInstance("SHA-1");
 
+			log.debug(String.format("Write model temporary to \"%s\".", tempFile.getAbsolutePath()));
+
 			try (OutputStream fileOut = new FileOutputStream(tempFile)) {
-				try (OutputStream hashOut = new DigestOutputStream(fileOut, MessageDigest.getInstance("SHA-1"))) {
-					try (OutputStream gzipOut = new GZIPOutputStream(hashOut)) {
+				try (OutputStream hashOut = new DigestOutputStream(fileOut, digest)) {
+					try (OutputStream gzipOut = new GZIPOutputStream(hashOut, true)) {
 						// serialize model to file
-						serialize(model, hashOut);
+						serialize(model, gzipOut);
+						gzipOut.flush();
 					}
 				}
 			}
@@ -76,9 +83,12 @@ public class ModelRepository {
 
 			if (!file.exists()) {
 				// model not stored by now
+				log.debug(String.format("Move model to \"%s\".", file.getAbsolutePath()));
 				tempFile.renameTo(file);
 			} else {
 				// model already stored
+				log.debug(String.format("Model already stored in \"%s\", delete \"%s\".", file.getAbsolutePath(),
+						tempFile.getAbsolutePath()));
 				tempFile.delete();
 			}
 
@@ -106,8 +116,7 @@ public class ModelRepository {
 	}
 
 	private void serialize(Model model, OutputStream out) throws IOException {
-		model.write(out, RDF_SERIALIZATION_LANG.getApacheJenaKey(), null);
-		out.flush();
+		model.write(out, RDF_SERIALIZATION_LANG.getApacheJenaKey());
 	}
 
 	private Model deserialize(InputStream fileIn) throws IOException {
