@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.math.BigInteger;
 import java.security.DigestOutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -19,9 +20,11 @@ import java.util.zip.GZIPOutputStream;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.springframework.stereotype.Component;
 
 import de.uni_jena.cs.fusion.abecto.util.RdfSerializationLanguage;
 
+@Component
 public class ModelRepository {
 	private final static RdfSerializationLanguage RDF_SERIALIZATION_LANG = RdfSerializationLanguage.NTRIPLES;
 
@@ -30,6 +33,7 @@ public class ModelRepository {
 
 	public ModelRepository() {
 		this.basePath = new File(System.getProperty("user.home") + "/.abecto/models");
+		this.basePath.mkdirs();
 	}
 
 	public Model get(String hash) {
@@ -62,7 +66,7 @@ public class ModelRepository {
 			}
 
 			// generate hash based on serialization
-			String hash = new String(digest.digest());
+			String hash = new BigInteger(1, digest.digest()).toString(16);
 
 			// add model to map
 			this.models.put(hash, model);
@@ -90,19 +94,20 @@ public class ModelRepository {
 	}
 
 	private File tempFile() {
-		return new File(basePath, UUID.randomUUID().toString());
+		File folder = new File(basePath, "temp");
+		folder.mkdir();
+		return new File(folder, UUID.randomUUID().toString());
 	}
 
 	private File file(String hash) {
-		File file = new File(basePath, hash.substring(0, 2) + "/" + hash.substring(2));
-		file.getParentFile().mkdirs();
-		return file;
+		File folder = new File(basePath, hash.substring(0, 2));
+		folder.mkdir();
+		return new File(folder, hash.substring(2));
 	}
 
 	private void serialize(Model model, OutputStream out) throws IOException {
 		model.write(out, RDF_SERIALIZATION_LANG.getApacheJenaKey(), null);
 		out.flush();
-		out.close();
 	}
 
 	private Model deserialize(InputStream fileIn) throws IOException {
