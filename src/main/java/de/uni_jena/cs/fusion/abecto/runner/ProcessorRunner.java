@@ -28,7 +28,6 @@ import de.uni_jena.cs.fusion.abecto.processor.api.Processor.Status;
 import de.uni_jena.cs.fusion.abecto.processor.api.RefinementProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.api.SourceProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.api.UploadSourceProcessor;
-import de.uni_jena.cs.fusion.abecto.rdfModel.RdfModelRepository;
 
 @Component
 public class ProcessorRunner {
@@ -39,8 +38,6 @@ public class ProcessorRunner {
 
 	@Autowired
 	ProcessingRepository processingRepository;
-	@Autowired
-	RdfModelRepository rdfModelRepository;
 	@Autowired
 	ModelRepository modelRepository;
 
@@ -127,11 +124,11 @@ public class ProcessorRunner {
 	private Processing syncExecute(Processing processing, Processor<?> processor) throws IllegalStateException {
 		ensureNotStartetd(processing);
 		try {
-			log.debug("Running processor " + processor);
+			log.info("Running processor " + processor);
 			processingRepository.save(processing.setStateStart());
 			Model model = processor.call();
 			String modelHash = modelRepository.save(model);
-			log.debug("Processor " + processor + " succeded");
+			log.info("Processor " + processor + " succeded");
 			return processingRepository.save(processing.setStateSuccess(modelHash));
 		} catch (Exception e) {
 			log.error("Processor " + processor + " failed", e);
