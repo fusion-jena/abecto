@@ -13,10 +13,8 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 @SpringBootApplication
 @EnableScheduling
 @EnableAsync
-@PropertySources({
-    @PropertySource(value="classpath:application.properties"),
-    @PropertySource(value="classpath:application_test.properties", ignoreResourceNotFound=true)
-})
+@PropertySources({ @PropertySource(value = "classpath:application.properties"),
+		@PropertySource(value = "classpath:application_test.properties", ignoreResourceNotFound = true) })
 public class Abecto {
 
 	public static void main(String[] args) {
