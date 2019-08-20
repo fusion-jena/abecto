@@ -111,9 +111,9 @@ public class StepRestController {
 	}
 
 	@PostMapping("/step/{uuid}/load")
-	public void load(@PathVariable("uuid") UUID uuid,
+	public Processing load(@PathVariable("uuid") UUID stepId,
 			@RequestParam(name = "file", required = false) MultipartFile file) {
-		Step step = get(uuid);
+		Step step = get(stepId);
 		Processing processing = processingRepository.save(new Processing(step));
 		try {
 			if (file == null) {
@@ -123,8 +123,14 @@ public class StepRestController {
 			}
 		} catch (IllegalArgumentException | IllegalStateException | IOException e) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-					String.format("Failed to execute Processor for Processing %s.", uuid), e);
+					String.format("Failed to execute Processor for Processing %s.", stepId), e);
 		}
+		return processing;
+	}
+
+	@GetMapping("/step/{uuid}/processing/last")
+	public Processing lastProcessing(@PathVariable("uuid") UUID stepId) {
+		return processingRepository.findTopByStepOrderByStartDateTimeDesc(get(stepId));
 	}
 
 	@SuppressWarnings("unchecked")

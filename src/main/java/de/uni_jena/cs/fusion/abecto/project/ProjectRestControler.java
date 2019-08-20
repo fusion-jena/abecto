@@ -47,13 +47,9 @@ public class ProjectRestControler {
 	}
 
 	@GetMapping("/project/{uuid}")
-	public Project get(@PathVariable("uuid") UUID uuid) {
-		Optional<Project> project = projectRepository.findById(uuid);
-		if (project.isPresent()) {
-			return project.get();
-		} else {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found.");
-		}
+	public Project get(@PathVariable("uuid") UUID projectId) {
+		return projectRepository.findById(projectId)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found."));
 	}
 
 	/**

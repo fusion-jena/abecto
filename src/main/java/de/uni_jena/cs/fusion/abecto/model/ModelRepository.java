@@ -30,7 +30,7 @@ import de.uni_jena.cs.fusion.abecto.util.RdfSerializationLanguage;
 public class ModelRepository {
 	private final static Logger log = LoggerFactory.getLogger(ModelRepository.class);
 
-	private final static RdfSerializationLanguage RDF_SERIALIZATION_LANG = RdfSerializationLanguage.NTRIPLES;
+	public final static RdfSerializationLanguage RDF_SERIALIZATION_LANG = RdfSerializationLanguage.NTRIPLES;
 
 	private final File basePath;
 	private final Map<String, Model> models = Collections.synchronizedMap(new WeakHashMap<String, Model>());

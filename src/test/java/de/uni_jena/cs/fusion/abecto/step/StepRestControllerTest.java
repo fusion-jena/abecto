@@ -1,7 +1,8 @@
 package de.uni_jena.cs.fusion.abecto.step;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
@@ -47,7 +48,7 @@ public class StepRestControllerTest {
 	private final String unknownUuid = UUID.randomUUID().toString();
 
 	private String projectId;
-	private String kowledgBaseId;
+	private String knowledgBaseId;
 
 	@Autowired
 	ProjectRepository projectRepository;
@@ -60,7 +61,7 @@ public class StepRestControllerTest {
 		projectId = buffer.getId();
 		mvc.perform(MockMvcRequestBuilders.post("/knowledgebase").param("project", projectId)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
-		kowledgBaseId = buffer.getId();
+		knowledgBaseId = buffer.getId();
 	}
 
 	@AfterEach
@@ -78,20 +79,19 @@ public class StepRestControllerTest {
 		// create new step without parameter
 		mvc.perform(MockMvcRequestBuilders.post("/step")
 				.param("class", "de.uni_jena.cs.fusion.abecto.step.StepRestControllerTest$ParameterProcessor")
-				.param("knowledgebase", kowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
+				.param("knowledgebase", knowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 
 		// create new step with parameter
 		String parametersJson = "{\"parameterName\":\"parameterValue\"}";
 		mvc.perform(MockMvcRequestBuilders.post("/step")
 				.param("class", "de.uni_jena.cs.fusion.abecto.step.StepRestControllerTest$ParameterProcessor")
-				.param("parameters", parametersJson).param("knowledgebase", kowledgBaseId)
+				.param("parameters", parametersJson).param("knowledgebase", knowledgBaseId)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 
 		// get step
 		mvc.perform(MockMvcRequestBuilders.get(String.format("/step/%s", buffer.getId()))
-				// TODO remove print
-				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer).andDo(print());
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		JSONAssert.assertEquals(parametersJson, buffer.getJson().path("parameter").path("parameters").toString(),
 				false);
 
@@ -115,7 +115,7 @@ public class StepRestControllerTest {
 		// create new source without parameter
 		mvc.perform(MockMvcRequestBuilders.post("/step")
 				.param("class", "de.uni_jena.cs.fusion.abecto.step.StepRestControllerTest$NoUploadProcessor")
-				.param("knowledgebase", kowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
+				.param("knowledgebase", knowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 
 		mvc.perform(MockMvcRequestBuilders.post(String.format("/step/%s/load", buffer.getId()))
@@ -129,7 +129,7 @@ public class StepRestControllerTest {
 		// create new source without parameter
 		mvc.perform(MockMvcRequestBuilders.post("/step")
 				.param("class", "de.uni_jena.cs.fusion.abecto.step.StepRestControllerTest$UploadProcessor")
-				.param("knowledgebase", kowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
+				.param("knowledgebase", knowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 
 		String content = "File Content";
@@ -139,6 +139,34 @@ public class StepRestControllerTest {
 
 		Assertions.assertEquals(content, new String(UploadProcessor.streamData));
 		Assertions.assertTrue(NoUploadProcessor.loaded);
+	}
+
+	@Test
+	public void lastProcessing() throws Exception {
+		String rdf1 = "<http://example.org/A> <http://example.org/B> <http://example.org/C> .";
+		String rdf2 = "<http://example.org/A> <http://example.org/B> <http://example.org/D> .";
+
+		// add source
+		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", "RdfFileSourceProcessor")
+				.param("knowledgebase", knowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
+				.andDo(buffer);
+		String sourceId = buffer.getId();
+
+		// upload source
+		MockMultipartFile multipartFileSource = new MockMultipartFile("file", rdf1.getBytes());
+		mvc.perform(multipart(String.format("/step/%s/load", sourceId)).file(multipartFileSource))
+				.andExpect(status().isOk());
+
+		// upload changed source
+		multipartFileSource = new MockMultipartFile("file", rdf2.getBytes());
+		mvc.perform(multipart(String.format("/step/%s/load", sourceId)).file(multipartFileSource))
+				.andExpect(status().isOk()).andDo(buffer);
+		String secondUploadId = buffer.getId();
+
+		// get last processing
+		mvc.perform(MockMvcRequestBuilders.get(String.format("/step/%s/processing/last", sourceId))
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
+				.andExpect(jsonPath("id", is(secondUploadId)));
 	}
 
 	public static class UploadProcessor extends AbstractSourceProcessor<EmptyParameters>

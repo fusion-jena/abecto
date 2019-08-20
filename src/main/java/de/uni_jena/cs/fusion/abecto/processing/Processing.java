@@ -2,7 +2,7 @@ package de.uni_jena.cs.fusion.abecto.processing;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.time.ZonedDateTime;
+import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
@@ -54,8 +54,8 @@ public class Processing extends AbstractEntityWithUUID {
 	private Set<Processing> inputProcessings = new HashSet<>();
 
 	// status
-	private ZonedDateTime startDateTime;
-	private ZonedDateTime endDateTime;
+	private OffsetDateTime startDateTime;
+	private OffsetDateTime endDateTime;
 	private Status status = Status.NOT_STARTED;
 	@Lob
 	private String stackTrace;
@@ -83,7 +83,7 @@ public class Processing extends AbstractEntityWithUUID {
 		return this.step;
 	}
 
-	public ZonedDateTime getEndDateTime() {
+	public OffsetDateTime getEndDateTime() {
 		return this.endDateTime;
 	}
 
@@ -108,7 +108,7 @@ public class Processing extends AbstractEntityWithUUID {
 		return this.stackTrace;
 	}
 
-	public ZonedDateTime getStartDateTime() {
+	public OffsetDateTime getStartDateTime() {
 		return this.startDateTime;
 	}
 
@@ -161,7 +161,7 @@ public class Processing extends AbstractEntityWithUUID {
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			t.printStackTrace(new PrintStream(out));
 			this.stackTrace = out.toString();
-			this.endDateTime = ZonedDateTime.now();
+			this.endDateTime = OffsetDateTime.now();
 			return this;
 		} else {
 			throw new IllegalStateException(
@@ -172,7 +172,7 @@ public class Processing extends AbstractEntityWithUUID {
 	public Processing setStateStart() {
 		if (this.isNotStarted()) {
 			this.status = Status.RUNNING;
-			this.startDateTime = ZonedDateTime.now();
+			this.startDateTime = OffsetDateTime.now();
 			return this;
 		} else {
 			throw new IllegalStateException("Failed to set state RUNNING as current state is not NOT_STARTED.");
@@ -184,7 +184,7 @@ public class Processing extends AbstractEntityWithUUID {
 			Objects.requireNonNull(modelHash);
 			this.modelHash = modelHash;
 			this.status = Status.SUCCEEDED;
-			this.endDateTime = ZonedDateTime.now();
+			this.endDateTime = OffsetDateTime.now();
 			return this;
 		} else {
 			throw new IllegalStateException(
