@@ -3,10 +3,12 @@ package de.uni_jena.cs.fusion.abecto.processing;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -14,6 +16,8 @@ import javax.persistence.FetchType;
 import javax.persistence.Lob;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.uni_jena.cs.fusion.abecto.parameter.Parameter;
 import de.uni_jena.cs.fusion.abecto.processor.api.Processor;
@@ -79,16 +83,29 @@ public class Processing extends AbstractEntityWithUUID {
 		this.inputProcessings.addAll(inputProcessings);
 	}
 
+	@JsonIgnore
 	public Step getStep() {
 		return this.step;
 	}
 
+	public UUID getStepId() {
+		return this.step.getId();
+	}
+
 	public OffsetDateTime getEndDateTime() {
+		// TODO format JSON serialization
 		return this.endDateTime;
 	}
 
+	@JsonIgnore
 	public Collection<Processing> getInputProcessings() {
 		return this.inputProcessings;
+	}
+
+	public Collection<UUID> getInputProcessingIds() {
+		Collection<UUID> ids = new ArrayList<>();
+		this.inputProcessings.forEach((p) -> ids.add(p.getId()));
+		return ids;
 	}
 
 	public Parameter getParameter() {
@@ -99,7 +116,7 @@ public class Processing extends AbstractEntityWithUUID {
 	public Class<? extends Processor> getProcessorClass() {
 		return this.processor;
 	}
-	
+
 	public String getModelHash() {
 		return this.modelHash;
 	}
@@ -109,6 +126,7 @@ public class Processing extends AbstractEntityWithUUID {
 	}
 
 	public OffsetDateTime getStartDateTime() {
+		// TODO format JSON serialization
 		return this.startDateTime;
 	}
 
@@ -194,8 +212,7 @@ public class Processing extends AbstractEntityWithUUID {
 
 	@Override
 	public String toString() {
-		return String.format(
-				"Processing[id=%s, step=%s, processor='%s', status=%s, start=%tc, end=%tc, parameter=%s]",
+		return String.format("Processing[id=%s, step=%s, processor='%s', status=%s, start=%tc, end=%tc, parameter=%s]",
 				this.id, this.step.getId(), this.processor.getSimpleName(), this.status, this.startDateTime,
 				this.endDateTime, this.parameter.getId());
 	}
