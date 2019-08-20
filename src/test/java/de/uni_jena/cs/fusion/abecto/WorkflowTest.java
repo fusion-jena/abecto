@@ -108,8 +108,6 @@ public class WorkflowTest {
 		mvc.perform(MockMvcRequestBuilders.get(String.format("/project/%s/run", projectId)).param("await", "true")
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 
-		// TODO wait for processing results
-
 		// TODO check generated models
 
 	}
