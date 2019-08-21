@@ -48,7 +48,7 @@ public class Processing extends AbstractEntityWithUUID {
 	/**
 	 * {@link Parameter} used to produce the result {@link RdfModel}.
 	 */
-	@ManyToOne(fetch = FetchType.LAZY)
+	@ManyToOne(cascade = CascadeType.PERSIST)
 	private Parameter parameter;
 	/**
 	 * Collection of {@link Processing}s used to produce the result
@@ -146,6 +146,7 @@ public class Processing extends AbstractEntityWithUUID {
 	 * @return {@code true} if this {@link Processing} has {@link Status#FAILED},
 	 *         else {@code false}
 	 */
+	@JsonIgnore
 	public boolean isFailed() {
 		return Status.FAILED.equals(this.status);
 	}
@@ -155,6 +156,7 @@ public class Processing extends AbstractEntityWithUUID {
 	 * @return {@code true} if this {@link Processing} has
 	 *         {@link Status#NOT_STARTED}, else {@code false}
 	 */
+	@JsonIgnore
 	public boolean isNotStarted() {
 		return Status.NOT_STARTED.equals(this.status);
 	}
@@ -164,6 +166,7 @@ public class Processing extends AbstractEntityWithUUID {
 	 * @return {@code true} if this {@link Processing} has {@link Status#RUNNING},
 	 *         else {@code false}
 	 */
+	@JsonIgnore
 	public boolean isRunning() {
 		return Status.RUNNING.equals(this.status);
 	}
@@ -173,6 +176,7 @@ public class Processing extends AbstractEntityWithUUID {
 	 * @return {@code true} if this {@link Processing} has {@link Status#SUCCEEDED},
 	 *         else {@code false}
 	 */
+	@JsonIgnore
 	public boolean isSucceeded() {
 		return Status.SUCCEEDED.equals(this.status);
 	}

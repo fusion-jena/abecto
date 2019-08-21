@@ -21,6 +21,12 @@ public class ProcessingRestController {
 	@Autowired
 	ModelRepository modelRepository;
 
+	@GetMapping("/processing/{uuid}")
+	public Processing getProcessing(@PathVariable("uuid") UUID processingId) throws IOException {
+		return processingRepository.findById(processingId)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Processing not found."));
+	}
+
 	@GetMapping("/processing/{uuid}/model")
 	public void getModel(HttpServletResponse response, @PathVariable("uuid") UUID processingId) throws IOException {
 		Processing processing = processingRepository.findById(processingId)
