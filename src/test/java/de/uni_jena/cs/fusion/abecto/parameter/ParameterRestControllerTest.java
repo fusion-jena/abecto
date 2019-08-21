@@ -1,7 +1,6 @@
 package de.uni_jena.cs.fusion.abecto.parameter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
@@ -69,7 +68,7 @@ public class ParameterRestControllerTest {
 		// get parameter value
 		mvc.perform(MockMvcRequestBuilders.get(String.format("/step/%s/parameter", configurationId))
 				.param("key", "parameterName").accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
-				.andDo(buffer).andDo(print());
+				.andDo(buffer);
 		assertEquals(parameterValue, buffer.getString());
 	}
 
