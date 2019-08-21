@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.runner;
+package de.uni_jena.cs.fusion.abecto.project;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -18,8 +18,7 @@ import org.springframework.stereotype.Component;
 
 import de.uni_jena.cs.fusion.abecto.processing.Processing;
 import de.uni_jena.cs.fusion.abecto.processing.ProcessingRepository;
-import de.uni_jena.cs.fusion.abecto.project.Project;
-import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
+import de.uni_jena.cs.fusion.abecto.processing.ProcessingRunner;
 import de.uni_jena.cs.fusion.abecto.step.Step;
 import de.uni_jena.cs.fusion.abecto.step.StepRepository;
 
@@ -33,7 +32,7 @@ public class ProjectRunner {
 	@Autowired
 	StepRepository stepRepository;
 	@Autowired
-	ProcessorRunner processorRunner;
+	ProcessingRunner processorRunner;
 
 	/**
 	 * Schedules a given {@link Project} starting at the given {@link Processing}s.

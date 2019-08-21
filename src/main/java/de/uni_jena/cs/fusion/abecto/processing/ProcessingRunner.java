@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.runner;
+package de.uni_jena.cs.fusion.abecto.processing;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,8 +21,6 @@ import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.stereotype.Component;
 
 import de.uni_jena.cs.fusion.abecto.model.ModelRepository;
-import de.uni_jena.cs.fusion.abecto.processing.Processing;
-import de.uni_jena.cs.fusion.abecto.processing.ProcessingRepository;
 import de.uni_jena.cs.fusion.abecto.processor.api.Processor;
 import de.uni_jena.cs.fusion.abecto.processor.api.Processor.Status;
 import de.uni_jena.cs.fusion.abecto.processor.api.RefinementProcessor;
@@ -30,8 +28,8 @@ import de.uni_jena.cs.fusion.abecto.processor.api.SourceProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.api.UploadSourceProcessor;
 
 @Component
-public class ProcessorRunner {
-	private final static Logger log = LoggerFactory.getLogger(ProcessorRunner.class);
+public class ProcessingRunner {
+	private final static Logger log = LoggerFactory.getLogger(ProcessingRunner.class);
 
 	private final Map<Processing, Processor<?>> processors = Collections
 			.synchronizedMap(new WeakHashMap<Processing, Processor<?>>());

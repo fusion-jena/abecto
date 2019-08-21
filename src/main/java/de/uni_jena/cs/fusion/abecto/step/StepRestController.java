@@ -25,10 +25,10 @@ import de.uni_jena.cs.fusion.abecto.parameter.Parameter;
 import de.uni_jena.cs.fusion.abecto.parameter.ParameterRepository;
 import de.uni_jena.cs.fusion.abecto.processing.Processing;
 import de.uni_jena.cs.fusion.abecto.processing.ProcessingRepository;
+import de.uni_jena.cs.fusion.abecto.processing.ProcessingRunner;
 import de.uni_jena.cs.fusion.abecto.processor.api.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.processor.api.Processor;
 import de.uni_jena.cs.fusion.abecto.processor.api.SourceProcessor;
-import de.uni_jena.cs.fusion.abecto.runner.ProcessorRunner;
 
 @RestController
 public class StepRestController {
@@ -42,7 +42,7 @@ public class StepRestController {
 	@Autowired
 	ProcessingRepository processingRepository;
 	@Autowired
-	ProcessorRunner processorRunner;
+	ProcessingRunner processorRunner;
 	@Autowired
 	ObjectMapper JSON;
 

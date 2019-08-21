@@ -25,7 +25,7 @@ import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @AutoConfigureMockMvc
-public class KnowledgBaseRestControllerTest {
+public class KnowledgeBaseRestControllerTest {
 
 	@Autowired
 	MockMvc mvc;

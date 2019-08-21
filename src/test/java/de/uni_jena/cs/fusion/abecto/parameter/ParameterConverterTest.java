@@ -20,9 +20,9 @@ import de.uni_jena.cs.fusion.abecto.processor.api.ParameterModel;
 @AutoConfigureMockMvc
 public class ParameterConverterTest {
 
-	private String parameterClass = ParameterConverterTestParameterModel.class.getName();
+	private String parameterClass = TestParameterModel.class.getName();
 	private String parameterJson = "{\"keyA\":\"valueA\",\"keyB\":\"valueB\"}";
-	private ParameterModel parameterObject = new ParameterConverterTestParameterModel();
+	private ParameterModel parameterObject = new TestParameterModel();
 
 	@Autowired
 	ObjectMapper objectMapper;
@@ -31,6 +31,7 @@ public class ParameterConverterTest {
 	@BeforeEach
 	public void prepareParameterConverter() {
 		parameterConverter = new ParameterConverter();
+		// set objectMapper as it will not get autowired
 		parameterConverter.objectMapper = objectMapper;
 	}
 
@@ -45,9 +46,16 @@ public class ParameterConverterTest {
 
 	@Test
 	public void testConvertToEntityAttribute() {
-		ParameterConverterTestParameterModel actualParameters = (ParameterConverterTestParameterModel) parameterConverter
+		TestParameterModel actualParameters = (TestParameterModel) parameterConverter
 				.convertToEntityAttribute(this.parameterClass + ParameterConverter.SEPARATOR + this.parameterJson);
 		Assertions.assertEquals("valueA", actualParameters.keyA);
 		Assertions.assertEquals("valueB", actualParameters.keyB);
+	}
+	
+	public static class TestParameterModel implements ParameterModel {
+		public String keyA = "valueA";
+		public String keyB = "valueB";
+		
+		public TestParameterModel() {}
 	}
 }

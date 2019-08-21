@@ -20,7 +20,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.uni_jena.cs.fusion.abecto.knowledgebase.KnowledgeBase;
 import de.uni_jena.cs.fusion.abecto.processing.Processing;
-import de.uni_jena.cs.fusion.abecto.runner.ProjectRunner;
 import de.uni_jena.cs.fusion.abecto.step.Step;
 
 @RestController
