@@ -1,6 +1,6 @@
 package de.uni_jena.cs.fusion.abecto.project;
 
-import java.util.ArrayList;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -9,7 +9,6 @@ import java.util.NoSuchElementException;
 import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,19 +31,44 @@ public class ProjectRunner {
 	@Autowired
 	StepRepository stepRepository;
 	@Autowired
-	ProcessingRunner processorRunner;
+	ProcessingRunner processingRunner;
+
+	/**
+	 * Schedules a given {@link Project} starting at the given {@link Processing}s
+	 * and awaits termination of each {@link Processing}. The given
+	 * {@link Processing}s and their input {@link Processing}s will not be executed.
+	 * 
+	 * @param project     {@link Project} to execute
+	 * @param processings {@link Processing}s after that to start
+	 * @throws InterruptedException if the current thread was interrupted while
+	 *                              waiting for the {@link Processing}s termination
+	 */
+	public Iterable<Processing> executeAndAwait(UUID projectId, Collection<UUID> startProcessingIds)
+			throws InterruptedException, ExecutionException {
+		Iterable<Processing> processings = execute(projectId, startProcessingIds);
+		for (Processing processing : processings) {
+			try {
+				this.processingRunner.getProcessor(processing).await();
+			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+					| InvocationTargetException | NoSuchMethodException | SecurityException e) {
+				log.error("Failed to instantiate Processor.", e);
+				// each Processor has already been instantiated before, so this should not
+				// happen in a consistent state
+				throw new IllegalStateException("Failed to instantiate Processor again.", e);
+			}
+		}
+		return processings;
+	}
 
 	/**
 	 * Schedules a given {@link Project} starting at the given {@link Processing}s.
-	 * The given {@link Processing}s and their dependent {@link Processing}s will
-	 * not be executed.
+	 * The given {@link Processing}s and their input {@link Processing}s will not be
+	 * executed.
 	 * 
-	 * @param project     {@link Project} to execute the belonging pipeline
-	 * @param processings {@link Processing}s to start at
-	 * @throws ExecutionException 
-	 * @throws InterruptedException 
+	 * @param project     {@link Project} to execute
+	 * @param processings {@link Processing}s after that to start
 	 */
-	public void execute(UUID projectId, Collection<UUID> startProcessingIds, boolean await) throws InterruptedException, ExecutionException {
+	public Iterable<Processing> execute(UUID projectId, Collection<UUID> startProcessingIds) {
 		Project project = projectRepository.findById(projectId).orElseThrow();
 		Iterable<Processing> processings = processingRepository.findAllById(startProcessingIds);
 		Iterable<Step> steps = stepRepository.findAllByProject(project);
@@ -70,23 +94,16 @@ public class ProjectRunner {
 		// save processings
 		Iterable<Processing> processingsToExecute = processingRepository.saveAll(processingsByStep.values());
 
-		Collection<Future<Processing>> futures = new ArrayList<>();
 		// execute processors
 		for (Processing processingToExecute : processingsToExecute) {
 			if (processingToExecute.isNotStarted()) {
 				try {
-					futures.add(processorRunner.asyncExecute(processingToExecute.getId()));
+					processingRunner.asyncExecute(processingToExecute.getId());
 				} catch (IllegalStateException | NoSuchElementException e) {
 					log.error(String.format("Failed to execute processing %s.", processingToExecute.getId()), e);
 				}
 			}
 		}
-
-		if (await) {
-			for (Future<Processing> future : futures) {
-				future.get();
-			}
-		}
-
+		return processingsToExecute;
 	}
 }

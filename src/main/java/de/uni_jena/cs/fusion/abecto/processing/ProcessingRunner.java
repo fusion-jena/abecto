@@ -51,8 +51,7 @@ public class ProcessingRunner {
 	 */
 	@Async
 	@Transactional
-	public Future<Processing> asyncExecute(UUID processingId)
-			throws NoSuchElementException, IllegalStateException {
+	public Future<Processing> asyncExecute(UUID processingId) throws NoSuchElementException, IllegalStateException {
 		Processing processing = processingRepository.findById(processingId).orElseThrow();
 		return new AsyncResult<Processing>(syncExecute(processing));
 	}
@@ -122,14 +121,14 @@ public class ProcessingRunner {
 	private Processing syncExecute(Processing processing, Processor<?> processor) throws IllegalStateException {
 		ensureNotStartetd(processing);
 		try {
-			log.info("Running processor " + processor);
+			log.info(String.format("Processor for processing  %s started.", processing.getId()));
 			processingRepository.save(processing.setStateStart());
 			Model model = processor.call();
 			String modelHash = modelRepository.save(model);
-			log.info("Processor " + processor + " succeded");
+			log.info(String.format("Processor for processing  %s succeded.", processing.getId()));
 			return processingRepository.save(processing.setStateSuccess(modelHash));
 		} catch (Exception e) {
-			log.error("Processor " + processor + " failed", e);
+			log.info(String.format("Processor for processing  %s failed.", processing.getId()));
 			processor.fail();
 			return processingRepository.save(processing.setStateFail(e));
 		}
@@ -160,27 +159,27 @@ public class ProcessingRunner {
 	 * @throws NoSuchMethodException
 	 * @throws SecurityException
 	 */
-	private Processor<?> getProcessor(Processing processing) throws InstantiationException, IllegalAccessException,
+	public synchronized Processor<?> getProcessor(Processing processing) throws InstantiationException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
-		Processor<?> processor = processing.getProcessorClass().getDeclaredConstructor().newInstance();
-		processor.setParameters(processing.getParameter().getParameters());
-		processor.setStatus(processing.getStatus());
-		if (processing.isSucceeded()) {
-			processor.setResultModel(modelRepository.get(processing.getModelHash()));
-		}
-		if (processor instanceof SourceProcessor) {
-			((SourceProcessor<?>) processor).setKnowledgBase(processing.getStep().getKnowledgeBase().getId());
-		} else if (processor instanceof RefinementProcessor) {
-			for (Processing inputProcessing : processing.getInputProcessings()) {
-				// recursive retrieval of input models
-				if (!this.processors.containsKey(inputProcessing)) {
-					this.processors.put(inputProcessing, getProcessor(inputProcessing));
-				}
-				Processor<?> inputProcessor = this.processors.get(inputProcessing);
-				((RefinementProcessor<?>) processor).addInputProcessor(inputProcessor);
+		if (!this.processors.containsKey(processing)) {
+			Processor<?> processor = processing.getProcessorClass().getDeclaredConstructor().newInstance();
+			processor.setParameters(processing.getParameter().getParameters());
+			processor.setStatus(processing.getStatus());
+			if (processing.isSucceeded()) {
+				processor.setResultModel(modelRepository.get(processing.getModelHash()));
 			}
+			if (processor instanceof SourceProcessor) {
+				((SourceProcessor<?>) processor).setKnowledgBase(processing.getStep().getKnowledgeBase().getId());
+			} else if (processor instanceof RefinementProcessor) {
+				for (Processing inputProcessing : processing.getInputProcessings()) {
+					// recursive retrieval of input models
+					Processor<?> inputProcessor = this.getProcessor(inputProcessing);
+					((RefinementProcessor<?>) processor).addInputProcessor(inputProcessor);
+				}
+			}
+			this.processors.put(processing, processor);
 		}
-		return processor;
+		return this.processors.get(processing);
 	}
 
 }

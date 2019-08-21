@@ -56,9 +56,10 @@ public class ProjectRestControler {
 	 * {@link Processing}s.
 	 * 
 	 * @param projectUuid id of the {@link Project}
+	 * @return
 	 */
 	@GetMapping("/project/{uuid}/run")
-	public void run(@PathVariable("uuid") UUID projectUuid,
+	public Iterable<Processing> run(@PathVariable("uuid") UUID projectUuid,
 			@RequestParam(name = "await", defaultValue = "false") boolean await) {
 		try {
 			Project project = projectRepository.findById(projectUuid).orElseThrow();
@@ -68,11 +69,17 @@ public class ProjectRestControler {
 					sourceKnowledgeBaseProcessingIds.add(sourceStep.getLastProcessing().getId());
 				}
 			}
-			projectRunner.execute(projectUuid, sourceKnowledgeBaseProcessingIds, await);
+			if (await) {
+				try {
+					return projectRunner.executeAndAwait(projectUuid, sourceKnowledgeBaseProcessingIds);
+				} catch (ExecutionException | InterruptedException e) {
+					throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Project execution failed.", e);
+				}
+			} else {
+				return projectRunner.execute(projectUuid, sourceKnowledgeBaseProcessingIds);
+			}
 		} catch (NoSuchElementException e) {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found.");
-		} catch (ExecutionException | InterruptedException e) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Project execution failed.", e);
 		}
 	}
 
