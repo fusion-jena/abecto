@@ -83,6 +83,10 @@ public class Processing extends AbstractEntityWithUUID {
 		this.inputProcessings.addAll(inputProcessings);
 	}
 
+	public void addInputProcessing(Processing processing) {
+		this.inputProcessings.add(processing);
+	}
+
 	@JsonIgnore
 	public Step getStep() {
 		return this.step;

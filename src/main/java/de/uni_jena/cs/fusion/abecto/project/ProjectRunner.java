@@ -86,9 +86,19 @@ public class ProjectRunner {
 
 		// TODO avoid re-execution of steps with same parameters and input
 
-		// create new processing for missing steps
+		// create processing for left steps
 		for (Step step : steps) {
 			processingsByStep.computeIfAbsent(step, (c) -> new Processing(c));
+		}
+
+		// interlink new processings
+		for (Step step : steps) {
+			Processing processing = processingsByStep.get(step);
+			if (processing.isNotStarted()) {
+				for (Step inputStep : step.getInputSteps()) {
+					processing.addInputProcessing(processingsByStep.get(inputStep));
+				}
+			}
 		}
 
 		// save processings
