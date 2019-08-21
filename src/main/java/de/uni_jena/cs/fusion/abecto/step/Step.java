@@ -193,11 +193,6 @@ public class Step extends AbstractEntityWithUUID {
 		this.parameter = parameter;
 	}
 
-	@Override
-	public String toString() {
-		return String.format("Step[id=%s, project=%s]", this.id, this.project.getId());
-	}
-
 	@JsonIgnore
 	public Processing getLastProcessing() {
 		return Collections.max(this.processings, new Comparator<Processing>() {

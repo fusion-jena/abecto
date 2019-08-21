@@ -213,11 +213,4 @@ public class Processing extends AbstractEntityWithUUID {
 					"Failed to set state SUCCEEDED as current state is not NOT_STARTED or RUNNING.");
 		}
 	}
-
-	@Override
-	public String toString() {
-		return String.format("Processing[id=%s, step=%s, processor='%s', status=%s, start=%tc, end=%tc, parameter=%s]",
-				this.id, this.step.getId(), this.processor.getSimpleName(), this.status, this.startDateTime,
-				this.endDateTime, this.parameter.getId());
-	}
 }

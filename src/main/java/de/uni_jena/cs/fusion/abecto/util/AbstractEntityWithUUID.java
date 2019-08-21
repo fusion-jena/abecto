@@ -58,4 +58,9 @@ public abstract class AbstractEntityWithUUID implements Persistable<UUID> {
 		this.persisted = true;
 	}
 
+	@Override
+	public String toString() {
+		return this.getClass().getSimpleName() + "[id=" + this.getId().toString() + "]";
+	}
+
 }

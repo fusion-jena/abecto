@@ -16,7 +16,8 @@ public class Project extends AbstractEntityWithUUID {
 	@OneToMany(mappedBy = "project", cascade = CascadeType.REMOVE)
 	protected Collection<KnowledgeBase> knowledgeBases;
 
-	protected Project() {}
+	protected Project() {
+	}
 
 	public Project(String label) {
 		this.label = label;
@@ -24,10 +25,5 @@ public class Project extends AbstractEntityWithUUID {
 
 	public String getLabel() {
 		return label;
-	}
-
-	@Override
-	public String toString() {
-		return String.format("Project[id=%s, label='%s']", this.id, this.label);
 	}
 }

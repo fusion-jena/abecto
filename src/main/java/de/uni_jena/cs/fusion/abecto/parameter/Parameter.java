@@ -124,9 +124,4 @@ public class Parameter extends AbstractEntityWithUUID {
 		}
 	}
 
-	@Override
-	public String toString() {
-		return String.format("ProcessingParameter[id=%s, parameter=%s]", this.id, this.parameters);
-	}
-
 }
