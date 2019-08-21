@@ -59,7 +59,7 @@ public class ProjectRestControler {
 	 * @return
 	 */
 	@GetMapping("/project/{uuid}/run")
-	public Iterable<Processing> run(@PathVariable("uuid") UUID projectUuid,
+	public Collection<UUID> run(@PathVariable("uuid") UUID projectUuid,
 			@RequestParam(name = "await", defaultValue = "false") boolean await) {
 		try {
 			Project project = projectRepository.findById(projectUuid).orElseThrow();

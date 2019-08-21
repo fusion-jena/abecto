@@ -1,6 +1,6 @@
 package de.uni_jena.cs.fusion.abecto.project;
 
-import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 import de.uni_jena.cs.fusion.abecto.processing.Processing;
 import de.uni_jena.cs.fusion.abecto.processing.ProcessingRepository;
 import de.uni_jena.cs.fusion.abecto.processing.ProcessingRunner;
+import de.uni_jena.cs.fusion.abecto.processing.ProcessorInstantiationException;
 import de.uni_jena.cs.fusion.abecto.step.Step;
 import de.uni_jena.cs.fusion.abecto.step.StepRepository;
 
@@ -43,21 +44,20 @@ public class ProjectRunner {
 	 * @throws InterruptedException if the current thread was interrupted while
 	 *                              waiting for the {@link Processing}s termination
 	 */
-	public Iterable<Processing> executeAndAwait(UUID projectId, Collection<UUID> startProcessingIds)
+	public Collection<UUID> executeAndAwait(UUID projectId, Collection<UUID> startProcessingIds)
 			throws InterruptedException, ExecutionException {
-		Iterable<Processing> processings = execute(projectId, startProcessingIds);
-		for (Processing processing : processings) {
+		Collection<UUID> processingIds = execute(projectId, startProcessingIds);
+		for (UUID processingId : processingIds) {
 			try {
-				this.processingRunner.getProcessor(processing).await();
-			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-					| InvocationTargetException | NoSuchMethodException | SecurityException e) {
-				log.error("Failed to instantiate Processor.", e);
+				this.processingRunner.await(processingId);
+			} catch (NoSuchElementException | ProcessorInstantiationException e) {
+				log.error("Failed to await Processing.", e);
 				// each Processor has already been instantiated before, so this should not
 				// happen in a consistent state
-				throw new IllegalStateException("Failed to instantiate Processor again.", e);
+				throw new IllegalStateException("Failed to await Processing again.", e);
 			}
 		}
-		return processings;
+		return processingIds;
 	}
 
 	/**
@@ -68,7 +68,7 @@ public class ProjectRunner {
 	 * @param project     {@link Project} to execute
 	 * @param processings {@link Processing}s after that to start
 	 */
-	public Iterable<Processing> execute(UUID projectId, Collection<UUID> startProcessingIds) {
+	public Collection<UUID> execute(UUID projectId, Collection<UUID> startProcessingIds) {
 		Project project = projectRepository.findById(projectId).orElseThrow();
 		Iterable<Processing> processings = processingRepository.findAllById(startProcessingIds);
 		Iterable<Step> steps = stepRepository.findAllByProject(project);
@@ -104,6 +104,8 @@ public class ProjectRunner {
 		// save processings
 		Iterable<Processing> processingsToExecute = processingRepository.saveAll(processingsByStep.values());
 
+		Collection<UUID> processingIds = new ArrayList<>();
+
 		// execute processors
 		for (Processing processingToExecute : processingsToExecute) {
 			if (processingToExecute.isNotStarted()) {
@@ -113,7 +115,8 @@ public class ProjectRunner {
 					log.error(String.format("Failed to execute processing %s.", processingToExecute.getId()), e);
 				}
 			}
+			processingIds.add(processingToExecute.getId());
 		}
-		return processingsToExecute;
+		return processingIds;
 	}
 }

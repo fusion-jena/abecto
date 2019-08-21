@@ -40,14 +40,28 @@ public class ProcessingRunner {
 	ModelRepository modelRepository;
 
 	/**
+	 * Awaits the termination of the given {@link Processing}.
+	 * 
+	 * @param processingId {@link UUID} of the {@link Processing} to await.
+	 * @throws ProcessorInstantiationException if instantiation of the
+	 *                                         {@link Processor} belonging to the
+	 *                                         {@link Processing} fails.
+	 * @throws NoSuchElementException          if the {@link Processing} was not
+	 *                                         found.
+	 * @throws InterruptedException            if the current thread was interrupted
+	 *                                         while waiting for termination.
+	 */
+	public void await(UUID processingId)
+			throws ProcessorInstantiationException, NoSuchElementException, InterruptedException {
+		this.getProcessor(processingRepository.findById(processingId).get()).await();
+	}
+
+	/**
 	 * Asynchronously execute a {@link Processing} without {@link InputStream}.
 	 * 
 	 * @param processingId {@link UUID} of the {@link Processing} to execute.
-	 * @throws NoSuchElementException   if the {@link Processing} was not found.
-	 * @throws IllegalStateException    if the {@link Processing} was already
-	 *                                  started.
-	 * @throws IllegalArgumentException if the {@link Processor} requires an input
-	 *                                  stream.
+	 * @throws NoSuchElementException if the {@link Processing} was not found.
+	 * @throws IllegalStateException  if the {@link Processing} was already started.
 	 */
 	@Async
 	@Transactional
@@ -60,12 +74,9 @@ public class ProcessingRunner {
 	 * Synchronously execute a {@link Processing} with {@link InputStream}.
 	 * 
 	 * @param processingId {@link UUID} of the {@link Processing} to execute.
-	 * @throws IllegalStateException    if the {@link Processing} was already
-	 *                                  started.
-	 * @throws IllegalArgumentException if the {@link Processor} does not accept an
-	 *                                  input stream.
-	 * @throws IOException              if the {@link Processor} failed to read the
-	 *                                  {@link InputStream}.
+	 * @throws IllegalStateException if the {@link Processing} was already started.
+	 * @throws IOException           if the {@link Processor} failed to read the
+	 *                               {@link InputStream}.
 	 */
 	public void syncExecute(Processing processing, InputStream inputStream)
 			throws IllegalStateException, IllegalArgumentException, IOException {
@@ -79,8 +90,7 @@ public class ProcessingRunner {
 						"Failed to execute Processor %s: Unexpected input streams.", processor.getClass().getName()));
 			}
 			syncExecute(processing, processor);
-		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
-				| NoSuchMethodException | SecurityException e) {
+		} catch (ProcessorInstantiationException e) {
 			processingRepository.save(processing.setStateFail(e));
 		}
 	}
@@ -89,10 +99,7 @@ public class ProcessingRunner {
 	 * Synchronously execute a {@link Processing} without {@link InputStream}.
 	 * 
 	 * @param processingId {@link UUID} of the {@link Processing} to execute.
-	 * @throws IllegalStateException    if the {@link Processing} was already
-	 *                                  started.
-	 * @throws IllegalArgumentException if the {@link Processor} requires an input
-	 *                                  stream.
+	 * @throws IllegalStateException if the {@link Processing} was already started.
 	 */
 	public Processing syncExecute(Processing processing) throws IllegalStateException {
 		ensureNotStartetd(processing);
@@ -105,8 +112,7 @@ public class ProcessingRunner {
 			}
 
 			return syncExecute(processing, processor);
-		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
-				| NoSuchMethodException | SecurityException e) {
+		} catch (ProcessorInstantiationException | IllegalArgumentException e) {
 			return processingRepository.save(processing.setStateFail(e));
 		}
 	}
@@ -152,17 +158,19 @@ public class ProcessingRunner {
 	 * {@link Model} (if applicable) as the given {@link Processing}.
 	 * 
 	 * @return {@link Processor} for the given {@link Processing}
-	 * @throws InstantiationException
-	 * @throws IllegalAccessException
-	 * @throws IllegalArgumentException
-	 * @throws InvocationTargetException
-	 * @throws NoSuchMethodException
-	 * @throws SecurityException
+	 * @throws ProcessorInstantiationException if the {@link Processor}
+	 *                                         instantiation failed for a variety of
+	 *                                         reasons
 	 */
-	public synchronized Processor<?> getProcessor(Processing processing) throws InstantiationException, IllegalAccessException,
-			IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
+	public synchronized Processor<?> getProcessor(Processing processing) throws ProcessorInstantiationException {
 		if (!this.processors.containsKey(processing)) {
-			Processor<?> processor = processing.getProcessorClass().getDeclaredConstructor().newInstance();
+			Processor<?> processor;
+			try {
+				processor = processing.getProcessorClass().getDeclaredConstructor().newInstance();
+			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+					| InvocationTargetException | NoSuchMethodException | SecurityException e) {
+				throw new ProcessorInstantiationException(e);
+			}
 			processor.setParameters(processing.getParameter().getParameters());
 			processor.setStatus(processing.getStatus());
 			if (processing.isSucceeded()) {
