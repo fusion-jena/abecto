@@ -22,7 +22,9 @@ public abstract class AbstractProcessor<P extends ParameterModel> implements Pro
 
 	@Override
 	public synchronized void await() throws InterruptedException {
-		this.wait();
+		if (this.isRunning() || this.isNotStarted()) {
+			this.wait();
+		}
 	}
 
 	@Override
@@ -110,10 +112,5 @@ public abstract class AbstractProcessor<P extends ParameterModel> implements Pro
 	@Override
 	public void setStatus(Status status) {
 		this.status = status;
-	}
-
-	@Override
-	public String toString() {
-		return String.format("%s%s", this.getClass().getSimpleName(), this.parameters);
 	}
 }
