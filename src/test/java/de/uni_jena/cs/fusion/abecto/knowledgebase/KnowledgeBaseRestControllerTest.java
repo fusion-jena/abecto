@@ -74,14 +74,14 @@ public class KnowledgeBaseRestControllerTest {
 		mvc.perform(MockMvcRequestBuilders.get("/knowledgebase").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(buffer);
 		assertTrue(buffer.getJson().findValuesAsText("label").contains(kowledgBaseLabel));
-		assertTrue(buffer.getJson().findValuesAsText("projectId").contains(projectId));
+		assertTrue(buffer.getJson().findValuesAsText("project").contains(projectId));
 		assertTrue(buffer.getIds().contains(knowledgeBaseId));
 
 		// return not empty knowledgeBase list by project
 		mvc.perform(MockMvcRequestBuilders.get("/knowledgebase").param("project", projectId)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		assertTrue(buffer.getJson().findValuesAsText("label").contains(kowledgBaseLabel));
-		assertTrue(buffer.getJson().findValuesAsText("projectId").contains(projectId));
+		assertTrue(buffer.getJson().findValuesAsText("project").contains(projectId));
 		assertTrue(buffer.getIds().contains(knowledgeBaseId));
 
 		// delete knowledgeBase

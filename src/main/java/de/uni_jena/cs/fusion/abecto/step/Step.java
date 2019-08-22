@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.NoSuchElementException;
-import java.util.UUID;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -15,6 +14,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import de.uni_jena.cs.fusion.abecto.knowledgebase.KnowledgeBase;
 import de.uni_jena.cs.fusion.abecto.parameter.Parameter;
@@ -27,6 +27,7 @@ import de.uni_jena.cs.fusion.abecto.processor.api.SourceProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.api.TransformationProcessor;
 import de.uni_jena.cs.fusion.abecto.project.Project;
 import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
+import de.uni_jena.cs.fusion.abecto.util.EntityToIdConverter;
 
 @Entity
 public class Step extends AbstractEntityWithUUID {
@@ -35,6 +36,7 @@ public class Step extends AbstractEntityWithUUID {
 	 * The {@link Project} this {@link Step} belongs to.
 	 */
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
+	@JsonSerialize(converter = EntityToIdConverter.class)
 	protected Project project;
 	/**
 	 * The {@link KnowledgeBase} this {@link Step} of a {@link SourceProcessor}
@@ -42,6 +44,7 @@ public class Step extends AbstractEntityWithUUID {
 	 * {@link SourceProcessor}.
 	 */
 	@ManyToOne(fetch = FetchType.LAZY)
+	@JsonSerialize(converter = EntityToIdConverter.class)
 	protected KnowledgeBase knowledgeBase;
 
 	@SuppressWarnings("rawtypes")
@@ -118,17 +121,8 @@ public class Step extends AbstractEntityWithUUID {
 		return this.inputStep;
 	}
 
-	@JsonIgnore
 	public KnowledgeBase getKnowledgeBase() {
 		return this.knowledgeBase;
-	}
-
-	public UUID getKnowledgeBaseId() {
-		if (this.knowledgeBase != null) {
-			return this.knowledgeBase.getId();
-		} else {
-			return null;
-		}
 	}
 
 	public Parameter getParameter() {
@@ -140,13 +134,8 @@ public class Step extends AbstractEntityWithUUID {
 		return this.processor;
 	}
 
-	@JsonIgnore
 	public Project getProject() {
 		return this.project;
-	}
-
-	public UUID getProjectId() {
-		return this.project.getId();
 	}
 
 	/**

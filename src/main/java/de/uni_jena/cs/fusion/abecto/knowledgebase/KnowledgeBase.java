@@ -1,7 +1,6 @@
 package de.uni_jena.cs.fusion.abecto.knowledgebase;
 
 import java.util.Collection;
-import java.util.UUID;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -10,16 +9,19 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import de.uni_jena.cs.fusion.abecto.project.Project;
 import de.uni_jena.cs.fusion.abecto.step.Step;
 import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
+import de.uni_jena.cs.fusion.abecto.util.EntityToIdConverter;
 
 @Entity
 public class KnowledgeBase extends AbstractEntityWithUUID {
 
 	protected String label;
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
+	@JsonSerialize(converter = EntityToIdConverter.class)
 	protected Project project;
 
 	@OneToMany(mappedBy = "knowledgeBase", cascade = CascadeType.REMOVE)
@@ -37,13 +39,8 @@ public class KnowledgeBase extends AbstractEntityWithUUID {
 		return label;
 	}
 
-	@JsonIgnore
 	public Project getProject() {
 		return this.project;
-	}
-
-	public UUID getProjectId() {
-		return this.project.getId();
 	}
 
 	@JsonIgnore
