@@ -76,9 +76,10 @@ public class ProjectRunner {
 			processingsByStep.computeIfAbsent(step, (c) -> new Processing(c));
 		}
 
+		// initialize result processing collection
 		Collection<Processing> processingsToReturn = new ArrayList<>();
 
-		// interlink new processings
+		// interlink processings
 		for (Step step : steps) {
 			Processing processing = processingsByStep.get(step);
 			if (processing.isNotStarted()) {
@@ -86,6 +87,7 @@ public class ProjectRunner {
 					processing.addInputProcessing(processingsByStep.get(inputStep));
 				}
 			} else {
+				// add processing to result
 				processingsToReturn.add(processing);
 			}
 		}
