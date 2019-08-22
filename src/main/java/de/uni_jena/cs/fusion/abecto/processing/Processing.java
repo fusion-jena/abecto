@@ -55,7 +55,7 @@ public class Processing extends AbstractEntityWithUUID {
 	 * Collection of {@link Processing}s used to produce the result
 	 * {@link RdfModel}.
 	 */
-	@ManyToMany
+	@ManyToMany(fetch = FetchType.EAGER)
 	@JsonSerialize(contentConverter = EntityToIdConverter.class)
 	private Set<Processing> inputProcessings = new HashSet<>();
 
