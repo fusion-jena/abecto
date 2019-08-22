@@ -4,11 +4,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.NoSuchElementException;
-import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +21,6 @@ import org.springframework.stereotype.Component;
 import de.uni_jena.cs.fusion.abecto.processing.Processing;
 import de.uni_jena.cs.fusion.abecto.processing.ProcessingRepository;
 import de.uni_jena.cs.fusion.abecto.processing.ProcessingRunner;
-import de.uni_jena.cs.fusion.abecto.processing.ProcessorInstantiationException;
 import de.uni_jena.cs.fusion.abecto.step.Step;
 import de.uni_jena.cs.fusion.abecto.step.StepRepository;
 
@@ -35,53 +37,36 @@ public class ProjectRunner {
 	ProcessingRunner processingRunner;
 
 	/**
-	 * Schedules a given {@link Project} starting at the given {@link Processing}s
-	 * and awaits termination of each {@link Processing}. The given
-	 * {@link Processing}s and their input {@link Processing}s will not be executed.
-	 * 
-	 * @param project     {@link Project} to execute
-	 * @param processings {@link Processing}s after that to start
-	 * @throws InterruptedException if the current thread was interrupted while
-	 *                              waiting for the {@link Processing}s termination
-	 */
-	public Collection<UUID> executeAndAwait(UUID projectId, Collection<UUID> startProcessingIds)
-			throws InterruptedException, ExecutionException {
-		Collection<UUID> processingIds = execute(projectId, startProcessingIds);
-		for (UUID processingId : processingIds) {
-			try {
-				this.processingRunner.await(processingId);
-			} catch (NoSuchElementException | ProcessorInstantiationException e) {
-				log.error("Failed to await Processing.", e);
-				// each Processor has already been instantiated before, so this should not
-				// happen in a consistent state
-				throw new IllegalStateException("Failed to await Processing again.", e);
-			}
-		}
-		return processingIds;
-	}
-
-	/**
 	 * Schedules a given {@link Project} starting at the given {@link Processing}s.
 	 * The given {@link Processing}s and their input {@link Processing}s will not be
 	 * executed.
 	 * 
 	 * @param project     {@link Project} to execute
 	 * @param processings {@link Processing}s after that to start
+	 * @throws InterruptedException if the current thread was interrupted while
+	 *                              waiting for the {@link Processing}s termination
 	 */
-	public Collection<UUID> execute(UUID projectId, Collection<UUID> startProcessingIds) {
+	public Collection<Processing> execute(UUID projectId, Collection<UUID> inputProcessingIds, boolean await)
+			throws InterruptedException {
+		// get project
 		Project project = projectRepository.findById(projectId).orElseThrow();
-		Iterable<Processing> processings = processingRepository.findAllById(startProcessingIds);
+		// get steps
 		Iterable<Step> steps = stepRepository.findAllByProject(project);
 
+		// initialize processing map
 		Map<Step, Processing> processingsByStep = new HashMap<>();
 
-		// collect given processings and their input processings
-		Queue<Processing> completedProcessings = new LinkedList<>();
-		processings.forEach(completedProcessings::add);
-		while (!completedProcessings.isEmpty()) {
-			Processing completedProcessing = completedProcessings.poll();
-			processingsByStep.put(completedProcessing.getStep(), completedProcessing);
-			completedProcessings.addAll(completedProcessing.getInputProcessings());
+		// get input processings
+		List<Processing> inputProcessings = new LinkedList<>();
+		processingRepository.findAllById(inputProcessingIds).forEach(inputProcessings::add);
+		// get transitive input processings
+		for (ListIterator<Processing> inputProcessingsIterator = inputProcessings
+				.listIterator(); inputProcessingsIterator.hasNext();) {
+			Processing inputProcessing = inputProcessingsIterator.next();
+			// get transitive input processings
+			inputProcessing.getInputProcessings().forEach(inputProcessingsIterator::add);
+			// add input processing to map
+			processingsByStep.put(inputProcessing.getStep(), inputProcessing);
 		}
 
 		// TODO avoid re-execution of steps with same parameters and input
@@ -91,6 +76,8 @@ public class ProjectRunner {
 			processingsByStep.computeIfAbsent(step, (c) -> new Processing(c));
 		}
 
+		Collection<Processing> processingsToReturn = new ArrayList<>();
+
 		// interlink new processings
 		for (Step step : steps) {
 			Processing processing = processingsByStep.get(step);
@@ -98,25 +85,42 @@ public class ProjectRunner {
 				for (Step inputStep : step.getInputSteps()) {
 					processing.addInputProcessing(processingsByStep.get(inputStep));
 				}
+			} else {
+				processingsToReturn.add(processing);
 			}
 		}
 
 		// save processings
 		Iterable<Processing> processingsToExecute = processingRepository.saveAll(processingsByStep.values());
 
-		Collection<UUID> processingIds = new ArrayList<>();
+		Map<Processing, Future<Processing>> futureProcessings = new HashMap<>();
 
 		// execute processors
 		for (Processing processingToExecute : processingsToExecute) {
 			if (processingToExecute.isNotStarted()) {
 				try {
-					processingRunner.asyncExecute(processingToExecute.getId());
+					futureProcessings.put(processingToExecute,
+							processingRunner.asyncExecute(processingToExecute.getId()));
 				} catch (IllegalStateException | NoSuchElementException e) {
 					log.error(String.format("Failed to execute processing %s.", processingToExecute.getId()), e);
 				}
 			}
-			processingIds.add(processingToExecute.getId());
+			if (!await) {
+				processingsToReturn.add(processingToExecute);
+			}
 		}
-		return processingIds;
+
+		// await processing termination
+		if (await) {
+			for (Entry<Processing, Future<Processing>> futureProcessing : futureProcessings.entrySet()) {
+				try {
+					processingsToReturn.add(futureProcessing.getValue().get());
+				} catch (ExecutionException e) {
+					processingsToReturn.add(futureProcessing.getKey().setStateFail(e));
+				}
+			}
+		}
+
+		return processingsToReturn;
 	}
 }

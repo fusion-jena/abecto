@@ -10,8 +10,6 @@ import java.util.UUID;
 import java.util.WeakHashMap;
 import java.util.concurrent.Future;
 
-import javax.transaction.Transactional;
-
 import org.apache.jena.rdf.model.Model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +17,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.uni_jena.cs.fusion.abecto.model.ModelRepository;
 import de.uni_jena.cs.fusion.abecto.processor.api.Processor;
@@ -51,9 +51,10 @@ public class ProcessingRunner {
 	 * @throws InterruptedException            if the current thread was interrupted
 	 *                                         while waiting for termination.
 	 */
+	@Transactional(readOnly = true, isolation = Isolation.READ_COMMITTED)
 	public void await(UUID processingId)
 			throws ProcessorInstantiationException, NoSuchElementException, InterruptedException {
-		this.getProcessor(processingRepository.findById(processingId).get()).await();
+		this.getProcessor(processingRepository.findById(processingId).orElseThrow()).await();
 	}
 
 	/**
@@ -78,7 +79,7 @@ public class ProcessingRunner {
 	 * @throws IOException           if the {@link Processor} failed to read the
 	 *                               {@link InputStream}.
 	 */
-	public void syncExecute(Processing processing, InputStream inputStream)
+	public Processing syncExecute(Processing processing, InputStream inputStream)
 			throws IllegalStateException, IllegalArgumentException, IOException {
 		ensureNotStartetd(processing);
 		try {
@@ -89,9 +90,9 @@ public class ProcessingRunner {
 				throw new IllegalArgumentException(String.format(
 						"Failed to execute Processor %s: Unexpected input streams.", processor.getClass().getName()));
 			}
-			syncExecute(processing, processor);
+			return syncExecute(processing, processor);
 		} catch (ProcessorInstantiationException e) {
-			processingRepository.save(processing.setStateFail(e));
+			return processingRepository.save(processing.setStateFail(e));
 		}
 	}
 
@@ -128,7 +129,7 @@ public class ProcessingRunner {
 		ensureNotStartetd(processing);
 		try {
 			log.info(String.format("Processor for %s started.", processing));
-			processingRepository.save(processing.setStateStart());
+			processing = processingRepository.save(processing.setStateStart());
 			Model model = processor.call();
 			String modelHash = modelRepository.save(model);
 			log.info(String.format("Processor for %s succeded.", processing));

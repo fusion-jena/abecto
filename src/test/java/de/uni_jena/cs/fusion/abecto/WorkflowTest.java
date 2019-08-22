@@ -1,11 +1,13 @@
 package de.uni_jena.cs.fusion.abecto;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +20,8 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+
+import com.fasterxml.jackson.databind.JsonNode;
 
 import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
 
@@ -102,13 +106,15 @@ public class WorkflowTest {
 				.param("input", transformation1Id, transformation2Id)
 				.param("parameters", "{\"threshold\":0.9,\"case_sensitive\":false}").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(buffer);
-		String mappingId = buffer.getId();
 
 		// run project
 		mvc.perform(MockMvcRequestBuilders.get(String.format("/project/%s/run", projectId)).param("await", "true")
-				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer).andDo(print());
 
-		// TODO check generated models
+		// check processings
+		for (JsonNode processingNode : buffer.getJson()) {
+			Assertions.assertEquals("SUCCEEDED", processingNode.get("status").asText());
+		}
 
 	}
 

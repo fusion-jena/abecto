@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -59,7 +58,7 @@ public class ProjectRestControler {
 	 * @return
 	 */
 	@GetMapping("/project/{uuid}/run")
-	public Collection<UUID> run(@PathVariable("uuid") UUID projectUuid,
+	public Collection<Processing> run(@PathVariable("uuid") UUID projectUuid,
 			@RequestParam(name = "await", defaultValue = "false") boolean await) {
 		try {
 			Project project = projectRepository.findById(projectUuid).orElseThrow();
@@ -69,14 +68,11 @@ public class ProjectRestControler {
 					sourceKnowledgeBaseProcessingIds.add(sourceStep.getLastProcessing().getId());
 				}
 			}
-			if (await) {
-				try {
-					return projectRunner.executeAndAwait(projectUuid, sourceKnowledgeBaseProcessingIds);
-				} catch (ExecutionException | InterruptedException e) {
-					throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Project execution failed.", e);
-				}
-			} else {
-				return projectRunner.execute(projectUuid, sourceKnowledgeBaseProcessingIds);
+			try {
+				return projectRunner.execute(projectUuid, sourceKnowledgeBaseProcessingIds, await);
+			} catch (InterruptedException e) {
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+						"Waiting for termination of Project execution interrupted.", e);
 			}
 		} catch (NoSuchElementException e) {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found.");
