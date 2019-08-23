@@ -16,7 +16,6 @@ import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Statement;
-import org.junit.jupiter.api.Test;
 
 import de.uni_jena.cs.fusion.abecto.util.ModelUtils;
 import de.uni_jena.cs.fusion.abecto.util.RdfSerializationLanguage;
@@ -114,14 +113,14 @@ public class TestOntologyBuilder {
 		return BigInteger.valueOf(Integer.MAX_VALUE - number).toString(16);
 	}
 
-	public void generateClass(int number) {
+	private void generateClass(int number) {
 		String name = "Class" + number;
 		OntClass resource = model.createClass(this.getUri(name));
 		resource.addLabel(name, "en");
 		classes.add(resource);
 	}
 
-	public void generateDataPropertyStatement(int number) {
+	private void generateDataPropertyStatement(int number) {
 		if (!isGapCase(number)) {
 			Statement statement;
 			if (!isErrorCase(number)) {
@@ -144,7 +143,7 @@ public class TestOntologyBuilder {
 		}
 	}
 
-	public void generateObjectPropertyStatement(int number) {
+	private void generateObjectPropertyStatement(int number) {
 		if (!isGapCase(number)) {
 			Statement statement;
 			if (!isErrorCase(number)) {
@@ -158,21 +157,21 @@ public class TestOntologyBuilder {
 		}
 	}
 
-	public void generateDataProperty(int number) {
+	private void generateDataProperty(int number) {
 		String name = "dataProperty" + number;
 		DatatypeProperty resource = model.createDatatypeProperty(this.getUri(name));
 		resource.addDomain(getClass(number));
 		dataProperties.add(resource);
 	}
 
-	public void generateIndividual(int number) {
+	private void generateIndividual(int number) {
 		String name = "individual" + number;
 		Individual resource = model.createIndividual(this.getUri(name), getClass(number));
 		resource.addLabel(name, "en");
 		individuals.add(resource);
 	}
 
-	public void generateObjectProperty(int number) {
+	private void generateObjectProperty(int number) {
 		String name = "objectProperty" + number;
 		ObjectProperty resource = model.createObjectProperty(this.getUri(name));
 //		resource.addDomain(getClass(number));
@@ -180,15 +179,15 @@ public class TestOntologyBuilder {
 		objectProperties.add(resource);
 	}
 
-	public OntClass getClass(int number) {
+	private OntClass getClass(int number) {
 		return classes.get(save(number, classFactor));
 	}
 
-	public DatatypeProperty getDataProperty(int number) {
+	private DatatypeProperty getDataProperty(int number) {
 		return dataProperties.get(save(number, dataPropertyFactor));
 	}
 
-	public Individual getIndividual(int number) {
+	private Individual getIndividual(int number) {
 		return individuals.get(save(number, individualFactor));
 	}
 
@@ -210,11 +209,11 @@ public class TestOntologyBuilder {
 		return in;
 	}
 
-	public ObjectProperty getObjectProperty(int number) {
+	private ObjectProperty getObjectProperty(int number) {
 		return objectProperties.get(number % objectPropertyFactor);
 	}
 
-	public String getUri(String name) {
+	private String getUri(String name) {
 		return String.format("http://example.org/onto%s/%s", this.ontologyNumber, name);
 	}
 
@@ -256,11 +255,5 @@ public class TestOntologyBuilder {
 	public TestOntologyBuilder setObjectPropertyFactor(int objectPropertyFactor) {
 		this.objectPropertyFactor = objectPropertyFactor;
 		return this;
-	}
-
-	@Test
-	public void test() {
-		new TestOntologyBuilder().setClassFactor(2).setObjectPropertyFactor(2).setDataPropertyFactor(2)
-				.setIndividualFactor(20).setDensity(2).write(1, System.out);
 	}
 }
