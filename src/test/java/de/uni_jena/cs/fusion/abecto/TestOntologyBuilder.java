@@ -1,10 +1,9 @@
 package de.uni_jena.cs.fusion.abecto;
 
-import java.io.IOException;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -196,17 +195,10 @@ public class TestOntologyBuilder {
 	}
 
 	private InputStream getModelInputStream(Model model) {
-		PipedInputStream in = new PipedInputStream();
-		new Thread(new Runnable() {
-			public void run() {
-				try (PipedOutputStream out = new PipedOutputStream(in)) {
-					model.write(out, lang.getApacheJenaKey());
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		}).start();
-		return in;
+		// work around PipedInputStream / PipedOutputStream problems
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		model.write(out, lang.getApacheJenaKey());
+		return new ByteArrayInputStream(out.toByteArray());
 	}
 
 	private ObjectProperty getObjectProperty(int number) {
