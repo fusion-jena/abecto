@@ -15,10 +15,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -28,7 +26,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import de.uni_jena.cs.fusion.abecto.ResponseBuffer;
-import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
+import de.uni_jena.cs.fusion.abecto.TestOntologyBuilder;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -43,16 +41,11 @@ class ProjectRestControlerTest {
 	@Autowired
 	ProjectRepository projectRepository;
 
-	@Value("classpath:workflowTestOntology1.ttl")
-	Resource sourceFile1;
-
-	@Value("classpath:workflowTestOntology2.ttl")
-	Resource sourceFile2;
-
 	@AfterEach
 	public void cleanup() throws IOException, Exception {
 		projectRepository.deleteAll();
 	}
+
 	@Test
 	public void test() throws Exception {
 		String projectLabel = "project label";
@@ -125,13 +118,18 @@ class ProjectRestControlerTest {
 				.andDo(buffer);
 		String source2Id = buffer.getId();
 
+		TestOntologyBuilder testOntologyBuilder = new TestOntologyBuilder().setClassFactor(5).setObjectPropertyFactor(3)
+				.setDataPropertyFactor(3).setIndividualFactor(50).setDensity(4);
+
 		// upload source 1
-		MockMultipartFile multipartFileSource1 = new MockMultipartFile("file", sourceFile1.getInputStream());
+		MockMultipartFile multipartFileSource1 = new MockMultipartFile("file",
+				testOntologyBuilder.setErrorRate(10).setGapRate(3).stream(1));
 		this.mvc.perform(multipart(String.format("/step/%s/load", source1Id)).file(multipartFileSource1))
 				.andExpect(status().isOk());
 
 		// upload source 2
-		MockMultipartFile multipartFileSource2 = new MockMultipartFile("file", sourceFile2.getInputStream());
+		MockMultipartFile multipartFileSource2 = new MockMultipartFile("file",
+				testOntologyBuilder.setErrorRate(8).setGapRate(5).stream(2));
 		this.mvc.perform(multipart(String.format("/step/%s/load", source2Id)).file(multipartFileSource2))
 				.andExpect(status().isOk());
 
