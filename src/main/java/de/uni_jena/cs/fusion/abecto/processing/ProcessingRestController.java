@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.jena.rdf.model.Model;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,6 +28,10 @@ public class ProcessingRestController {
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Processing not found."));
 	}
 
+	/**
+	 * Returns the {@link Processing}s result {@link Model} as stored in the
+	 * {@link ModelRepository}.
+	 */
 	@GetMapping("/processing/{uuid}/model")
 	public void getModel(HttpServletResponse response, @PathVariable("uuid") UUID processingId) throws IOException {
 		Processing processing = processingRepository.findById(processingId)
@@ -34,5 +39,15 @@ public class ProcessingRestController {
 		response.setContentType(ModelRepository.RDF_SERIALIZATION_LANG.getMimeType());
 		modelRepository.get(processing.getModelHash()).write(response.getOutputStream(),
 				ModelRepository.RDF_SERIALIZATION_LANG.getApacheJenaKey());
+	}
+
+	/**
+	 * Returns the {@link Processing}s results as JSON-LD.
+	 */
+	@GetMapping("/processing/{uuid}/result")
+	public Model getResult(@PathVariable("uuid") UUID processingId) {
+		Processing processing = processingRepository.findById(processingId)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Processing not found."));
+		return modelRepository.get(processing.getModelHash());
 	}
 }

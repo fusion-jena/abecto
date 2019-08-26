@@ -15,7 +15,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.uni_jena.cs.fusion.abecto.TestOntologyBuilder;
-import de.uni_jena.cs.fusion.abecto.util.RdfSerializationLanguage;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -33,7 +32,7 @@ public class ModelJsonSerializerTest {
 	public void serialize() throws JsonProcessingException {
 		Model model = new TestOntologyBuilder().build(1);
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		model.write(out, RdfSerializationLanguage.JSONLD.getApacheJenaKey());
+		model.write(out, "JSON-LD");
 		String expected = out.toString();
 		Assertions.assertEquals(expected, objectMapper.writeValueAsString(model));
 	}

@@ -1,6 +1,7 @@
 package de.uni_jena.cs.fusion.abecto.util;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
@@ -48,9 +49,21 @@ public class ModelUtils {
 		model.read(in, base, lang.getApacheJenaKey());
 		return model;
 	}
-	
+
 	public static OntModel getEmptyOntModel() {
 		return ModelFactory.createOntologyModel(OntModelSpec.OWL_MEM);
+	}
+
+	public static String getStringSerialization(Model model, String lang) {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		model.write(out, lang);
+		return out.toString();
+	}
+
+	public static byte[] getByteSerialization(Model model, String lang) {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		model.write(out, lang);
+		return out.toByteArray();
 	}
 
 }
