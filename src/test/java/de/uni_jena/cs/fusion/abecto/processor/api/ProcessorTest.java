@@ -9,6 +9,10 @@ import org.apache.jena.rdf.model.Model;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
+import de.uni_jena.cs.fusion.abecto.processor.AbstractProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.Processor;
+
 public class ProcessorTest {
 
 	@Test

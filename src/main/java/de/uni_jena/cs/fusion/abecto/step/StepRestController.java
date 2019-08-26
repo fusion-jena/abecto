@@ -23,12 +23,12 @@ import de.uni_jena.cs.fusion.abecto.knowledgebase.KnowledgeBase;
 import de.uni_jena.cs.fusion.abecto.knowledgebase.KnowledgeBaseRepository;
 import de.uni_jena.cs.fusion.abecto.parameter.Parameter;
 import de.uni_jena.cs.fusion.abecto.parameter.ParameterRepository;
+import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.processing.Processing;
 import de.uni_jena.cs.fusion.abecto.processing.ProcessingRepository;
 import de.uni_jena.cs.fusion.abecto.processing.ProcessingRunner;
-import de.uni_jena.cs.fusion.abecto.processor.api.ParameterModel;
-import de.uni_jena.cs.fusion.abecto.processor.api.Processor;
-import de.uni_jena.cs.fusion.abecto.processor.api.SourceProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.Processor;
+import de.uni_jena.cs.fusion.abecto.processor.SourceProcessor;
 
 @RestController
 public class StepRestController {
@@ -137,7 +137,7 @@ public class StepRestController {
 	private Class<Processor<?>> getProcessorClass(String processorClassName) throws ResponseStatusException {
 		try {
 			if (!processorClassName.contains(".")) {
-				processorClassName = "de.uni_jena.cs.fusion.abecto.processor." + processorClassName;
+				processorClassName = "de.uni_jena.cs.fusion.abecto.processor.implementation." + processorClassName;
 			}
 
 			return (Class<Processor<?>>) Class.forName(processorClassName);

@@ -21,11 +21,11 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.uni_jena.cs.fusion.abecto.model.ModelRepository;
-import de.uni_jena.cs.fusion.abecto.processor.api.Processor;
-import de.uni_jena.cs.fusion.abecto.processor.api.Processor.Status;
-import de.uni_jena.cs.fusion.abecto.processor.api.RefinementProcessor;
-import de.uni_jena.cs.fusion.abecto.processor.api.SourceProcessor;
-import de.uni_jena.cs.fusion.abecto.processor.api.UploadSourceProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.Processor;
+import de.uni_jena.cs.fusion.abecto.processor.RefinementProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.SourceProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.UploadSourceProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.Processor.Status;
 
 @Component
 public class ProcessingRunner {

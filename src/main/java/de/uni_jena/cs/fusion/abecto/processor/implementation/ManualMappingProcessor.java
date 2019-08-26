@@ -1,15 +1,19 @@
-package de.uni_jena.cs.fusion.abecto.processor;
+package de.uni_jena.cs.fusion.abecto.processor.implementation;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Optional;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ResourceFactory;
 
-import de.uni_jena.cs.fusion.abecto.processor.api.AbstractMappingProcessor;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-public class ManualMappingProcessor extends AbstractMappingProcessor<ManualMappingProcessorParameter> {
+import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
+import de.uni_jena.cs.fusion.abecto.processor.AbstractMappingProcessor;
+
+public class ManualMappingProcessor extends AbstractMappingProcessor<ManualMappingProcessor.Parameter> {
 
 	@Override
 	public Collection<Mapping> computeMapping(Model firstModel, Model secondModel) {
@@ -25,7 +29,8 @@ public class ManualMappingProcessor extends AbstractMappingProcessor<ManualMappi
 				}
 			}
 		}
-		for (Collection<String> allEquivalent : this.getParameters().suppressed_mappings.orElse(Collections.emptyList())) {
+		for (Collection<String> allEquivalent : this.getParameters().suppressed_mappings
+				.orElse(Collections.emptyList())) {
 			for (String firstEntity : allEquivalent) {
 				for (String secondEntity : allEquivalent) {
 					if (!firstEntity.equals(secondEntity)) {
@@ -36,6 +41,12 @@ public class ManualMappingProcessor extends AbstractMappingProcessor<ManualMappi
 			}
 		}
 		return mappings;
+	}
+
+	@JsonSerialize
+	public static class Parameter implements ParameterModel {
+		public Optional<Collection<Collection<String>>> mappings = Optional.empty();
+		public Optional<Collection<Collection<String>>> suppressed_mappings = Optional.empty();
 	}
 
 }

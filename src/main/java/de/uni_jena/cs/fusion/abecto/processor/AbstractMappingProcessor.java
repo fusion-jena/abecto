@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.processor.api;
+package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -13,6 +13,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
 
+import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.util.Vocabulary;
 
 public abstract class AbstractMappingProcessor<P extends ParameterModel> extends AbstractMetaProcessor<P> implements MappingProcessor<P> {

@@ -6,8 +6,8 @@ import java.lang.reflect.InvocationTargetException;
 import javax.persistence.Convert;
 import javax.persistence.Entity;
 
-import de.uni_jena.cs.fusion.abecto.processor.api.ParameterModel;
-import de.uni_jena.cs.fusion.abecto.processor.api.Processor;
+import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
+import de.uni_jena.cs.fusion.abecto.processor.Processor;
 import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
 
 @Entity

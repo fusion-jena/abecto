@@ -9,6 +9,7 @@ import org.apache.jena.rdf.model.ResourceFactory;
 import org.junit.jupiter.api.Test;
 
 import de.uni_jena.cs.fusion.abecto.model.ModelUtils;
+import de.uni_jena.cs.fusion.abecto.processor.implementation.SparqlConstructProcessor;
 
 public class SparqlConstructProcessorTest {
 	@Test
@@ -17,7 +18,7 @@ public class SparqlConstructProcessorTest {
 		Model inputModel = ModelUtils.load(new ByteArrayInputStream(inputRdf.getBytes()));
 		SparqlConstructProcessor processor = new SparqlConstructProcessor();
 		processor.addInputModelGroup(UUID.randomUUID(), Collections.singleton(inputModel));
-		SparqlConstructProcessorParameter parameter = new SparqlConstructProcessorParameter();
+		SparqlConstructProcessor.Parameter parameter = new SparqlConstructProcessor.Parameter();
 		parameter.query = "CONSTRUCT {?s <http://example.org/x> <http://example.org/y>} WHERE {?s ?p ?o.}";
 		processor.setParameters(parameter);
 		Model outputModel = processor.call();

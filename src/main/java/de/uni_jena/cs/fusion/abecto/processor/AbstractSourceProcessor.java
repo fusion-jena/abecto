@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.processor.api;
+package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.apache.jena.rdf.model.Model;
+
+import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 
 public abstract class AbstractSourceProcessor<P extends ParameterModel> extends AbstractProcessor<P> implements SourceProcessor<P> {
 

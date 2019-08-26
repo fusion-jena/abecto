@@ -10,7 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.uni_jena.cs.fusion.abecto.processor.api.ParameterModel;
+import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 
 @Converter
 public class ParameterConverter implements AttributeConverter<ParameterModel, String> {

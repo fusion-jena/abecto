@@ -1,8 +1,10 @@
-package de.uni_jena.cs.fusion.abecto.processor.api;
+package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.util.Objects;
 
 import org.apache.jena.rdf.model.Model;
+
+import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 
 public abstract class AbstractProcessor<P extends ParameterModel> implements Processor<P> {
 

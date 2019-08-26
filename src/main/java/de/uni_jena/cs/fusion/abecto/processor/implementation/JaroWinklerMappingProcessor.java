@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.processor;
+package de.uni_jena.cs.fusion.abecto.processor.implementation;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 
 import org.apache.jena.rdf.model.Model;
@@ -16,10 +17,13 @@ import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.vocabulary.RDFS;
 
-import de.uni_jena.cs.fusion.abecto.processor.api.AbstractMappingProcessor;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
+import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
+import de.uni_jena.cs.fusion.abecto.processor.AbstractMappingProcessor;
 import de.uni_jena.cs.fusion.similarity.jarowinkler.JaroWinklerSimilarity;
 
-public class JaroWinklerMappingProcessor extends AbstractMappingProcessor<JaroWinklerMappingProcessorParameter> {
+public class JaroWinklerMappingProcessor extends AbstractMappingProcessor<JaroWinklerMappingProcessor.Parameter> {
 
 	// TODO add language handling parameter
 
@@ -42,7 +46,7 @@ public class JaroWinklerMappingProcessor extends AbstractMappingProcessor<JaroWi
 	public Collection<Mapping> computeMapping(Model firstModel, Model secondModel) {
 
 		// get parameters
-		JaroWinklerMappingProcessorParameter parameters = this.getParameters();
+		Parameter parameters = this.getParameters();
 		boolean caseSensitive = parameters.case_sensitive;
 		double threshold = parameters.threshold;
 		Property property = parameters.property.map(ResourceFactory::createProperty).orElse(RDFS.label);
@@ -93,4 +97,10 @@ public class JaroWinklerMappingProcessor extends AbstractMappingProcessor<JaroWi
 		return mappings;
 	}
 
+	@JsonSerialize
+	public static class Parameter implements ParameterModel {
+		public double threshold;
+		public boolean case_sensitive;
+		public Optional<String> property = Optional.empty();
+	}
 }

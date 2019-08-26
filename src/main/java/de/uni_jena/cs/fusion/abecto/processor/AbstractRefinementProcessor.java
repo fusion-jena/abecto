@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.processor.api;
+package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -14,6 +14,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 
 import de.uni_jena.cs.fusion.abecto.model.ModelUtils;
+import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 
 public abstract class AbstractRefinementProcessor<P extends ParameterModel> extends AbstractProcessor<P> implements RefinementProcessor<P> {
 

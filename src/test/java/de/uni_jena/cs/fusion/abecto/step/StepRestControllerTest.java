@@ -29,10 +29,10 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import de.uni_jena.cs.fusion.abecto.ResponseBuffer;
 import de.uni_jena.cs.fusion.abecto.model.ModelUtils;
-import de.uni_jena.cs.fusion.abecto.processor.EmptyParameters;
-import de.uni_jena.cs.fusion.abecto.processor.api.AbstractSourceProcessor;
-import de.uni_jena.cs.fusion.abecto.processor.api.ParameterModel;
-import de.uni_jena.cs.fusion.abecto.processor.api.UploadSourceProcessor;
+import de.uni_jena.cs.fusion.abecto.parameter_model.EmptyParameters;
+import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
+import de.uni_jena.cs.fusion.abecto.processor.AbstractSourceProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.UploadSourceProcessor;
 import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
 
 @ExtendWith(SpringExtension.class)

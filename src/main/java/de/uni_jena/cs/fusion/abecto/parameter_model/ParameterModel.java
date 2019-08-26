@@ -1,6 +1,8 @@
-package de.uni_jena.cs.fusion.abecto.processor.api;
+package de.uni_jena.cs.fusion.abecto.parameter_model;
 
 import java.util.Optional;
+
+import de.uni_jena.cs.fusion.abecto.processor.Processor;
 
 /**
  * {@link ParameterModel} is an interface for parameter objects of

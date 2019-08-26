@@ -22,8 +22,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import de.uni_jena.cs.fusion.abecto.ResponseBuffer;
 import de.uni_jena.cs.fusion.abecto.model.ModelUtils;
-import de.uni_jena.cs.fusion.abecto.processor.api.AbstractSourceProcessor;
-import de.uni_jena.cs.fusion.abecto.processor.api.ParameterModel;
+import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
+import de.uni_jena.cs.fusion.abecto.processor.AbstractSourceProcessor;
 import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
 
 @ExtendWith(SpringExtension.class)

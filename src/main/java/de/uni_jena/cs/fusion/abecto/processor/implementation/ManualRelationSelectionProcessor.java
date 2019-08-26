@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.processor;
+package de.uni_jena.cs.fusion.abecto.processor.implementation;
 
 import java.util.Map;
 import java.util.Map.Entry;
@@ -25,11 +25,15 @@ import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.Template;
 import org.slf4j.LoggerFactory;
 
-import de.uni_jena.cs.fusion.abecto.processor.api.AbstractMetaProcessor;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
+import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
+import de.uni_jena.cs.fusion.abecto.processor.AbstractMetaProcessor;
 import de.uni_jena.cs.fusion.abecto.util.SparqlUtil;
 import de.uni_jena.cs.fusion.abecto.util.Vocabulary;
 
-public class ManualRelationSelectionProcessor extends AbstractMetaProcessor<ManualRelationSelectionProcessorParameter> {
+public class ManualRelationSelectionProcessor
+		extends AbstractMetaProcessor<ManualRelationSelectionProcessor.Parameter> {
 
 	@Override
 	protected Model computeResultModel() throws Exception {
@@ -80,8 +84,7 @@ public class ManualRelationSelectionProcessor extends AbstractMetaProcessor<Manu
 			}
 		}
 
-		Optional<Map<String, String>> suppressedCategoriesParameterOptional = this
-				.getParameters().suppressed_relations;
+		Optional<Map<String, String>> suppressedCategoriesParameterOptional = this.getParameters().suppressed_relations;
 		if (suppressedCategoriesParameterOptional.isPresent()) {
 			for (Entry<String, String> categoryEntry : suppressedCategoriesParameterOptional.orElseThrow().entrySet()) {
 				String categoryName = categoryEntry.getKey();
@@ -98,12 +101,18 @@ public class ManualRelationSelectionProcessor extends AbstractMetaProcessor<Manu
 		}
 
 		LoggerFactory.getLogger(ManualRelationSelectionProcessor.class).info(query.serialize());
-		
+
 		// prepare execution
 		QueryExecution queryExecution = QueryExecutionFactory.create(query, this.inputModelUnion);
 
 		// execute and return result
 		return queryExecution.execConstruct();
+	}
+
+	@JsonSerialize
+	public static class Parameter implements ParameterModel {
+		public Optional<Map<String, String>> relations = Optional.empty();
+		public Optional<Map<String, String>> suppressed_relations = Optional.empty();
 	}
 
 }

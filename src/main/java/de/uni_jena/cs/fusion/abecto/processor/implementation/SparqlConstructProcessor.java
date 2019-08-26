@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.processor;
+package de.uni_jena.cs.fusion.abecto.processor.implementation;
 
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
@@ -6,9 +6,13 @@ import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Model;
 
-import de.uni_jena.cs.fusion.abecto.processor.api.AbstractTransformationProcessor;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-public class SparqlConstructProcessor extends AbstractTransformationProcessor<SparqlConstructProcessorParameter> {
+import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
+import de.uni_jena.cs.fusion.abecto.processor.AbstractTransformationProcessor;
+
+public class SparqlConstructProcessor
+		extends AbstractTransformationProcessor<SparqlConstructProcessor.Parameter> {
 
 	@Override
 	public Model computeResultModel() {
@@ -23,4 +27,8 @@ public class SparqlConstructProcessor extends AbstractTransformationProcessor<Sp
 		return constructedModel;
 	}
 
+	@JsonSerialize
+	public static class Parameter implements ParameterModel {
+		public String query;
+	}
 }

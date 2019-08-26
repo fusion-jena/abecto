@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.processor.api;
+package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
@@ -9,6 +9,8 @@ import java.util.concurrent.Callable;
 import org.apache.jena.graph.compose.MultiUnion;
 import org.apache.jena.rdf.model.Model;
 import org.springframework.core.GenericTypeResolver;
+
+import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 
 /**
  * {@link Processor} is an interface for a task that outputs a new {@link Model}

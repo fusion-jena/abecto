@@ -13,7 +13,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.uni_jena.cs.fusion.abecto.processor.api.ParameterModel;
+import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest

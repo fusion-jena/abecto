@@ -1,6 +1,6 @@
 package de.uni_jena.cs.fusion.abecto.processing;
 
-import de.uni_jena.cs.fusion.abecto.processor.api.Processor;
+import de.uni_jena.cs.fusion.abecto.processor.Processor;
 
 /**
  * Thrown when the instantiation of a {@link Processor} failed for a variety of

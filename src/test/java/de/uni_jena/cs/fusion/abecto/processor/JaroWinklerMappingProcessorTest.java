@@ -18,7 +18,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import de.uni_jena.cs.fusion.abecto.model.ModelUtils;
-import de.uni_jena.cs.fusion.abecto.processor.api.AbstractMappingProcessor.Mapping;
+import de.uni_jena.cs.fusion.abecto.processor.AbstractMappingProcessor.Mapping;
+import de.uni_jena.cs.fusion.abecto.processor.implementation.JaroWinklerMappingProcessor;
 import de.uni_jena.cs.fusion.abecto.util.Vocabulary;
 
 public class JaroWinklerMappingProcessorTest {
@@ -49,7 +50,7 @@ public class JaroWinklerMappingProcessorTest {
 	@Test
 	public void testComputeMapping() throws Exception {
 		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor();
-		JaroWinklerMappingProcessorParameter parameter = new JaroWinklerMappingProcessorParameter();
+		JaroWinklerMappingProcessor.Parameter parameter = new JaroWinklerMappingProcessor.Parameter();
 		parameter.case_sensitive = false;
 		parameter.threshold = 0.90D;
 		processor.setParameters(parameter);
@@ -64,7 +65,7 @@ public class JaroWinklerMappingProcessorTest {
 	@Test
 	public void testComputeResultModel() throws Exception {
 		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor();
-		JaroWinklerMappingProcessorParameter parameter = new JaroWinklerMappingProcessorParameter();
+		JaroWinklerMappingProcessor.Parameter parameter = new JaroWinklerMappingProcessor.Parameter();
 		parameter.case_sensitive = false;
 		parameter.threshold = 0.90D;
 		processor.setParameters(parameter);
