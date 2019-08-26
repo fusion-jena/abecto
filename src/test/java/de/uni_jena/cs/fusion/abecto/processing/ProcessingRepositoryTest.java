@@ -24,9 +24,9 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import de.uni_jena.cs.fusion.abecto.ResponseBuffer;
 import de.uni_jena.cs.fusion.abecto.TestOntologyBuilder;
+import de.uni_jena.cs.fusion.abecto.model.ModelUtils;
+import de.uni_jena.cs.fusion.abecto.model.ModelSerializationLanguage;
 import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
-import de.uni_jena.cs.fusion.abecto.util.ModelUtils;
-import de.uni_jena.cs.fusion.abecto.util.RdfSerializationLanguage;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -64,7 +64,7 @@ public class ProcessingRepositoryTest {
 
 		// upload source
 		MockMultipartFile multipartFileSource1 = new MockMultipartFile("file",
-				ModelUtils.getByteSerialization(model, RdfSerializationLanguage.NTRIPLES.getApacheJenaKey()));
+				ModelUtils.getByteSerialization(model, ModelSerializationLanguage.NTRIPLES.getApacheJenaKey()));
 		mvc.perform(multipart(String.format("/step/%s/load", sourceId)).file(multipartFileSource1))
 				.andExpect(status().isOk());
 

@@ -16,12 +16,12 @@ import org.apache.jena.ontology.OntModel;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Statement;
 
-import de.uni_jena.cs.fusion.abecto.util.ModelUtils;
-import de.uni_jena.cs.fusion.abecto.util.RdfSerializationLanguage;
+import de.uni_jena.cs.fusion.abecto.model.ModelUtils;
+import de.uni_jena.cs.fusion.abecto.model.ModelSerializationLanguage;
 
 public class TestOntologyBuilder {
 
-	private RdfSerializationLanguage lang = RdfSerializationLanguage.NTRIPLES;
+	private ModelSerializationLanguage lang = ModelSerializationLanguage.NTRIPLES;
 
 	private OntModel model;
 
@@ -239,7 +239,7 @@ public class TestOntologyBuilder {
 		return this;
 	}
 
-	public TestOntologyBuilder setLang(RdfSerializationLanguage lang) {
+	public TestOntologyBuilder setLang(ModelSerializationLanguage lang) {
 		this.lang = lang;
 		return this;
 	}

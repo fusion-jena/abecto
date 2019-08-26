@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.util;
+package de.uni_jena.cs.fusion.abecto.model;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
@@ -17,7 +17,7 @@ public class ModelUtils {
 		return load(in, null, null);
 	}
 
-	public static Model load(InputStream in, RdfSerializationLanguage lang) throws IOException {
+	public static Model load(InputStream in, ModelSerializationLanguage lang) throws IOException {
 		return load(in, null, lang);
 	}
 
@@ -25,14 +25,14 @@ public class ModelUtils {
 		return load(in, base, null);
 	}
 
-	public static Model load(InputStream in, String base, RdfSerializationLanguage lang) throws IOException {
+	public static Model load(InputStream in, String base, ModelSerializationLanguage lang) throws IOException {
 		// determine serialization language
 		if (Objects.isNull(lang)) {
 			if (!in.markSupported()) {
 				in = new BufferedInputStream(in);
 			}
 			in.mark(1024);
-			lang = RdfSerializationLanguage.determine(new String(in.readNBytes(1024)));
+			lang = ModelSerializationLanguage.determine(new String(in.readNBytes(1024)));
 			in.reset();
 		}
 		// determine base

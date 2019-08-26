@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.util;
+package de.uni_jena.cs.fusion.abecto.model;
 
 import java.util.EnumSet;
 import java.util.NoSuchElementException;
@@ -6,7 +6,7 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public enum RdfSerializationLanguage {
+public enum ModelSerializationLanguage {
 	// https://www.w3.org/TR/json-ld/
 	JSONLD("application/ld+json", "jsonld", "JSON-LD", Pattern.compile("^\\s*\\{", Pattern.MULTILINE),
 			Pattern.compile("\"@base\"\\s*:\\s*\"(?<base>[^\"]+)\"")),
@@ -39,7 +39,7 @@ public enum RdfSerializationLanguage {
 	private final Pattern languagePattern;
 	private final Pattern basePattern;
 
-	RdfSerializationLanguage(String mimeType, String fileExtension, String jena, Pattern languagePattern,
+	ModelSerializationLanguage(String mimeType, String fileExtension, String jena, Pattern languagePattern,
 			Pattern basePattern) {
 		this.mimeType = mimeType;
 		this.fileExtension = fileExtension;
@@ -48,8 +48,8 @@ public enum RdfSerializationLanguage {
 		this.basePattern = basePattern;
 	}
 
-	public static RdfSerializationLanguage determine(String documentStart) {
-		for (RdfSerializationLanguage lang : EnumSet.allOf(RdfSerializationLanguage.class)) {
+	public static ModelSerializationLanguage determine(String documentStart) {
+		for (ModelSerializationLanguage lang : EnumSet.allOf(ModelSerializationLanguage.class)) {
 			if (Objects.nonNull(lang.getLanguagePattern()) && lang.getLanguagePattern().matcher(documentStart).find()) {
 				return lang;
 			}

@@ -24,13 +24,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import de.uni_jena.cs.fusion.abecto.util.RdfSerializationLanguage;
-
 @Component
 public class ModelRepository {
 	private final static Logger log = LoggerFactory.getLogger(ModelRepository.class);
 
-	public final static RdfSerializationLanguage RDF_SERIALIZATION_LANG = RdfSerializationLanguage.NTRIPLES;
+	public final static ModelSerializationLanguage RDF_SERIALIZATION_LANG = ModelSerializationLanguage.NTRIPLES;
 
 	private final File basePath;
 	private final Map<String, Model> models = Collections.synchronizedMap(new WeakHashMap<String, Model>());

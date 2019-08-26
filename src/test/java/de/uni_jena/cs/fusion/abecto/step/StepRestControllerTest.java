@@ -28,12 +28,12 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import de.uni_jena.cs.fusion.abecto.ResponseBuffer;
+import de.uni_jena.cs.fusion.abecto.model.ModelUtils;
 import de.uni_jena.cs.fusion.abecto.processor.EmptyParameters;
 import de.uni_jena.cs.fusion.abecto.processor.api.AbstractSourceProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.api.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.processor.api.UploadSourceProcessor;
 import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
-import de.uni_jena.cs.fusion.abecto.util.ModelUtils;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest

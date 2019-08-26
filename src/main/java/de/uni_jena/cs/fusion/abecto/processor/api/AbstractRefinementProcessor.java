@@ -13,7 +13,7 @@ import org.apache.jena.ontology.OntModel;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 
-import de.uni_jena.cs.fusion.abecto.util.ModelUtils;
+import de.uni_jena.cs.fusion.abecto.model.ModelUtils;
 
 public abstract class AbstractRefinementProcessor<P extends ParameterModel> extends AbstractProcessor<P> implements RefinementProcessor<P> {
 

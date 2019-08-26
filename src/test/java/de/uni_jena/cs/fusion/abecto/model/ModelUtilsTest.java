@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.util;
+package de.uni_jena.cs.fusion.abecto.model;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
