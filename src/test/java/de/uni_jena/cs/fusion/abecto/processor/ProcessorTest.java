@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.processor.api;
+package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
