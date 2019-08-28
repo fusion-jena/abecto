@@ -6,7 +6,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.jena.ontology.DatatypeProperty;
 import org.apache.jena.ontology.Individual;
@@ -15,9 +19,10 @@ import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.vocabulary.RDF;
 
-import de.uni_jena.cs.fusion.abecto.model.ModelUtils;
 import de.uni_jena.cs.fusion.abecto.model.ModelSerializationLanguage;
+import de.uni_jena.cs.fusion.abecto.model.ModelUtils;
 
 public class TestOntologyBuilder {
 
@@ -45,6 +50,32 @@ public class TestOntologyBuilder {
 	private int gapRate = 0;
 
 	private int density = 1;
+
+	public Map<String, Collection<String>> buildPatterns(int ontologyNumber) {
+		Map<String, Collection<String>> patterns = new HashMap<>();
+
+		for (int classNumber = 0; classNumber < classFactor; classNumber++) {
+			StringBuilder pattern = new StringBuilder();
+			String className = generateClassName(classNumber);
+			
+			pattern.append("?" + className + " <" + RDF.type + "> <" + getUri(className) + ">");
+
+			for (int objectPropertyNumber = 0; objectPropertyNumber < objectPropertyFactor; objectPropertyNumber++) {
+				String objectPropertyName = generateObjectPropertyName(objectPropertyNumber);
+				pattern.append(" ; <" + getUri(objectPropertyName) + "> ?" + objectPropertyName + " ");
+			}
+
+			for (int dataPropertyNumber = 0; dataPropertyNumber < dataPropertyFactor; dataPropertyNumber++) {
+				String dataPropertyName = generateDataPropertyName(dataPropertyNumber);
+				pattern.append(" ; <" + getUri(dataPropertyName) + "> ?" + dataPropertyName + " ");
+			}
+			
+			pattern.append(" .");
+
+			patterns.put(className, Collections.singleton(pattern.toString()));
+		}
+		return patterns;
+	}
 
 	public Model build(int ontologyNumber) {
 		this.ontologyNumber = ontologyNumber;
@@ -113,10 +144,14 @@ public class TestOntologyBuilder {
 	}
 
 	private void generateClass(int number) {
-		String name = "Class" + number;
+		String name = generateClassName(number);
 		OntClass resource = model.createClass(this.getUri(name));
 		resource.addLabel(name, "en");
 		classes.add(resource);
+	}
+
+	private String generateClassName(int number) {
+		return "Class" + number;
 	}
 
 	private void generateDataPropertyStatement(int number) {
@@ -157,25 +192,37 @@ public class TestOntologyBuilder {
 	}
 
 	private void generateDataProperty(int number) {
-		String name = "dataProperty" + number;
+		String name = generateDataPropertyName(number);
 		DatatypeProperty resource = model.createDatatypeProperty(this.getUri(name));
 		resource.addDomain(getClass(number));
 		dataProperties.add(resource);
 	}
 
+	private String generateDataPropertyName(int number) {
+		return "dataProperty" + number;
+	}
+
 	private void generateIndividual(int number) {
-		String name = "individual" + number;
+		String name = generateIndividualName(number);
 		Individual resource = model.createIndividual(this.getUri(name), getClass(number));
 		resource.addLabel(name, "en");
 		individuals.add(resource);
 	}
 
+	private String generateIndividualName(int number) {
+		return "individual" + number;
+	}
+
 	private void generateObjectProperty(int number) {
-		String name = "objectProperty" + number;
+		String name = generateObjectPropertyName(number);
 		ObjectProperty resource = model.createObjectProperty(this.getUri(name));
 //		resource.addDomain(getClass(number));
 //		resource.addRange(getClass(number - 1));
 		objectProperties.add(resource);
+	}
+
+	private String generateObjectPropertyName(int number) {
+		return "objectProperty" + number;
 	}
 
 	private OntClass getClass(int number) {
