@@ -14,7 +14,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.uni_jena.cs.fusion.abecto.TestOntologyBuilder;
+import de.uni_jena.cs.fusion.abecto.TestDataGenerator;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -30,7 +30,7 @@ public class ModelJsonSerializerTest {
 	 */
 	@Test
 	public void serialize() throws JsonProcessingException {
-		Model model = new TestOntologyBuilder().build(1);
+		Model model = new TestDataGenerator().generateOntology(1);
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		model.write(out, "JSON-LD");
 		String expected = out.toString();

@@ -24,7 +24,7 @@ import org.apache.jena.vocabulary.RDF;
 import de.uni_jena.cs.fusion.abecto.model.ModelSerializationLanguage;
 import de.uni_jena.cs.fusion.abecto.model.ModelUtils;
 
-public class TestOntologyBuilder {
+public class TestDataGenerator {
 
 	private ModelSerializationLanguage lang = ModelSerializationLanguage.NTRIPLES;
 
@@ -51,33 +51,7 @@ public class TestOntologyBuilder {
 
 	private int density = 1;
 
-	public Map<String, Collection<String>> buildPatterns(int ontologyNumber) {
-		Map<String, Collection<String>> patterns = new HashMap<>();
-
-		for (int classNumber = 0; classNumber < classFactor; classNumber++) {
-			StringBuilder pattern = new StringBuilder();
-			String className = generateClassName(classNumber);
-			
-			pattern.append("?" + className + " <" + RDF.type + "> <" + getUri(className) + ">");
-
-			for (int objectPropertyNumber = 0; objectPropertyNumber < objectPropertyFactor; objectPropertyNumber++) {
-				String objectPropertyName = generateObjectPropertyName(objectPropertyNumber);
-				pattern.append(" ; <" + getUri(objectPropertyName) + "> ?" + objectPropertyName + " ");
-			}
-
-			for (int dataPropertyNumber = 0; dataPropertyNumber < dataPropertyFactor; dataPropertyNumber++) {
-				String dataPropertyName = generateDataPropertyName(dataPropertyNumber);
-				pattern.append(" ; <" + getUri(dataPropertyName) + "> ?" + dataPropertyName + " ");
-			}
-			
-			pattern.append(" .");
-
-			patterns.put(className, Collections.singleton(pattern.toString()));
-		}
-		return patterns;
-	}
-
-	public Model build(int ontologyNumber) {
+	public Model generateOntology(int ontologyNumber) {
 		this.ontologyNumber = ontologyNumber;
 
 		// initialize model and resource lists
@@ -117,30 +91,30 @@ public class TestOntologyBuilder {
 		return model;
 	}
 
-	public InputStream stream(int ontologyNumber) {
-		// write model
-		return getModelInputStream(build(ontologyNumber));
-	}
+	public Map<String, Collection<String>> generatePatterns(int ontologyNumber) {
+		Map<String, Collection<String>> patterns = new HashMap<>();
 
-	public void write(int ontologyNumber, OutputStream out) {
-		build(ontologyNumber).write(out, lang.getApacheJenaKey());
-	}
+		for (int classNumber = 0; classNumber < classFactor; classNumber++) {
+			StringBuilder pattern = new StringBuilder();
+			String className = generateClassName(classNumber);
+			
+			pattern.append("?" + className + " <" + RDF.type + "> <" + getUri(className) + ">");
 
-	private boolean isGapCase(int number) {
-		return gapRate != 0 && number % gapRate == 0;
-	}
+			for (int objectPropertyNumber = 0; objectPropertyNumber < objectPropertyFactor; objectPropertyNumber++) {
+				String objectPropertyName = generateObjectPropertyName(objectPropertyNumber);
+				pattern.append(" ; <" + getUri(objectPropertyName) + "> ?" + objectPropertyName + " ");
+			}
 
-	private boolean isErrorCase(int number) {
-		final int OVERLAP_PROTECTION_OFFSET = 1;
-		return errorRate != 0 && number + OVERLAP_PROTECTION_OFFSET % errorRate == 0;
-	}
+			for (int dataPropertyNumber = 0; dataPropertyNumber < dataPropertyFactor; dataPropertyNumber++) {
+				String dataPropertyName = generateDataPropertyName(dataPropertyNumber);
+				pattern.append(" ; <" + getUri(dataPropertyName) + "> ?" + dataPropertyName + " ");
+			}
+			
+			pattern.append(" .");
 
-	private boolean isTextCase(int number) {
-		return number % 2 == 0;
-	}
-
-	private String generateText(int number) {
-		return BigInteger.valueOf(Integer.MAX_VALUE - number).toString(16);
+			patterns.put(className, Collections.singleton(pattern.toString()));
+		}
+		return patterns;
 	}
 
 	private void generateClass(int number) {
@@ -152,6 +126,17 @@ public class TestOntologyBuilder {
 
 	private String generateClassName(int number) {
 		return "Class" + number;
+	}
+
+	private void generateDataProperty(int number) {
+		String name = generateDataPropertyName(number);
+		DatatypeProperty resource = model.createDatatypeProperty(this.getUri(name));
+		resource.addDomain(getClass(number));
+		dataProperties.add(resource);
+	}
+
+	private String generateDataPropertyName(int number) {
+		return "dataProperty" + number;
 	}
 
 	private void generateDataPropertyStatement(int number) {
@@ -177,31 +162,6 @@ public class TestOntologyBuilder {
 		}
 	}
 
-	private void generateObjectPropertyStatement(int number) {
-		if (!isGapCase(number)) {
-			Statement statement;
-			if (!isErrorCase(number)) {
-				statement = model.createStatement(getIndividual(number), getObjectProperty(number),
-						getIndividual(number - 1));
-			} else {
-				statement = model.createStatement(getIndividual(number), getObjectProperty(number),
-						getIndividual(number - 2));
-			}
-			model.add(statement);
-		}
-	}
-
-	private void generateDataProperty(int number) {
-		String name = generateDataPropertyName(number);
-		DatatypeProperty resource = model.createDatatypeProperty(this.getUri(name));
-		resource.addDomain(getClass(number));
-		dataProperties.add(resource);
-	}
-
-	private String generateDataPropertyName(int number) {
-		return "dataProperty" + number;
-	}
-
 	private void generateIndividual(int number) {
 		String name = generateIndividualName(number);
 		Individual resource = model.createIndividual(this.getUri(name), getClass(number));
@@ -225,6 +185,24 @@ public class TestOntologyBuilder {
 		return "objectProperty" + number;
 	}
 
+	private void generateObjectPropertyStatement(int number) {
+		if (!isGapCase(number)) {
+			Statement statement;
+			if (!isErrorCase(number)) {
+				statement = model.createStatement(getIndividual(number), getObjectProperty(number),
+						getIndividual(number - 1));
+			} else {
+				statement = model.createStatement(getIndividual(number), getObjectProperty(number),
+						getIndividual(number - 2));
+			}
+			model.add(statement);
+		}
+	}
+
+	private String generateText(int number) {
+		return BigInteger.valueOf(Integer.MAX_VALUE - number).toString(16);
+	}
+
 	private OntClass getClass(int number) {
 		return classes.get(save(number, classFactor));
 	}
@@ -235,10 +213,6 @@ public class TestOntologyBuilder {
 
 	private Individual getIndividual(int number) {
 		return individuals.get(save(number, individualFactor));
-	}
-
-	private int save(int number, int max) {
-		return (max + number) % max;
 	}
 
 	private InputStream getModelInputStream(Model model) {
@@ -256,43 +230,69 @@ public class TestOntologyBuilder {
 		return String.format("http://example.org/onto%s/%s", this.ontologyNumber, name);
 	}
 
-	public TestOntologyBuilder setClassFactor(int classFactor) {
+	private boolean isErrorCase(int number) {
+		final int OVERLAP_PROTECTION_OFFSET = 1;
+		return errorRate != 0 && number + OVERLAP_PROTECTION_OFFSET % errorRate == 0;
+	}
+
+	private boolean isGapCase(int number) {
+		return gapRate != 0 && number % gapRate == 0;
+	}
+
+	private boolean isTextCase(int number) {
+		return number % 2 == 0;
+	}
+
+	private int save(int number, int max) {
+		return (max + number) % max;
+	}
+
+	public TestDataGenerator setClassFactor(int classFactor) {
 		this.classFactor = classFactor;
 		return this;
 	}
 
-	public TestOntologyBuilder setDataPropertyFactor(int dataPropertyFactor) {
+	public TestDataGenerator setDataPropertyFactor(int dataPropertyFactor) {
 		this.dataPropertyFactor = dataPropertyFactor;
 		return this;
 	}
 
-	public TestOntologyBuilder setDensity(int density) {
+	public TestDataGenerator setDensity(int density) {
 		this.density = density;
 		return this;
 	}
 
-	public TestOntologyBuilder setErrorRate(int errorRate) {
+	public TestDataGenerator setErrorRate(int errorRate) {
 		this.errorRate = errorRate;
 		return this;
 	}
 
-	public TestOntologyBuilder setGapRate(int gapRate) {
+	public TestDataGenerator setGapRate(int gapRate) {
 		this.gapRate = gapRate;
 		return this;
 	}
 
-	public TestOntologyBuilder setIndividualFactor(int individualFactor) {
+	public TestDataGenerator setIndividualFactor(int individualFactor) {
 		this.individualFactor = individualFactor;
 		return this;
 	}
 
-	public TestOntologyBuilder setLang(ModelSerializationLanguage lang) {
+	public TestDataGenerator setLang(ModelSerializationLanguage lang) {
 		this.lang = lang;
 		return this;
 	}
 
-	public TestOntologyBuilder setObjectPropertyFactor(int objectPropertyFactor) {
+	public TestDataGenerator setObjectPropertyFactor(int objectPropertyFactor) {
 		this.objectPropertyFactor = objectPropertyFactor;
 		return this;
+	}
+
+	public InputStream stream(int ontologyNumber) {
+		// write model
+		return getModelInputStream(generateOntology(ontologyNumber));
+	}
+
+	public void write(int ontologyNumber, OutputStream out) {
+		generateOntology(ontologyNumber).write(out, lang.getApacheJenaKey());
 	}
 }

@@ -26,7 +26,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import de.uni_jena.cs.fusion.abecto.ResponseBuffer;
-import de.uni_jena.cs.fusion.abecto.TestOntologyBuilder;
+import de.uni_jena.cs.fusion.abecto.TestDataGenerator;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -118,7 +118,7 @@ class ProjectRestControlerTest {
 				.andDo(buffer);
 		String source2Id = buffer.getId();
 
-		TestOntologyBuilder testOntologyBuilder = new TestOntologyBuilder().setClassFactor(5).setObjectPropertyFactor(3)
+		TestDataGenerator testOntologyBuilder = new TestDataGenerator().setClassFactor(5).setObjectPropertyFactor(3)
 				.setDataPropertyFactor(3).setIndividualFactor(50).setDensity(4);
 
 		// upload source 1

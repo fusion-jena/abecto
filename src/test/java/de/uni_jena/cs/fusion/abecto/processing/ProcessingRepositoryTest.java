@@ -23,7 +23,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import de.uni_jena.cs.fusion.abecto.ResponseBuffer;
-import de.uni_jena.cs.fusion.abecto.TestOntologyBuilder;
+import de.uni_jena.cs.fusion.abecto.TestDataGenerator;
 import de.uni_jena.cs.fusion.abecto.model.ModelUtils;
 import de.uni_jena.cs.fusion.abecto.model.ModelSerializationLanguage;
 import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
@@ -46,7 +46,7 @@ public class ProcessingRepositoryTest {
 
 	@BeforeEach
 	public void init() throws Exception {
-		model = new TestOntologyBuilder().build(1);
+		model = new TestDataGenerator().generateOntology(1);
 
 		// create project
 		mvc.perform(MockMvcRequestBuilders.post("/project").accept(MediaType.APPLICATION_JSON))
