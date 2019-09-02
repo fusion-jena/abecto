@@ -92,25 +92,28 @@ public class TestDataGenerator {
 	}
 
 	public Map<String, Collection<String>> generatePatterns(int ontologyNumber) {
+		this.ontologyNumber = ontologyNumber;
 		Map<String, Collection<String>> patterns = new HashMap<>();
 
 		for (int classNumber = 0; classNumber < classFactor; classNumber++) {
 			StringBuilder pattern = new StringBuilder();
 			String className = generateClassName(classNumber);
-			
-			pattern.append("?" + className + " <" + RDF.type + "> <" + getUri(className) + ">");
+
+			pattern.append("?" + className + " <" + RDF.type + "> <" + getUri(className) + "> .");
+
+			// TODO correlate classes and properties of individuals
 
 			for (int objectPropertyNumber = 0; objectPropertyNumber < objectPropertyFactor; objectPropertyNumber++) {
 				String objectPropertyName = generateObjectPropertyName(objectPropertyNumber);
-				pattern.append(" ; <" + getUri(objectPropertyName) + "> ?" + objectPropertyName + " ");
+				pattern.append("OPTIONAL { ?" + className + " <" + getUri(objectPropertyName) + "> ?"
+						+ objectPropertyName + " }");
 			}
 
 			for (int dataPropertyNumber = 0; dataPropertyNumber < dataPropertyFactor; dataPropertyNumber++) {
 				String dataPropertyName = generateDataPropertyName(dataPropertyNumber);
-				pattern.append(" ; <" + getUri(dataPropertyName) + "> ?" + dataPropertyName + " ");
+				pattern.append(
+						"OPTIONAL { ?" + className + " <" + getUri(dataPropertyName) + "> ?" + dataPropertyName + " }");
 			}
-			
-			pattern.append(" .");
 
 			patterns.put(className, Collections.singleton(pattern.toString()));
 		}
@@ -140,6 +143,7 @@ public class TestDataGenerator {
 	}
 
 	private void generateDataPropertyStatement(int number) {
+		// TODO correlate classes and properties of individuals
 		if (!isGapCase(number)) {
 			Statement statement;
 			if (!isErrorCase(number)) {
