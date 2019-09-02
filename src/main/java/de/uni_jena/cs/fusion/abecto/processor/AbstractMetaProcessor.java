@@ -1,7 +1,6 @@
 package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.UUID;
@@ -14,7 +13,7 @@ public abstract class AbstractMetaProcessor<P extends ParameterModel> extends Ab
 
 	@Override
 	public Map<UUID, Collection<Model>> getDataModels() {
-		return Collections.emptyMap();
+		return this.inputGroupSubModels;
 	}
 
 	@Override
