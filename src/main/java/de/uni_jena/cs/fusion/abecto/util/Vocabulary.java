@@ -27,8 +27,8 @@ public final class Vocabulary {
 	
 	public final static Property CATEGORY_NAME = ResourceFactory
 			.createProperty("http://fusion.cs.uni-jena.de/ontology/abecto/categoryName");
-	public final static Property CATEGORY_TEMPLATE = ResourceFactory
-			.createProperty("http://fusion.cs.uni-jena.de/ontology/abecto/categoryTemplate");
+	public final static Property CATEGORY_PATTERN = ResourceFactory
+			.createProperty("http://fusion.cs.uni-jena.de/ontology/abecto/categoryPattern");
 	public final static Property CATEGORY_TARGET = ResourceFactory
 			.createProperty("http://fusion.cs.uni-jena.de/ontology/abecto/categoryTarget");
 

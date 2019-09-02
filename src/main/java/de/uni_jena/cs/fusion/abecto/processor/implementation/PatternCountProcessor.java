@@ -3,7 +3,7 @@ package de.uni_jena.cs.fusion.abecto.processor.implementation;
 import static de.uni_jena.cs.fusion.abecto.util.Vocabulary.CATEGORY;
 import static de.uni_jena.cs.fusion.abecto.util.Vocabulary.CATEGORY_NAME;
 import static de.uni_jena.cs.fusion.abecto.util.Vocabulary.CATEGORY_TARGET;
-import static de.uni_jena.cs.fusion.abecto.util.Vocabulary.CATEGORY_TEMPLATE;
+import static de.uni_jena.cs.fusion.abecto.util.Vocabulary.CATEGORY_PATTERN;
 import static de.uni_jena.cs.fusion.abecto.util.Vocabulary.COUNT_MEASURE;
 import static de.uni_jena.cs.fusion.abecto.util.Vocabulary.KNOWLEDGE_BASE;
 import static de.uni_jena.cs.fusion.abecto.util.Vocabulary.VALUE;
@@ -59,7 +59,7 @@ public class PatternCountProcessor extends AbstractMetaProcessor<PatternCountPro
 	protected Model computeResultModel() throws Exception {
 		// get templates
 		Query templateQuery = QueryFactory.create("SELECT ?name ?template WHERE {[ <" + RDF.type + "> <" + CATEGORY
-				+ "> ; <" + CATEGORY_NAME + "> ?name; <" + CATEGORY_TEMPLATE + "> ?template; ]}");
+				+ "> ; <" + CATEGORY_NAME + "> ?name; <" + CATEGORY_PATTERN + "> ?template; ]}");
 		ResultSet templateQueryResult = QueryExecutionFactory.create(templateQuery, this.metaModel).execSelect();
 
 		/**

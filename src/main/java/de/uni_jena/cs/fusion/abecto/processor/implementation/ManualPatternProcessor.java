@@ -2,20 +2,18 @@ package de.uni_jena.cs.fusion.abecto.processor.implementation;
 
 import static de.uni_jena.cs.fusion.abecto.util.Vocabulary.CATEGORY;
 import static de.uni_jena.cs.fusion.abecto.util.Vocabulary.CATEGORY_NAME;
-import static de.uni_jena.cs.fusion.abecto.util.Vocabulary.CATEGORY_TEMPLATE;
+import static de.uni_jena.cs.fusion.abecto.util.Vocabulary.CATEGORY_PATTERN;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.jena.query.ParameterizedSparqlString;
+import org.apache.jena.arq.querybuilder.ConstructBuilder;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.vocabulary.RDF;
 
@@ -35,15 +33,18 @@ public class ManualPatternProcessor extends AbstractMetaProcessor<ManualPatternP
 
 	@Override
 	protected Model computeResultModel() throws Exception {
-		ParameterizedSparqlString preparedQuery = new ParameterizedSparqlString();
-		preparedQuery.setCommandText("CONSTRUCT {[ <" + RDF.type + "> <" + CATEGORY + "> ; <" + CATEGORY_NAME
-				+ "> ?name; <" + CATEGORY_TEMPLATE + "> ?pattern; ]} WHERE {VALUES (?name ?pattern) {?values} }");
+		Node blankNodeVar = NodeFactory.createBlankNode();
+		Node categoryVar = NodeFactory.createVariable("category");
+		Node patternVar = NodeFactory.createVariable("pattern");
+		ConstructBuilder resultQueryBuilder = new ConstructBuilder().addConstruct(blankNodeVar, RDF.type, CATEGORY)
+				.addConstruct(blankNodeVar, CATEGORY_NAME, categoryVar)
+				.addConstruct(blankNodeVar, CATEGORY_PATTERN, patternVar).addValueVar(categoryVar)
+				.addValueVar(patternVar);
 
 		if (this.getParameters().patterns.isEmpty()) {
 			throw new IllegalArgumentException("Empty category list.");
 		}
 
-		List<List<? extends RDFNode>> values = new ArrayList<>();
 		for (Entry<String, Collection<String>> entry : this.getParameters().patterns.entrySet()) {
 			String category = entry.getKey();
 			if (entry.getValue().isEmpty()) {
@@ -51,15 +52,14 @@ public class ManualPatternProcessor extends AbstractMetaProcessor<ManualPatternP
 			}
 			for (String pattern : entry.getValue()) {
 				Pattern.validate(category, pattern);
-				values.add(Arrays.asList(ResourceFactory.createStringLiteral(category),
-						ResourceFactory.createStringLiteral(pattern)));
+				resultQueryBuilder.addValueRow(ResourceFactory.createStringLiteral(category),
+						ResourceFactory.createStringLiteral(pattern));
 			}
 		}
 
-		preparedQuery.setRowValues("values", values);
-		Query query = preparedQuery.asQuery();
-		Model model = ModelUtils.getEmptyOntModel();
-		return QueryExecutionFactory.create(query, model).execConstruct(model);
+		Query resultQuery = resultQueryBuilder.build();
+		Model resultModel = ModelUtils.getEmptyOntModel();
+		return QueryExecutionFactory.create(resultQuery, resultModel).execConstruct(resultModel);
 	}
 
 }
