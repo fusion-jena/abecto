@@ -42,7 +42,7 @@ public class ManualRelationSelectionProcessor
 		Var pathVar = Var.alloc(NodeFactory.createVariable("path"));
 		Var enabledVar = Var.alloc(NodeFactory.createVariable("enabled"));
 
-		Query query = QueryFactory.make();
+		Query query = QueryFactory.create();
 		query.setQueryConstructType();
 		BasicPattern construct = new BasicPattern();
 		Node blankNode = NodeFactory.createBlankNode();
