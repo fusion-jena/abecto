@@ -127,7 +127,7 @@ public class TestDataGenerator {
 		classes.add(resource);
 	}
 
-	private String generateClassName(int number) {
+	public String generateClassName(int number) {
 		return "Class" + number;
 	}
 
@@ -138,7 +138,7 @@ public class TestDataGenerator {
 		dataProperties.add(resource);
 	}
 
-	private String generateDataPropertyName(int number) {
+	public String generateDataPropertyName(int number) {
 		return "dataProperty" + number;
 	}
 
@@ -173,7 +173,7 @@ public class TestDataGenerator {
 		individuals.add(resource);
 	}
 
-	private String generateIndividualName(int number) {
+	public String generateIndividualName(int number) {
 		return "individual" + number;
 	}
 
@@ -185,7 +185,7 @@ public class TestDataGenerator {
 		objectProperties.add(resource);
 	}
 
-	private String generateObjectPropertyName(int number) {
+	public String generateObjectPropertyName(int number) {
 		return "objectProperty" + number;
 	}
 
