@@ -18,9 +18,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import de.uni_jena.cs.fusion.abecto.model.ModelUtils;
-import de.uni_jena.cs.fusion.abecto.processor.AbstractMappingProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.AbstractMappingProcessor.Mapping;
-import de.uni_jena.cs.fusion.abecto.processor.implementation.JaroWinklerMappingProcessor;
 import de.uni_jena.cs.fusion.abecto.util.Vocabulary;
 
 public class JaroWinklerMappingProcessorTest {
