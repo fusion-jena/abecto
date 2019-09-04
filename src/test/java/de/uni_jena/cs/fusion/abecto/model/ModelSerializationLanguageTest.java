@@ -10,13 +10,9 @@ public class ModelSerializationLanguageTest {
 	public void determine() {
 		String documentStart;
 
-		// JSONLD
+		// TODO JSONLD
 
-		// TODO
-
-		// N3
-
-		// TODO
+		// TODO N3
 
 		// NQUAD
 
@@ -46,13 +42,9 @@ public class ModelSerializationLanguageTest {
 		documentStart = "<http://example.org/s> <http://example.org/p> \"abc\"@en .";
 		assertEquals(ModelSerializationLanguage.NTRIPLES, ModelSerializationLanguage.determine(documentStart));
 
-		// OWLXML
+		// TODO OWLXML
 
-		// TODO
-
-		// RDFJSON
-
-		// TODO
+		// TODO RDFJSON
 
 		// RDFXML
 
@@ -78,29 +70,17 @@ public class ModelSerializationLanguageTest {
 	public void determineBase() {
 		String documentStart;
 
-		// JSONLD
+		// TODO JSONLD
 
-		// TODO
+		// TODO N3
 
-		// N3
+		// TODO NQUAD
 
-		// TODO
+		// TODO NTRIPLES
 
-		// NQUAD
+		// TODO OWLXML
 
-		// TODO
-
-		// NTRIPLES
-
-		// TODO
-
-		// OWLXML
-
-		// TODO
-
-		// RDFJSON
-
-		// TODO
+		// TODO RDFJSON
 
 		// RDFXML
 
