@@ -63,11 +63,6 @@
 		</dependency>
 		<dependency>
 			<groupId>org.apache.jena</groupId>
-			<artifactId>jena-querybuilder</artifactId>
-			<version>${apache.jena.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.jena</groupId>
 			<artifactId>jena-arq</artifactId>
 			<version>${apache.jena.version}</version>
 		</dependency>
