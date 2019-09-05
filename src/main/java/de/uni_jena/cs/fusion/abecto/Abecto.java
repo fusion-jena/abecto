@@ -9,12 +9,15 @@ import org.springframework.core.task.TaskExecutor;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @SpringBootApplication
 @EnableScheduling
 @EnableAsync
 @PropertySources({ @PropertySource(value = "classpath:application.properties"),
 		@PropertySource(value = "classpath:application_test.properties", ignoreResourceNotFound = true) })
+@RestController
 public class Abecto {
 
 	public static void main(String[] args) {
@@ -28,5 +31,10 @@ public class Abecto {
 		executor.setThreadNamePrefix("abecto-async-");
 		executor.initialize();
 		return executor;
+	}
+	
+	@GetMapping("")
+	public String create() {
+		return "ABECTO is running.";
 	}
 }
