@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 
 public class ModelSerializationLanguageTest {
+	
+	private final static String NONSENSE = "EI50Ti4gIeTJI7hPJU1h3QtbC0NWm9ZtcL0LMVnSXI0rRJfhELxMMQmAFIMt";
 
 	@Test
 	public void determine() {
@@ -79,9 +81,11 @@ public class ModelSerializationLanguageTest {
 
 		// TODO N3
 
-		// TODO NQUAD
+		// NQUAD
+		assertEquals(null, ModelSerializationLanguage.NQUAD.determineBase(NONSENSE));
 
-		// TODO NTRIPLES
+		// NTRIPLES
+		assertEquals(null, ModelSerializationLanguage.NTRIPLES.determineBase(NONSENSE));
 
 		// TODO OWLXML
 
@@ -105,6 +109,11 @@ public class ModelSerializationLanguageTest {
 				+ ":entity rdfs:label \"label\" .";
 
 		assertEquals("http://example.org/rdf#", ModelSerializationLanguage.TURTLE.determineBase(documentStart));
+
+		documentStart = ":entity rdfs:label \"label1\" ," //
+				+ "                   \"label2\" ;" //
+				+ "        rdfs:comment \"label3\" .";
+		assertEquals(null, ModelSerializationLanguage.TURTLE.determineBase(documentStart));
 
 	}
 

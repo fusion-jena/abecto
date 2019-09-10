@@ -14,9 +14,11 @@ public enum ModelSerializationLanguage {
 	N3("text/n3", "n3", "N3", null, Pattern.compile("@base\\s+<(?<base>[^\"]+)>")),
 	// https://www.w3.org/TR/n-quads/
 	NQUAD("application/n-quads", "nq", null,
-			Pattern.compile("^\\s*(<\\S+>|_:\\S+)\\s+<\\S+>\\s+(<\\S+>|_:\\S+|\"[^\"]*\")\\s+(<\\S+>|_:\\S+)\\s*\\."), null),
+			Pattern.compile("^\\s*(<\\S+>|_:\\S+)\\s+<\\S+>\\s+(<\\S+>|_:\\S+|\"[^\"]*\")\\s+(<\\S+>|_:\\S+)\\s*\\."),
+			null),
 	// https://www.w3.org/TR/n-triples/
-	NTRIPLES("application/n-triples", "nt", "NT", Pattern.compile("^[ \\t]*(<\\S+>|_:\\S+)[ \\t]+(<\\S+>)[ \\t]+(<\\S+>|_:\\S+|\"\\S*\"(\\^\\^<\\S+>*|@\\S*)?)[ \\t]*\\."),
+	NTRIPLES("application/n-triples", "nt", "NT", Pattern.compile(
+			"^[ \\t]*(<\\S+>|_:\\S+)[ \\t]+(<\\S+>)[ \\t]+(<\\S+>|_:\\S+|\"\\S*\"(\\^\\^<\\S+>*|@\\S*)?)[ \\t]*\\."),
 			null),
 	// https://www.w3.org/TR/owl2-xml-serialization/
 	// https://www.w3.org/TR/owl-ref/
@@ -64,8 +66,11 @@ public enum ModelSerializationLanguage {
 	public String determineBase(String documentStart) {
 		if (Objects.nonNull(this.basePattern)) {
 			Matcher matcher = this.basePattern.matcher(documentStart);
-			matcher.find();
-			return matcher.group("base");
+			if (matcher.find()) {
+				return matcher.group("base");
+			} else {
+				return null;
+			}
 		} else {
 			return null;
 		}
