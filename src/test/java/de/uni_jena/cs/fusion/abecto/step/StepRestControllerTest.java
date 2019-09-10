@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashSet;
 import java.util.UUID;
 
 import org.apache.jena.rdf.model.Model;
@@ -52,6 +53,8 @@ public class StepRestControllerTest {
 
 	@Autowired
 	ProjectRepository projectRepository;
+	@Autowired
+	StepRepository stepRepository;
 
 	@BeforeEach
 	public void init() throws Exception {
@@ -67,6 +70,7 @@ public class StepRestControllerTest {
 	@AfterEach
 	public void cleanup() throws IOException, Exception {
 		projectRepository.deleteAll();
+		stepRepository.deleteAll();
 	}
 
 	@Test
@@ -167,6 +171,24 @@ public class StepRestControllerTest {
 		mvc.perform(MockMvcRequestBuilders.get(String.format("/step/%s/processing/last", sourceId))
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andExpect(jsonPath("id", is(secondUploadId)));
+	}
+
+	@Test
+	public void list() throws Exception {
+		HashSet<String> expected = new HashSet<>();
+
+		for (int i = 0; i < 1; i++) {
+			mvc.perform(MockMvcRequestBuilders.post("/step")
+					.param("class", "de.uni_jena.cs.fusion.abecto.step.StepRestControllerTest$ParameterProcessor")
+					.param("knowledgebase", knowledgBaseId).accept(MediaType.APPLICATION_JSON))
+					.andExpect(status().isOk()).andDo(buffer);
+			expected.add(buffer.getId());
+		}
+
+		mvc.perform(MockMvcRequestBuilders.get("/step").param("project", projectId).accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andDo(buffer);
+
+		Assertions.assertEquals(expected, new HashSet<>(buffer.getIds()));
 	}
 
 	public static class UploadProcessor extends AbstractSourceProcessor<EmptyParameters>

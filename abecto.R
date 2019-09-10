@@ -37,7 +37,7 @@ getProject <- function(project) {
 }
 
 runProject <- function(project,await=FALSE) {
-    content(GET(url=paste0(base,"project/",project,"/run"),params=list(await=await)))
+    content(GET(url=paste0(base,"project/",project,"/run"),query=list(await=await)))
 }
 
 # knowledgebase
@@ -55,7 +55,7 @@ getKnowledgebase  <- function(knowledgebase) {
 }
 
 listKnowledgebases <- function(project=NULL) {
-    content(GET(url=paste0(base,"knowledgebase"),params=list(project=project)))
+    content(GET(url=paste0(base,"knowledgebase"),query=list(project=project)))
 }
 
 # step
@@ -66,6 +66,10 @@ createStep  <- function(class,knowledgebase=NULL,input=NULL,parameters=NULL) {
 
 getStep <- function(step) {
     content(GET(url=paste0(base,"step/",step)))
+}
+
+listSteps <- function(project) {
+    content(GET(url=paste0(base,"step"),query=list(project=project)))
 }
 
 loadStep  <- function(step,data=NULL,file=NULL,path=NULL) {
@@ -86,11 +90,11 @@ getLastProcessing <- function(step) {
 # parameter
 
 addParameter  <- function(step,key=NULL,value=NULL) {
-    content(POST(url=paste0(base,"step",step,"/load"),body=list(key=key,value=value)))
+    content(POST(url=paste0(base,"step/",step,"/load"),body=list(key=key,value=value)))
 }
 
 getParameter <- function(step,key=NULL) {
-    content(GET(url=paste0(base,"step/",step),params=list(key=key)))
+    content(GET(url=paste0(base,"step/",step),query=list(key=key)))
 }
 
 # processing

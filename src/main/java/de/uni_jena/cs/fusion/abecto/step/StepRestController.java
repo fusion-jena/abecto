@@ -29,10 +29,14 @@ import de.uni_jena.cs.fusion.abecto.processing.ProcessingRepository;
 import de.uni_jena.cs.fusion.abecto.processing.ProcessingRunner;
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
 import de.uni_jena.cs.fusion.abecto.processor.SourceProcessor;
+import de.uni_jena.cs.fusion.abecto.project.Project;
+import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
 
 @RestController
 public class StepRestController {
 
+	@Autowired
+	ProjectRepository projectRepository;
 	@Autowired
 	KnowledgeBaseRepository knowledgeBaseRepository;
 	@Autowired
@@ -131,6 +135,16 @@ public class StepRestController {
 	@GetMapping("/step/{uuid}/processing/last")
 	public Processing lastProcessing(@PathVariable("uuid") UUID stepId) {
 		return processingRepository.findTopByStepOrderByStartDateTimeDesc(get(stepId));
+	}
+
+	@GetMapping("/step")
+	public Iterable<Step> list(@RequestParam(name = "project") UUID projectId) {
+		Optional<Project> project = projectRepository.findById(projectId);
+		if (project.isPresent()) {
+			return stepRepository.findAllByProject(project.get());
+		} else {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Project not found.");
+		}
 	}
 
 	@SuppressWarnings("unchecked")

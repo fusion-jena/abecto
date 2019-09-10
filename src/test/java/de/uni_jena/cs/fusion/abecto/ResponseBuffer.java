@@ -1,6 +1,7 @@
 package de.uni_jena.cs.fusion.abecto;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.test.web.servlet.MvcResult;
@@ -33,6 +34,8 @@ public class ResponseBuffer implements ResultHandler {
 	}
 
 	public List<String> getIds() throws IOException {
-		return JSON.readTree(bytes).findValuesAsText("id");
+		ArrayList<String> ids = new ArrayList<>();
+		JSON.readTree(bytes).elements().forEachRemaining((node) -> ids.add(node.get("id").asText()));
+		return ids;
 	}
 }
