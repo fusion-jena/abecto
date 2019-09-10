@@ -128,14 +128,14 @@ public class ProcessingRunner {
 	private Processing syncExecute(Processing processing, Processor<?> processor) throws IllegalStateException {
 		ensureNotStartetd(processing);
 		try {
-			log.info(String.format("Processor for %s started.", processing));
+			log.debug(String.format("Processor for %s started.", processing));
 			processing = processingRepository.save(processing.setStateStart());
 			Model model = processor.call();
 			String modelHash = modelRepository.save(model);
-			log.info(String.format("Processor for %s succeded.", processing));
+			log.debug(String.format("Processor for %s succeded.", processing));
 			return processingRepository.save(processing.setStateSuccess(modelHash));
 		} catch (Exception e) {
-			log.info(String.format("Processor for %s failed.", processing));
+			log.debug(String.format("Processor for %s failed.", processing));
 			processor.fail();
 			return processingRepository.save(processing.setStateFail(e));
 		}
