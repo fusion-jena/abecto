@@ -60,16 +60,23 @@ listKnowledgebases <- function(project=NULL) {
 
 # step
 
-createStep  <- function(project,class,knowledgebase=NULL,input=NULL,parameters=NULL) {
-    content(POST(url=paste0(base,"step"),body=list(project=project,knowledgebase=knowledgebase,input=input,parameters=parameters)))$id
+createStep  <- function(class,knowledgebase=NULL,input=NULL,parameters=NULL) {
+    content(POST(url=paste0(base,"step"),body=list(class=class,knowledgebase=knowledgebase,input=input,parameters=parameters)))$id
 }
 
 getStep <- function(step) {
     content(GET(url=paste0(base,"step/",step)))
 }
 
-loadStep  <- function(step,file=NULL) {
-    content(POST(url=paste0(base,"step",step,"/load"),params=list(file=file)))
+loadStep  <- function(step,data=NULL,file=NULL,path=NULL) {
+    if (!is.null(path)) {
+        file = upload_file(path);
+    } else if (!is.null(data)) {
+        temp <- tempfile(pattern = "abecto-");
+        writeLines(data, temp);
+        file = upload_file(temp);
+    }
+    content(POST(url=paste0(base,"step/",step,"/load"),body=list(file=file)))
 }
 
 getLastProcessing <- function(step) {
