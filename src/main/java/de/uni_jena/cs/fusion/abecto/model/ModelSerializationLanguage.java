@@ -30,7 +30,11 @@ public enum ModelSerializationLanguage {
 			Pattern.compile("(xml:base=\"|<owl:Ontology rdf:about=\")(?<base>[^\\\"]+)\"")),
 	// https://www.w3.org/TR/2014/REC-turtle-20140225/
 	TURTLE("text/turtle", "ttl", "TTL",
-			Pattern.compile("^\\s*((\\@prefix)|(\\@base)|(BASE)|(PREFIX)|(base)|(prefix))", Pattern.MULTILINE),
+			// https://regex101.com/r/UTj2JG
+			// TODO allow comments inside of statements
+			Pattern.compile(
+					"^\\s*(((@prefix|@PREFIX|PREFIX)\\s+\\S+:\\s+<\\S+>|(@base|@BASE|BASE)\\s+\\<\\S+\\>|\\S+\\s+\\S+\\s+\\S+(\\s+\\,\\s+\\S+)*(\\s+\\;\\s+\\S+\\s+\\S+(\\s+\\,\\s+\\S+)*)*)\\s+\\.\\s*|\\#.*\\n)+",
+					Pattern.MULTILINE),
 			Pattern.compile("@base\\s*<(?<base>[^>]+)>"));
 
 	private final String mimeType;

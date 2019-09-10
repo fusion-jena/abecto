@@ -64,6 +64,11 @@ public class ModelSerializationLanguageTest {
 				+ ":entity rdfs:label \"label\" .";
 		assertEquals(ModelSerializationLanguage.TURTLE, ModelSerializationLanguage.determine(documentStart));
 
+		documentStart = ":entity rdfs:label \"label1\" ," //
+				+ "                   \"label2\" ;" //
+				+ "        rdfs:comment \"label3\" .";
+		assertEquals(ModelSerializationLanguage.TURTLE, ModelSerializationLanguage.determine(documentStart));
+
 	}
 
 	@Test
