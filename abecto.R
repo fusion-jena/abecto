@@ -72,15 +72,8 @@ listSteps <- function(project) {
     content(GET(url=paste0(base,"step"),query=list(project=project)))
 }
 
-loadStep  <- function(step,data=NULL,file=NULL,path=NULL) {
-    if (!is.null(path)) {
-        file = upload_file(path);
-    } else if (!is.null(data)) {
-        temp <- tempfile(pattern = "abecto-");
-        writeLines(data, temp);
-        file = upload_file(temp);
-    }
-    content(POST(url=paste0(base,"step/",step,"/load"),body=list(file=file)))
+loadStep  <- function(step,file) {
+    content(POST(url=paste0(base,"step/",step,"/load"),body=list(file=upload_file(file))))
 }
 
 getLastProcessing <- function(step) {
@@ -105,4 +98,12 @@ getProcessing <- function(processing) {
 
 getProcessingResult <- function(processing) {
     content(GET(url=paste0(base,"processing/",processing,"/result")))
+}
+
+# tutorial helper
+
+writeTempFile <- function(data) {
+    path <- tempfile()
+    writeLines(data, path)
+    return(path)
 }
