@@ -32,12 +32,12 @@ public enum ModelSerializationLanguage {
 			Pattern.compile("(xml:base=\"|<owl:Ontology rdf:about=\")(?<base>[^\\\"]+)\"")),
 	// https://www.w3.org/TR/2014/REC-turtle-20140225/
 	TURTLE("text/turtle", "ttl", "TTL",
-			// https://regex101.com/r/UTj2JG
+			// https://regex101.com/r/UTj2JG/4
 			// TODO allow comments inside of statements
 			Pattern.compile(
-					"^\\s*(((@prefix|@PREFIX|PREFIX)\\s+\\S+:\\s+<\\S+>|(@base|@BASE|BASE)\\s+\\<\\S+\\>|\\S+\\s+\\S+\\s+\\S+(\\s+\\,\\s+\\S+)*(\\s+\\;\\s+\\S+\\s+\\S+(\\s+\\,\\s+\\S+)*)*)\\s+\\.\\s*|\\#.*\\n)+",
+					"^\\s*(((@prefix|@PREFIX)\\s+\\S+:\\s+<\\S+>|(@base|@BASE)\\s+\\<\\S+\\>|\\S+\\s+\\S+\\s+\\S+(\\s+\\,\\s+\\S+)*(\\s+\\;\\s+\\S+\\s+\\S+(\\s+\\,\\s+\\S+)*)*)\\s+\\.\\s*|\\#.*\\n|PREFIX\\s+\\S+:\\s+<\\S+>\\s*|BASE\\s+\\<\\S+\\>\\s*)+",
 					Pattern.MULTILINE),
-			Pattern.compile("@base\\s*<(?<base>[^>]+)>"));
+			Pattern.compile("(@base|@BASE|BASE)\\s+<(?<base>[^>]+)>"));
 
 	private final String mimeType;
 	private final String fileExtension;

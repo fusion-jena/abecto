@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 
 public class ModelSerializationLanguageTest {
-	
+
 	private final static String NONSENSE = "EI50Ti4gIeTJI7hPJU1h3QtbC0NWm9ZtcL0LMVnSXI0rRJfhELxMMQmAFIMt";
 
 	@Test
@@ -66,6 +66,11 @@ public class ModelSerializationLanguageTest {
 				+ ":entity rdfs:label \"label\" .";
 		assertEquals(ModelSerializationLanguage.TURTLE, ModelSerializationLanguage.determine(documentStart));
 
+		documentStart = "BASE <http://example.org/rdf#>\n" //
+				+ "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" //
+				+ ":entity rdfs:label \"label\" .";
+		assertEquals(ModelSerializationLanguage.TURTLE, ModelSerializationLanguage.determine(documentStart));
+
 		documentStart = ":entity rdfs:label \"label1\" ," //
 				+ "                   \"label2\" ;" //
 				+ "        rdfs:comment \"label3\" .";
@@ -107,7 +112,11 @@ public class ModelSerializationLanguageTest {
 		documentStart = "@base <http://example.org/rdf#> .\n" //
 				+ "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\n" //
 				+ ":entity rdfs:label \"label\" .";
+		assertEquals("http://example.org/rdf#", ModelSerializationLanguage.TURTLE.determineBase(documentStart));
 
+		documentStart = "BASE <http://example.org/rdf#>\n" //
+				+ "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" //
+				+ ":entity rdfs:label \"label\" .";
 		assertEquals("http://example.org/rdf#", ModelSerializationLanguage.TURTLE.determineBase(documentStart));
 
 		documentStart = ":entity rdfs:label \"label1\" ," //
