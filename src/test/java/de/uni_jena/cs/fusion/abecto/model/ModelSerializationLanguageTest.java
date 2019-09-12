@@ -19,13 +19,13 @@ public class ModelSerializationLanguageTest {
 		// NQUAD
 
 		documentStart = "<http://example.org/rdf#s> <http://example.org/rdf#p> <http://example.org/rdf#o> <http://example.org/rdf#g> .";
-		assertEquals(ModelSerializationLanguage.NQUAD, ModelSerializationLanguage.determine(documentStart));
+		assertEquals(ModelSerializationLanguage.NQUADS, ModelSerializationLanguage.determine(documentStart));
 
 		documentStart = "<http://example.org/rdf#s> <http://example.org/rdf#p> \"abc def\" <http://example.org/rdf#g> .";
-		assertEquals(ModelSerializationLanguage.NQUAD, ModelSerializationLanguage.determine(documentStart));
+		assertEquals(ModelSerializationLanguage.NQUADS, ModelSerializationLanguage.determine(documentStart));
 
 		documentStart = "_:s1 <http://example.org/rdf#p> _:o1 _:g1 .";
-		assertEquals(ModelSerializationLanguage.NQUAD, ModelSerializationLanguage.determine(documentStart));
+		assertEquals(ModelSerializationLanguage.NQUADS, ModelSerializationLanguage.determine(documentStart));
 
 		// NTRIPLES
 
@@ -87,7 +87,7 @@ public class ModelSerializationLanguageTest {
 		// TODO N3
 
 		// NQUAD
-		assertEquals(null, ModelSerializationLanguage.NQUAD.determineBase(NONSENSE));
+		assertEquals(null, ModelSerializationLanguage.NQUADS.determineBase(NONSENSE));
 
 		// NTRIPLES
 		assertEquals(null, ModelSerializationLanguage.NTRIPLES.determineBase(NONSENSE));
