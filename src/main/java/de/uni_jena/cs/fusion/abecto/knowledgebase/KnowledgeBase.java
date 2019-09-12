@@ -16,10 +16,16 @@ import de.uni_jena.cs.fusion.abecto.step.Step;
 import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
 import de.uni_jena.cs.fusion.abecto.util.EntityToIdConverter;
 
+/**
+ * Provides a representation of a knowledge base that can be persisted.
+ *
+ * Knowledge bases consist of sources represented by {@link Step}s.
+ */
 @Entity
 public class KnowledgeBase extends AbstractEntityWithUUID {
 
 	protected String label;
+
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	@JsonSerialize(converter = EntityToIdConverter.class)
 	protected Project project;
