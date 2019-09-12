@@ -13,8 +13,8 @@ import org.springframework.core.GenericTypeResolver;
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 
 /**
- * {@link Processor} is an interface for a task that outputs a new {@link Model}
- * based on given input {@link Model}s and parameters provided with by an
+ * Provides an interface for a task that outputs a new {@link Model} based on
+ * given input {@link Model}s and parameters provided with by an
  * {@link ParameterModel} object. A {@link Processor} implementation is linked
  * to the appropriate {@link ParameterModel} using the type parameter {@link P}.
  * 
@@ -149,8 +149,8 @@ public interface Processor<P extends ParameterModel> extends Callable<Model> {
 	public boolean isSucceeded();
 
 	/**
-	 * Set the parameters for this processor. Earlier parameters will
-	 * be overwritten.
+	 * Set the parameters for this processor. Earlier parameters will be
+	 * overwritten.
 	 * 
 	 * @param parameters TODO
 	 */
