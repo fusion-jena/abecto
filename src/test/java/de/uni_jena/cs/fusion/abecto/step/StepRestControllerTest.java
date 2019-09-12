@@ -29,7 +29,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import de.uni_jena.cs.fusion.abecto.ResponseBuffer;
-import de.uni_jena.cs.fusion.abecto.model.ModelUtils;
+import de.uni_jena.cs.fusion.abecto.model.Models;
 import de.uni_jena.cs.fusion.abecto.parameter_model.EmptyParameters;
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.processor.AbstractSourceProcessor;
@@ -205,7 +205,7 @@ public class StepRestControllerTest {
 		@Override
 		protected Model computeResultModel() throws Exception {
 			loaded = true;
-			return ModelUtils.getEmptyOntModel();
+			return Models.getEmptyOntModel();
 		}
 	}
 
@@ -216,7 +216,7 @@ public class StepRestControllerTest {
 		@Override
 		protected Model computeResultModel() throws Exception {
 			loaded = true;
-			return ModelUtils.getEmptyOntModel();
+			return Models.getEmptyOntModel();
 		}
 	}
 
@@ -227,7 +227,7 @@ public class StepRestControllerTest {
 		@Override
 		protected Model computeResultModel() throws Exception {
 			loaded = true;
-			return ModelUtils.getEmptyOntModel();
+			return Models.getEmptyOntModel();
 		}
 	}
 

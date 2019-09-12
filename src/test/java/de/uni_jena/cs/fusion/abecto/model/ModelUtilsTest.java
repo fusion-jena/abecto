@@ -8,7 +8,7 @@ public class ModelUtilsTest {
 
 	@Test
 	public void testGetEmptyOntModel() {
-		assertFalse(ModelUtils.getEmptyOntModel().listStatements().hasNext());
+		assertFalse(Models.getEmptyOntModel().listStatements().hasNext());
 	}
 
 }

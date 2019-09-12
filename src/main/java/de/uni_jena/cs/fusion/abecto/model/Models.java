@@ -11,7 +11,10 @@ import org.apache.jena.ontology.OntModelSpec;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 
-public class ModelUtils {
+/**
+ * Provides a couple of handy methods to easy work with {@link Model}s. 
+ */
+public class Models {
 
 	public static Model load(InputStream in) throws IOException {
 		return load(in, null, null);

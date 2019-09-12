@@ -4,7 +4,7 @@ import java.io.InputStream;
 
 import org.apache.jena.rdf.model.Model;
 
-import de.uni_jena.cs.fusion.abecto.model.ModelUtils;
+import de.uni_jena.cs.fusion.abecto.model.Models;
 import de.uni_jena.cs.fusion.abecto.parameter_model.EmptyParameters;
 import de.uni_jena.cs.fusion.abecto.processor.AbstractSourceProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.UploadSourceProcessor;
@@ -16,7 +16,7 @@ public class RdfFileSourceProcessor extends AbstractSourceProcessor<EmptyParamet
 
 	@Override
 	public Model computeResultModel() throws Exception {
-		return ModelUtils.load(this.stream);
+		return Models.load(this.stream);
 	}
 
 	@Override

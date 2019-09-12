@@ -22,7 +22,7 @@ import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.vocabulary.RDF;
 
 import de.uni_jena.cs.fusion.abecto.model.ModelSerializationLanguage;
-import de.uni_jena.cs.fusion.abecto.model.ModelUtils;
+import de.uni_jena.cs.fusion.abecto.model.Models;
 
 public class TestDataGenerator {
 
@@ -55,7 +55,7 @@ public class TestDataGenerator {
 		this.ontologyNumber = ontologyNumber;
 
 		// initialize model and resource lists
-		model = ModelUtils.getEmptyOntModel();
+		model = Models.getEmptyOntModel();
 		classes = new ArrayList<>();
 		objectProperties = new ArrayList<>();
 		dataProperties = new ArrayList<>();

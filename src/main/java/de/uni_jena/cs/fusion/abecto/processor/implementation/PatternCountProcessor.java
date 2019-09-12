@@ -32,7 +32,7 @@ import org.apache.jena.vocabulary.RDF;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-import de.uni_jena.cs.fusion.abecto.model.ModelUtils;
+import de.uni_jena.cs.fusion.abecto.model.Models;
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.pattern.Pattern;
 import de.uni_jena.cs.fusion.abecto.processor.AbstractMetaProcessor;
@@ -135,7 +135,7 @@ public class PatternCountProcessor extends AbstractMetaProcessor<PatternCountPro
 		}
 
 		// construct result model
-		Model resultModel = ModelUtils.getEmptyOntModel();
+		Model resultModel = Models.getEmptyOntModel();
 		Query resultQuery = resultQueryBuilder.build();
 		QueryExecutionFactory.create(resultQuery, resultModel).execConstruct(resultModel);
 
