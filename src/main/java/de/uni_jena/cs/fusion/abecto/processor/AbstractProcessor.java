@@ -40,11 +40,9 @@ public abstract class AbstractProcessor<P extends ParameterModel> implements Pro
 	}
 
 	/**
-	 * <p>
 	 * Computes a {@link Model}, or throws an exception if unable to do so. This
 	 * method is used by {@link #call()} should be implemented instead of
 	 * overwriting {@link #call()}.
-	 * </p>
 	 * 
 	 * @return computed {@link Model}
 	 * @throws Exception
