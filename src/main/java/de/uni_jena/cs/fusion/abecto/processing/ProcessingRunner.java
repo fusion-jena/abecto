@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.WeakHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import org.apache.jena.rdf.model.Model;
@@ -136,7 +137,11 @@ public class ProcessingRunner {
 			return processingRepository.save(processing.setStateSuccess(modelHash));
 		} catch (Exception e) {
 			log.debug(String.format("Processor for %s failed.", processing));
-			processor.fail();
+			try {
+				processor.fail(e);
+			} catch (ExecutionException e1) {
+				// do nothing
+			}
 			return processingRepository.save(processing.setStateFail(e));
 		}
 	}

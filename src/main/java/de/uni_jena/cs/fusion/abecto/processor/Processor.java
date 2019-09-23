@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.jena.graph.compose.MultiUnion;
 import org.apache.jena.rdf.model.Model;
@@ -46,9 +47,12 @@ public interface Processor<P extends ParameterModel> extends Callable<Model> {
 	public void await() throws InterruptedException;
 
 	/**
-	 * Set this {@link Processor} to status failed.
+	 * Sets this {@link Processor} to status failed and throws an
+	 * {@link ExecutionException}.
+	 * 
+	 * @throws ExecutionException if this method is called
 	 */
-	public void fail();
+	public void fail(Throwable cause) throws ExecutionException;
 
 	/**
 	 * @return {@link MultiUnion}s of result data {@link Model}s of this
@@ -58,6 +62,12 @@ public interface Processor<P extends ParameterModel> extends Callable<Model> {
 	 * @see #getResultModel()
 	 */
 	public Map<UUID, Collection<Model>> getDataModels();
+
+	/**
+	 * @return the cause of failure of this {@link Processor}
+	 * @throws IllegalStateException if this {@link Processor} is not failed
+	 */
+	public Throwable getFailureCause();
 
 	/**
 	 * @param processorClass {@link Processor} implementation to determine the

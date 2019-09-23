@@ -1,6 +1,7 @@
 package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.jena.rdf.model.Model;
 
@@ -11,6 +12,7 @@ public abstract class AbstractProcessor<P extends ParameterModel> implements Pro
 	private Model resultModel;
 
 	private Status status = Status.NOT_STARTED;
+	private Throwable failureCause;
 
 	/**
 	 * The current parameters of this processor.
@@ -50,9 +52,18 @@ public abstract class AbstractProcessor<P extends ParameterModel> implements Pro
 	protected abstract Model computeResultModel() throws Exception;
 
 	@Override
-	public void fail() {
+	public void fail(Throwable cause) throws ExecutionException {
 		this.status = Status.FAILED;
 		this.alert();
+		throw new ExecutionException(cause);
+	}
+
+	public Throwable getFailureCause() {
+		if (this.isFailed()) {
+			return failureCause;
+		} else {
+			throw new IllegalStateException("Failed to return failure cause: Processor has not failed.");
+		}
 	}
 
 	@Override

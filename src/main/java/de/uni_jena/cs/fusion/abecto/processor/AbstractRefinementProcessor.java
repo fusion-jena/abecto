@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.jena.graph.compose.MultiUnion;
 import org.apache.jena.ontology.OntModel;
@@ -16,7 +17,8 @@ import org.apache.jena.rdf.model.ModelFactory;
 import de.uni_jena.cs.fusion.abecto.model.Models;
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 
-public abstract class AbstractRefinementProcessor<P extends ParameterModel> extends AbstractProcessor<P> implements RefinementProcessor<P> {
+public abstract class AbstractRefinementProcessor<P extends ParameterModel> extends AbstractProcessor<P>
+		implements RefinementProcessor<P> {
 
 	/**
 	 * {@link Processor}s this {@link Processor} depends on.
@@ -70,11 +72,11 @@ public abstract class AbstractRefinementProcessor<P extends ParameterModel> exte
 	}
 
 	@Override
-	protected void prepare() throws InterruptedException {
+	protected void prepare() throws InterruptedException, ExecutionException {
 		for (Processor<?> inputProcessor : this.inputProcessors) {
 			while (!inputProcessor.isSucceeded()) {
 				if (inputProcessor.isFailed()) {
-					this.fail();
+					this.fail(inputProcessor.getFailureCause());
 				}
 				inputProcessor.await();
 			}
