@@ -2,7 +2,6 @@ package de.uni_jena.cs.fusion.abecto.processing;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -24,8 +23,8 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import de.uni_jena.cs.fusion.abecto.ResponseBuffer;
 import de.uni_jena.cs.fusion.abecto.TestDataGenerator;
-import de.uni_jena.cs.fusion.abecto.model.Models;
 import de.uni_jena.cs.fusion.abecto.model.ModelSerializationLanguage;
+import de.uni_jena.cs.fusion.abecto.model.Models;
 import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
 
 @ExtendWith(SpringExtension.class)
@@ -89,7 +88,7 @@ public class ProcessingRepositoryTest {
 	@Test
 	public void getResult() throws Exception {
 		mvc.perform(MockMvcRequestBuilders.get(String.format("/processing/%s/result", processingId))
-				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(print())
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andExpect(content().string(containsString("@graph")));
 	}
 
