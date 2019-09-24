@@ -16,16 +16,17 @@ import org.apache.jena.rdf.model.Statement;
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.util.Vocabulary;
 
-public abstract class AbstractMappingProcessor<P extends ParameterModel> extends AbstractMetaProcessor<P> implements MappingProcessor<P> {
+public abstract class AbstractMappingProcessor<P extends ParameterModel> extends AbstractMetaProcessor<P>
+		implements MappingProcessor<P> {
 
 	@Override
-	public Model computeResultModel() {
+	public Model computeResultModel() throws Exception {
 		// collect known mappings
 		Collection<Mapping> knownMappings = new HashSet<>();
 		Iterator<Statement> knownMappingsIterator = this.metaModel.listStatements(null, Vocabulary.MAPPING,
 				(RDFNode) null);
-		Iterator<Statement> knownAntiMappingsIterator = this.metaModel.listStatements(null,
-				Vocabulary.ANTI_MAPPING, (RDFNode) null);
+		Iterator<Statement> knownAntiMappingsIterator = this.metaModel.listStatements(null, Vocabulary.ANTI_MAPPING,
+				(RDFNode) null);
 
 		while (knownMappingsIterator.hasNext()) {
 			Statement statement = knownMappingsIterator.next();
@@ -68,7 +69,7 @@ public abstract class AbstractMappingProcessor<P extends ParameterModel> extends
 	 * @param secondModel second model to process
 	 * @return computed mapping
 	 */
-	public abstract Collection<Mapping> computeMapping(Model firstModel, Model secondModel);
+	public abstract Collection<Mapping> computeMapping(Model firstModel, Model secondModel) throws Exception;
 
 	public final static class Mapping {
 		public final Resource first;

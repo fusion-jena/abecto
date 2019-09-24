@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
@@ -19,12 +21,14 @@ import org.junit.jupiter.api.Test;
 
 import de.uni_jena.cs.fusion.abecto.model.Models;
 import de.uni_jena.cs.fusion.abecto.processor.AbstractMappingProcessor.Mapping;
+import de.uni_jena.cs.fusion.abecto.util.Queries;
 import de.uni_jena.cs.fusion.abecto.util.Vocabulary;
 
 public class JaroWinklerMappingProcessorTest {
 
 	private static Model FIRST_GRAPH;
 	private static Model SECOND_GRAPH;
+	private static Model META_GRAPH;
 
 	@BeforeAll
 	public static void setUpBeforeClass() throws Exception {
@@ -44,6 +48,10 @@ public class JaroWinklerMappingProcessorTest {
 				":entity1 rdfs:label \"abcdabcdabcdabcdabcd\" .\r\n" + //
 				":entity2 rdfs:label \"efghefghefghefghabcd\" .\r\n" + //
 				":entity3 rdfs:label \"mnopmnopmnopmnopmnop\" .").getBytes()));
+		META_GRAPH = Models.getEmptyOntModel();
+		Query metaConstructQuery = Queries.patternConstruct()
+				.addValueRow("entity", "?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .").build();
+		QueryExecutionFactory.create(metaConstructQuery, META_GRAPH).execConstruct(META_GRAPH);
 	}
 
 	@Test
@@ -52,7 +60,10 @@ public class JaroWinklerMappingProcessorTest {
 		JaroWinklerMappingProcessor.Parameter parameter = new JaroWinklerMappingProcessor.Parameter();
 		parameter.case_sensitive = false;
 		parameter.threshold = 0.90D;
+		parameter.category = "entity";
+		parameter.variables = Collections.singleton("label");
 		processor.setParameters(parameter);
+		processor.addMetaModels(Collections.singleton(META_GRAPH));
 		Collection<Mapping> mappings = processor.computeMapping(FIRST_GRAPH, SECOND_GRAPH);
 		assertEquals(2, mappings.size());
 		assertTrue(mappings.contains(Mapping.of(ResourceFactory.createResource("http://example.org/entity1"),
@@ -67,9 +78,12 @@ public class JaroWinklerMappingProcessorTest {
 		JaroWinklerMappingProcessor.Parameter parameter = new JaroWinklerMappingProcessor.Parameter();
 		parameter.case_sensitive = false;
 		parameter.threshold = 0.90D;
+		parameter.category = "entity";
+		parameter.variables = Collections.singleton("label");
 		processor.setParameters(parameter);
 		processor.addInputModelGroups(Map.of(UUID.randomUUID(), Collections.singleton(FIRST_GRAPH), UUID.randomUUID(),
 				Collections.singleton(SECOND_GRAPH)));
+		processor.addMetaModels(Collections.singleton(META_GRAPH));
 		Model result = processor.computeResultModel();
 		List<Statement> statements = new ArrayList<>();
 		result.listStatements().forEachRemaining(statements::add);

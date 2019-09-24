@@ -21,7 +21,7 @@ public class ManualPatternProcessor extends AbstractMetaProcessor<ManualPatternP
 
 	@JsonSerialize
 	public static class Parameter implements ParameterModel {
-		Map<String, Collection<String>> patterns;
+		public Map<String, Collection<String>> patterns;
 	}
 
 	@Override

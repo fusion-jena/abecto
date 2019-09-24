@@ -3,7 +3,6 @@ package de.uni_jena.cs.fusion.abecto.project;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -27,6 +26,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import de.uni_jena.cs.fusion.abecto.ResponseBuffer;
 import de.uni_jena.cs.fusion.abecto.TestDataGenerator;
+import de.uni_jena.cs.fusion.abecto.processor.implementation.ManualPatternProcessor;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -147,20 +147,28 @@ class ProjectRestControlerTest {
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		String transformation2Id = buffer.getId();
 
+		// add pattern
+		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", ManualPatternProcessor.class.getTypeName())
+				.param("input", transformation1Id, transformation2Id)
+				.param("parameters",
+						"{\"patterns\":{\"entity\":[\"?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .\"]}}")
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
+		String patternId = buffer.getId();
+
 		// add mapping
 		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", "JaroWinklerMappingProcessor")
-				.param("input", transformation1Id, transformation2Id)
-				.param("parameters", "{\"threshold\":0.9,\"case_sensitive\":false}").accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk()).andDo(buffer);
+				.param("input", patternId)
+				.param("parameters",
+						"{\"threshold\":0.9,\"case_sensitive\":false,\"category\":\"entity\",\"variables\":[\"label\"]}")
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 
 		// run project
 		mvc.perform(MockMvcRequestBuilders.get(String.format("/project/%s/run", projectId)).param("await", "true")
-				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer).andDo(print());
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 
 		// check processings
 		for (JsonNode processingNode : buffer.getJson()) {
 			Assertions.assertEquals("SUCCEEDED", processingNode.get("status").asText());
 		}
-
 	}
 }
