@@ -20,4 +20,12 @@ public abstract class AbstractSparqlEntity {
 	public int hashCode() {
 		return (id != null) ? id.hashCode() : super.hashCode();
 	}
+
+	public Resource id() {
+		return id;
+	}
+
+	public void id(Resource id) {
+		this.id = id;
+	}
 }
