@@ -39,6 +39,16 @@ public class SparqlEntityManager {
 		update.addInsert(new Triple(subject, predicate, update.makeNode(object)));
 	}
 
+	private static Object fieldValue(RDFNode node, Field field) {
+		if (node.isLiteral()) {
+			return node.asLiteral().getValue();
+		} else if (node.isResource()) {
+			return node.asResource();
+		} else {
+			throw new IllegalStateException(String.format("Illegal value for member %s.", field.getName()));
+		}
+	}
+
 	public static <T extends AbstractSparqlEntity> void insert(Collection<T> resources, Model target)
 			throws NoSuchElementException {
 
@@ -216,16 +226,6 @@ public class SparqlEntityManager {
 		}
 
 		return new HashSet<T>(entityMap.values());
-	}
-
-	private static Object fieldValue(RDFNode node, Field field) {
-		if (node.isLiteral()) {
-			return node.asLiteral().getValue();
-		} else if (node.isResource()) {
-			return node.asResource();
-		} else {
-			throw new IllegalStateException(String.format("Illegal value for member %s.", field.getName()));
-		}
 	}
 
 	private static <T extends AbstractSparqlEntity> SelectBuilder selectQuery(Class<T> type) {
