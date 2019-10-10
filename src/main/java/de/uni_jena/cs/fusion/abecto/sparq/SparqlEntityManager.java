@@ -2,10 +2,10 @@ package de.uni_jena.cs.fusion.abecto.sparq;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 
@@ -49,8 +49,21 @@ public class SparqlEntityManager {
 		}
 	}
 
-	public static <T extends AbstractSparqlEntity> void insert(Collection<T> resources, Model target)
-			throws NoSuchElementException {
+	public static <T extends AbstractSparqlEntity> void insert(T resource, Model target) {
+		insert(Collections.singleton(resource), target);
+	}
+
+	/**
+	 * Inserts resources into a {@link Model} .
+	 * 
+	 * @param <T>       the type of the resources
+	 * @param resources the resources to insert
+	 * @param target    the {@link Model} to insert the resources into
+	 */
+	public static <T extends AbstractSparqlEntity> void insert(Collection<T> resources, Model target) {
+		if (resources.isEmpty()) {
+			return;
+		}
 
 		T prototype = resources.stream().findAny().get();
 		Field[] fields = prototype.getClass().getFields();
@@ -64,40 +77,48 @@ public class SparqlEntityManager {
 		UpdateBuilder update = new UpdateBuilder(prologue.getPrefixMapping());
 
 		for (T resource : resources) {
-			// get resource identifier or new blank node
+
+			// get subject
 			Node subject;
 			if (resource.id == null) {
 				subject = NodeFactory.createBlankNode();
 			} else {
 				subject = resource.id.asNode();
 			}
+
 			for (Field field : fields) {
+
+				// get predicate
 				Node property = property(field, prologue);
+
+				// get object
 				try {
-					Object value = field.get(resource);
-					if (value == null) {
+					Object object = field.get(resource);
+					if (object == null) {
 						throw new NullPointerException(String.format("Missing value for member %s.", field.getName()));
-					} else if ((value instanceof Collection)) {
-						for (Object valueElement : (Collection<?>) value) {
-							if (valueElement != null) {
-								addInsert(update, subject, property, valueElement);
+					} else if ((object instanceof Collection)) {
+						for (Object objectElement : (Collection<?>) object) {
+							if (objectElement != null) {
+								addInsert(update, subject, property, objectElement);
 							} else {
 								throw new NullPointerException(String
 										.format("Null element contained in member collection %s.", field.getName()));
 							}
 						}
-					} else if (value instanceof Optional) {
-						if (((Optional<?>) value).isPresent()) {
-							addInsert(update, subject, property, ((Optional<?>) value).get());
+					} else if (object instanceof Optional) {
+						if (((Optional<?>) object).isPresent()) {
+							addInsert(update, subject, property, ((Optional<?>) object).get());
 						}
 					} else {
-						addInsert(update, subject, property, value);
+						addInsert(update, subject, property, object);
 					}
 				} catch (IllegalArgumentException | IllegalAccessException e) {
 					throw new RuntimeException("Failed to access member " + field.getName(), e);
 				}
 			}
 		}
+
+		// execute update
 		UpdateAction.execute(update.buildRequest(), target);
 	}
 
@@ -226,6 +247,12 @@ public class SparqlEntityManager {
 		}
 
 		return new HashSet<T>(entityMap.values());
+	}
+
+	public static <T extends AbstractSparqlEntity> Set<T> select(Collection<T> prototype, Model source)
+			throws ReflectiveOperationException, IllegalStateException, NullPointerException {
+		// TODO implement select for prototype collections
+		throw new UnsupportedOperationException();
 	}
 
 	private static <T extends AbstractSparqlEntity> SelectBuilder selectQuery(Class<T> type) {
