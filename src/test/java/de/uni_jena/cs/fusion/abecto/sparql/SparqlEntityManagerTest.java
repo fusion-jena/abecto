@@ -162,7 +162,7 @@ public class SparqlEntityManagerTest {
 		});
 
 		SparqlEntityManager.insert(Collections.singleton(with), model);
-		
+
 		Assertions.assertThrows(NullPointerException.class, () -> {
 			SparqlEntityManager.select(new EntityWithoutAnnotation(), model);
 		});
@@ -303,6 +303,27 @@ public class SparqlEntityManagerTest {
 	}
 
 	@Test
+	public void selectById() throws IllegalStateException, NullPointerException, ReflectiveOperationException {
+		EntityWithOptional alice1 = new EntityWithOptional();
+		alice1.id(ResourceFactory.createResource("http://example.org/Alice1"));
+		alice1.name = "Alice";
+		alice1.partner = Optional.empty();
+		EntityWithOptional alice2 = new EntityWithOptional();
+		alice2.id(ResourceFactory.createResource("http://example.org/Alice2"));
+		alice2.name = "Alice";
+		alice2.partner = Optional.empty();
+
+		SparqlEntityManager.insert(Arrays.asList(alice1, alice2), model);
+
+		alice1.name = null;
+		alice1.partner = null;
+		Set<EntityWithOptional> select = SparqlEntityManager.select(alice1, model);
+
+		Assertions.assertEquals(1, select.size());
+		Assertions.assertEquals(alice1.id(), select.iterator().next().id());
+	}
+
+	@Test
 	public void selectPropertyPath() throws IllegalStateException, NullPointerException, ReflectiveOperationException {
 		EntityWithResource alice = new EntityWithResource();
 		alice.id(ResourceFactory.createResource("http://example.org/alice"));
@@ -326,5 +347,31 @@ public class SparqlEntityManagerTest {
 		Assertions.assertEquals(1, select.size());
 		Assertions.assertEquals(charlie.name, select.iterator().next().name);
 		Assertions.assertEquals(alice.id(), select.iterator().next().bigBoss);
+	}
+
+	@Test
+	public void selectResourceCollectionByMultipleEnties()
+			throws IllegalStateException, NullPointerException, ReflectiveOperationException {
+		EntityWithResourceCollection alice = new EntityWithResourceCollection();
+		alice.name = "Alice";
+		alice.friends = Arrays.asList(ResourceFactory.createResource("http://example.org/Bob"),
+				ResourceFactory.createResource("http://example.org/Charlie"));
+		EntityWithResourceCollection bob = new EntityWithResourceCollection();
+		bob.name = "Bob";
+		bob.friends = Arrays.asList(ResourceFactory.createResource("http://example.org/Alice"),
+				ResourceFactory.createResource("http://example.org/Charlie"));
+
+		SparqlEntityManager.insert(Arrays.asList(alice, bob), model);
+
+		alice.friends = Collections.emptySet();
+		bob.friends = Collections.emptySet();
+
+		Set<EntityWithResourceCollection> select = SparqlEntityManager.select(Arrays.asList(alice, bob), model);
+
+		Assertions.assertEquals(2, select.size());
+		Assertions.assertEquals(new HashSet<>(alice.friends),
+				new HashSet<>(select.stream().filter((x) -> x.name.equals("Alice")).findAny().get().friends));
+		Assertions.assertEquals(new HashSet<>(bob.friends),
+				new HashSet<>(select.stream().filter((x) -> x.name.equals("Bob")).findAny().get().friends));
 	}
 }

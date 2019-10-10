@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.apache.jena.arq.querybuilder.AbstractQueryBuilder;
+import org.apache.jena.arq.querybuilder.ExprFactory;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.arq.querybuilder.UpdateBuilder;
 import org.apache.jena.graph.Node;
@@ -155,13 +156,31 @@ public class SparqlEntityManager {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	public static <T extends AbstractSparqlEntity> Set<T> select(T prototype, Model source)
 			throws ReflectiveOperationException, IllegalStateException, NullPointerException {
+		return select(Collections.singleton(prototype), source);
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <T extends AbstractSparqlEntity> Set<T> select(Collection<T> prototypes, Model source)
+			throws ReflectiveOperationException, IllegalStateException, NullPointerException {
+		if (prototypes.isEmpty()) {
+			return Collections.emptySet();
+		}
+
+		T prototype = prototypes.stream().findAny().get();
+
 		// get plain query
 		SelectBuilder select = selectQuery(prototype.getClass());
+		ExprFactory expression = select.getExprFactory();
+
+		// TODO support multiple prototypes
+
 		// add prototype values to query
 		Var idVar = AbstractQueryBuilder.makeVar("id");
+		if (prototype.id != null) {
+			select.addFilter(expression.eq(idVar, prototype.id));
+		}
 		for (Field field : prototype.getClass().getFields()) {
 			if (field.get(prototype) != null) {
 				Path pathPattern = propertyPath(field, select.getPrologHandler().getPrefixes());
@@ -178,7 +197,7 @@ public class SparqlEntityManager {
 						select.addWhere(triplePath);
 					} else {
 						TriplePath triplePath = select.makeTriplePath(idVar, pathPattern, Node.ANY);
-						select.addFilter(select.getExprFactory().notexists(new SelectBuilder().addWhere(triplePath)));
+						select.addFilter(expression.notexists(new SelectBuilder().addWhere(triplePath)));
 					}
 				} else {
 					Object value = field.get(prototype);
@@ -247,12 +266,6 @@ public class SparqlEntityManager {
 		}
 
 		return new HashSet<T>(entityMap.values());
-	}
-
-	public static <T extends AbstractSparqlEntity> Set<T> select(Collection<T> prototype, Model source)
-			throws ReflectiveOperationException, IllegalStateException, NullPointerException {
-		// TODO implement select for prototype collections
-		throw new UnsupportedOperationException();
 	}
 
 	private static <T extends AbstractSparqlEntity> SelectBuilder selectQuery(Class<T> type) {
