@@ -1,6 +1,7 @@
 package de.uni_jena.cs.fusion.abecto.sparq;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -24,9 +25,11 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.sparql.ARQInternalErrorException;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.core.TriplePath;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.path.P_Link;
 import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.path.PathParser;
@@ -161,51 +164,66 @@ public class SparqlEntityManager {
 		return select(Collections.singleton(prototype), source);
 	}
 
+	private static <T extends AbstractSparqlEntity> Expr entityExpression(T filterEntity, SelectBuilder select)
+			throws ReflectiveOperationException, ARQInternalErrorException, IllegalArgumentException,
+			NullPointerException {
+		Collection<Expr> expressions = new ArrayList<>();
+		ExprFactory factory = select.getPrologHandler().getExprFactory();
+
+		Var idVar = AbstractQueryBuilder.makeVar("id");
+		if (filterEntity.id != null) {
+			expressions.add(factory.eq(idVar, filterEntity.id));
+		}
+		for (Field field : filterEntity.getClass().getFields()) {
+			if (field.get(filterEntity) != null) {
+				Path pathPattern = propertyPath(field, select.getPrologHandler().getPrefixes());
+				if (Collection.class.isAssignableFrom(field.getType())) {
+					@SuppressWarnings("unchecked")
+					Collection<Object> values = (Collection<Object>) field.get(filterEntity);
+					for (Object value : values) {
+						TriplePath triplePath = select.makeTriplePath(idVar, pathPattern, select.makeNode(value));
+						expressions.add(factory.exists(new SelectBuilder().addWhere(triplePath)));
+					}
+				} else if (Optional.class.isAssignableFrom(field.getType())) {
+					@SuppressWarnings("unchecked")
+					Optional<Object> value = (Optional<Object>) field.get(filterEntity);
+					if (value.isPresent()) {
+						expressions
+								.add(factory.eq(AbstractQueryBuilder.makeVar(field.getName()), select.makeNode(value)));
+					} else {
+						TriplePath triplePath = select.makeTriplePath(idVar, pathPattern, Node.ANY);
+						expressions.add(factory.notexists(new SelectBuilder().addWhere(triplePath)));
+					}
+				} else {
+					Object value = field.get(filterEntity);
+					expressions.add(factory.eq(AbstractQueryBuilder.makeVar(field.getName()), select.makeNode(value)));
+				}
+			}
+		}
+
+		return expressions.stream().reduce(factory::and).orElse(factory.asExpr(true));
+	}
+
 	@SuppressWarnings("unchecked")
-	public static <T extends AbstractSparqlEntity> Set<T> select(Collection<T> prototypes, Model source)
+	public static <T extends AbstractSparqlEntity> Set<T> select(Collection<T> filterEntities, Model source)
 			throws ReflectiveOperationException, IllegalStateException, NullPointerException {
-		if (prototypes.isEmpty()) {
+		if (filterEntities.isEmpty()) {
 			return Collections.emptySet();
 		}
 
-		T prototype = prototypes.stream().findAny().get();
+		T prototype = filterEntities.stream().findAny().get();
 
 		// get plain query
 		SelectBuilder select = selectQuery(prototype.getClass());
 		ExprFactory expression = select.getExprFactory();
 
-		// TODO support multiple prototypes
+		// add entity filters to query
+		Collection<Expr> entityExpressions = new ArrayList<>();
+		for (T filterEntity : filterEntities) {
+			entityExpressions.add(entityExpression(filterEntity, select));
+		}
+		entityExpressions.stream().reduce(expression::or).ifPresent(select::addFilter);
 
-		// add prototype values to query
-		Var idVar = AbstractQueryBuilder.makeVar("id");
-		if (prototype.id != null) {
-			select.addFilter(expression.eq(idVar, prototype.id));
-		}
-		for (Field field : prototype.getClass().getFields()) {
-			if (field.get(prototype) != null) {
-				Path pathPattern = propertyPath(field, select.getPrologHandler().getPrefixes());
-				if (Collection.class.isAssignableFrom(field.getType())) {
-					Collection<Object> values = (Collection<Object>) field.get(prototype);
-					for (Object value : values) {
-						TriplePath triplePath = select.makeTriplePath(idVar, pathPattern, select.makeNode(value));
-						select.addWhere(triplePath);
-					}
-				} else if (Optional.class.isAssignableFrom(field.getType())) {
-					Optional<Object> value = (Optional<Object>) field.get(prototype);
-					if (value.isPresent()) {
-						TriplePath triplePath = select.makeTriplePath(idVar, pathPattern, select.makeNode(value));
-						select.addWhere(triplePath);
-					} else {
-						TriplePath triplePath = select.makeTriplePath(idVar, pathPattern, Node.ANY);
-						select.addFilter(expression.notexists(new SelectBuilder().addWhere(triplePath)));
-					}
-				} else {
-					Object value = field.get(prototype);
-					TriplePath triplePath = select.makeTriplePath(idVar, pathPattern, select.makeNode(value));
-					select.addWhere(triplePath);
-				}
-			}
-		}
 		// execute query
 		ResultSet queryResults = QueryExecutionFactory.create(select.build(), source).execSelect();
 		// generate result set

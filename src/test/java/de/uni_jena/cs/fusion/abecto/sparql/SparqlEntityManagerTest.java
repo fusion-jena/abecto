@@ -363,10 +363,13 @@ public class SparqlEntityManagerTest {
 
 		SparqlEntityManager.insert(Arrays.asList(alice, bob), model);
 
-		alice.friends = Collections.emptySet();
-		bob.friends = Collections.emptySet();
+		EntityWithResourceCollection aliceFilter = new EntityWithResourceCollection();
+		aliceFilter.name = "Alice";
+		EntityWithResourceCollection bobFilter = new EntityWithResourceCollection();
+		bobFilter.name = "Bob";
 
-		Set<EntityWithResourceCollection> select = SparqlEntityManager.select(Arrays.asList(alice, bob), model);
+		Set<EntityWithResourceCollection> select = SparqlEntityManager.select(Arrays.asList(aliceFilter, bobFilter),
+				model);
 
 		Assertions.assertEquals(2, select.size());
 		Assertions.assertEquals(new HashSet<>(alice.friends),
