@@ -10,6 +10,6 @@ import java.lang.annotation.Target;
 @Documented
 @Retention(RUNTIME)
 @Target(TYPE)
-public @interface Namespaces {
-	Namespace[] value();
+public @interface SparqlNamespaces {
+	SparqlNamespace[] value();
 }

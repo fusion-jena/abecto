@@ -8,11 +8,15 @@ import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+/**
+ * Indicates the namespaces used by {@link SparqlEntityManager}.
+ */
 @Documented
 @Retention(RUNTIME)
 @Target(TYPE)
-@Repeatable(Namespaces.class)
-public @interface Namespace {
+@Repeatable(SparqlNamespaces.class)
+public @interface SparqlNamespace {
 	String prefix();
+
 	String namespace();
 }

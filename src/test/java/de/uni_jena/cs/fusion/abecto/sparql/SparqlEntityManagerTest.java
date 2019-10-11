@@ -17,81 +17,81 @@ import org.junit.jupiter.api.Test;
 
 import de.uni_jena.cs.fusion.abecto.model.Models;
 import de.uni_jena.cs.fusion.abecto.sparq.AbstractSparqlEntity;
-import de.uni_jena.cs.fusion.abecto.sparq.Namespace;
-import de.uni_jena.cs.fusion.abecto.sparq.PropertyPattern;
+import de.uni_jena.cs.fusion.abecto.sparq.SparqlNamespace;
+import de.uni_jena.cs.fusion.abecto.sparq.SparqlPattern;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 
 public class SparqlEntityManagerTest {
 
-	@Namespace(prefix = "ex", namespace = "http://example.org/")
+	@SparqlNamespace(prefix = "ex", namespace = "http://example.org/")
 	public static class EntityWithCollection extends AbstractSparqlEntity {
-		@PropertyPattern("ex:name")
+		@SparqlPattern("ex:name")
 		public String name;
-		@PropertyPattern("ex:friend")
+		@SparqlPattern("ex:friend")
 		public Collection<String> friends = new ArrayList<>();
 	}
 
-	@Namespace(prefix = "ex", namespace = "http://example.org/")
-	@Namespace(prefix = "ex2", namespace = "http://example.com/")
+	@SparqlNamespace(prefix = "ex", namespace = "http://example.org/")
+	@SparqlNamespace(prefix = "ex2", namespace = "http://example.com/")
 	public static class EntityWithMultipleNamespaces extends AbstractSparqlEntity {
-		@PropertyPattern("ex:name")
+		@SparqlPattern("ex:name")
 		public String name;
-		@PropertyPattern("ex2:age")
+		@SparqlPattern("ex2:age")
 		public Integer age;
 	}
 
-	@Namespace(prefix = "ex", namespace = "http://example.org/")
+	@SparqlNamespace(prefix = "ex", namespace = "http://example.org/")
 	public static class EntityWithOptional extends AbstractSparqlEntity {
-		@PropertyPattern("ex:name")
+		@SparqlPattern("ex:name")
 		public String name;
-		@PropertyPattern("ex:partner")
+		@SparqlPattern("ex:partner")
 		public Optional<String> partner;
 	}
 
-	@Namespace(prefix = "ex", namespace = "http://example.org/")
+	@SparqlNamespace(prefix = "ex", namespace = "http://example.org/")
 	public static class EntityWithoutAnnotation extends AbstractSparqlEntity {
-		@PropertyPattern("ex:name")
+		@SparqlPattern("ex:name")
 		public String name;
 		public Resource boss;
 	}
 
-	@Namespace(prefix = "ex", namespace = "http://example.org/")
+	@SparqlNamespace(prefix = "ex", namespace = "http://example.org/")
 	public static class EntityWithPropertyPath extends AbstractSparqlEntity {
-		@PropertyPattern("ex:name")
+		@SparqlPattern("ex:name")
 		public String name;
-		@PropertyPattern("ex:boss/ex:boss")
+		@SparqlPattern("ex:boss/ex:boss")
 		public Resource bigBoss;
 	}
 
-	@Namespace(prefix = "ex", namespace = "http://example.org/")
+	@SparqlNamespace(prefix = "ex", namespace = "http://example.org/")
 	public static class EntityWithResource extends AbstractSparqlEntity {
-		@PropertyPattern("ex:name")
+		@SparqlPattern("ex:name")
 		public String name;
-		@PropertyPattern("ex:boss")
+		@SparqlPattern("ex:boss")
 		public Resource boss;
 	}
 
-	@Namespace(prefix = "ex", namespace = "http://example.org/")
+	@SparqlNamespace(prefix = "ex", namespace = "http://example.org/")
 	public static class EntityWithResourceCollection extends AbstractSparqlEntity {
-		@PropertyPattern("ex:name")
+		@SparqlPattern("ex:name")
 		public String name;
-		@PropertyPattern("ex:friend")
+		@SparqlPattern("ex:friend")
 		public Collection<Resource> friends = new ArrayList<>();
 	}
 
-	@Namespace(prefix = "ex", namespace = "http://example.org/")
+	@SparqlNamespace(prefix = "ex", namespace = "http://example.org/")
 	public static class EntityWithResourceOptional extends AbstractSparqlEntity {
-		@PropertyPattern("ex:name")
+		@SparqlPattern("ex:name")
 		public String name;
-		@PropertyPattern("ex:partner")
+		@SparqlPattern("ex:partner")
 		public Optional<Resource> partner;
 	}
 
-	@Namespace(prefix = "ex", namespace = "http://example.org/")
+	@SparqlNamespace(prefix = "ex", namespace = "http://example.org/")
 	public static class EntityWithUninitializedCollection extends AbstractSparqlEntity {
-		@PropertyPattern("ex:name")
+		@SparqlPattern("ex:name")
 		public String name;
-		@PropertyPattern("ex:friend")
+		@SparqlPattern("ex:friend")
 		public Collection<String> friends;
 	}
 
