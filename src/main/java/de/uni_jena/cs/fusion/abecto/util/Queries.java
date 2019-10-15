@@ -14,6 +14,7 @@ import org.apache.jena.vocabulary.RDF;
 /**
  * Provides prepared queries for meta model patterns.
  */
+@Deprecated
 public class Queries {
 	/**
 	 * Returns a prepared select query to get pairs of category and pattern.

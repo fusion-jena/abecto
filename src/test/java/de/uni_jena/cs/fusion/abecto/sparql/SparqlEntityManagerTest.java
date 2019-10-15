@@ -16,82 +16,90 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import de.uni_jena.cs.fusion.abecto.model.Models;
-import de.uni_jena.cs.fusion.abecto.sparq.AbstractSparqlEntity;
+import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlNamespace;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlPattern;
-import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 
 public class SparqlEntityManagerTest {
 
 	@SparqlNamespace(prefix = "ex", namespace = "http://example.org/")
-	public static class EntityWithCollection extends AbstractSparqlEntity {
-		@SparqlPattern("ex:name")
+	public static class EntityWithCollection {
+		public Resource id;
+		@SparqlPattern(subject = "id", predicate = "ex:name")
 		public String name;
-		@SparqlPattern("ex:friend")
+		@SparqlPattern(subject = "id", predicate = "ex:friend")
 		public Collection<String> friends = new ArrayList<>();
 	}
 
 	@SparqlNamespace(prefix = "ex", namespace = "http://example.org/")
 	@SparqlNamespace(prefix = "ex2", namespace = "http://example.com/")
-	public static class EntityWithMultipleNamespaces extends AbstractSparqlEntity {
-		@SparqlPattern("ex:name")
+	public static class EntityWithMultipleNamespaces {
+		public Resource id;
+		@SparqlPattern(subject = "id", predicate = "ex:name")
 		public String name;
-		@SparqlPattern("ex2:age")
+		@SparqlPattern(subject = "id", predicate = "ex2:age")
 		public Integer age;
 	}
 
 	@SparqlNamespace(prefix = "ex", namespace = "http://example.org/")
-	public static class EntityWithOptional extends AbstractSparqlEntity {
-		@SparqlPattern("ex:name")
+	public static class EntityWithOptional {
+		public Resource id;
+		@SparqlPattern(subject = "id", predicate = "ex:name")
 		public String name;
-		@SparqlPattern("ex:partner")
+		@SparqlPattern(subject = "id", predicate = "ex:partner")
 		public Optional<String> partner;
 	}
 
 	@SparqlNamespace(prefix = "ex", namespace = "http://example.org/")
-	public static class EntityWithoutAnnotation extends AbstractSparqlEntity {
-		@SparqlPattern("ex:name")
+	public static class EntityWithoutAnnotation {
+		public Resource id;
+		@SparqlPattern(subject = "id", predicate = "ex:name")
 		public String name;
 		public Resource boss;
 	}
 
 	@SparqlNamespace(prefix = "ex", namespace = "http://example.org/")
-	public static class EntityWithPropertyPath extends AbstractSparqlEntity {
-		@SparqlPattern("ex:name")
+	public static class EntityWithPropertyPath {
+		public Resource id;
+		@SparqlPattern(subject = "id", predicate = "ex:name")
 		public String name;
-		@SparqlPattern("ex:boss/ex:boss")
+		@SparqlPattern(subject = "id", predicate = "ex:boss/ex:boss")
 		public Resource bigBoss;
 	}
 
 	@SparqlNamespace(prefix = "ex", namespace = "http://example.org/")
-	public static class EntityWithResource extends AbstractSparqlEntity {
-		@SparqlPattern("ex:name")
+	public static class EntityWithResource {
+		public Resource id;
+		@SparqlPattern(subject = "id", predicate = "ex:name")
 		public String name;
-		@SparqlPattern("ex:boss")
+		@SparqlPattern(subject = "id", predicate = "ex:boss")
 		public Resource boss;
 	}
 
 	@SparqlNamespace(prefix = "ex", namespace = "http://example.org/")
-	public static class EntityWithResourceCollection extends AbstractSparqlEntity {
-		@SparqlPattern("ex:name")
+	public static class EntityWithResourceCollection {
+		public Resource id;
+		@SparqlPattern(subject = "id", predicate = "ex:name")
 		public String name;
-		@SparqlPattern("ex:friend")
+		@SparqlPattern(subject = "id", predicate = "ex:friend")
 		public Collection<Resource> friends = new ArrayList<>();
 	}
 
 	@SparqlNamespace(prefix = "ex", namespace = "http://example.org/")
-	public static class EntityWithResourceOptional extends AbstractSparqlEntity {
-		@SparqlPattern("ex:name")
+	public static class EntityWithResourceOptional {
+		public Resource id;
+		@SparqlPattern(subject = "id", predicate = "ex:name")
 		public String name;
-		@SparqlPattern("ex:partner")
+		@SparqlPattern(subject = "id", predicate = "ex:partner")
 		public Optional<Resource> partner;
 	}
 
 	@SparqlNamespace(prefix = "ex", namespace = "http://example.org/")
-	public static class EntityWithUninitializedCollection extends AbstractSparqlEntity {
-		@SparqlPattern("ex:name")
+	public static class EntityWithUninitializedCollection {
+		public Resource id;
+		@SparqlPattern(subject = "id", predicate = "ex:name")
 		public String name;
-		@SparqlPattern("ex:friend")
+		@SparqlPattern(subject = "id", predicate = "ex:friend")
 		public Collection<String> friends;
 	}
 
@@ -135,7 +143,7 @@ public class SparqlEntityManagerTest {
 	@Test
 	public void insertAndSelectId() throws IllegalStateException, NullPointerException, ReflectiveOperationException {
 		EntityWithOptional alice = new EntityWithOptional();
-		alice.id(ResourceFactory.createResource("http://example.org/Alice"));
+		alice.id = ResourceFactory.createResource("http://example.org/Alice");
 		alice.name = "Alice";
 		alice.partner = Optional.empty();
 
@@ -144,7 +152,7 @@ public class SparqlEntityManagerTest {
 		Set<EntityWithOptional> select = SparqlEntityManager.select(new EntityWithOptional(), model);
 
 		Assertions.assertEquals(1, select.size());
-		Assertions.assertEquals(alice.id(), select.iterator().next().id());
+		Assertions.assertEquals(alice.id, select.iterator().next().id);
 		Assertions.assertEquals(alice.name, select.iterator().next().name);
 	}
 
@@ -305,11 +313,11 @@ public class SparqlEntityManagerTest {
 	@Test
 	public void selectById() throws IllegalStateException, NullPointerException, ReflectiveOperationException {
 		EntityWithOptional alice1 = new EntityWithOptional();
-		alice1.id(ResourceFactory.createResource("http://example.org/Alice1"));
+		alice1.id = ResourceFactory.createResource("http://example.org/Alice1");
 		alice1.name = "Alice";
 		alice1.partner = Optional.empty();
 		EntityWithOptional alice2 = new EntityWithOptional();
-		alice2.id(ResourceFactory.createResource("http://example.org/Alice2"));
+		alice2.id = ResourceFactory.createResource("http://example.org/Alice2");
 		alice2.name = "Alice";
 		alice2.partner = Optional.empty();
 
@@ -320,23 +328,23 @@ public class SparqlEntityManagerTest {
 		Set<EntityWithOptional> select = SparqlEntityManager.select(alice1, model);
 
 		Assertions.assertEquals(1, select.size());
-		Assertions.assertEquals(alice1.id(), select.iterator().next().id());
+		Assertions.assertEquals(alice1.id, select.iterator().next().id);
 	}
 
 	@Test
 	public void selectPropertyPath() throws IllegalStateException, NullPointerException, ReflectiveOperationException {
 		EntityWithResource alice = new EntityWithResource();
-		alice.id(ResourceFactory.createResource("http://example.org/alice"));
+		alice.id = ResourceFactory.createResource("http://example.org/alice");
 		alice.name = "Alice";
 		alice.boss = ResourceFactory.createResource("http://example.org/alice");
 		EntityWithResource bob = new EntityWithResource();
-		bob.id(ResourceFactory.createResource("http://example.org/bob"));
+		bob.id = ResourceFactory.createResource("http://example.org/bob");
 		bob.name = "Bob";
-		bob.boss = alice.id();
+		bob.boss = alice.id;
 		EntityWithResource charlie = new EntityWithResource();
-		charlie.id(ResourceFactory.createResource("http://example.org/charlie"));
+		charlie.id = ResourceFactory.createResource("http://example.org/charlie");
 		charlie.name = "Charlie";
-		charlie.boss = bob.id();
+		charlie.boss = bob.id;
 
 		SparqlEntityManager.insert(Arrays.asList(alice, bob, charlie), model);
 
@@ -346,7 +354,7 @@ public class SparqlEntityManagerTest {
 
 		Assertions.assertEquals(1, select.size());
 		Assertions.assertEquals(charlie.name, select.iterator().next().name);
-		Assertions.assertEquals(alice.id(), select.iterator().next().bigBoss);
+		Assertions.assertEquals(alice.id, select.iterator().next().bigBoss);
 	}
 
 	@Test
