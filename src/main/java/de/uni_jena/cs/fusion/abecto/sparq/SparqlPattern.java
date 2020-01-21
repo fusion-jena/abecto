@@ -11,7 +11,7 @@ import java.lang.annotation.Target;
 /**
  * Indicates the properties used by {@link SparqlEntityManager} for a field.
  * 
- * Namespaces indicated with at the class with {@link SparqlNamespace} will be
+ * Namespaces indicated at the class with {@link SparqlNamespace} will be
  * considered.
  */
 @Documented
