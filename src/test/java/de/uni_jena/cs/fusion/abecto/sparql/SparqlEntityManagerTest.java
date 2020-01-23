@@ -138,6 +138,15 @@ public class SparqlEntityManagerTest {
 		Assertions.assertEquals(1, select.size());
 		Assertions.assertEquals(empty.name, select.iterator().next().name);
 		Assertions.assertEquals(new HashSet<>(empty.friends), new HashSet<>(select.iterator().next().friends));
+		
+		pattern.name = null;
+		pattern.friends = Arrays.asList("Bob", "Charlie");
+		select = SparqlEntityManager.select(pattern, model);
+		Assertions.assertEquals(1, select.size());
+		Assertions.assertEquals(notEmpty.name, select.iterator().next().name);
+		Assertions.assertEquals(new HashSet<>(notEmpty.friends), new HashSet<>(select.iterator().next().friends));
+		
+		
 	}
 
 	@Test
@@ -157,7 +166,8 @@ public class SparqlEntityManagerTest {
 	}
 
 	@Test
-	public void insertAndSelectMissingFieldAnnotation() {
+	public void insertAndSelectMissingFieldAnnotation()
+			throws IllegalStateException, NullPointerException, ReflectiveOperationException {
 		EntityWithResource with = new EntityWithResource();
 		with.name = "Alice";
 		with.boss = ResourceFactory.createResource("http://example.org/boss");
@@ -165,13 +175,11 @@ public class SparqlEntityManagerTest {
 		without.name = with.name;
 		without.boss = with.boss;
 
-		Assertions.assertThrows(NullPointerException.class, () -> {
-			SparqlEntityManager.insert(Collections.singleton(without), model);
-		});
+		SparqlEntityManager.insert(Collections.singleton(without), model);
 
 		SparqlEntityManager.insert(Collections.singleton(with), model);
 
-		Assertions.assertThrows(NullPointerException.class, () -> {
+		Assertions.assertThrows(IllegalStateException.class, () -> {
 			SparqlEntityManager.select(new EntityWithoutAnnotation(), model);
 		});
 	}
@@ -358,7 +366,7 @@ public class SparqlEntityManagerTest {
 	}
 
 	@Test
-	public void selectResourceCollectionByMultipleEnties()
+	public void selectResourceCollectionByMultipleEntities()
 			throws IllegalStateException, NullPointerException, ReflectiveOperationException {
 		EntityWithResourceCollection alice = new EntityWithResourceCollection();
 		alice.name = "Alice";

@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -57,44 +58,41 @@ public class SparqlEntityManager {
 		update.addInsert(new Triple(subject, predicate, object));
 	}
 
-	private static <T> Expr objectFilter(T filterEntity, SelectBuilder select) throws ReflectiveOperationException,
+	private static <T> Expr getSelectFilter(T filterEntity, SelectBuilder select) throws ReflectiveOperationException,
 			ARQInternalErrorException, IllegalArgumentException, NullPointerException {
 		Collection<Expr> expressions = new ArrayList<>();
 		ExprFactory factory = select.getPrologHandler().getExprFactory();
 
 		for (Field field : filterEntity.getClass().getFields()) {
 			if (field.get(filterEntity) != null) {
-				for (SparqlPattern annotation : field.getAnnotationsByType(SparqlPattern.class)) {
+				Object value = field.get(filterEntity);
+				if (value instanceof Collection) {
+					SelectBuilder existsClause = new SelectBuilder();
+					for (SparqlPattern annotation : field.getAnnotationsByType(SparqlPattern.class)) {
+						Path predicate = getAnnotationPropertyPath(field, annotation,
+								select.getPrologHandler().getPrefixes());
+						if (isAnnotationWithSubject(annotation)) {
+							for (Object element : (Collection<?>) value) {
 
-					// get subject
-					Var subject = AbstractQueryBuilder.makeVar(annotation.subject());
+								// use element as object
+								Node subject = AbstractQueryBuilder.makeVar(annotation.subject());
+								Node object = select.makeNode(element);
 
-					// get predicate
-					Path predicate = propertyPath(field, annotation, select.getPrologHandler().getPrefixes());
-
-					// get object and add expression
-					if (Collection.class.isAssignableFrom(field.getType())) {
-						@SuppressWarnings("unchecked")
-						Collection<Object> values = (Collection<Object>) field.get(filterEntity);
-						for (Object value : values) {
-							TriplePath triplePath = select.makeTriplePath(subject, predicate, select.makeNode(value));
-							expressions.add(factory.exists(new SelectBuilder().addWhere(triplePath)));
-						}
-					} else if (Optional.class.isAssignableFrom(field.getType())) {
-						@SuppressWarnings("unchecked")
-						Optional<Object> value = (Optional<Object>) field.get(filterEntity);
-						if (value.isPresent()) {
-							expressions.add(
-									factory.eq(AbstractQueryBuilder.makeVar(field.getName()), select.makeNode(value)));
+								// add triple
+								existsClause.addWhere(select.makeTriplePath(subject, predicate, object));
+							}
+						} else if (isAnnotationWithObject(annotation)) {
+							throw new IllegalArgumentException(String.format(
+									"Illegal annotation for %s: Omission of annotation subject permitted only for Resource fields.",
+									field.getName()));
 						} else {
-							TriplePath triplePath = select.makeTriplePath(subject, predicate, Node.ANY);
-							expressions.add(factory.notexists(new SelectBuilder().addWhere(triplePath)));
+							throw new IllegalArgumentException(String.format(
+									"Missing annotation for %s: Either subject or object required.", field.getName()));
 						}
-					} else {
-						Object value = field.get(filterEntity);
-						expressions
-								.add(factory.eq(AbstractQueryBuilder.makeVar(field.getName()), select.makeNode(value)));
 					}
+					expressions.add(factory.exists(existsClause));
+				} else {
+					expressions.add(factory.eq(AbstractQueryBuilder.makeVar(field.getName()), select.makeNode(value)));
 				}
 			}
 		}
@@ -102,7 +100,7 @@ public class SparqlEntityManager {
 		return expressions.stream().reduce(factory::and).orElse(factory.asExpr(true));
 	}
 
-	private static Object fieldValue(RDFNode node, Field field) {
+	private static Object getFieldValue(RDFNode node, Field field) {
 		if (node.isLiteral()) {
 			return node.asLiteral().getValue();
 		} else if (node.isResource()) {
@@ -206,15 +204,15 @@ public class SparqlEntityManager {
 			for (Field field : resources.keySet()) {
 				for (SparqlPattern annotation : field.getAnnotationsByType(SparqlPattern.class)) {
 					validateAnnotation(annotation, field);
-					Node property = property(field, annotation, prologue);
-					if (annotationWithSubject(annotation)) {
-						Node subject = subject(field, annotation);
+					Node property = getAnnotationProperty(field, annotation, prologue);
+					if (isAnnotationWithSubject(annotation)) {
+						Node subject = getAnnotationSubject(field, annotation, resources);
 						Node object = resources.get(field);
 						addInsert(update, subject, property, object);
 						requiredResources.add(annotation.subject());
-					} else if (annotationWithObject(annotation)) {
+					} else if (isAnnotationWithObject(annotation)) {
 						Node subject = resources.get(field);
-						Node object = object(field, annotation, prologue);
+						Node object = getAnnotationObject(field, annotation, prologue);
 						addInsert(update, subject, property, object);
 					}
 				}
@@ -223,9 +221,9 @@ public class SparqlEntityManager {
 			for (Field field : literals.keySet()) {
 				for (SparqlPattern annotation : field.getAnnotationsByType(SparqlPattern.class)) {
 					validateAnnotation(annotation, field);
-					if (annotationWithSubject(annotation)) {
-						Node subject = subject(field, annotation);
-						Node property = property(field, annotation, prologue);
+					if (isAnnotationWithSubject(annotation)) {
+						Node subject = getAnnotationSubject(field, annotation, resources);
+						Node property = getAnnotationProperty(field, annotation, prologue);
 						Node object = literals.get(field);
 						addInsert(update, subject, property, object);
 						requiredResources.add(annotation.subject());
@@ -239,9 +237,9 @@ public class SparqlEntityManager {
 			for (Field field : collections.keySet()) {
 				for (SparqlPattern annotation : field.getAnnotationsByType(SparqlPattern.class)) {
 					validateAnnotation(annotation, field);
-					if (annotationWithSubject(annotation)) {
-						Node subject = subject(field, annotation);
-						Node property = property(field, annotation, prologue);
+					if (isAnnotationWithSubject(annotation)) {
+						Node subject = getAnnotationSubject(field, annotation, resources);
+						Node property = getAnnotationProperty(field, annotation, prologue);
 						for (Node object : collections.get(field)) {
 							addInsert(update, subject, property, object);
 						}
@@ -257,19 +255,19 @@ public class SparqlEntityManager {
 					.listIterator(); requiredResourcesIterator.hasNext();) {
 				String fieldName = requiredResourcesIterator.next();
 				try {
-					Field field = resource.getClass().getField(requiredResourcesIterator.next());
+					Field field = resource.getClass().getField(fieldName);
 					if (optionalResources.containsKey(field)) {
 						for (SparqlPattern annotation : field.getAnnotationsByType(SparqlPattern.class)) {
 							validateAnnotation(annotation, field);
-							Node property = property(field, annotation, prologue);
-							if (annotationWithSubject(annotation)) {
-								Node subject = subject(field, annotation);
+							Node property = getAnnotationProperty(field, annotation, prologue);
+							if (isAnnotationWithSubject(annotation)) {
+								Node subject = getAnnotationSubject(field, annotation, resources);
 								Node object = optionalResources.get(field);
 								addInsert(update, subject, property, object);
 								requiredResourcesIterator.add(annotation.subject());
-							} else if (annotationWithObject(annotation)) {
+							} else if (isAnnotationWithObject(annotation)) {
 								Node subject = optionalResources.get(field);
-								Node object = object(field, annotation, prologue);
+								Node object = getAnnotationObject(field, annotation, prologue);
 								addInsert(update, subject, property, object);
 							}
 						}
@@ -286,11 +284,11 @@ public class SparqlEntityManager {
 
 	}
 
-	private static boolean annotationWithSubject(SparqlPattern annotation) {
+	private static boolean isAnnotationWithSubject(SparqlPattern annotation) {
 		return annotation.object().isEmpty() && !annotation.subject().isEmpty();
 	}
 
-	private static boolean annotationWithObject(SparqlPattern annotation) {
+	private static boolean isAnnotationWithObject(SparqlPattern annotation) {
 		return annotation.subject().isEmpty() && !annotation.object().isEmpty();
 	}
 
@@ -317,8 +315,19 @@ public class SparqlEntityManager {
 		insert(Collections.singleton(object), target);
 	}
 
-	private static Node subject(Field field, SparqlPattern annotation)
-			throws IllegalArgumentException, NullPointerException {
+	/**
+	 * 
+	 * @param field
+	 * @param annotation
+	 * @param resources
+	 * @return
+	 * @throws IllegalArgumentException
+	 * @throws NullPointerException
+	 * @throws NoSuchElementException   if subject field is not present or not a
+	 *                                  resource
+	 */
+	private static Node getAnnotationSubject(Field field, SparqlPattern annotation, Map<Field, Node> resources)
+			throws IllegalArgumentException, NullPointerException, NoSuchElementException {
 		try {
 			String subject = annotation.subject();
 			if (subject.isEmpty()) {
@@ -326,14 +335,16 @@ public class SparqlEntityManager {
 						String.format("Illegal %s annotation for member %s: Expected subject.",
 								SparqlPattern.class.getSimpleName(), field.getName()));
 			}
-			return AbstractQueryBuilder.makeVar(subject);
-		} catch (NullPointerException e) {
+			// return value of the subject field
+			return resources.entrySet().stream().filter((e) -> e.getKey().getName().equals(subject)).findAny()
+					.orElseThrow().getValue();
+		} catch (NullPointerException e) { // annotation == null
 			throw new NullPointerException(String.format("Missing %s annotation for member %s.",
 					SparqlPattern.class.getSimpleName(), field.getName()));
 		}
 	}
 
-	private static Node object(Field field, SparqlPattern annotation, Prologue prologue)
+	private static Node getAnnotationObject(Field field, SparqlPattern annotation, Prologue prologue)
 			throws IllegalArgumentException, NullPointerException {
 		try {
 			String object = annotation.object();
@@ -352,7 +363,7 @@ public class SparqlEntityManager {
 		}
 	}
 
-	private static Node property(Field field, SparqlPattern annotation, Prologue prologue)
+	private static Node getAnnotationProperty(Field field, SparqlPattern annotation, Prologue prologue)
 			throws IllegalArgumentException, NullPointerException {
 		try {
 			String propertyAnnotation = annotation.predicate();
@@ -370,7 +381,7 @@ public class SparqlEntityManager {
 		}
 	}
 
-	private static Path propertyPath(Field field, SparqlPattern annotation, PrefixMapping prefixMapping)
+	private static Path getAnnotationPropertyPath(Field field, SparqlPattern annotation, PrefixMapping prefixMapping)
 			throws IllegalArgumentException, NullPointerException {
 		try {
 			String propertyAnnotation = annotation.predicate();
@@ -397,10 +408,10 @@ public class SparqlEntityManager {
 	 * <p>
 	 * The results will be filtered using the given objects. Each given object will
 	 * be translated into a filter expression. Result objects must match at least
-	 * one of filter expression. To match a filter, the all fields of the result
-	 * objects must be match the according fields of the given object that are not
-	 * null. Result fields matched if they are equal to the literal representation
-	 * of the given object, except of fields with one of the following types:
+	 * one of filter expression. To match a filter, all fields of the result objects
+	 * must match the according fields of the given object that are not null. Result
+	 * fields match if they are equal to the literal representation of the given
+	 * object, except of fields with one of the following types:
 	 * <dl>
 	 * <dt>{@link Collection}
 	 * <dd>A result field matches, if for each element of the given object a
@@ -414,7 +425,7 @@ public class SparqlEntityManager {
 	 * <dd>A result field matches, if it represents the same resource.
 	 * </dl>
 	 * 
-	 * TODO javadoc for return and throws
+	 * TODO javadoc for throws
 	 * 
 	 * @param <T>           the type of the objects
 	 * @param filterObjects the objects to use for filtering the result
@@ -435,15 +446,15 @@ public class SparqlEntityManager {
 		List<Field> fields = Arrays.asList(prototype.getClass().getFields());
 
 		// get plain query
-		SelectBuilder select = selectQuery(prototype.getClass());
-		ExprFactory expression = select.getExprFactory();
+		SelectBuilder select = getSelectQuery(prototype.getClass());
+		ExprFactory expressionFactory = select.getExprFactory();
 
 		// add entity filters to query
 		Collection<Expr> entityExpressions = new ArrayList<>();
 		for (T filterObject : filterObjects) {
-			entityExpressions.add(objectFilter(filterObject, select));
+			entityExpressions.add(getSelectFilter(filterObject, select));
 		}
-		entityExpressions.stream().reduce(expression::or).ifPresent(select::addFilter);
+		entityExpressions.stream().reduce(expressionFactory::or).ifPresent(select::addFilter);
 
 		// execute query
 		ResultSet queryResults = QueryExecutionFactory.create(select.build(), source).execSelect();
@@ -451,13 +462,11 @@ public class SparqlEntityManager {
 		boolean classContainsCollection = fields.stream()
 				.anyMatch((field -> Collection.class.isAssignableFrom(field.getType())));
 
-		// initialize result index by field values for collection building
-		Map<Field, Map<RDFNode, Set<T>>> entitiesByFields = new HashMap<>();
-		if (classContainsCollection) {
-			for (Field field : prototype.getClass().getFields()) {
-				if (!Collection.class.isAssignableFrom(field.getType())) {
-					entitiesByFields.put(field, new HashMap<>());
-				}
+		// result entity indices for each field by value
+		Map<Field, Map<RDFNode, Set<T>>> resultEntityIndices = new HashMap<>();
+		for (Field field : fields) {
+			if (!Collection.class.isAssignableFrom(field.getType())) {
+				resultEntityIndices.put(field, new HashMap<>());
 			}
 		}
 
@@ -468,23 +477,25 @@ public class SparqlEntityManager {
 			boolean firstVisit;
 
 			// get entity by lookup for collection building or instantiation
-			T entity = (T) prototype.getClass().getDeclaredConstructor().newInstance();
+			T entity;
 			if (classContainsCollection) {
-				Set<T> priviousEntities = fields.stream()
-						.map((field) -> entitiesByFields.get(field).get(queryResult.get(field.getName())))
+				Set<T> matchingEntities = fields.stream()
+						.filter((field) -> !Collection.class.isAssignableFrom(field.getType()))
+						.map((field) -> resultEntityIndices.get(field).getOrDefault(queryResult.get(field.getName()),
+								Collections.emptySet()))
 						.reduce((a, b) -> {
 							a.retainAll(b);
 							return a;
 						}).orElse(Collections.emptySet());
-				if (!priviousEntities.isEmpty()) {
-					entity = priviousEntities.iterator().next();
+				if (!matchingEntities.isEmpty()) {
+					entity = matchingEntities.iterator().next();
 					firstVisit = false;
 				} else {
-					entity = (T) prototype.getClass().getDeclaredConstructor().newInstance();
+					entity = getNewEntity(prototype);
 					firstVisit = true;
 				}
 			} else {
-				entity = (T) prototype.getClass().getDeclaredConstructor().newInstance();
+				entity = getNewEntity(prototype);
 				firstVisit = true;
 			}
 			entities.add(entity);
@@ -495,7 +506,7 @@ public class SparqlEntityManager {
 					Collection<Object> collection = (Collection<Object>) field.get(entity);
 					if (collection != null) {
 						if (node != null) {
-							collection.add(fieldValue(node, field));
+							collection.add(getFieldValue(node, field));
 						}
 					} else {
 						throw new NullPointerException(
@@ -505,21 +516,22 @@ public class SparqlEntityManager {
 					Object newValue;
 					if (Optional.class.isAssignableFrom(field.getType())) {
 						if (node != null) {
-							newValue = Optional.of(fieldValue(node, field));
+							newValue = Optional.of(getFieldValue(node, field));
 						} else {
 							newValue = Optional.empty();
 						}
 					} else {
 						if (node != null) {
-							newValue = fieldValue(node, field);
+							newValue = getFieldValue(node, field);
 						} else {
-							// TODO is this possible?
+							// this might occur, if there are field not connected to other fields
 							throw new IllegalStateException(
 									String.format("Missing value for non optional member %s.", field.getName()));
 						}
 					}
 					if (firstVisit) {
 						field.set(entity, newValue);
+						resultEntityIndices.get(field).computeIfAbsent(node, (n) -> new HashSet<T>()).add(entity);
 					} else if (!field.get(entity).equals(newValue)) {
 						throw new IllegalStateException(
 								String.format("Multiple values for functional field %s: \"%s\", \"%s\".",
@@ -532,12 +544,33 @@ public class SparqlEntityManager {
 		return entities;
 	}
 
+	@SuppressWarnings("unchecked")
+	private static <T> T getNewEntity(T prototype) throws ReflectiveOperationException {
+		return (T) prototype.getClass().getDeclaredConstructor().newInstance();
+	}
+
+	/**
+	 * Selects objects of a certain class form a {@link Model} via SPARQL filtered
+	 * by a given object of that class.
+	 * 
+	 * This is a shortcut for passing a singleton {@link Collection} to
+	 * {@link SparqlEntityManager#select(Collection, Model)}.
+	 * <p>
+	 * 
+	 * @param <T>       the type of the objects
+	 * @param prototype the object to use for filtering the result
+	 * @param source    the {@link Model} select the objects from
+	 * @return the selected objects
+	 * @throws ReflectiveOperationException
+	 * @throws IllegalStateException
+	 * @throws NullPointerException
+	 */
 	public static <T> Set<T> select(T prototype, Model source)
 			throws ReflectiveOperationException, IllegalStateException, NullPointerException {
 		return select(Collections.singleton(prototype), source);
 	}
 
-	private static <T> SelectBuilder selectQuery(Class<T> type) {
+	private static <T> SelectBuilder getSelectQuery(Class<T> type) {
 		return SELECT_QUERY_CACHE.computeIfAbsent(type, (t) -> {
 			SelectBuilder select = new SelectBuilder();
 
@@ -549,9 +582,11 @@ public class SparqlEntityManager {
 			for (Field field : type.getFields()) {
 				for (SparqlPattern annotation : field.getAnnotationsByType(SparqlPattern.class)) {
 					Var subject;
-					Path predicate = propertyPath(field, annotation, select.getPrologHandler().getPrefixes());
+					Path predicate = getAnnotationPropertyPath(field, annotation,
+							select.getPrologHandler().getPrefixes());
 					Var object;
-					if (annotation.subject().isEmpty() && !annotation.object().isEmpty()) {
+
+					if (isAnnotationWithObject(annotation)) {
 						// use field as subject
 						if (!Resource.class.isAssignableFrom(field.getType())) {
 							throw new IllegalArgumentException(String.format(
@@ -560,7 +595,7 @@ public class SparqlEntityManager {
 						}
 						subject = AbstractQueryBuilder.makeVar(field.getName());
 						object = AbstractQueryBuilder.makeVar(annotation.object());
-					} else if (annotation.object().isEmpty() && !annotation.subject().isEmpty()) {
+					} else if (isAnnotationWithSubject(annotation)) {
 						// use field as object
 						subject = AbstractQueryBuilder.makeVar(annotation.subject());
 						object = AbstractQueryBuilder.makeVar(field.getName());
