@@ -144,7 +144,9 @@ public class SparqlEntityManager {
 		Field[] fields = prototype.getClass().getFields();
 
 		// manage prefixes
+		
 		Prologue prologue = new Prologue();
+		prologue.setBaseURI("");
 		for (SparqlNamespace namespaceAnnotation : prototype.getClass().getAnnotationsByType(SparqlNamespace.class)) {
 			prologue.setPrefix(namespaceAnnotation.prefix(), namespaceAnnotation.namespace());
 		}
@@ -353,8 +355,9 @@ public class SparqlEntityManager {
 						String.format("Illegal %s annotation for member %s: Expected object.",
 								SparqlPattern.class.getSimpleName(), field.getName()));
 			}
-			return NodeFactory.createURI(prologue.getResolver().resolveToString(object));
+			return NodeFactory.createURI(prologue.expandPrefixedName(object));
 		} catch (NullPointerException e) {
+			e.printStackTrace(System.out);
 			throw new NullPointerException(String.format("Missing %s annotation for member %s.",
 					SparqlPattern.class.getSimpleName(), field.getName()));
 		} catch (RiotException e) {

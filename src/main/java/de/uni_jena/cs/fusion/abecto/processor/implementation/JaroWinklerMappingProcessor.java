@@ -9,23 +9,19 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.jena.graph.NodeFactory;
-import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
-import org.apache.jena.sparql.syntax.ElementGroup;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
-import de.uni_jena.cs.fusion.abecto.pattern.Pattern;
 import de.uni_jena.cs.fusion.abecto.processor.AbstractMappingProcessor;
-import de.uni_jena.cs.fusion.abecto.util.Queries;
+import de.uni_jena.cs.fusion.abecto.processor.model.Category;
+import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 import de.uni_jena.cs.fusion.similarity.jarowinkler.JaroWinklerSimilarity;
 
 public class JaroWinklerMappingProcessor extends AbstractMappingProcessor<JaroWinklerMappingProcessor.Parameter> {
@@ -41,7 +37,7 @@ public class JaroWinklerMappingProcessor extends AbstractMappingProcessor<JaroWi
 	}
 
 	/** the patterns relevant for the category mapped with contained variables */
-	private Map<ElementGroup, Collection<Var>> patterns = new HashMap<>();
+	private Map<Category, Collection<Var>> patterns = new HashMap<>();
 	/** the variable values mapped with the entities of the category by model */
 	private Map<Model, Map<Var, Map<String, Collection<Resource>>>> values = new HashMap<>();
 
@@ -57,8 +53,8 @@ public class JaroWinklerMappingProcessor extends AbstractMappingProcessor<JaroWi
 			String category = this.getParameters().category;
 
 			// iterate the patterns
-			for (Entry<ElementGroup, Collection<Var>> entry : patterns.entrySet()) {
-				ElementGroup pattern = entry.getKey();
+			for (Entry<Category, Collection<Var>> entry : patterns.entrySet()) {
+				Category pattern = entry.getKey();
 
 				// get pattern variables except of category
 				Collection<Var> variables = entry.getValue();
@@ -68,8 +64,7 @@ public class JaroWinklerMappingProcessor extends AbstractMappingProcessor<JaroWi
 				variables.forEach((variable -> modelValues.computeIfAbsent(variable, v -> new HashMap<>())));
 
 				// execute query of the pattern
-				ResultSet results = QueryExecutionFactory
-						.create(Queries.categorySelect(pattern, Var.alloc(category), variables), model).execSelect();
+				ResultSet results = pattern.selectCategory(model);
 
 				// iterate results
 				while (results.hasNext()) {
@@ -93,18 +88,16 @@ public class JaroWinklerMappingProcessor extends AbstractMappingProcessor<JaroWi
 	}
 
 	@Override
-	public Collection<Mapping> computeMapping(Model firstModel, Model secondModel) throws ParseException {
+	public Collection<Mapping> computeMapping(Model firstModel, Model secondModel)
+			throws ParseException, IllegalStateException, NullPointerException, ReflectiveOperationException {
 		// get parameters
 		boolean caseSensitive = this.getParameters().case_sensitive;
 		double threshold = this.getParameters().threshold;
 		Collection<String> variables = this.getParameters().variables;
 
 		// get patterns
-		Query patternSelect = Queries.patternSelect(NodeFactory.createLiteral(this.getParameters().category)).build();
-		ResultSet patternResults = QueryExecutionFactory.create(patternSelect, this.metaModel).execSelect();
-		while (patternResults.hasNext()) {
-			ElementGroup pattern = Pattern.parse(patternResults.next().get("pattern").toString());
-			Collection<Var> relevantVariables = Pattern.getVariables(pattern).stream()
+		for (Category pattern : SparqlEntityManager.select(new Category(), this.metaModel)) {
+			Collection<Var> relevantVariables = pattern.getPatternVariables().stream()
 					.filter((var) -> variables.contains(var.getName())).collect(Collectors.toList());
 			if (!relevantVariables.isEmpty()) {
 				this.patterns.put(pattern, relevantVariables);

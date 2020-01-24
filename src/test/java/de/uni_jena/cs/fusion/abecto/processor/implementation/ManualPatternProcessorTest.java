@@ -26,7 +26,7 @@ public class ManualPatternProcessorTest {
 				"?bad <" + RDFS.subClassOf + "> <" + OWL.Thing + ">"));
 		processor.setParameters(parameter);
 		Model model = processor.computeResultModel();
-		Assertions.assertEquals(4, model.listSubjectsWithProperty(RDF.type, Vocabulary.CATEGORY).toSet().size());
+		Assertions.assertEquals(4, model.listResourcesWithProperty(RDF.type, Vocabulary.CATEGORY).toSet().size());
 	}
 
 	@Test

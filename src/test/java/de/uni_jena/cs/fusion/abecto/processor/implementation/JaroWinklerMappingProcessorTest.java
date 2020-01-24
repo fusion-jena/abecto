@@ -11,8 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
@@ -21,7 +19,8 @@ import org.junit.jupiter.api.Test;
 
 import de.uni_jena.cs.fusion.abecto.model.Models;
 import de.uni_jena.cs.fusion.abecto.processor.AbstractMappingProcessor.Mapping;
-import de.uni_jena.cs.fusion.abecto.util.Queries;
+import de.uni_jena.cs.fusion.abecto.processor.model.Category;
+import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 import de.uni_jena.cs.fusion.abecto.util.Vocabulary;
 
 public class JaroWinklerMappingProcessorTest {
@@ -49,9 +48,8 @@ public class JaroWinklerMappingProcessorTest {
 				":entity2 rdfs:label \"efghefghefghefghabcd\" .\r\n" + //
 				":entity3 rdfs:label \"mnopmnopmnopmnopmnop\" .").getBytes()));
 		META_GRAPH = Models.getEmptyOntModel();
-		Query metaConstructQuery = Queries.patternConstruct()
-				.addValueRow("entity", "?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .").build();
-		QueryExecutionFactory.create(metaConstructQuery, META_GRAPH).execConstruct(META_GRAPH);
+		SparqlEntityManager.insert(
+				new Category("entity", "?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label ."), META_GRAPH);
 	}
 
 	@Test

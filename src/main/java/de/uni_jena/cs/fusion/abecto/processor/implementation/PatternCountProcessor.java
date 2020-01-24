@@ -1,9 +1,7 @@
 package de.uni_jena.cs.fusion.abecto.processor.implementation;
 
-import static de.uni_jena.cs.fusion.abecto.util.Vocabulary.CATEGORY;
 import static de.uni_jena.cs.fusion.abecto.util.Vocabulary.CATEGORY_NAME;
 import static de.uni_jena.cs.fusion.abecto.util.Vocabulary.CATEGORY_TARGET;
-import static de.uni_jena.cs.fusion.abecto.util.Vocabulary.CATEGORY_PATTERN;
 import static de.uni_jena.cs.fusion.abecto.util.Vocabulary.COUNT_MEASURE;
 import static de.uni_jena.cs.fusion.abecto.util.Vocabulary.KNOWLEDGE_BASE;
 import static de.uni_jena.cs.fusion.abecto.util.Vocabulary.VALUE;
@@ -21,8 +19,6 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
-import org.apache.jena.query.QueryFactory;
-import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ResourceFactory;
@@ -34,8 +30,9 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import de.uni_jena.cs.fusion.abecto.model.Models;
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
-import de.uni_jena.cs.fusion.abecto.pattern.Pattern;
 import de.uni_jena.cs.fusion.abecto.processor.AbstractMetaProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.model.Category;
+import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 
 public class PatternCountProcessor extends AbstractMetaProcessor<PatternCountProcessor.Parameter> {
 
@@ -58,9 +55,7 @@ public class PatternCountProcessor extends AbstractMetaProcessor<PatternCountPro
 	@Override
 	protected Model computeResultModel() throws Exception {
 		// get templates
-		Query templateQuery = QueryFactory.create("SELECT ?name ?template WHERE {[ <" + RDF.type + "> <" + CATEGORY
-				+ "> ; <" + CATEGORY_NAME + "> ?name; <" + CATEGORY_PATTERN + "> ?template; ]}");
-		ResultSet templateQueryResult = QueryExecutionFactory.create(templateQuery, this.metaModel).execSelect();
+		Collection<Category> categories = SparqlEntityManager.select(new Category(), this.metaModel);
 
 		/**
 		 * Counts by knowledge base, category and target. The null target key represents
@@ -68,21 +63,19 @@ public class PatternCountProcessor extends AbstractMetaProcessor<PatternCountPro
 		 */
 		Map<UUID, Map<String, Map<String, Long>>> counts = new HashMap<>();
 
-		while (templateQueryResult.hasNext()) {
+		for (Category category : categories) {
 			// get template data
-			QuerySolution templateQuerySolution = templateQueryResult.next();
-			String category = templateQuerySolution.get("name").toString();
-			String template = templateQuerySolution.get("template").toString();
-			ElementGroup templatePattern = Pattern.parse(template);
+			String categoryName = category.name;
+			ElementGroup categoryPattern = category.getPatternElementGroup();
 
 			Collection<String> targets = new HashSet<>();
-			Pattern.getVariables(templatePattern).forEach((v) -> targets.add(v.getName()));
-			targets.remove(category);
+			category.getPatternVariables().forEach((v) -> targets.add(v.getName()));
+			targets.remove(categoryName);
 			targets.add(null);
 
 			// create queries
 			Map<String, Query> categoryQueries = new HashMap<>();
-			targets.forEach((target) -> categoryQueries.put(target, countQuery(category, templatePattern, target)));
+			targets.forEach((target) -> categoryQueries.put(target, countQuery(categoryName, categoryPattern, target)));
 
 			for (Entry<UUID, Model> entry : this.inputGroupModels.entrySet()) {
 				// get control variables
@@ -90,7 +83,7 @@ public class PatternCountProcessor extends AbstractMetaProcessor<PatternCountPro
 				Model inputGroupModel = entry.getValue();
 				// get result map
 				Map<String, Long> countsByTarget = counts.computeIfAbsent(knowledgeBase, (kb) -> new HashMap<>())
-						.computeIfAbsent(category, (c) -> new HashMap<>());
+						.computeIfAbsent(categoryName, (c) -> new HashMap<>());
 
 				for (String target : targets) {
 					// get counts for current template, model and target

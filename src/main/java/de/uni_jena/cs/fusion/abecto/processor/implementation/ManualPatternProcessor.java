@@ -1,21 +1,19 @@
 package de.uni_jena.cs.fusion.abecto.processor.implementation;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.jena.arq.querybuilder.ConstructBuilder;
-import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ResourceFactory;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import de.uni_jena.cs.fusion.abecto.model.Models;
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
-import de.uni_jena.cs.fusion.abecto.pattern.Pattern;
 import de.uni_jena.cs.fusion.abecto.processor.AbstractMetaProcessor;
-import de.uni_jena.cs.fusion.abecto.util.Queries;
+import de.uni_jena.cs.fusion.abecto.processor.model.Category;
+import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 
 public class ManualPatternProcessor extends AbstractMetaProcessor<ManualPatternProcessor.Parameter> {
 
@@ -26,26 +24,25 @@ public class ManualPatternProcessor extends AbstractMetaProcessor<ManualPatternP
 
 	@Override
 	protected Model computeResultModel() throws Exception {
-		ConstructBuilder resultQuery = Queries.patternConstruct();
+		Collection<Category> categoryPatterns = new ArrayList<>();
 
 		if (this.getParameters().patterns.isEmpty()) {
 			throw new IllegalArgumentException("Empty category list.");
 		}
 
 		for (Entry<String, Collection<String>> entry : this.getParameters().patterns.entrySet()) {
-			String category = entry.getKey();
+			String categoryName = entry.getKey();
 			if (entry.getValue().isEmpty()) {
 				throw new IllegalArgumentException("Empty pattern list.");
 			}
-			for (String pattern : entry.getValue()) {
-				Pattern.validate(category, pattern);
-				resultQuery.addValueRow(ResourceFactory.createStringLiteral(category),
-						ResourceFactory.createStringLiteral(pattern));
+			for (String categoryPattern : entry.getValue()) {
+				categoryPatterns.add(new Category(categoryName, categoryPattern));
 			}
 		}
 
 		Model resultModel = Models.getEmptyOntModel();
-		return QueryExecutionFactory.create(resultQuery.build(), resultModel).execConstruct(resultModel);
+		SparqlEntityManager.insert(categoryPatterns, resultModel);
+		return resultModel;
 	}
 
 }
