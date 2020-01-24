@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
 
 import de.uni_jena.cs.fusion.abecto.TestDataGenerator;
 
-public class PatternCountProcessorTest {
+public class CategoryCountProcessorTest {
 
 	@Test
 	public void test() throws Exception {
@@ -45,10 +45,10 @@ public class PatternCountProcessorTest {
 		source2.call();
 
 		// generate and load patterns
-		ManualPatternProcessor patternProcessor1 = new ManualPatternProcessor();
-		ManualPatternProcessor patternProcessor2 = new ManualPatternProcessor();
-		ManualPatternProcessor.Parameter patternParameter1 = new ManualPatternProcessor.Parameter();
-		ManualPatternProcessor.Parameter patternParameter2 = new ManualPatternProcessor.Parameter();
+		ManualCategoryProcessor patternProcessor1 = new ManualCategoryProcessor();
+		ManualCategoryProcessor patternProcessor2 = new ManualCategoryProcessor();
+		ManualCategoryProcessor.Parameter patternParameter1 = new ManualCategoryProcessor.Parameter();
+		ManualCategoryProcessor.Parameter patternParameter2 = new ManualCategoryProcessor.Parameter();
 		patternParameter1.patterns = generator.generatePatterns(1);
 		patternParameter2.patterns = generator.generatePatterns(2);
 		patternProcessor1.setParameters(patternParameter1);
@@ -61,7 +61,7 @@ public class PatternCountProcessorTest {
 		patternProcessor2.call();
 
 		// generate counts
-		PatternCountProcessor countProcessor = new PatternCountProcessor();
+		CategoryCountProcessor countProcessor = new CategoryCountProcessor();
 		countProcessor.addInputModelGroups(patternProcessor2.getDataModels());
 		countProcessor.addMetaModels(patternProcessor2.getMetaModel());
 		countProcessor.call().write(System.out, "JSON-LD");

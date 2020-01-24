@@ -96,11 +96,11 @@ public class JaroWinklerMappingProcessor extends AbstractMappingProcessor<JaroWi
 		Collection<String> variables = this.getParameters().variables;
 
 		// get patterns
-		for (Category pattern : SparqlEntityManager.select(new Category(), this.metaModel)) {
-			Collection<Var> relevantVariables = pattern.getPatternVariables().stream()
+		for (Category category : SparqlEntityManager.select(new Category(), this.metaModel)) {
+			Collection<Var> relevantVariables = category.getPatternVariables().stream()
 					.filter((var) -> variables.contains(var.getName())).collect(Collectors.toList());
 			if (!relevantVariables.isEmpty()) {
-				this.patterns.put(pattern, relevantVariables);
+				this.patterns.put(category, relevantVariables);
 			}
 		}
 

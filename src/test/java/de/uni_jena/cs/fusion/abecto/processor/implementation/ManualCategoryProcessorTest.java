@@ -13,12 +13,12 @@ import org.junit.jupiter.api.Test;
 
 import de.uni_jena.cs.fusion.abecto.util.Vocabulary;
 
-public class ManualPatternProcessorTest {
+public class ManualCategoryProcessorTest {
 
 	@Test
 	public void computeResultModel() throws Exception {
-		ManualPatternProcessor processor = new ManualPatternProcessor();
-		ManualPatternProcessor.Parameter parameter = new ManualPatternProcessor.Parameter();
+		ManualCategoryProcessor processor = new ManualCategoryProcessor();
+		ManualCategoryProcessor.Parameter parameter = new ManualCategoryProcessor.Parameter();
 		parameter.patterns = new HashMap<>();
 		parameter.patterns.put("good", Arrays.asList("?good <" + RDF.type + "> <" + RDFS.Class + ">",
 				"?good <" + RDFS.subClassOf + "> <" + OWL.Thing + ">"));
@@ -31,8 +31,8 @@ public class ManualPatternProcessorTest {
 
 	@Test
 	public void invalidTemplate() {
-		ManualPatternProcessor processor = new ManualPatternProcessor();
-		ManualPatternProcessor.Parameter parameter = new ManualPatternProcessor.Parameter();
+		ManualCategoryProcessor processor = new ManualCategoryProcessor();
+		ManualCategoryProcessor.Parameter parameter = new ManualCategoryProcessor.Parameter();
 		parameter.patterns = new HashMap<>();
 		parameter.patterns.put("test", Collections.singletonList(""));
 		processor.setParameters(parameter);
@@ -43,8 +43,8 @@ public class ManualPatternProcessorTest {
 
 	@Test
 	public void emptyCategoryList() {
-		ManualPatternProcessor processor = new ManualPatternProcessor();
-		ManualPatternProcessor.Parameter parameter = new ManualPatternProcessor.Parameter();
+		ManualCategoryProcessor processor = new ManualCategoryProcessor();
+		ManualCategoryProcessor.Parameter parameter = new ManualCategoryProcessor.Parameter();
 		parameter.patterns = new HashMap<>();
 		processor.setParameters(parameter);
 		Assertions.assertThrows(IllegalArgumentException.class, () -> {
@@ -54,8 +54,8 @@ public class ManualPatternProcessorTest {
 
 	@Test
 	public void emptyTemplateList() {
-		ManualPatternProcessor processor = new ManualPatternProcessor();
-		ManualPatternProcessor.Parameter parameter = new ManualPatternProcessor.Parameter();
+		ManualCategoryProcessor processor = new ManualCategoryProcessor();
+		ManualCategoryProcessor.Parameter parameter = new ManualCategoryProcessor.Parameter();
 		parameter.patterns = new HashMap<>();
 		parameter.patterns.put("test", Collections.emptyList());
 		processor.setParameters(parameter);

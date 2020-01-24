@@ -26,7 +26,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import de.uni_jena.cs.fusion.abecto.ResponseBuffer;
 import de.uni_jena.cs.fusion.abecto.TestDataGenerator;
-import de.uni_jena.cs.fusion.abecto.processor.implementation.ManualPatternProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.implementation.JaroWinklerMappingProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.implementation.ManualCategoryProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.implementation.RdfFileSourceProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.implementation.SparqlConstructProcessor;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -107,13 +110,13 @@ class ProjectRestControlerTest {
 		String knowledgBase2Id = buffer.getId();
 
 		// add source 1
-		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", "RdfFileSourceProcessor")
+		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", RdfFileSourceProcessor.class.getTypeName())
 				.param("knowledgebase", knowledgBase1Id).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 		String source1Id = buffer.getId();
 
 		// add source 2
-		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", "RdfFileSourceProcessor")
+		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", RdfFileSourceProcessor.class.getTypeName())
 				.param("knowledgebase", knowledgBase2Id).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 		String source2Id = buffer.getId();
@@ -136,19 +139,19 @@ class ProjectRestControlerTest {
 		String transformationParameter = "{\"query\":\"CONSTRUCT {?s <http://example.org/p> <http://example.org/o>} WHERE {?s ?p ?o. Filter(!isBLANK(?s))}\"}";
 
 		// add transformation 1
-		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", "SparqlConstructProcessor")
+		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", SparqlConstructProcessor.class.getTypeName())
 				.param("input", source1Id).param("parameters", transformationParameter)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		String transformation1Id = buffer.getId();
 
 		// add transformation 2
-		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", "SparqlConstructProcessor")
+		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", SparqlConstructProcessor.class.getTypeName())
 				.param("input", source2Id).param("parameters", transformationParameter)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		String transformation2Id = buffer.getId();
 
 		// add pattern
-		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", ManualPatternProcessor.class.getTypeName())
+		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", ManualCategoryProcessor.class.getTypeName())
 				.param("input", transformation1Id, transformation2Id)
 				.param("parameters",
 						"{\"patterns\":{\"entity\":[\"?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .\"]}}")
@@ -156,7 +159,7 @@ class ProjectRestControlerTest {
 		String patternId = buffer.getId();
 
 		// add mapping
-		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", "JaroWinklerMappingProcessor")
+		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", JaroWinklerMappingProcessor.class.getTypeName())
 				.param("input", patternId)
 				.param("parameters",
 						"{\"threshold\":0.9,\"case_sensitive\":false,\"category\":\"entity\",\"variables\":[\"label\"]}")
