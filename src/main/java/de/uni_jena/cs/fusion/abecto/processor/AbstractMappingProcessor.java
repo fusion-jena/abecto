@@ -20,8 +20,8 @@ public abstract class AbstractMappingProcessor<P extends ParameterModel> extends
 	@Override
 	public Model computeResultModel() throws Exception {
 		// collect known mappings
-		Collection<Mapping> knownMappings = SparqlEntityManager.select(new PositiveMapping(), this.metaModel);
-		knownMappings.addAll(SparqlEntityManager.select(new NegativeMapping(), this.metaModel));
+		Collection<Mapping> knownMappings = SparqlEntityManager.select(PositiveMapping.prototype, this.metaModel);
+		knownMappings.addAll(SparqlEntityManager.select(NegativeMapping.prototype, this.metaModel));
 
 		// init result model
 		Model resultsModel = ModelFactory.createDefaultModel();

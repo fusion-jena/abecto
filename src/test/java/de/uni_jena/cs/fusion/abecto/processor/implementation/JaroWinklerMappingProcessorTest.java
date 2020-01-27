@@ -7,7 +7,6 @@ import java.io.ByteArrayInputStream;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 
 import org.apache.jena.rdf.model.Model;
@@ -82,8 +81,8 @@ public class JaroWinklerMappingProcessorTest {
 				Collections.singleton(SECOND_GRAPH)));
 		processor.addMetaModels(Collections.singleton(META_GRAPH));
 		Model result = processor.computeResultModel();
-		Collection<PositiveMapping> positiveMappings = SparqlEntityManager.select(new PositiveMapping(), result);
-		Collection<NegativeMapping> negativeMappings = SparqlEntityManager.select(new NegativeMapping(), result);
+		Collection<PositiveMapping> positiveMappings = SparqlEntityManager.select(PositiveMapping.prototype, result);
+		Collection<NegativeMapping> negativeMappings = SparqlEntityManager.select(NegativeMapping.prototype, result);
 		assertEquals(2, positiveMappings.size());
 		assertTrue(positiveMappings.contains(Mapping.of(ResourceFactory.createResource("http://example.org/entity1"),
 				ResourceFactory.createResource("http://example.com/entity1"))));

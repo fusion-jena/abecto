@@ -1,6 +1,9 @@
 package de.uni_jena.cs.fusion.abecto.sparq;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.Parameter;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,10 +14,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.apache.jena.arq.querybuilder.AbstractQueryBuilder;
@@ -63,7 +68,7 @@ public class SparqlEntityManager {
 		Collection<Expr> expressions = new ArrayList<>();
 		ExprFactory factory = select.getPrologHandler().getExprFactory();
 
-		for (Field field : filterEntity.getClass().getFields()) {
+		for (Field field : getPublicNonstaticFields(filterEntity)) {
 			if (field.get(filterEntity) != null) {
 				Object value = field.get(filterEntity);
 				if (value instanceof Collection) {
@@ -141,10 +146,10 @@ public class SparqlEntityManager {
 		}
 
 		T prototype = objects.stream().findAny().get();
-		Field[] fields = prototype.getClass().getFields();
+		List<Field> fields = getPublicNonstaticFields(prototype);
 
 		// manage prefixes
-		
+
 		Prologue prologue = new Prologue();
 		prologue.setBaseURI("");
 		for (SparqlNamespace namespaceAnnotation : prototype.getClass().getAnnotationsByType(SparqlNamespace.class)) {
@@ -257,7 +262,7 @@ public class SparqlEntityManager {
 					.listIterator(); requiredResourcesIterator.hasNext();) {
 				String fieldName = requiredResourcesIterator.next();
 				try {
-					Field field = resource.getClass().getField(fieldName);
+					Field field = getPublicNonstaticField(resource, fieldName);
 					if (optionalResources.containsKey(field)) {
 						for (SparqlPattern annotation : field.getAnnotationsByType(SparqlPattern.class)) {
 							validateAnnotation(annotation, field);
@@ -438,7 +443,6 @@ public class SparqlEntityManager {
 	 * @throws IllegalStateException
 	 * @throws NullPointerException
 	 */
-	@SuppressWarnings("unchecked")
 	public static <T> Set<T> select(Collection<T> filterObjects, Model source)
 			throws ReflectiveOperationException, IllegalStateException, NullPointerException {
 		if (filterObjects.isEmpty()) {
@@ -446,7 +450,7 @@ public class SparqlEntityManager {
 		}
 
 		T prototype = filterObjects.stream().findAny().get();
-		List<Field> fields = Arrays.asList(prototype.getClass().getFields());
+		List<Field> fields = getPublicNonstaticFields(prototype);
 
 		// get plain query
 		SelectBuilder select = getSelectQuery(prototype.getClass());
@@ -460,96 +464,268 @@ public class SparqlEntityManager {
 		entityExpressions.stream().reduce(expressionFactory::or).ifPresent(select::addFilter);
 
 		// execute query
-		ResultSet queryResults = QueryExecutionFactory.create(select.build(), source).execSelect();
-
-		boolean classContainsCollection = fields.stream()
-				.anyMatch((field -> Collection.class.isAssignableFrom(field.getType())));
-
-		// result entity indices for each field by value
-		Map<Field, Map<RDFNode, Set<T>>> resultEntityIndices = new HashMap<>();
-		for (Field field : fields) {
-			if (!Collection.class.isAssignableFrom(field.getType())) {
-				resultEntityIndices.put(field, new HashMap<>());
-			}
-		}
+		ResultSet querySolutions = QueryExecutionFactory.create(select.build(), source).execSelect();
 
 		// generate result set
-		Set<T> entities = new HashSet<T>();
-		while (queryResults.hasNext()) {
-			QuerySolution queryResult = queryResults.next();
-			boolean firstVisit;
+		Set<T> results = new HashSet<T>();
 
-			// get entity by lookup for collection building or instantiation
-			T entity;
-			if (classContainsCollection) {
-				Set<T> matchingEntities = fields.stream()
-						.filter((field) -> !Collection.class.isAssignableFrom(field.getType()))
-						.map((field) -> resultEntityIndices.get(field).getOrDefault(queryResult.get(field.getName()),
-								Collections.emptySet()))
-						.reduce((a, b) -> {
-							a.retainAll(b);
-							return a;
-						}).orElse(Collections.emptySet());
-				if (!matchingEntities.isEmpty()) {
-					entity = matchingEntities.iterator().next();
-					firstVisit = false;
+		// get constructor for entities
+		Constructor<T> constructor = getParameterizedConstructor(prototype)
+				.orElseGet(() -> getPlainConstructor(prototype));
+
+		if (fields.stream().anyMatch((field -> Collection.class.isAssignableFrom(field.getType())))) {
+			// class has member with type collection
+
+			// create object index
+			Map<String, Map<Object, Set<T>>> objectIndex = createObjectIndex(prototype);
+
+			// iterate solutions
+			while (querySolutions.hasNext()) {
+
+				// get field values from query solution
+				Map<String, Object> fieldValues = getFieldValues(prototype, querySolutions.next());
+
+				// try to find matching object in object index
+				Optional<T> existingEntity = searchInObjectIndex(prototype, objectIndex, fieldValues);
+
+				if (existingEntity.isPresent()) {
+					// matching object found
+
+					// update object
+					updateObject(existingEntity.get(), fieldValues);
+
 				} else {
-					entity = getNewEntity(prototype);
-					firstVisit = true;
+					// no matching object found
+
+					// create new object
+					T entity = createObject(constructor, fieldValues);
+
+					// add object to object index
+					addToObjectIndex(entity, objectIndex);
+
+					// add object to results
+					results.add(entity);
 				}
+			}
+		} else {
+			// class has no member with type collection
+
+			// iterate solutions
+			while (querySolutions.hasNext()) {
+
+				// get field values from query solution
+				Map<String, Object> fieldValues = getFieldValues(prototype, querySolutions.next());
+
+				// create new object
+				T entity = createObject(constructor, fieldValues);
+
+				// add object to results
+				results.add(entity);
+			}
+		}
+		return results;
+	}
+
+	/**
+	 * Provides a {@link Map} of {@link Field} values based on a
+	 * {@link QuerySolution} for an object.
+	 * 
+	 * Creates a new {@link ArrayList} for {@link Collection} fields. During
+	 * population of an object, the returned {@link ArrayList} should be added to
+	 * the object using {@link Collection#addAll(Collection)} to avoid conflicts
+	 * with actual collection type of the field.
+	 * 
+	 * @param <T>           type of the new object
+	 * @param prototype     the prototype of the object
+	 * @param querySolution the {@link QuerySolution} to obtain the values from
+	 * @return field values for an object
+	 */
+	private static <T> Map<String, Object> getFieldValues(T prototype, QuerySolution querySolution) {
+		Map<String, Object> fieldValues = new HashMap<>();
+		for (Field field : getPublicNonstaticFields(prototype)) {
+			RDFNode node = querySolution.get(field.getName());
+			if (Collection.class.isAssignableFrom(field.getType())) {
+				Collection<Object> collection = new ArrayList<Object>();
+				if (node != null) {
+					collection.add(getFieldValue(node, field));
+				}
+				fieldValues.put(field.getName(), collection);
 			} else {
-				entity = getNewEntity(prototype);
-				firstVisit = true;
-			}
-
-			for (Field field : prototype.getClass().getFields()) {
-				RDFNode node = queryResult.get(field.getName());
-				if (Collection.class.isAssignableFrom(field.getType())) {
-					Collection<Object> collection = (Collection<Object>) field.get(entity);
-					if (collection != null) {
-						if (node != null) {
-							collection.add(getFieldValue(node, field));
-						}
+				if (Optional.class.isAssignableFrom(field.getType())) {
+					if (node != null) {
+						fieldValues.put(field.getName(), Optional.of(getFieldValue(node, field)));
 					} else {
-						throw new NullPointerException(
-								String.format("Member collection %s not initialized.", field.getName()));
+						fieldValues.put(field.getName(), Optional.empty());
 					}
 				} else {
-					Object newValue;
-					if (Optional.class.isAssignableFrom(field.getType())) {
-						if (node != null) {
-							newValue = Optional.of(getFieldValue(node, field));
-						} else {
-							newValue = Optional.empty();
-						}
+					if (node != null) {
+						fieldValues.put(field.getName(), getFieldValue(node, field));
 					} else {
-						if (node != null) {
-							newValue = getFieldValue(node, field);
-						} else {
-							// this might occur, if there are field not connected to other fields
-							throw new IllegalStateException(
-									String.format("Missing value for non optional member %s.", field.getName()));
-						}
-					}
-					if (firstVisit) {
-						field.set(entity, newValue);
-						resultEntityIndices.get(field).computeIfAbsent(node, (n) -> new HashSet<T>()).add(entity);
-					} else if (!field.get(entity).equals(newValue)) {
+						// this might occur, if there is a field not connected to other fields
 						throw new IllegalStateException(
-								String.format("Multiple values for functional field %s: \"%s\", \"%s\".",
-										field.getName(), field.get(entity), newValue));
+								String.format("Missing value for non optional member %s.", field.getName()));
 					}
 				}
 			}
-			entities.add(entity); // do after creating entity manipulations to not change hash values
 		}
 
-		return entities;
+		return fieldValues;
+	}
+
+	/**
+	 * Provides the constructor with parameters matching the class members.
+	 * 
+	 * @param <T>       type of the objects to construct
+	 * @param prototype the prototype of the objects to construct
+	 * @return constructor with matching parameters
+	 */
+	@SuppressWarnings("unchecked")
+	private static <T> Optional<Constructor<T>> getParameterizedConstructor(T prototype) {
+		for (Constructor<?> constructor : prototype.getClass().getConstructors()) {
+			if (constructor.getParameterCount() != getPublicNonstaticFields(prototype).size()) {
+				// constructor has wrong parameter count
+				continue;
+			}
+			for (Parameter parameter : constructor.getParameters()) {
+				Member member = parameter.getAnnotation(Member.class);
+				if (member == null) {
+					// parameter not assigned to a member
+					continue;
+				}
+				try {
+					Field field = getPublicNonstaticField(prototype, member.value());
+					if (!field.getType().isAssignableFrom(parameter.getType())) {
+						// parameter type does not fit to member type
+						continue;
+					}
+				} catch (NoSuchFieldException | SecurityException e) {
+					// member name does not match parameter annotation
+					continue;
+				}
+			}
+			// found suitable constructor
+			return Optional.of((Constructor<T>) constructor);
+		}
+		return Optional.empty();
+	}
+
+	private static List<Field> getPublicNonstaticFields(Object object) {
+		List<Field> fields = new ArrayList<>();
+		for (Field field : Arrays.asList(object.getClass().getFields())) {
+			if (!Modifier.isStatic(field.getModifiers())) {
+				fields.add(field);
+			}
+		}
+		return fields;
+	}
+
+	private static Field getPublicNonstaticField(Object object, String name)
+			throws NoSuchFieldException, SecurityException {
+		Field field = object.getClass().getField(name);
+		if (Modifier.isStatic(field.getModifiers())) {
+			throw new NoSuchFieldException(String.format("Field % is static.", name));
+		}
+		return field;
+	}
+
+	/**
+	 * Provides the constructor without parameters.
+	 * 
+	 * @param <T>       type of the objects to construct
+	 * @param prototype the prototype of the objects to construct
+	 * @return constructor without parameters
+	 */
+	@SuppressWarnings("unchecked")
+	private static <T> Constructor<T> getPlainConstructor(T prototype) {
+		try {
+			return (Constructor<T>) prototype.getClass().getConstructor();
+		} catch (NoSuchMethodException | SecurityException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	/**
+	 * Provides the matching object in the object index, if exists.
+	 * 
+	 * @param <T>
+	 * @param prototype
+	 * @param objectIndex
+	 * @param fieldValues
+	 * @return
+	 */
+	private static <T> Optional<T> searchInObjectIndex(T prototype, Map<String, Map<Object, Set<T>>> objectIndex,
+			Map<String, Object> fieldValues) {
+		return objectIndex.keySet().stream().map((fieldName) -> objectIndex.get(fieldName)
+				.getOrDefault(fieldValues.get(fieldName), Collections.emptySet())).reduce((a, b) -> {
+					a.retainAll(b);
+					return a;
+				}).filter(Predicate.not(Collection::isEmpty)).map((set) -> set.iterator().next());
+	}
+
+	private static <T> void addToObjectIndex(T entity, Map<String, Map<Object, Set<T>>> objectIndex)
+			throws IllegalArgumentException, IllegalAccessException {
+		for (Field field : getPublicNonstaticFields(entity)) {
+			if (!Collection.class.isAssignableFrom(field.getType())) {
+				objectIndex.get(field.getName()).computeIfAbsent(field.get(entity), (key) -> new HashSet<>())
+						.add(entity);
+			}
+		}
+	}
+
+	private static <T> Map<String, Map<Object, Set<T>>> createObjectIndex(T prototype) {
+		Map<String, Map<Object, Set<T>>> objectIndex = new HashMap<>();
+		for (Field field : getPublicNonstaticFields(prototype)) {
+			if (!Collection.class.isAssignableFrom(field.getType())) {
+				objectIndex.put(field.getName(), new HashMap<>());
+			}
+		}
+		return objectIndex;
 	}
 
 	@SuppressWarnings("unchecked")
-	private static <T> T getNewEntity(T prototype) throws ReflectiveOperationException {
-		return (T) prototype.getClass().getDeclaredConstructor().newInstance();
+	private static <T> void updateObject(T object, Map<String, Object> fieldValues)
+			throws IllegalAccessException, SecurityException, IllegalArgumentException, NoSuchFieldException {
+		for (Entry<String, Object> fieldValue : fieldValues.entrySet()) {
+			if (fieldValue.getValue() instanceof Collection) {
+				((Collection<Object>) getPublicNonstaticField(object, fieldValue.getKey()).get(object))
+						.addAll((Collection<Object>) fieldValue.getValue());
+			}
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private static <T> T createObject(Constructor<T> constructor, Map<String, Object> fieldValues)
+			throws ReflectiveOperationException {
+		T object;
+		if (constructor.getParameterCount() == 0) {
+			// create instance
+			object = constructor.newInstance();
+
+			// set members
+			for (String fieldName : fieldValues.keySet()) {
+				if (fieldValues.get(fieldName) instanceof Collection<?>) {
+					// if a collection add all values
+					((Collection<Object>) getPublicNonstaticField(object, fieldName).get(object))
+							.addAll((Collection<Object>) fieldValues.get(fieldName));
+				} else {
+					// if not a collection set value
+					getPublicNonstaticField(object, fieldName).set(object, fieldValues.get(fieldName));
+				}
+			}
+		} else {
+			// initialize parameter value array
+			Object[] parameterValues = new Object[constructor.getParameterCount()];
+
+			// set parameters
+			Parameter[] parameters = constructor.getParameters();
+			for (int i = 0; i < constructor.getParameterCount(); i++) {
+				parameterValues[i] = fieldValues.get(parameters[i].getAnnotation(Member.class).value());
+			}
+
+			// create instance using the parameter values
+			object = constructor.newInstance(parameterValues);
+		}
+		return object;
 	}
 
 	/**

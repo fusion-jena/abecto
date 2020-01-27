@@ -1,24 +1,22 @@
 package de.uni_jena.cs.fusion.abecto.processor.model;
 
-import java.util.Objects;
-
 import org.apache.jena.rdf.model.Resource;
 
+import de.uni_jena.cs.fusion.abecto.sparq.Member;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlNamespace;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlPattern;
 
 @SparqlNamespace(prefix = "abecto", namespace = "http://fusion.cs.uni-jena.de/ontology/abecto/")
 public final class NegativeMapping implements Mapping {
-	public Resource first;
+	public final Resource first;
 	@SparqlPattern(subject = "first", predicate = "abecto:different")
-	public Resource second;
+	public final Resource second;
+
+	public final static NegativeMapping prototype = new NegativeMapping(null, null);
 
 	private final static int HASH_OFFSET = 1;
 
-	public NegativeMapping() {
-	}
-
-	public NegativeMapping(Resource first, Resource second) {
+	public NegativeMapping(@Member("first") Resource first, @Member("second") Resource second) {
 		this.first = first;
 		this.second = second;
 	}
@@ -29,15 +27,15 @@ public final class NegativeMapping implements Mapping {
 
 	@Override
 	public boolean equals(Object o) {
+		if (!(o instanceof NegativeMapping)) return false;
 		NegativeMapping other = (NegativeMapping) o;
-		return Objects.equals(this.first, other.first) && Objects.equals(this.second, other.second)
-				|| Objects.equals(this.first, other.second) && Objects.equals(this.second, other.first);
+		return this.first.equals(other.first) && this.second.equals(other.second)
+				|| this.first.equals(other.second) && this.second.equals(other.first);
 	}
 
 	@Override
 	public int hashCode() {
-		return ((first != null) ? first.getURI().hashCode() : 0) + ((second != null) ? second.getURI().hashCode() : 0)
-				+ HASH_OFFSET;
+		return first.getURI().hashCode() + second.getURI().hashCode() + HASH_OFFSET;
 	}
 
 }
