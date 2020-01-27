@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.processor.AbstractMappingProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.model.Mapping;
 
 public class ManualMappingProcessor extends AbstractMappingProcessor<ManualMappingProcessor.Parameter> {
 

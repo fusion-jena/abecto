@@ -501,7 +501,6 @@ public class SparqlEntityManager {
 				entity = getNewEntity(prototype);
 				firstVisit = true;
 			}
-			entities.add(entity);
 
 			for (Field field : prototype.getClass().getFields()) {
 				RDFNode node = queryResult.get(field.getName());
@@ -542,6 +541,7 @@ public class SparqlEntityManager {
 					}
 				}
 			}
+			entities.add(entity); // do after creating entity manipulations to not change hash values
 		}
 
 		return entities;

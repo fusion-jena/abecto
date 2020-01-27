@@ -4,24 +4,23 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.jena.rdf.model.Statement;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import de.uni_jena.cs.fusion.abecto.model.Models;
-import de.uni_jena.cs.fusion.abecto.processor.AbstractMappingProcessor.Mapping;
 import de.uni_jena.cs.fusion.abecto.processor.model.Category;
+import de.uni_jena.cs.fusion.abecto.processor.model.Mapping;
+import de.uni_jena.cs.fusion.abecto.processor.model.NegativeMapping;
+import de.uni_jena.cs.fusion.abecto.processor.model.PositiveMapping;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
-import de.uni_jena.cs.fusion.abecto.util.Vocabulary;
 
 public class JaroWinklerMappingProcessorTest {
 
@@ -41,7 +40,7 @@ public class JaroWinklerMappingProcessorTest {
 				":entity3 rdfs:label \"ijklijklijklijklijkl\" .").getBytes()));
 		SECOND_GRAPH = Models.load(new ByteArrayInputStream(("" + //
 				"@base <http://example.com/> .\r\n" + //
-				"@prefix : <http://example.org/> .\r\n" + //
+				"@prefix : <http://example.com/> .\r\n" + //
 				"@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\r\n" + //
 				"\r\n" + //
 				":entity1 rdfs:label \"abcdabcdabcdabcdabcd\" .\r\n" + //
@@ -65,9 +64,9 @@ public class JaroWinklerMappingProcessorTest {
 		Collection<Mapping> mappings = processor.computeMapping(FIRST_GRAPH, SECOND_GRAPH);
 		assertEquals(2, mappings.size());
 		assertTrue(mappings.contains(Mapping.of(ResourceFactory.createResource("http://example.org/entity1"),
-				ResourceFactory.createResource("http://example.org/entity1"))));
+				ResourceFactory.createResource("http://example.com/entity1"))));
 		assertTrue(mappings.contains(Mapping.of(ResourceFactory.createResource("http://example.org/entity2"),
-				ResourceFactory.createResource("http://example.org/entity2"))));
+				ResourceFactory.createResource("http://example.com/entity2"))));
 	}
 
 	@Test
@@ -83,15 +82,14 @@ public class JaroWinklerMappingProcessorTest {
 				Collections.singleton(SECOND_GRAPH)));
 		processor.addMetaModels(Collections.singleton(META_GRAPH));
 		Model result = processor.computeResultModel();
-		List<Statement> statements = new ArrayList<>();
-		result.listStatements().forEachRemaining(statements::add);
-		assertEquals(2, statements.size());
-		assertTrue(statements
-				.contains(ResourceFactory.createStatement(ResourceFactory.createResource("http://example.org/entity1"),
-						Vocabulary.MAPPING, ResourceFactory.createResource("http://example.org/entity1"))));
-		assertTrue(statements
-				.contains(ResourceFactory.createStatement(ResourceFactory.createResource("http://example.org/entity2"),
-						Vocabulary.MAPPING, ResourceFactory.createResource("http://example.org/entity2"))));
+		Collection<PositiveMapping> positiveMappings = SparqlEntityManager.select(new PositiveMapping(), result);
+		Collection<NegativeMapping> negativeMappings = SparqlEntityManager.select(new NegativeMapping(), result);
+		assertEquals(2, positiveMappings.size());
+		assertTrue(positiveMappings.contains(Mapping.of(ResourceFactory.createResource("http://example.org/entity1"),
+				ResourceFactory.createResource("http://example.com/entity1"))));
+		assertTrue(positiveMappings.contains(Mapping.of(ResourceFactory.createResource("http://example.org/entity2"),
+				ResourceFactory.createResource("http://example.com/entity2"))));
+		assertTrue(negativeMappings.isEmpty());
 	}
 
 }

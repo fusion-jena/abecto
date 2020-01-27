@@ -171,7 +171,6 @@ class ProjectRestControlerTest {
 
 		// check processings
 		for (JsonNode processingNode : buffer.getJson()) {
-			// TODO unstable Test: status was occasionally is "FAILED"
 			Assertions.assertEquals("SUCCEEDED", processingNode.get("status").asText());
 		}
 	}

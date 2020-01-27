@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.processor.AbstractMappingProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.model.Category;
+import de.uni_jena.cs.fusion.abecto.processor.model.Mapping;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 import de.uni_jena.cs.fusion.similarity.jarowinkler.JaroWinklerSimilarity;
 

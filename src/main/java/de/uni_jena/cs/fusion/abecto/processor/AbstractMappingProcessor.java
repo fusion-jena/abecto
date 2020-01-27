@@ -2,19 +2,17 @@ package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.UUID;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.jena.rdf.model.Statement;
 
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
-import de.uni_jena.cs.fusion.abecto.util.Vocabulary;
+import de.uni_jena.cs.fusion.abecto.processor.model.Mapping;
+import de.uni_jena.cs.fusion.abecto.processor.model.NegativeMapping;
+import de.uni_jena.cs.fusion.abecto.processor.model.PositiveMapping;
+import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 
 public abstract class AbstractMappingProcessor<P extends ParameterModel> extends AbstractMetaProcessor<P>
 		implements MappingProcessor<P> {
@@ -22,20 +20,8 @@ public abstract class AbstractMappingProcessor<P extends ParameterModel> extends
 	@Override
 	public Model computeResultModel() throws Exception {
 		// collect known mappings
-		Collection<Mapping> knownMappings = new HashSet<>();
-		Iterator<Statement> knownMappingsIterator = this.metaModel.listStatements(null, Vocabulary.MAPPING,
-				(RDFNode) null);
-		Iterator<Statement> knownAntiMappingsIterator = this.metaModel.listStatements(null, Vocabulary.ANTI_MAPPING,
-				(RDFNode) null);
-
-		while (knownMappingsIterator.hasNext()) {
-			Statement statement = knownMappingsIterator.next();
-			knownMappings.add(Mapping.of(statement.getSubject(), statement.getObject().asResource()));
-		}
-		while (knownAntiMappingsIterator.hasNext()) {
-			Statement statement = knownAntiMappingsIterator.next();
-			knownMappings.add(Mapping.not(statement.getSubject(), statement.getObject().asResource()));
-		}
+		Collection<Mapping> knownMappings = SparqlEntityManager.select(new PositiveMapping(), this.metaModel);
+		knownMappings.addAll(SparqlEntityManager.select(new NegativeMapping(), this.metaModel));
 
 		// init result model
 		Model resultsModel = ModelFactory.createDefaultModel();
@@ -46,15 +32,26 @@ public abstract class AbstractMappingProcessor<P extends ParameterModel> extends
 					// compute mapping
 					Collection<Mapping> mappings = computeMapping(i.getValue(), j.getValue());
 
+					Collection<PositiveMapping> positiveMappings = new HashSet<>();
+					Collection<NegativeMapping> negativeMappings = new HashSet<>();
+
 					for (Mapping mapping : mappings) {
 						// check if mapping is already known or contradicts to previous known mappings
 						if (!knownMappings.contains(mapping) && !knownMappings.contains(mapping.inverse())) {
 
-							// add mapping to results
-							resultsModel.add(mapping.getStatement());
-							resultsModel.add(mapping.getReverseStatement());
+							if (mapping instanceof PositiveMapping) {
+								positiveMappings.add((PositiveMapping) mapping);
+							} else if (mapping instanceof NegativeMapping) {
+								negativeMappings.add((NegativeMapping) mapping);
+							} else {
+								throw new IllegalStateException(String.format("Mapping is neither a %s nor a %s.",
+										PositiveMapping.class.getName(), NegativeMapping.class.getName()));
+							}
 						}
 					}
+					// add mappings to results
+					SparqlEntityManager.insert(positiveMappings, resultsModel);
+					SparqlEntityManager.insert(negativeMappings, resultsModel);
 				}
 			}
 		}
@@ -70,53 +67,5 @@ public abstract class AbstractMappingProcessor<P extends ParameterModel> extends
 	 * @return computed mapping
 	 */
 	public abstract Collection<Mapping> computeMapping(Model firstModel, Model secondModel) throws Exception;
-
-	public final static class Mapping {
-		public final Resource first;
-		public final Resource second;
-		public final boolean isAntiMapping;
-
-		private Mapping(Resource first, Resource second, boolean isAntiMapping) {
-			this.first = first;
-			this.second = second;
-			this.isAntiMapping = isAntiMapping;
-		}
-
-		public static Mapping of(Resource first, Resource second) {
-			return new Mapping(first, second, false);
-		}
-
-		public static Mapping not(Resource first, Resource second) {
-			return new Mapping(first, second, true);
-		}
-
-		public Statement getStatement() {
-			return ResourceFactory.createStatement(first,
-					((this.isAntiMapping) ? Vocabulary.ANTI_MAPPING : Vocabulary.MAPPING), second);
-		}
-
-		public Statement getReverseStatement() {
-			return ResourceFactory.createStatement(second,
-					((this.isAntiMapping) ? Vocabulary.ANTI_MAPPING : Vocabulary.MAPPING), first);
-		}
-
-		public Mapping inverse() {
-			return new Mapping(this.first, this.second, !this.isAntiMapping);
-		}
-
-		@Override
-		public boolean equals(Object o) {
-			Mapping other = (Mapping) o;
-			return this.isAntiMapping == other.isAntiMapping
-					&& (this.first.equals(other.first) && this.second.equals(other.second)
-							|| this.first.equals(other.second) && this.second.equals(other.first));
-		}
-
-		@Override
-		public int hashCode() {
-			return first.getURI().hashCode() + second.getURI().hashCode() + ((this.isAntiMapping) ? 1 : 0);
-		}
-
-	}
 
 }
