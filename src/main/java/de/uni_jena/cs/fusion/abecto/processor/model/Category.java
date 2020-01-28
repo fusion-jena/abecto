@@ -2,6 +2,7 @@ package de.uni_jena.cs.fusion.abecto.processor.model;
 
 import java.io.ByteArrayInputStream;
 import java.util.Collection;
+import java.util.UUID;
 
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
@@ -24,13 +25,21 @@ public class Category {
 	public Resource category;
 	@SparqlPattern(subject = "category", predicate = "abecto:categoryName")
 	public String name;
+	/**
+	 * The pattern describing the category.
+	 */
 	@SparqlPattern(subject = "category", predicate = "abecto:categoryPattern")
 	public String pattern;
+	/**
+	 * The knowledge base this category definition belongs to.
+	 */
+	@SparqlPattern(subject = "category", predicate = "abecto:knowledgeBase")
+	public UUID knowledgeBase;
 
 	public Category() {
 	}
 
-	public Category(String name, String pattern) throws IllegalArgumentException {
+	public Category(String name, String pattern, UUID knowledgeBase) throws IllegalArgumentException {
 		this.name = name;
 		this.pattern = pattern;
 		this.validate();
@@ -50,13 +59,17 @@ public class Category {
 		return PatternVars.vars(this.getPatternElementGroup());
 	}
 
-	public ResultSet selectCategory(Model model) {
+	public Query getQuery() {
 		Query query = new Query();
 		query.setQuerySelectType();
 		query.addResultVar(name);
 		this.getPatternVariables().forEach(query::addResultVar);
 		query.setQueryPattern(this.getPatternElementGroup());
-		return QueryExecutionFactory.create(query, model).execSelect();
+		return query;
+	}
+
+	public ResultSet selectCategory(Model model) {
+		return QueryExecutionFactory.create(this.getQuery(), model).execSelect();
 	}
 
 	public void validate() throws IllegalArgumentException {

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.UUID;
 
 import org.apache.jena.rdf.model.Model;
 
@@ -20,6 +21,7 @@ public class ManualCategoryProcessor extends AbstractMetaProcessor<ManualCategor
 	@JsonSerialize
 	public static class Parameter implements ParameterModel {
 		public Map<String, Collection<String>> patterns;
+		public UUID knowledgeBase;
 	}
 
 	@Override
@@ -36,10 +38,10 @@ public class ManualCategoryProcessor extends AbstractMetaProcessor<ManualCategor
 				throw new IllegalArgumentException("Empty pattern list.");
 			}
 			for (String categoryPattern : entry.getValue()) {
-				categories.add(new Category(categoryName, categoryPattern));
+				categories.add(new Category(categoryName, categoryPattern, this.getParameters().knowledgeBase));
 			}
 		}
-
+		
 		Model resultModel = Models.getEmptyOntModel();
 		SparqlEntityManager.insert(categories, resultModel);
 		return resultModel;
