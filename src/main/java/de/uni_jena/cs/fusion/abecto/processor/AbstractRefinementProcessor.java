@@ -21,30 +21,44 @@ public abstract class AbstractRefinementProcessor<P extends ParameterModel> exte
 		implements RefinementProcessor<P> {
 
 	/**
-	 * {@link Processor}s this {@link Processor} depends on.
+	 * The {@link Processor}s this {@link Processor} depends on.
 	 */
 	protected final Collection<Processor<?>> inputProcessors = new ArrayList<>();
-
 	/**
-	 * TODO The previous meta result graph that is a {@link MultiUnion} of all
-	 * {@link #metaSubModels}.
+	 * {@link MultiUnion} of the input meta models.
+	 * 
+	 * @see {@link #metaSubModels} provides the single input meta models.
 	 */
 	protected final OntModel metaModel = Models.getEmptyOntModel();
 	/**
-	 * TODO The previous meta result submodels.
+	 * The input meta models.
+	 * 
+	 * @see {@link #metaModel} provides a union of the input meta models.
 	 */
 	protected final Set<Model> metaSubModels = new HashSet<>();
 	/**
-	 * TODO The input {@link Model}s that as {@link MultiUnion}s of the according
-	 * {@link #inputSubModels}.
+	 * {@link MultiUnion}s of the input group models by knowledge base.
+	 * 
+	 * @see {@link #inputGroupSubModels} provides the single input group models by
+	 *      knowledge base.
+	 * @see {@link #inputModelUnion} provides a union over all knowledge bases. .
 	 */
 	protected final Map<UUID, Model> inputGroupModels = new HashMap<>();
 	/**
-	 * TODO The input submodels.
+	 * The input group models by knowledge base.
+	 * 
+	 * @see {@link #inputGroupModels} provides a union of he input group models by
+	 *      knowledge base.
+	 * @see {@link #inputModelUnion} provides a union over all knowledge bases. .
 	 */
 	protected final Map<UUID, Collection<Model>> inputGroupSubModels = new HashMap<>();
 	/**
-	 * Union of all input {@link Model}s.
+	 * {@link MultiUnion}s of all input group models.
+	 * 
+	 * @see {@link #inputGroupModels} provides a union of he input group models by
+	 *      knowledge base.
+	 * @see {@link #inputGroupSubModels} provides the single input group models by
+	 *      knowledge base.
 	 */
 	protected final OntModel inputModelUnion = Models.getEmptyOntModel();
 
