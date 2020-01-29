@@ -54,7 +54,7 @@ public class CategoryCountProcessorTest {
 		CategoryCountProcessor countProcessor = new CategoryCountProcessor();
 		countProcessor.addInputModelGroups(patternProcessor2.getDataModels());
 		countProcessor.addMetaModels(patternProcessor2.getMetaModel());
-		countProcessor.call().write(System.out, "JSON-LD");// TODO remove
+		countProcessor.call();
 
 		// check results
 		Model resultModel = countProcessor.getResultModel();

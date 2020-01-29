@@ -449,15 +449,16 @@ public class SparqlEntityManager {
 	 * <dd>A result field matches, if it represents the same resource.
 	 * </dl>
 	 * 
-	 * TODO javadoc for throws
-	 * 
 	 * @param <T>           the type of the objects
 	 * @param filterObjects the objects to use for filtering the result
 	 * @param source        the {@link Model} select the objects from
 	 * @return the selected objects
-	 * @throws ReflectiveOperationException
-	 * @throws IllegalStateException
-	 * @throws NullPointerException
+	 * @throws ReflectiveOperationException if creation of an object failed for
+	 *                                      various reasons
+	 * @throws IllegalStateException        if a value in the SPARQL query solution
+	 *                                      has an inappropriate type
+	 * @throws NullPointerException         if the model annotation is not
+	 *                                      sufficient
 	 */
 	public static <T> Set<T> select(Collection<T> filterObjects, Model source)
 			throws ReflectiveOperationException, IllegalStateException, NullPointerException {
@@ -775,6 +776,30 @@ public class SparqlEntityManager {
 		return object;
 	}
 
+	/**
+	 * Selects one object of a certain class form a {@link Model} via SPARQL
+	 * filtered by a given object of that class.
+	 * 
+	 * This is a shortcut for
+	 * <ol>
+	 * <li>calling {@link SparqlEntityManager#select(Collection, Model)},
+	 * <li>ensuring that there is exact one result,
+	 * <li>and unwrapping them.
+	 * </ol>
+	 * 
+	 * @param <T>       the type of the objects
+	 * @param prototype the object to use for filtering the result
+	 * @param source    the {@link Model} select the objects from
+	 * @return the selected object
+	 * @throws ReflectiveOperationException if creation of an object failed for
+	 *                                      various reasons
+	 * @throws IllegalStateException        if a value in the SPARQL query solution
+	 *                                      has an inappropriate type, or if
+	 *                                      multiple results have been found
+	 * @throws NullPointerException         if the model annotation is not
+	 *                                      sufficient
+	 * @throws NoSuchElementException       if no result has been found
+	 */
 	public static <T> T selectOne(T prototype, Model source)
 			throws IllegalStateException, NullPointerException, ReflectiveOperationException {
 		Set<T> result = select(prototype, source);
@@ -799,9 +824,12 @@ public class SparqlEntityManager {
 	 * @param prototype the object to use for filtering the result
 	 * @param source    the {@link Model} select the objects from
 	 * @return the selected objects
-	 * @throws ReflectiveOperationException
-	 * @throws IllegalStateException
-	 * @throws NullPointerException
+	 * @throws ReflectiveOperationException if creation of an object failed for
+	 *                                      various reasons
+	 * @throws IllegalStateException        if a value in the SPARQL query solution
+	 *                                      has an inappropriate type
+	 * @throws NullPointerException         if the model annotation is not
+	 *                                      sufficient
 	 */
 	public static <T> Set<T> select(T prototype, Model source)
 			throws ReflectiveOperationException, IllegalStateException, NullPointerException {

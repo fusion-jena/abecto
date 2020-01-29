@@ -159,22 +159,22 @@ public interface Processor<P extends ParameterModel> extends Callable<Model> {
 	public boolean isSucceeded();
 
 	/**
-	 * Set the parameters for this processor. Earlier parameters will be
+	 * Sets the parameters for this processor. Earlier parameters will be
 	 * overwritten.
 	 * 
-	 * @param parameters TODO
+	 * @param parameters the parameters to set
 	 */
 	public void setParameters(ParameterModel parameters);
 
 	/**
-	 * Set the result {@link Model} for this {@link Processor}.
+	 * Sets the result {@link Model} for this {@link Processor}.
 	 * 
 	 * @param resultModel {@link Model} to use as result model
 	 */
 	public void setResultModel(Model model);
 
 	/**
-	 * Set the {@link Status} for this {@link Processor}.
+	 * Sets the {@link Status} for this {@link Processor}.
 	 * 
 	 * @param resultModel {@link Status} to set
 	 */
