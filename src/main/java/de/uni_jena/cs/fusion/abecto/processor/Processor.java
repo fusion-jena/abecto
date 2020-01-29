@@ -131,6 +131,15 @@ public interface Processor<P extends ParameterModel> extends Callable<Model> {
 	public Status getStatus();
 
 	/**
+	 * Provides the identifier of the knowledge base, this {@link Processor} belongs
+	 * to. <strong>Using this method restricts the Processor to work on exact one
+	 * knowledge base.</strong>
+	 * 
+	 * @return the knowledge base identifier
+	 */
+	public UUID getKnowledgeBase();
+
+	/**
 	 * 
 	 * @return {@code true} if this {@link Processor} has {@link Status#FAILED},
 	 *         else {@code false}

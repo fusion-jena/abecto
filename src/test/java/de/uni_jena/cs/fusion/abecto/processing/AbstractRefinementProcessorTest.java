@@ -2,6 +2,7 @@ package de.uni_jena.cs.fusion.abecto.processing;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
@@ -55,6 +56,11 @@ public class AbstractRefinementProcessorTest {
 		@Override
 		public Status getStatus() {
 			return Processor.Status.FAILED;
+		}
+
+		@Override
+		public UUID getKnowledgeBase() {
+			throw new NoSuchElementException();
 		}
 	}
 

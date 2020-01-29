@@ -86,6 +86,18 @@ public abstract class AbstractRefinementProcessor<P extends ParameterModel> exte
 	}
 
 	@Override
+	public UUID getKnowledgeBase() {
+		return this.inputProcessors.stream().map(Processor::getKnowledgeBase).reduce((a, b) -> {
+			if (a.equals(b)) {
+				return a;
+			} else {
+				throw new IllegalStateException(
+						"Failed to get knowledge base UUID. Found multiple knowledge base UUID.");
+			}
+		}).orElseThrow();
+	}
+
+	@Override
 	protected void prepare() throws InterruptedException, ExecutionException {
 		for (Processor<?> inputProcessor : this.inputProcessors) {
 			while (!inputProcessor.isSucceeded()) {

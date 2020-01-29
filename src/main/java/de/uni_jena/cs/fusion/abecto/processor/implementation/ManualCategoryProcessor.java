@@ -24,7 +24,7 @@ public class ManualCategoryProcessor extends AbstractMetaProcessor<ManualCategor
 		/**
 		 * The patterns by knowledge base and category name.
 		 */
-		public Map<UUID, Map<String, String>> patterns = new HashMap<>();
+		public Map<String, String> patterns = new HashMap<>();
 	}
 
 	@Override
@@ -32,20 +32,15 @@ public class ManualCategoryProcessor extends AbstractMetaProcessor<ManualCategor
 		Collection<Category> categories = new ArrayList<>();
 
 		if (this.getParameters().patterns.isEmpty()) {
-			throw new IllegalArgumentException("Empty category list.");
+			throw new IllegalArgumentException("Empty pattern list.");
 		}
 
-		for (Entry<UUID, Map<String, String>> patternByCategoryOfKnowledgeBase : this.getParameters().patterns
-				.entrySet()) {
-			UUID knowledgeBase = patternByCategoryOfKnowledgeBase.getKey();
-			if (patternByCategoryOfKnowledgeBase.getValue().isEmpty()) {
-				throw new IllegalArgumentException("Empty pattern list.");
-			}
-			for (Entry<String, String> patternOfCategory : patternByCategoryOfKnowledgeBase.getValue().entrySet()) {
-				String categoryName = patternOfCategory.getKey();
-				String categoryPattern = patternOfCategory.getValue();
-				categories.add(new Category(categoryName, categoryPattern, knowledgeBase));
-			}
+		UUID knowledgeBase = this.getKnowledgeBase();
+
+		for (Entry<String, String> patternOfCategory : this.getParameters().patterns.entrySet()) {
+			String categoryName = patternOfCategory.getKey();
+			String categoryPattern = patternOfCategory.getValue();
+			categories.add(new Category(categoryName, categoryPattern, knowledgeBase));
 		}
 
 		Model resultModel = Models.getEmptyOntModel();

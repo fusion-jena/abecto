@@ -1,7 +1,6 @@
 package de.uni_jena.cs.fusion.abecto.processor.implementation;
 
 import java.io.InputStream;
-import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -39,20 +38,20 @@ public class CategoryCountProcessorTest {
 		ManualCategoryProcessor patternProcessor2 = new ManualCategoryProcessor();
 		ManualCategoryProcessor.Parameter patternParameter1 = new ManualCategoryProcessor.Parameter();
 		ManualCategoryProcessor.Parameter patternParameter2 = new ManualCategoryProcessor.Parameter();
-		patternParameter1.patterns = Collections.singletonMap(sourceUUID1, generator.generatePatterns(1));
-		patternParameter2.patterns = Collections.singletonMap(sourceUUID2, generator.generatePatterns(2));
+		patternParameter1.patterns = generator.generatePatterns(1);
 		patternProcessor1.setParameters(patternParameter1);
-		patternProcessor2.setParameters(patternParameter2);
-		patternProcessor1.addInputModelGroups(source1.getDataModels());
-		patternProcessor1.addInputModelGroups(source2.getDataModels());
+		patternProcessor1.addInputProcessor(source1);
 		patternProcessor1.call();
-		patternProcessor2.addInputModelGroups(patternProcessor1.getDataModels());
-		patternProcessor2.addMetaModels(patternProcessor1.getMetaModel());
+		patternParameter2.patterns = generator.generatePatterns(2);
+		patternProcessor2.setParameters(patternParameter2);
+		patternProcessor2.addInputProcessor(source2);
 		patternProcessor2.call();
 
 		// generate counts
 		CategoryCountProcessor countProcessor = new CategoryCountProcessor();
+		countProcessor.addInputModelGroups(patternProcessor1.getDataModels());
 		countProcessor.addInputModelGroups(patternProcessor2.getDataModels());
+		countProcessor.addMetaModels(patternProcessor1.getMetaModel());
 		countProcessor.addMetaModels(patternProcessor2.getMetaModel());
 		countProcessor.call();
 

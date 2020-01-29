@@ -3,6 +3,7 @@ package de.uni_jena.cs.fusion.abecto.processor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 import org.apache.jena.rdf.model.Model;
@@ -19,10 +20,10 @@ public class ProcessorTest {
 	public void getParameterModel() throws InstantiationException, IllegalAccessException, IllegalArgumentException,
 			InvocationTargetException, NoSuchMethodException, SecurityException {
 		Class<? extends ParameterModel> modelClass;
-		
+
 		modelClass = Processor.getParameterClass(DummySuperProcessor.class);
 		Assertions.assertEquals(DummyParameters.class, modelClass);
-		
+
 		modelClass = Processor.getParameterClass(DummySubProcessor.class);
 		Assertions.assertEquals(DummyParameters.class, modelClass);
 	}
@@ -31,11 +32,11 @@ public class ProcessorTest {
 	public void getDefaultParameters() throws InstantiationException, IllegalAccessException, IllegalArgumentException,
 			InvocationTargetException, NoSuchMethodException, SecurityException {
 		ParameterModel parameters;
-		
+
 		parameters = Processor.getDefaultParameters(DummySuperProcessor.class);
 		Assertions.assertTrue(parameters instanceof DummyParameters);
 		Assertions.assertEquals("default", ((DummyParameters) parameters).test);
-		
+
 		parameters = Processor.getDefaultParameters(DummySubProcessor.class);
 		Assertions.assertTrue(parameters instanceof DummyParameters);
 		Assertions.assertEquals("default", ((DummyParameters) parameters).test);
@@ -64,6 +65,11 @@ public class ProcessorTest {
 
 		@Override
 		protected void prepare() throws Exception {
+		}
+
+		@Override
+		public UUID getKnowledgeBase() {
+			throw new NoSuchElementException();
 		}
 
 	}

@@ -153,18 +153,21 @@ class ProjectRestControlerTest {
 
 		// add pattern
 		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", ManualCategoryProcessor.class.getTypeName())
-				.param("input", transformation1Id, transformation2Id)
+				.param("input", transformation1Id)
 				.param("parameters",
-						"{\"patterns\":{\"" + knowledgBase1Id
-								+ "\":{\"entity\":\"?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .\"},\""
-								+ knowledgBase2Id
-								+ "\":{\"entity\":\"?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .\"}}}")
+						"{\"patterns\":{\"entity\":\"?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .\"}}")
 				.accept(MediaType.APPLICATION_JSON)).andDo(print()).andExpect(status().isOk()).andDo(buffer);
-		String patternId = buffer.getId();
+		String pattern1Id = buffer.getId();
+		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", ManualCategoryProcessor.class.getTypeName())
+				.param("input", transformation2Id)
+				.param("parameters",
+						"{\"patterns\":{\"entity\":\"?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .\"}}")
+				.accept(MediaType.APPLICATION_JSON)).andDo(print()).andExpect(status().isOk()).andDo(buffer);
+		String pattern2Id = buffer.getId();
 
 		// add mapping
 		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", JaroWinklerMappingProcessor.class.getTypeName())
-				.param("input", patternId)
+				.param("input", pattern1Id, pattern2Id)
 				.param("parameters",
 						"{\"threshold\":0.9,\"case_sensitive\":false,\"category\":\"entity\",\"variables\":[\"label\"]}")
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);

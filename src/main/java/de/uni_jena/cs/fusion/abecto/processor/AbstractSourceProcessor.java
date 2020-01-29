@@ -35,6 +35,11 @@ public abstract class AbstractSourceProcessor<P extends ParameterModel> extends 
 	}
 
 	@Override
+	public UUID getKnowledgeBase() {
+		return knowledgBase;
+	}
+
+	@Override
 	protected void prepare() throws InterruptedException {
 		// do nothing
 	}
