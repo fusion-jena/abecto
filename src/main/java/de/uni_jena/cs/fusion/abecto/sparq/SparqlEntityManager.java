@@ -96,6 +96,22 @@ public class SparqlEntityManager {
 						}
 					}
 					expressions.add(factory.exists(existsClause));
+				} else if (value instanceof Optional<?>) {
+					if (((Optional<?>) value).isPresent()) {
+						expressions.add(factory.eq(AbstractQueryBuilder.makeVar(field.getName()),
+								select.makeNode(((Optional<?>) value).get())));
+					} else {
+						SelectBuilder notExistsClause = new SelectBuilder();
+						for (SparqlPattern annotation : field.getAnnotationsByType(SparqlPattern.class)) {
+
+							Node subject = AbstractQueryBuilder.makeVar(annotation.subject());
+							Path predicate = getAnnotationPropertyPath(field, annotation,
+									select.getPrologHandler().getPrefixes());
+
+							notExistsClause.addWhere(select.makeTriplePath(subject, predicate, Node.ANY));
+						}
+						expressions.add(factory.notexists(notExistsClause));
+					}
 				} else {
 					expressions.add(factory.eq(AbstractQueryBuilder.makeVar(field.getName()), select.makeNode(value)));
 				}
@@ -694,6 +710,35 @@ public class SparqlEntityManager {
 	}
 
 	@SuppressWarnings("unchecked")
+	private static <I, O> O convert(I value, Class<O> out) {
+		if (out.isInstance(value)) {
+			return out.cast(value);
+		}
+		if (value instanceof Number && Number.class.isAssignableFrom(out)) {
+			if (Long.class.isAssignableFrom(out)) {
+				return (O) Long.valueOf(((Number) value).longValue());
+			}
+			if (Integer.class.isAssignableFrom(out)) {
+				return (O) Integer.valueOf(((Number) value).intValue());
+			}
+			if (Byte.class.isAssignableFrom(out)) {
+				return (O) Byte.valueOf(((Number) value).byteValue());
+			}
+			if (Short.class.isAssignableFrom(out)) {
+				return (O) Short.valueOf(((Number) value).shortValue());
+			}
+			if (Double.class.isAssignableFrom(out)) {
+				return (O) Double.valueOf(((Number) value).doubleValue());
+			}
+			if (Float.class.isAssignableFrom(out)) {
+				return (O) Float.valueOf(((Number) value).floatValue());
+			}
+		}
+		// otherwise give them a try
+		return (O) value;
+	}
+
+	@SuppressWarnings("unchecked")
 	private static <T> T createObject(Constructor<T> constructor, Map<String, Object> fieldValues)
 			throws ReflectiveOperationException {
 		T object;
@@ -703,13 +748,15 @@ public class SparqlEntityManager {
 
 			// set members
 			for (String fieldName : fieldValues.keySet()) {
+				Field field = getPublicNonstaticField(object, fieldName);
 				if (fieldValues.get(fieldName) instanceof Collection<?>) {
+					Collection<Object> collection = ((Collection<Object>) field.get(object));
 					// if a collection add all values
-					((Collection<Object>) getPublicNonstaticField(object, fieldName).get(object))
-							.addAll((Collection<Object>) fieldValues.get(fieldName));
+					((Collection<Object>) fieldValues.get(fieldName)).stream().map((v) -> convert(v, field.getType()))
+							.forEach(collection::add);
 				} else {
 					// if not a collection set value
-					getPublicNonstaticField(object, fieldName).set(object, fieldValues.get(fieldName));
+					field.set(object, convert(fieldValues.get(fieldName), field.getType()));
 				}
 			}
 		} else {
@@ -726,6 +773,18 @@ public class SparqlEntityManager {
 			object = constructor.newInstance(parameterValues);
 		}
 		return object;
+	}
+
+	public static <T> T selectOne(T prototype, Model source)
+			throws IllegalStateException, NullPointerException, ReflectiveOperationException {
+		Set<T> result = select(prototype, source);
+		if (result.isEmpty()) {
+			throw new NoSuchElementException();
+		}
+		if (result.size() > 1) {
+			throw new IllegalStateException("Selected multiple results.");
+		}
+		return result.iterator().next();
 	}
 
 	/**
