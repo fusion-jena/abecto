@@ -2,6 +2,7 @@ package de.uni_jena.cs.fusion.abecto.processor.implementation;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
@@ -20,8 +21,10 @@ public class ManualCategoryProcessor extends AbstractMetaProcessor<ManualCategor
 
 	@JsonSerialize
 	public static class Parameter implements ParameterModel {
-		public Map<String, Collection<String>> patterns;
-		public UUID knowledgeBase;
+		/**
+		 * The patterns by knowledge base and category name.
+		 */
+		public Map<UUID, Map<String, String>> patterns = new HashMap<>();
 	}
 
 	@Override
@@ -32,16 +35,19 @@ public class ManualCategoryProcessor extends AbstractMetaProcessor<ManualCategor
 			throw new IllegalArgumentException("Empty category list.");
 		}
 
-		for (Entry<String, Collection<String>> entry : this.getParameters().patterns.entrySet()) {
-			String categoryName = entry.getKey();
-			if (entry.getValue().isEmpty()) {
+		for (Entry<UUID, Map<String, String>> patternByCategoryOfKnowledgeBase : this.getParameters().patterns
+				.entrySet()) {
+			UUID knowledgeBase = patternByCategoryOfKnowledgeBase.getKey();
+			if (patternByCategoryOfKnowledgeBase.getValue().isEmpty()) {
 				throw new IllegalArgumentException("Empty pattern list.");
 			}
-			for (String categoryPattern : entry.getValue()) {
-				categories.add(new Category(categoryName, categoryPattern, this.getParameters().knowledgeBase));
+			for (Entry<String, String> patternOfCategory : patternByCategoryOfKnowledgeBase.getValue().entrySet()) {
+				String categoryName = patternOfCategory.getKey();
+				String categoryPattern = patternOfCategory.getValue();
+				categories.add(new Category(categoryName, categoryPattern, knowledgeBase));
 			}
 		}
-		
+
 		Model resultModel = Models.getEmptyOntModel();
 		SparqlEntityManager.insert(categories, resultModel);
 		return resultModel;

@@ -1,8 +1,8 @@
 package de.uni_jena.cs.fusion.abecto.processor.implementation;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.vocabulary.OWL;
@@ -19,22 +19,22 @@ public class ManualCategoryProcessorTest {
 	public void computeResultModel() throws Exception {
 		ManualCategoryProcessor processor = new ManualCategoryProcessor();
 		ManualCategoryProcessor.Parameter parameter = new ManualCategoryProcessor.Parameter();
-		parameter.patterns = new HashMap<>();
-		parameter.patterns.put("good", Arrays.asList("?good <" + RDF.type + "> <" + RDFS.Class + ">",
-				"?good <" + RDFS.subClassOf + "> <" + OWL.Thing + ">"));
-		parameter.patterns.put("bad", Arrays.asList("?bad <" + RDF.type + "> <" + RDFS.Class + ">",
-				"?bad <" + RDFS.subClassOf + "> <" + OWL.Thing + ">"));
+		Map<String, String> patternByName = new HashMap<>();
+		parameter.patterns.put(UUID.randomUUID(), patternByName);
+		patternByName.put("good", "?good <" + RDFS.subClassOf + "> <" + OWL.Thing + ">");
+		patternByName.put("bad", "?bad <" + RDF.type + "> <" + RDFS.Class + ">");
 		processor.setParameters(parameter);
 		Model model = processor.computeResultModel();
-		Assertions.assertEquals(4, model.listResourcesWithProperty(RDF.type, Vocabulary.CATEGORY).toSet().size());
+		Assertions.assertEquals(2, model.listResourcesWithProperty(RDF.type, Vocabulary.CATEGORY).toSet().size());
 	}
 
 	@Test
 	public void invalidTemplate() {
 		ManualCategoryProcessor processor = new ManualCategoryProcessor();
 		ManualCategoryProcessor.Parameter parameter = new ManualCategoryProcessor.Parameter();
-		parameter.patterns = new HashMap<>();
-		parameter.patterns.put("test", Collections.singletonList(""));
+		Map<String, String> patternByName = new HashMap<>();
+		parameter.patterns.put(UUID.randomUUID(), patternByName);
+		patternByName.put("test", "");
 		processor.setParameters(parameter);
 		Assertions.assertThrows(IllegalArgumentException.class, () -> {
 			processor.computeResultModel();
@@ -53,11 +53,10 @@ public class ManualCategoryProcessorTest {
 	}
 
 	@Test
-	public void emptyTemplateList() {
+	public void emptyPatternList() {
 		ManualCategoryProcessor processor = new ManualCategoryProcessor();
 		ManualCategoryProcessor.Parameter parameter = new ManualCategoryProcessor.Parameter();
-		parameter.patterns = new HashMap<>();
-		parameter.patterns.put("test", Collections.emptyList());
+		parameter.patterns.put(UUID.randomUUID(), new HashMap<>());
 		processor.setParameters(parameter);
 		Assertions.assertThrows(IllegalArgumentException.class, () -> {
 			processor.computeResultModel();

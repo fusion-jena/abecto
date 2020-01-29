@@ -46,8 +46,8 @@ public class JaroWinklerMappingProcessorTest {
 				":entity2 rdfs:label \"efghefghefghefghabcd\" .\r\n" + //
 				":entity3 rdfs:label \"mnopmnopmnopmnopmnop\" .").getBytes()));
 		META_GRAPH = Models.getEmptyOntModel();
-		SparqlEntityManager.insert(
-				new Category("entity", "?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label ."), META_GRAPH);
+		SparqlEntityManager.insert(new Category("entity",
+				"?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .", UUID.randomUUID()), META_GRAPH);
 	}
 
 	@Test

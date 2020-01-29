@@ -42,6 +42,7 @@ public class Category {
 	public Category(String name, String pattern, UUID knowledgeBase) throws IllegalArgumentException {
 		this.name = name;
 		this.pattern = pattern;
+		this.knowledgeBase = knowledgeBase;
 		this.validate();
 	}
 

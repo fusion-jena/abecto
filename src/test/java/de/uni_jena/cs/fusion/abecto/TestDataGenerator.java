@@ -6,8 +6,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -91,9 +89,9 @@ public class TestDataGenerator {
 		return model;
 	}
 
-	public Map<String, Collection<String>> generatePatterns(int ontologyNumber) {
+	public Map<String, String> generatePatterns(int ontologyNumber) {
 		this.ontologyNumber = ontologyNumber;
-		Map<String, Collection<String>> patterns = new HashMap<>();
+		Map<String, String> patterns = new HashMap<>();
 
 		for (int classNumber = 0; classNumber < classFactor; classNumber++) {
 			StringBuilder pattern = new StringBuilder();
@@ -115,7 +113,7 @@ public class TestDataGenerator {
 						"OPTIONAL { ?" + className + " <" + getUri(dataPropertyName) + "> ?" + dataPropertyName + " }");
 			}
 
-			patterns.put(className, Collections.singleton(pattern.toString()));
+			patterns.put(className, pattern.toString());
 		}
 		return patterns;
 	}
