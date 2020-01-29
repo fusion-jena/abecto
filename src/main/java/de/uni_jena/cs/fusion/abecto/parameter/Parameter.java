@@ -3,6 +3,7 @@ package de.uni_jena.cs.fusion.abecto.parameter;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 
+import javax.persistence.Column;
 import javax.persistence.Convert;
 import javax.persistence.Entity;
 
@@ -13,6 +14,7 @@ import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
 @Entity
 public class Parameter extends AbstractEntityWithUUID {
 
+	@Column(columnDefinition="CLOB")
 	@Convert(converter = ParameterConverter.class)
 	private ParameterModel parameters;
 
