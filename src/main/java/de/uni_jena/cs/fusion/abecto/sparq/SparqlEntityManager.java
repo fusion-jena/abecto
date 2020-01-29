@@ -63,6 +63,246 @@ public class SparqlEntityManager {
 		update.addInsert(new Triple(subject, predicate, object));
 	}
 
+	@SuppressWarnings("unchecked")
+	private static <I, O> O convertType(I value, Class<O> out) {
+		if (out.isInstance(value)) {
+			return out.cast(value);
+		}
+		if (value instanceof Number && Number.class.isAssignableFrom(out)) {
+			if (Long.class.isAssignableFrom(out)) {
+				return (O) Long.valueOf(((Number) value).longValue());
+			}
+			if (Integer.class.isAssignableFrom(out)) {
+				return (O) Integer.valueOf(((Number) value).intValue());
+			}
+			if (Byte.class.isAssignableFrom(out)) {
+				return (O) Byte.valueOf(((Number) value).byteValue());
+			}
+			if (Short.class.isAssignableFrom(out)) {
+				return (O) Short.valueOf(((Number) value).shortValue());
+			}
+			if (Double.class.isAssignableFrom(out)) {
+				return (O) Double.valueOf(((Number) value).doubleValue());
+			}
+			if (Float.class.isAssignableFrom(out)) {
+				return (O) Float.valueOf(((Number) value).floatValue());
+			}
+		}
+		// otherwise give them a try
+		return (O) value;
+	}
+
+	private static Node getAnnotationObject(Field field, SparqlPattern annotation, Prologue prologue)
+			throws IllegalArgumentException, NullPointerException {
+		try {
+			String object = annotation.object();
+			if (object.isEmpty()) {
+				throw new IllegalArgumentException(
+						String.format("Illegal %s annotation for member %s: Expected object.",
+								SparqlPattern.class.getSimpleName(), field.getName()));
+			}
+			return NodeFactory.createURI(prologue.expandPrefixedName(object));
+		} catch (NullPointerException e) {
+			e.printStackTrace(System.out);
+			throw new NullPointerException(String.format("Missing %s annotation for member %s.",
+					SparqlPattern.class.getSimpleName(), field.getName()));
+		} catch (RiotException e) {
+			throw new IllegalArgumentException(String.format("Illegal %s annotation for member %s: Illegal object.",
+					SparqlPattern.class.getSimpleName(), field.getName()));
+		}
+	}
+
+	private static Node getAnnotationProperty(Field field, SparqlPattern annotation, Prologue prologue)
+			throws IllegalArgumentException, NullPointerException {
+		try {
+			String propertyAnnotation = annotation.predicate();
+			Path path = PathParser.parse(propertyAnnotation, prologue);
+			if (path instanceof P_Link) {
+				return ((P_Link) path).getNode();
+			} else {
+				throw new IllegalArgumentException(
+						String.format("Illegal %s annotation for member %s: Expected single property.",
+								SparqlPattern.class.getSimpleName(), field.getName()));
+			}
+		} catch (NullPointerException e) {
+			throw new NullPointerException(String.format("Missing %s annotation for member %s.",
+					SparqlPattern.class.getSimpleName(), field.getName()));
+		}
+	}
+
+	private static Path getAnnotationPropertyPath(Field field, SparqlPattern annotation, PrefixMapping prefixMapping)
+			throws IllegalArgumentException, NullPointerException {
+		try {
+			String propertyAnnotation = annotation.predicate();
+			return PathParser.parse(propertyAnnotation, prefixMapping);
+		} catch (NullPointerException e) {
+			throw new NullPointerException(String.format("Missing %s annotation for member %s.",
+					SparqlPattern.class.getSimpleName(), field.getName()));
+		} catch (QueryException e) {
+			throw new IllegalArgumentException(
+					String.format("Illegal %s annotation for member %s: Expected property path.",
+							SparqlPattern.class.getSimpleName(), field.getName()),
+					e);
+		}
+	}
+
+	/**
+	 * 
+	 * @param field
+	 * @param annotation
+	 * @param resources
+	 * @return
+	 * @throws IllegalArgumentException
+	 * @throws NullPointerException
+	 * @throws NoSuchElementException   if subject field is not present or not a
+	 *                                  resource
+	 */
+	private static Node getAnnotationSubject(Field field, SparqlPattern annotation, Map<Field, Node> resources)
+			throws IllegalArgumentException, NullPointerException, NoSuchElementException {
+		try {
+			String subject = annotation.subject();
+			if (subject.isEmpty()) {
+				throw new IllegalArgumentException(
+						String.format("Illegal %s annotation for member %s: Expected subject.",
+								SparqlPattern.class.getSimpleName(), field.getName()));
+			}
+			// return value of the subject field
+			return resources.entrySet().stream().filter((e) -> e.getKey().getName().equals(subject)).findAny()
+					.orElseThrow().getValue();
+		} catch (NullPointerException e) { // annotation == null
+			throw new NullPointerException(String.format("Missing %s annotation for member %s.",
+					SparqlPattern.class.getSimpleName(), field.getName()));
+		}
+	}
+
+	private static Object getFieldValue(RDFNode node, Field field) {
+		if (node.isLiteral()) {
+			return node.asLiteral().getValue();
+		} else if (node.isResource()) {
+			return node.asResource();
+		} else {
+			throw new IllegalStateException(String.format("Illegal value for member %s.", field.getName()));
+		}
+	}
+
+	/**
+	 * Provides a {@link Map} of {@link Field} values based on a
+	 * {@link QuerySolution} for an object.
+	 * 
+	 * Creates a new {@link ArrayList} for {@link Collection} fields. During
+	 * population of an object, the returned {@link ArrayList} should be added to
+	 * the object using {@link Collection#addAll(Collection)} to avoid conflicts
+	 * with actual collection type of the field.
+	 * 
+	 * @param <T>           type of the new object
+	 * @param prototype     the prototype of the object
+	 * @param querySolution the {@link QuerySolution} to obtain the values from
+	 * @return field values for an object
+	 */
+	private static <T> Map<String, Object> getFieldValues(T prototype, QuerySolution querySolution) {
+		Map<String, Object> fieldValues = new HashMap<>();
+		for (Field field : getPublicNonstaticFields(prototype)) {
+			RDFNode node = querySolution.get(field.getName());
+			if (Collection.class.isAssignableFrom(field.getType())) {
+				Collection<Object> collection = new ArrayList<Object>();
+				if (node != null) {
+					collection.add(getFieldValue(node, field));
+				}
+				fieldValues.put(field.getName(), collection);
+			} else {
+				if (Optional.class.isAssignableFrom(field.getType())) {
+					if (node != null) {
+						fieldValues.put(field.getName(), Optional.of(getFieldValue(node, field)));
+					} else {
+						fieldValues.put(field.getName(), Optional.empty());
+					}
+				} else {
+					if (node != null) {
+						fieldValues.put(field.getName(), getFieldValue(node, field));
+					} else {
+						// this might occur, if there is a field not connected to other fields
+						throw new IllegalStateException(
+								String.format("Missing value for non optional member %s.", field.getName()));
+					}
+				}
+			}
+		}
+
+		return fieldValues;
+	}
+
+	/**
+	 * Provides the constructor with parameters matching the class members.
+	 * 
+	 * @param <T>       type of the objects to construct
+	 * @param prototype the prototype of the objects to construct
+	 * @return constructor with matching parameters
+	 */
+	@SuppressWarnings("unchecked")
+	private static <T> Optional<Constructor<T>> getParameterizedConstructor(T prototype) {
+		for (Constructor<?> constructor : prototype.getClass().getConstructors()) {
+			if (constructor.getParameterCount() != getPublicNonstaticFields(prototype).size()) {
+				// constructor has wrong parameter count
+				continue;
+			}
+			for (Parameter parameter : constructor.getParameters()) {
+				Member member = parameter.getAnnotation(Member.class);
+				if (member == null) {
+					// parameter not assigned to a member
+					continue;
+				}
+				try {
+					Field field = getPublicNonstaticField(prototype, member.value());
+					if (!field.getType().isAssignableFrom(parameter.getType())) {
+						// parameter type does not fit to member type
+						continue;
+					}
+				} catch (NoSuchFieldException | SecurityException e) {
+					// member name does not match parameter annotation
+					continue;
+				}
+			}
+			// found suitable constructor
+			return Optional.of((Constructor<T>) constructor);
+		}
+		return Optional.empty();
+	}
+
+	/**
+	 * Provides the constructor without parameters.
+	 * 
+	 * @param <T>       type of the objects to construct
+	 * @param prototype the prototype of the objects to construct
+	 * @return constructor without parameters
+	 */
+	@SuppressWarnings("unchecked")
+	private static <T> Constructor<T> getPlainConstructor(T prototype) {
+		try {
+			return (Constructor<T>) prototype.getClass().getConstructor();
+		} catch (NoSuchMethodException | SecurityException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private static Field getPublicNonstaticField(Object object, String name)
+			throws NoSuchFieldException, SecurityException {
+		Field field = object.getClass().getField(name);
+		if (Modifier.isStatic(field.getModifiers())) {
+			throw new NoSuchFieldException(String.format("Field % is static.", name));
+		}
+		return field;
+	}
+
+	private static List<Field> getPublicNonstaticFields(Object object) {
+		List<Field> fields = new ArrayList<>();
+		for (Field field : Arrays.asList(object.getClass().getFields())) {
+			if (!Modifier.isStatic(field.getModifiers())) {
+				fields.add(field);
+			}
+		}
+		return fields;
+	}
+
 	private static <T> Expr getSelectFilter(T filterEntity, SelectBuilder select) throws ReflectiveOperationException,
 			ARQInternalErrorException, IllegalArgumentException, NullPointerException {
 		Collection<Expr> expressions = new ArrayList<>();
@@ -121,14 +361,52 @@ public class SparqlEntityManager {
 		return expressions.stream().reduce(factory::and).orElse(factory.asExpr(true));
 	}
 
-	private static Object getFieldValue(RDFNode node, Field field) {
-		if (node.isLiteral()) {
-			return node.asLiteral().getValue();
-		} else if (node.isResource()) {
-			return node.asResource();
-		} else {
-			throw new IllegalStateException(String.format("Illegal value for member %s.", field.getName()));
-		}
+	private static <T> SelectBuilder getSelectQuery(Class<T> type) {
+		return SELECT_QUERY_CACHE.computeIfAbsent(type, (t) -> {
+			SelectBuilder select = new SelectBuilder();
+
+			// add prefixes
+			for (SparqlNamespace namespaceAnnotation : type.getAnnotationsByType(SparqlNamespace.class)) {
+				select.addPrefix(namespaceAnnotation.prefix(), namespaceAnnotation.namespace());
+			}
+
+			for (Field field : type.getFields()) {
+				for (SparqlPattern annotation : field.getAnnotationsByType(SparqlPattern.class)) {
+					Var subject;
+					Path predicate = getAnnotationPropertyPath(field, annotation,
+							select.getPrologHandler().getPrefixes());
+					Var object;
+
+					if (isAnnotationWithObject(annotation)) {
+						// use field as subject
+						if (!Resource.class.isAssignableFrom(field.getType())) {
+							throw new IllegalArgumentException(String.format(
+									"Illegal annotation for %s: Omission of annotation subject permitted only for Resource fields.",
+									field.getName()));
+						}
+						subject = AbstractQueryBuilder.makeVar(field.getName());
+						object = AbstractQueryBuilder.makeVar(annotation.object());
+					} else if (isAnnotationWithSubject(annotation)) {
+						// use field as object
+						subject = AbstractQueryBuilder.makeVar(annotation.subject());
+						object = AbstractQueryBuilder.makeVar(field.getName());
+					} else {
+						throw new IllegalArgumentException(String.format(
+								"Missing annotation for %s: Either subject or object required.", field.getName()));
+					}
+					// add triple
+					TriplePath triplePath = select.makeTriplePath(subject, predicate, object);
+					if (Collection.class.isAssignableFrom(field.getType())
+							|| Optional.class.isAssignableFrom(field.getType())) {
+						select.addOptional(triplePath);
+					} else {
+						select.addWhere(triplePath);
+					}
+				}
+			}
+
+			return select;
+		}).clone();
 	}
 
 	/**
@@ -307,22 +585,6 @@ public class SparqlEntityManager {
 
 	}
 
-	private static boolean isAnnotationWithSubject(SparqlPattern annotation) {
-		return annotation.object().isEmpty() && !annotation.subject().isEmpty();
-	}
-
-	private static boolean isAnnotationWithObject(SparqlPattern annotation) {
-		return annotation.subject().isEmpty() && !annotation.object().isEmpty();
-	}
-
-	private static void validateAnnotation(SparqlPattern annotation, Field field) {
-		if (annotation.subject().isEmpty() && annotation.object().isEmpty()
-				|| !annotation.subject().isEmpty() && !annotation.object().isEmpty()) {
-			throw new IllegalArgumentException(
-					String.format("Illegal annotation for %s: Either subject or object required.", field.getName()));
-		}
-	}
-
 	/**
 	 * Inserts public fields of the object into a {@link Model} via SPARQL.
 	 * 
@@ -338,86 +600,97 @@ public class SparqlEntityManager {
 		insert(Collections.singleton(object), target);
 	}
 
+	private static boolean isAnnotationWithObject(SparqlPattern annotation) {
+		return annotation.subject().isEmpty() && !annotation.object().isEmpty();
+	}
+
+	private static boolean isAnnotationWithSubject(SparqlPattern annotation) {
+		return annotation.object().isEmpty() && !annotation.subject().isEmpty();
+	}
+
+	@SuppressWarnings("unchecked")
+	private static <T> T objectCreate(Constructor<T> constructor, Map<String, Object> fieldValues)
+			throws ReflectiveOperationException {
+		T object;
+		if (constructor.getParameterCount() == 0) {
+			// create instance
+			object = constructor.newInstance();
+
+			// set members
+			for (String fieldName : fieldValues.keySet()) {
+				Field field = getPublicNonstaticField(object, fieldName);
+				if (fieldValues.get(fieldName) instanceof Collection<?>) {
+					Collection<Object> collection = ((Collection<Object>) field.get(object));
+					// if a collection add all values
+					((Collection<Object>) fieldValues.get(fieldName)).stream().map((v) -> convertType(v, field.getType()))
+							.forEach(collection::add);
+				} else {
+					// if not a collection set value
+					field.set(object, convertType(fieldValues.get(fieldName), field.getType()));
+				}
+			}
+		} else {
+			// initialize parameter value array
+			Object[] parameterValues = new Object[constructor.getParameterCount()];
+
+			// set parameters
+			Parameter[] parameters = constructor.getParameters();
+			for (int i = 0; i < constructor.getParameterCount(); i++) {
+				parameterValues[i] = fieldValues.get(parameters[i].getAnnotation(Member.class).value());
+			}
+
+			// create instance using the parameter values
+			object = constructor.newInstance(parameterValues);
+		}
+		return object;
+	}
+
+	private static <T> void objectIndexAdd(T entity, Map<String, Map<Object, Set<T>>> objectIndex)
+			throws IllegalArgumentException, IllegalAccessException {
+		for (Field field : getPublicNonstaticFields(entity)) {
+			if (!Collection.class.isAssignableFrom(field.getType())) {
+				objectIndex.get(field.getName()).computeIfAbsent(field.get(entity), (key) -> new HashSet<>())
+						.add(entity);
+			}
+		}
+	}
+
+	private static <T> Map<String, Map<Object, Set<T>>> objectIndexCreate(T prototype) {
+		Map<String, Map<Object, Set<T>>> objectIndex = new HashMap<>();
+		for (Field field : getPublicNonstaticFields(prototype)) {
+			if (!Collection.class.isAssignableFrom(field.getType())) {
+				objectIndex.put(field.getName(), new HashMap<>());
+			}
+		}
+		return objectIndex;
+	}
+
 	/**
+	 * Provides the matching object in the object index, if exists.
 	 * 
-	 * @param field
-	 * @param annotation
-	 * @param resources
+	 * @param <T>
+	 * @param prototype
+	 * @param objectIndex
+	 * @param fieldValues
 	 * @return
-	 * @throws IllegalArgumentException
-	 * @throws NullPointerException
-	 * @throws NoSuchElementException   if subject field is not present or not a
-	 *                                  resource
 	 */
-	private static Node getAnnotationSubject(Field field, SparqlPattern annotation, Map<Field, Node> resources)
-			throws IllegalArgumentException, NullPointerException, NoSuchElementException {
-		try {
-			String subject = annotation.subject();
-			if (subject.isEmpty()) {
-				throw new IllegalArgumentException(
-						String.format("Illegal %s annotation for member %s: Expected subject.",
-								SparqlPattern.class.getSimpleName(), field.getName()));
-			}
-			// return value of the subject field
-			return resources.entrySet().stream().filter((e) -> e.getKey().getName().equals(subject)).findAny()
-					.orElseThrow().getValue();
-		} catch (NullPointerException e) { // annotation == null
-			throw new NullPointerException(String.format("Missing %s annotation for member %s.",
-					SparqlPattern.class.getSimpleName(), field.getName()));
-		}
+	private static <T> Optional<T> objectIndexSearch(T prototype, Map<String, Map<Object, Set<T>>> objectIndex,
+			Map<String, Object> fieldValues) {
+		return objectIndex.keySet().stream().map((fieldName) -> objectIndex.get(fieldName)
+				.getOrDefault(fieldValues.get(fieldName), Collections.emptySet())).reduce((a, b) -> {
+					a.retainAll(b);
+					return a;
+				}).filter(Predicate.not(Collection::isEmpty)).map((set) -> set.iterator().next());
 	}
 
-	private static Node getAnnotationObject(Field field, SparqlPattern annotation, Prologue prologue)
-			throws IllegalArgumentException, NullPointerException {
-		try {
-			String object = annotation.object();
-			if (object.isEmpty()) {
-				throw new IllegalArgumentException(
-						String.format("Illegal %s annotation for member %s: Expected object.",
-								SparqlPattern.class.getSimpleName(), field.getName()));
+	@SuppressWarnings("unchecked")
+	private static <T> void objectUpdate(T object, Map<String, Object> fieldValues)
+			throws IllegalAccessException, SecurityException, IllegalArgumentException, NoSuchFieldException {
+		for (Entry<String, Object> fieldValue : fieldValues.entrySet()) {
+			if (fieldValue.getValue() instanceof Collection) {
+				((Collection<Object>) getPublicNonstaticField(object, fieldValue.getKey()).get(object))
+						.addAll((Collection<Object>) fieldValue.getValue());
 			}
-			return NodeFactory.createURI(prologue.expandPrefixedName(object));
-		} catch (NullPointerException e) {
-			e.printStackTrace(System.out);
-			throw new NullPointerException(String.format("Missing %s annotation for member %s.",
-					SparqlPattern.class.getSimpleName(), field.getName()));
-		} catch (RiotException e) {
-			throw new IllegalArgumentException(String.format("Illegal %s annotation for member %s: Illegal object.",
-					SparqlPattern.class.getSimpleName(), field.getName()));
-		}
-	}
-
-	private static Node getAnnotationProperty(Field field, SparqlPattern annotation, Prologue prologue)
-			throws IllegalArgumentException, NullPointerException {
-		try {
-			String propertyAnnotation = annotation.predicate();
-			Path path = PathParser.parse(propertyAnnotation, prologue);
-			if (path instanceof P_Link) {
-				return ((P_Link) path).getNode();
-			} else {
-				throw new IllegalArgumentException(
-						String.format("Illegal %s annotation for member %s: Expected single property.",
-								SparqlPattern.class.getSimpleName(), field.getName()));
-			}
-		} catch (NullPointerException e) {
-			throw new NullPointerException(String.format("Missing %s annotation for member %s.",
-					SparqlPattern.class.getSimpleName(), field.getName()));
-		}
-	}
-
-	private static Path getAnnotationPropertyPath(Field field, SparqlPattern annotation, PrefixMapping prefixMapping)
-			throws IllegalArgumentException, NullPointerException {
-		try {
-			String propertyAnnotation = annotation.predicate();
-			return PathParser.parse(propertyAnnotation, prefixMapping);
-		} catch (NullPointerException e) {
-			throw new NullPointerException(String.format("Missing %s annotation for member %s.",
-					SparqlPattern.class.getSimpleName(), field.getName()));
-		} catch (QueryException e) {
-			throw new IllegalArgumentException(
-					String.format("Illegal %s annotation for member %s: Expected property path.",
-							SparqlPattern.class.getSimpleName(), field.getName()),
-					e);
 		}
 	}
 
@@ -494,7 +767,7 @@ public class SparqlEntityManager {
 			// class has member with type collection
 
 			// create object index
-			Map<String, Map<Object, Set<T>>> objectIndex = createObjectIndex(prototype);
+			Map<String, Map<Object, Set<T>>> objectIndex = objectIndexCreate(prototype);
 
 			// iterate solutions
 			while (querySolutions.hasNext()) {
@@ -503,22 +776,22 @@ public class SparqlEntityManager {
 				Map<String, Object> fieldValues = getFieldValues(prototype, querySolutions.next());
 
 				// try to find matching object in object index
-				Optional<T> existingEntity = searchInObjectIndex(prototype, objectIndex, fieldValues);
+				Optional<T> existingEntity = objectIndexSearch(prototype, objectIndex, fieldValues);
 
 				if (existingEntity.isPresent()) {
 					// matching object found
 
 					// update object
-					updateObject(existingEntity.get(), fieldValues);
+					objectUpdate(existingEntity.get(), fieldValues);
 
 				} else {
 					// no matching object found
 
 					// create new object
-					T entity = createObject(constructor, fieldValues);
+					T entity = objectCreate(constructor, fieldValues);
 
 					// add object to object index
-					addToObjectIndex(entity, objectIndex);
+					objectIndexAdd(entity, objectIndex);
 
 					// add object to results
 					results.add(entity);
@@ -534,7 +807,7 @@ public class SparqlEntityManager {
 				Map<String, Object> fieldValues = getFieldValues(prototype, querySolutions.next());
 
 				// create new object
-				T entity = createObject(constructor, fieldValues);
+				T entity = objectCreate(constructor, fieldValues);
 
 				// add object to results
 				results.add(entity);
@@ -544,236 +817,27 @@ public class SparqlEntityManager {
 	}
 
 	/**
-	 * Provides a {@link Map} of {@link Field} values based on a
-	 * {@link QuerySolution} for an object.
+	 * Selects objects of a certain class form a {@link Model} via SPARQL filtered
+	 * by a given object of that class.
 	 * 
-	 * Creates a new {@link ArrayList} for {@link Collection} fields. During
-	 * population of an object, the returned {@link ArrayList} should be added to
-	 * the object using {@link Collection#addAll(Collection)} to avoid conflicts
-	 * with actual collection type of the field.
+	 * This is a shortcut for passing a singleton {@link Collection} to
+	 * {@link SparqlEntityManager#select(Collection, Model)}.
+	 * <p>
 	 * 
-	 * @param <T>           type of the new object
-	 * @param prototype     the prototype of the object
-	 * @param querySolution the {@link QuerySolution} to obtain the values from
-	 * @return field values for an object
+	 * @param <T>       the type of the objects
+	 * @param prototype the object to use for filtering the result
+	 * @param source    the {@link Model} select the objects from
+	 * @return the selected objects
+	 * @throws ReflectiveOperationException if creation of an object failed for
+	 *                                      various reasons
+	 * @throws IllegalStateException        if a value in the SPARQL query solution
+	 *                                      has an inappropriate type
+	 * @throws NullPointerException         if the model annotation is not
+	 *                                      sufficient
 	 */
-	private static <T> Map<String, Object> getFieldValues(T prototype, QuerySolution querySolution) {
-		Map<String, Object> fieldValues = new HashMap<>();
-		for (Field field : getPublicNonstaticFields(prototype)) {
-			RDFNode node = querySolution.get(field.getName());
-			if (Collection.class.isAssignableFrom(field.getType())) {
-				Collection<Object> collection = new ArrayList<Object>();
-				if (node != null) {
-					collection.add(getFieldValue(node, field));
-				}
-				fieldValues.put(field.getName(), collection);
-			} else {
-				if (Optional.class.isAssignableFrom(field.getType())) {
-					if (node != null) {
-						fieldValues.put(field.getName(), Optional.of(getFieldValue(node, field)));
-					} else {
-						fieldValues.put(field.getName(), Optional.empty());
-					}
-				} else {
-					if (node != null) {
-						fieldValues.put(field.getName(), getFieldValue(node, field));
-					} else {
-						// this might occur, if there is a field not connected to other fields
-						throw new IllegalStateException(
-								String.format("Missing value for non optional member %s.", field.getName()));
-					}
-				}
-			}
-		}
-
-		return fieldValues;
-	}
-
-	/**
-	 * Provides the constructor with parameters matching the class members.
-	 * 
-	 * @param <T>       type of the objects to construct
-	 * @param prototype the prototype of the objects to construct
-	 * @return constructor with matching parameters
-	 */
-	@SuppressWarnings("unchecked")
-	private static <T> Optional<Constructor<T>> getParameterizedConstructor(T prototype) {
-		for (Constructor<?> constructor : prototype.getClass().getConstructors()) {
-			if (constructor.getParameterCount() != getPublicNonstaticFields(prototype).size()) {
-				// constructor has wrong parameter count
-				continue;
-			}
-			for (Parameter parameter : constructor.getParameters()) {
-				Member member = parameter.getAnnotation(Member.class);
-				if (member == null) {
-					// parameter not assigned to a member
-					continue;
-				}
-				try {
-					Field field = getPublicNonstaticField(prototype, member.value());
-					if (!field.getType().isAssignableFrom(parameter.getType())) {
-						// parameter type does not fit to member type
-						continue;
-					}
-				} catch (NoSuchFieldException | SecurityException e) {
-					// member name does not match parameter annotation
-					continue;
-				}
-			}
-			// found suitable constructor
-			return Optional.of((Constructor<T>) constructor);
-		}
-		return Optional.empty();
-	}
-
-	private static List<Field> getPublicNonstaticFields(Object object) {
-		List<Field> fields = new ArrayList<>();
-		for (Field field : Arrays.asList(object.getClass().getFields())) {
-			if (!Modifier.isStatic(field.getModifiers())) {
-				fields.add(field);
-			}
-		}
-		return fields;
-	}
-
-	private static Field getPublicNonstaticField(Object object, String name)
-			throws NoSuchFieldException, SecurityException {
-		Field field = object.getClass().getField(name);
-		if (Modifier.isStatic(field.getModifiers())) {
-			throw new NoSuchFieldException(String.format("Field % is static.", name));
-		}
-		return field;
-	}
-
-	/**
-	 * Provides the constructor without parameters.
-	 * 
-	 * @param <T>       type of the objects to construct
-	 * @param prototype the prototype of the objects to construct
-	 * @return constructor without parameters
-	 */
-	@SuppressWarnings("unchecked")
-	private static <T> Constructor<T> getPlainConstructor(T prototype) {
-		try {
-			return (Constructor<T>) prototype.getClass().getConstructor();
-		} catch (NoSuchMethodException | SecurityException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	/**
-	 * Provides the matching object in the object index, if exists.
-	 * 
-	 * @param <T>
-	 * @param prototype
-	 * @param objectIndex
-	 * @param fieldValues
-	 * @return
-	 */
-	private static <T> Optional<T> searchInObjectIndex(T prototype, Map<String, Map<Object, Set<T>>> objectIndex,
-			Map<String, Object> fieldValues) {
-		return objectIndex.keySet().stream().map((fieldName) -> objectIndex.get(fieldName)
-				.getOrDefault(fieldValues.get(fieldName), Collections.emptySet())).reduce((a, b) -> {
-					a.retainAll(b);
-					return a;
-				}).filter(Predicate.not(Collection::isEmpty)).map((set) -> set.iterator().next());
-	}
-
-	private static <T> void addToObjectIndex(T entity, Map<String, Map<Object, Set<T>>> objectIndex)
-			throws IllegalArgumentException, IllegalAccessException {
-		for (Field field : getPublicNonstaticFields(entity)) {
-			if (!Collection.class.isAssignableFrom(field.getType())) {
-				objectIndex.get(field.getName()).computeIfAbsent(field.get(entity), (key) -> new HashSet<>())
-						.add(entity);
-			}
-		}
-	}
-
-	private static <T> Map<String, Map<Object, Set<T>>> createObjectIndex(T prototype) {
-		Map<String, Map<Object, Set<T>>> objectIndex = new HashMap<>();
-		for (Field field : getPublicNonstaticFields(prototype)) {
-			if (!Collection.class.isAssignableFrom(field.getType())) {
-				objectIndex.put(field.getName(), new HashMap<>());
-			}
-		}
-		return objectIndex;
-	}
-
-	@SuppressWarnings("unchecked")
-	private static <T> void updateObject(T object, Map<String, Object> fieldValues)
-			throws IllegalAccessException, SecurityException, IllegalArgumentException, NoSuchFieldException {
-		for (Entry<String, Object> fieldValue : fieldValues.entrySet()) {
-			if (fieldValue.getValue() instanceof Collection) {
-				((Collection<Object>) getPublicNonstaticField(object, fieldValue.getKey()).get(object))
-						.addAll((Collection<Object>) fieldValue.getValue());
-			}
-		}
-	}
-
-	@SuppressWarnings("unchecked")
-	private static <I, O> O convert(I value, Class<O> out) {
-		if (out.isInstance(value)) {
-			return out.cast(value);
-		}
-		if (value instanceof Number && Number.class.isAssignableFrom(out)) {
-			if (Long.class.isAssignableFrom(out)) {
-				return (O) Long.valueOf(((Number) value).longValue());
-			}
-			if (Integer.class.isAssignableFrom(out)) {
-				return (O) Integer.valueOf(((Number) value).intValue());
-			}
-			if (Byte.class.isAssignableFrom(out)) {
-				return (O) Byte.valueOf(((Number) value).byteValue());
-			}
-			if (Short.class.isAssignableFrom(out)) {
-				return (O) Short.valueOf(((Number) value).shortValue());
-			}
-			if (Double.class.isAssignableFrom(out)) {
-				return (O) Double.valueOf(((Number) value).doubleValue());
-			}
-			if (Float.class.isAssignableFrom(out)) {
-				return (O) Float.valueOf(((Number) value).floatValue());
-			}
-		}
-		// otherwise give them a try
-		return (O) value;
-	}
-
-	@SuppressWarnings("unchecked")
-	private static <T> T createObject(Constructor<T> constructor, Map<String, Object> fieldValues)
-			throws ReflectiveOperationException {
-		T object;
-		if (constructor.getParameterCount() == 0) {
-			// create instance
-			object = constructor.newInstance();
-
-			// set members
-			for (String fieldName : fieldValues.keySet()) {
-				Field field = getPublicNonstaticField(object, fieldName);
-				if (fieldValues.get(fieldName) instanceof Collection<?>) {
-					Collection<Object> collection = ((Collection<Object>) field.get(object));
-					// if a collection add all values
-					((Collection<Object>) fieldValues.get(fieldName)).stream().map((v) -> convert(v, field.getType()))
-							.forEach(collection::add);
-				} else {
-					// if not a collection set value
-					field.set(object, convert(fieldValues.get(fieldName), field.getType()));
-				}
-			}
-		} else {
-			// initialize parameter value array
-			Object[] parameterValues = new Object[constructor.getParameterCount()];
-
-			// set parameters
-			Parameter[] parameters = constructor.getParameters();
-			for (int i = 0; i < constructor.getParameterCount(); i++) {
-				parameterValues[i] = fieldValues.get(parameters[i].getAnnotation(Member.class).value());
-			}
-
-			// create instance using the parameter values
-			object = constructor.newInstance(parameterValues);
-		}
-		return object;
+	public static <T> Set<T> select(T prototype, Model source)
+			throws ReflectiveOperationException, IllegalStateException, NullPointerException {
+		return select(Collections.singleton(prototype), source);
 	}
 
 	/**
@@ -812,76 +876,12 @@ public class SparqlEntityManager {
 		return result.iterator().next();
 	}
 
-	/**
-	 * Selects objects of a certain class form a {@link Model} via SPARQL filtered
-	 * by a given object of that class.
-	 * 
-	 * This is a shortcut for passing a singleton {@link Collection} to
-	 * {@link SparqlEntityManager#select(Collection, Model)}.
-	 * <p>
-	 * 
-	 * @param <T>       the type of the objects
-	 * @param prototype the object to use for filtering the result
-	 * @param source    the {@link Model} select the objects from
-	 * @return the selected objects
-	 * @throws ReflectiveOperationException if creation of an object failed for
-	 *                                      various reasons
-	 * @throws IllegalStateException        if a value in the SPARQL query solution
-	 *                                      has an inappropriate type
-	 * @throws NullPointerException         if the model annotation is not
-	 *                                      sufficient
-	 */
-	public static <T> Set<T> select(T prototype, Model source)
-			throws ReflectiveOperationException, IllegalStateException, NullPointerException {
-		return select(Collections.singleton(prototype), source);
-	}
-
-	private static <T> SelectBuilder getSelectQuery(Class<T> type) {
-		return SELECT_QUERY_CACHE.computeIfAbsent(type, (t) -> {
-			SelectBuilder select = new SelectBuilder();
-
-			// add prefixes
-			for (SparqlNamespace namespaceAnnotation : type.getAnnotationsByType(SparqlNamespace.class)) {
-				select.addPrefix(namespaceAnnotation.prefix(), namespaceAnnotation.namespace());
-			}
-
-			for (Field field : type.getFields()) {
-				for (SparqlPattern annotation : field.getAnnotationsByType(SparqlPattern.class)) {
-					Var subject;
-					Path predicate = getAnnotationPropertyPath(field, annotation,
-							select.getPrologHandler().getPrefixes());
-					Var object;
-
-					if (isAnnotationWithObject(annotation)) {
-						// use field as subject
-						if (!Resource.class.isAssignableFrom(field.getType())) {
-							throw new IllegalArgumentException(String.format(
-									"Illegal annotation for %s: Omission of annotation subject permitted only for Resource fields.",
-									field.getName()));
-						}
-						subject = AbstractQueryBuilder.makeVar(field.getName());
-						object = AbstractQueryBuilder.makeVar(annotation.object());
-					} else if (isAnnotationWithSubject(annotation)) {
-						// use field as object
-						subject = AbstractQueryBuilder.makeVar(annotation.subject());
-						object = AbstractQueryBuilder.makeVar(field.getName());
-					} else {
-						throw new IllegalArgumentException(String.format(
-								"Missing annotation for %s: Either subject or object required.", field.getName()));
-					}
-					// add triple
-					TriplePath triplePath = select.makeTriplePath(subject, predicate, object);
-					if (Collection.class.isAssignableFrom(field.getType())
-							|| Optional.class.isAssignableFrom(field.getType())) {
-						select.addOptional(triplePath);
-					} else {
-						select.addWhere(triplePath);
-					}
-				}
-			}
-
-			return select;
-		}).clone();
+	private static void validateAnnotation(SparqlPattern annotation, Field field) {
+		if (annotation.subject().isEmpty() && annotation.object().isEmpty()
+				|| !annotation.subject().isEmpty() && !annotation.object().isEmpty()) {
+			throw new IllegalArgumentException(
+					String.format("Illegal annotation for %s: Either subject or object required.", field.getName()));
+		}
 	}
 
 	private SparqlEntityManager() {
