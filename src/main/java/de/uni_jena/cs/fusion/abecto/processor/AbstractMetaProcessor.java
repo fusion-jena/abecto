@@ -17,7 +17,7 @@ public abstract class AbstractMetaProcessor<P extends ParameterModel> extends Ab
 	}
 
 	@Override
-	public Collection<Model> getMetaModel() {
+	public Collection<Model> getMetaModels() {
 		if (!this.isSucceeded()) {
 			throw new IllegalStateException("Result Model is not avaliable.");
 		}

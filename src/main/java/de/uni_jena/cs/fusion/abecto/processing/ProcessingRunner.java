@@ -2,7 +2,6 @@ package de.uni_jena.cs.fusion.abecto.processing;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -23,10 +22,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.uni_jena.cs.fusion.abecto.model.ModelRepository;
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
+import de.uni_jena.cs.fusion.abecto.processor.Processor.Status;
 import de.uni_jena.cs.fusion.abecto.processor.RefinementProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.SourceProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.UploadSourceProcessor;
-import de.uni_jena.cs.fusion.abecto.processor.Processor.Status;
 
 @Component
 public class ProcessingRunner {
@@ -44,17 +43,16 @@ public class ProcessingRunner {
 	 * Awaits the termination of the given {@link Processing}.
 	 * 
 	 * @param processingId {@link UUID} of the {@link Processing} to await.
-	 * @throws ProcessorInstantiationException if instantiation of the
-	 *                                         {@link Processor} belonging to the
-	 *                                         {@link Processing} fails.
-	 * @throws NoSuchElementException          if the {@link Processing} was not
-	 *                                         found.
-	 * @throws InterruptedException            if the current thread was interrupted
-	 *                                         while waiting for termination.
+	 * @throws ReflectiveOperationException if instantiation of the
+	 *                                      {@link Processor} belonging to the
+	 *                                      {@link Processing} fails.
+	 * @throws NoSuchElementException       if the {@link Processing} was not found.
+	 * @throws InterruptedException         if the current thread was interrupted
+	 *                                      while waiting for termination.
 	 */
 	@Transactional(readOnly = true, isolation = Isolation.READ_COMMITTED)
 	public void await(UUID processingId)
-			throws ProcessorInstantiationException, NoSuchElementException, InterruptedException {
+			throws ReflectiveOperationException, NoSuchElementException, InterruptedException {
 		this.getProcessor(processingRepository.findById(processingId).orElseThrow()).await();
 	}
 
@@ -92,7 +90,7 @@ public class ProcessingRunner {
 						"Failed to execute Processor %s: Unexpected input streams.", processor.getClass().getName()));
 			}
 			return syncExecute(processing, processor);
-		} catch (ProcessorInstantiationException e) {
+		} catch (ReflectiveOperationException e) {
 			return processingRepository.save(processing.setStateFail(e));
 		}
 	}
@@ -114,7 +112,7 @@ public class ProcessingRunner {
 			}
 
 			return syncExecute(processing, processor);
-		} catch (ProcessorInstantiationException | IllegalArgumentException e) {
+		} catch (ReflectiveOperationException | IllegalArgumentException e) {
 			return processingRepository.save(processing.setStateFail(e));
 		}
 	}
@@ -164,19 +162,12 @@ public class ProcessingRunner {
 	 * {@link Model} (if applicable) as the given {@link Processing}.
 	 * 
 	 * @return {@link Processor} for the given {@link Processing}
-	 * @throws ProcessorInstantiationException if the {@link Processor}
-	 *                                         instantiation failed for a variety of
-	 *                                         reasons
+	 * @throws ReflectiveOperationException if the {@link Processor} instantiation
+	 *                                      failed for a variety of reasons
 	 */
-	public synchronized Processor<?> getProcessor(Processing processing) throws ProcessorInstantiationException {
+	public synchronized Processor<?> getProcessor(Processing processing) throws ReflectiveOperationException {
 		if (!this.processors.containsKey(processing)) {
-			Processor<?> processor;
-			try {
-				processor = processing.getProcessorClass().getDeclaredConstructor().newInstance();
-			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-					| InvocationTargetException | NoSuchMethodException | SecurityException e) {
-				throw new ProcessorInstantiationException(e);
-			}
+			Processor<?> processor = processing.getProcessorClass().getDeclaredConstructor().newInstance();
 			processor.setParameters(processing.getParameter().getParameters());
 			processor.setStatus(processing.getStatus());
 			if (processing.isSucceeded()) {

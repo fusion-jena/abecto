@@ -34,7 +34,7 @@ public class AbstractRefinementProcessorTest {
 		}
 
 		@Override
-		public Collection<Model> getMetaModel() {
+		public Collection<Model> getMetaModels() {
 			throw new UnsupportedOperationException();
 		}
 
@@ -72,7 +72,7 @@ public class AbstractRefinementProcessorTest {
 		}
 
 		@Override
-		public Collection<Model> getMetaModel() {
+		public Collection<Model> getMetaModels() {
 			throw new UnsupportedOperationException();
 		}
 

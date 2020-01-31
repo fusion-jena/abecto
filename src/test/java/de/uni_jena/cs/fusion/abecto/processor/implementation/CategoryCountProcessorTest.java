@@ -51,8 +51,8 @@ public class CategoryCountProcessorTest {
 		CategoryCountProcessor countProcessor = new CategoryCountProcessor();
 		countProcessor.addInputModelGroups(patternProcessor1.getDataModels());
 		countProcessor.addInputModelGroups(patternProcessor2.getDataModels());
-		countProcessor.addMetaModels(patternProcessor1.getMetaModel());
-		countProcessor.addMetaModels(patternProcessor2.getMetaModel());
+		countProcessor.addMetaModels(patternProcessor1.getMetaModels());
+		countProcessor.addMetaModels(patternProcessor2.getMetaModels());
 		countProcessor.call();
 
 		// check results

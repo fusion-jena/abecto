@@ -54,7 +54,7 @@ public class ProcessorTest {
 		}
 
 		@Override
-		public Collection<Model> getMetaModel() {
+		public Collection<Model> getMetaModels() {
 			return null;
 		}
 

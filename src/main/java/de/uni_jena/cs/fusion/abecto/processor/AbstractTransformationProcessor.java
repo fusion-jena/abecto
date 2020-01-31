@@ -28,7 +28,7 @@ public abstract class AbstractTransformationProcessor<P extends ParameterModel> 
 	}
 
 	@Override
-	public Collection<Model> getMetaModel() {
+	public Collection<Model> getMetaModels() {
 		return this.metaSubModels;
 	}
 }

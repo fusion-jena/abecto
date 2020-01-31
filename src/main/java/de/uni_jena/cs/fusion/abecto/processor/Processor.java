@@ -7,7 +7,6 @@ import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
-import org.apache.jena.graph.compose.MultiUnion;
 import org.apache.jena.rdf.model.Model;
 import org.springframework.core.GenericTypeResolver;
 
@@ -55,10 +54,10 @@ public interface Processor<P extends ParameterModel> extends Callable<Model> {
 	public void fail(Throwable cause) throws ExecutionException;
 
 	/**
-	 * @return {@link MultiUnion}s of result data {@link Model}s of this
-	 *         {@link Processor} and its input {@link Processor}s
+	 * @return Result data {@link Model}s of this {@link Processor} and its input
+	 *         {@link Processor}s
 	 * 
-	 * @see #getMetaModel()
+	 * @see #getMetaModels()
 	 * @see #getResultModel()
 	 */
 	public Map<UUID, Collection<Model>> getDataModels();
@@ -104,10 +103,10 @@ public interface Processor<P extends ParameterModel> extends Callable<Model> {
 	}
 
 	/**
-	 * @return {@link MultiUnion} of result meta {@link Model}s of this
-	 *         {@link Processor} and its input {@link Processor}s
+	 * @return Result meta {@link Model}s of this {@link Processor} and its input
+	 *         {@link Processor}s
 	 */
-	public Collection<Model> getMetaModel();
+	public Collection<Model> getMetaModels();
 
 	/**
 	 * Returns the parameters of this processor.

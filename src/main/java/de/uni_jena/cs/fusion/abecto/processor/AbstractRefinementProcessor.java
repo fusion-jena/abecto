@@ -9,7 +9,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
-import org.apache.jena.graph.compose.MultiUnion;
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -25,7 +24,7 @@ public abstract class AbstractRefinementProcessor<P extends ParameterModel> exte
 	 */
 	protected final Collection<Processor<?>> inputProcessors = new ArrayList<>();
 	/**
-	 * {@link MultiUnion} of the input meta models.
+	 * Union of the input meta models.
 	 * 
 	 * @see {@link #metaSubModels} provides the single input meta models.
 	 */
@@ -37,7 +36,7 @@ public abstract class AbstractRefinementProcessor<P extends ParameterModel> exte
 	 */
 	protected final Set<Model> metaSubModels = new HashSet<>();
 	/**
-	 * {@link MultiUnion}s of the input group models by knowledge base.
+	 * Unions of the input group models by knowledge base.
 	 * 
 	 * @see {@link #inputGroupSubModels} provides the single input group models by
 	 *      knowledge base.
@@ -53,7 +52,7 @@ public abstract class AbstractRefinementProcessor<P extends ParameterModel> exte
 	 */
 	protected final Map<UUID, Collection<Model>> inputGroupSubModels = new HashMap<>();
 	/**
-	 * {@link MultiUnion}s of all input group models.
+	 * Unions of all input group models.
 	 * 
 	 * @see {@link #inputGroupModels} provides a union of he input group models by
 	 *      knowledge base.
@@ -106,7 +105,7 @@ public abstract class AbstractRefinementProcessor<P extends ParameterModel> exte
 				}
 				inputProcessor.await();
 			}
-			this.addMetaModels(inputProcessor.getMetaModel());
+			this.addMetaModels(inputProcessor.getMetaModels());
 			this.addInputModelGroups(inputProcessor.getDataModels());
 		}
 	}

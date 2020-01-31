@@ -30,7 +30,7 @@ public abstract class AbstractSourceProcessor<P extends ParameterModel> extends 
 	}
 
 	@Override
-	public Collection<Model> getMetaModel() {
+	public Collection<Model> getMetaModels() {
 		return Collections.emptySet();
 	}
 
