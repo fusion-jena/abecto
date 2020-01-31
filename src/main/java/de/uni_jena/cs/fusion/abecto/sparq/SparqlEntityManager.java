@@ -1,5 +1,7 @@
 package de.uni_jena.cs.fusion.abecto.sparq;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -26,6 +28,8 @@ import org.apache.jena.arq.querybuilder.AbstractQueryBuilder;
 import org.apache.jena.arq.querybuilder.ExprFactory;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.arq.querybuilder.UpdateBuilder;
+import org.apache.jena.arq.querybuilder.clauses.PrologClause;
+import org.apache.jena.arq.querybuilder.clauses.WhereClause;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
@@ -48,16 +52,27 @@ import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.path.PathParser;
 import org.apache.jena.update.UpdateAction;
 
+import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.core.Version;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+
 /**
  * Provides methods to insert or select objects into or from a {@link Model} via
  * SPARQL.
  * 
  * The SPARQL queries will be build automatically using field types and
- * annotations with {@link SparqlNamespace} and {@link SparqlPattern}.
+ * annotations with {@link SparqlNamespace}, {@link SparqlPattern}, and
+ * {@link Member}.
  */
 public class SparqlEntityManager {
 
 	private final static Map<Class<?>, SelectBuilder> SELECT_QUERY_CACHE = new HashMap<>();
+
+	private final static ObjectMapper JSON = new ObjectMapper()
+			.registerModule(new SimpleModule("ResourceSerializer", new Version(1, 0, 0, null, null, null))
+					.addSerializer(Resource.class, new ResourceSerializer()));
 
 	private static void addInsert(UpdateBuilder update, Node subject, Node predicate, Node object) {
 		update.addInsert(new Triple(subject, predicate, object));
@@ -303,8 +318,9 @@ public class SparqlEntityManager {
 		return fields;
 	}
 
-	private static <T> Expr getSelectFilter(T filterEntity, SelectBuilder select) throws ReflectiveOperationException,
-			ARQInternalErrorException, IllegalArgumentException, NullPointerException {
+	private static <T> Expr getSelectFilter(T filterEntity, AbstractQueryBuilder<?> select)
+			throws ReflectiveOperationException, ARQInternalErrorException, IllegalArgumentException,
+			NullPointerException {
 		Collection<Expr> expressions = new ArrayList<>();
 		ExprFactory factory = select.getPrologHandler().getExprFactory();
 
@@ -364,47 +380,7 @@ public class SparqlEntityManager {
 	private static <T> SelectBuilder getSelectQuery(Class<T> type) {
 		return SELECT_QUERY_CACHE.computeIfAbsent(type, (t) -> {
 			SelectBuilder select = new SelectBuilder();
-
-			// add prefixes
-			for (SparqlNamespace namespaceAnnotation : type.getAnnotationsByType(SparqlNamespace.class)) {
-				select.addPrefix(namespaceAnnotation.prefix(), namespaceAnnotation.namespace());
-			}
-
-			for (Field field : type.getFields()) {
-				for (SparqlPattern annotation : field.getAnnotationsByType(SparqlPattern.class)) {
-					Var subject;
-					Path predicate = getAnnotationPropertyPath(field, annotation,
-							select.getPrologHandler().getPrefixes());
-					Var object;
-
-					if (isAnnotationWithObject(annotation)) {
-						// use field as subject
-						if (!Resource.class.isAssignableFrom(field.getType())) {
-							throw new IllegalArgumentException(String.format(
-									"Illegal annotation for %s: Omission of annotation subject permitted only for Resource fields.",
-									field.getName()));
-						}
-						subject = AbstractQueryBuilder.makeVar(field.getName());
-						object = AbstractQueryBuilder.makeVar(annotation.object());
-					} else if (isAnnotationWithSubject(annotation)) {
-						// use field as object
-						subject = AbstractQueryBuilder.makeVar(annotation.subject());
-						object = AbstractQueryBuilder.makeVar(field.getName());
-					} else {
-						throw new IllegalArgumentException(String.format(
-								"Missing annotation for %s: Either subject or object required.", field.getName()));
-					}
-					// add triple
-					TriplePath triplePath = select.makeTriplePath(subject, predicate, object);
-					if (Collection.class.isAssignableFrom(field.getType())
-							|| Optional.class.isAssignableFrom(field.getType())) {
-						select.addOptional(triplePath);
-					} else {
-						select.addWhere(triplePath);
-					}
-				}
-			}
-
+			writeWhereClause(select, type);
 			return select;
 		}).clone();
 	}
@@ -622,8 +598,8 @@ public class SparqlEntityManager {
 				if (fieldValues.get(fieldName) instanceof Collection<?>) {
 					Collection<Object> collection = ((Collection<Object>) field.get(object));
 					// if a collection add all values
-					((Collection<Object>) fieldValues.get(fieldName)).stream().map((v) -> convertType(v, field.getType()))
-							.forEach(collection::add);
+					((Collection<Object>) fieldValues.get(fieldName)).stream()
+							.map((v) -> convertType(v, field.getType())).forEach(collection::add);
 				} else {
 					// if not a collection set value
 					field.set(object, convertType(fieldValues.get(fieldName), field.getType()));
@@ -744,14 +720,9 @@ public class SparqlEntityManager {
 
 		// get plain query
 		SelectBuilder select = getSelectQuery(prototype.getClass());
-		ExprFactory expressionFactory = select.getExprFactory();
 
 		// add entity filters to query
-		Collection<Expr> entityExpressions = new ArrayList<>();
-		for (T filterObject : filterObjects) {
-			entityExpressions.add(getSelectFilter(filterObject, select));
-		}
-		entityExpressions.stream().reduce(expressionFactory::or).ifPresent(select::addFilter);
+		writeFilter(select, filterObjects);
 
 		// execute query
 		ResultSet querySolutions = QueryExecutionFactory.create(select.build(), source).execSelect();
@@ -881,6 +852,71 @@ public class SparqlEntityManager {
 				|| !annotation.subject().isEmpty() && !annotation.object().isEmpty()) {
 			throw new IllegalArgumentException(
 					String.format("Illegal annotation for %s: Either subject or object required.", field.getName()));
+		}
+	}
+
+	public static <T> void wirteJsonTable(OutputStream out, Collection<T> filterObjects, Model source)
+			throws IllegalStateException, NullPointerException, NoSuchElementException, ReflectiveOperationException,
+			JsonGenerationException, JsonMappingException, IOException {
+		JSON.writeValue(out, select(filterObjects, source));
+	}
+
+	private static <T> void writeFilter(WhereClause<?> queryBuilder, Collection<T> filterObjects)
+			throws ReflectiveOperationException, IllegalStateException, NullPointerException {
+		ExprFactory expressionFactory = ((AbstractQueryBuilder<?>) queryBuilder).getExprFactory();
+
+		// add entity filters to query
+		Collection<Expr> entityExpressions = new ArrayList<>();
+		for (T filterObject : filterObjects) {
+			entityExpressions.add(getSelectFilter(filterObject, (AbstractQueryBuilder<?>) queryBuilder));
+		}
+		entityExpressions.stream().reduce(expressionFactory::or).ifPresent(queryBuilder::addFilter);
+	}
+
+	private static <T> void writePrologClause(PrologClause<?> queryBuilder, Class<T> type) {
+		// add prefixes
+		for (SparqlNamespace namespaceAnnotation : type.getAnnotationsByType(SparqlNamespace.class)) {
+			queryBuilder.addPrefix(namespaceAnnotation.prefix(), namespaceAnnotation.namespace());
+		}
+	}
+
+	private static <T> void writeWhereClause(WhereClause<?> queryBuilder, Class<T> type) {
+		writePrologClause((PrologClause<?>) queryBuilder, type);
+
+		for (Field field : type.getFields()) {
+			for (SparqlPattern annotation : field.getAnnotationsByType(SparqlPattern.class)) {
+				Var subject;
+				Path predicate = getAnnotationPropertyPath(field, annotation,
+						((PrologClause<?>) queryBuilder).getPrologHandler().getPrefixes());
+				Var object;
+
+				if (isAnnotationWithObject(annotation)) {
+					// use field as subject
+					if (!Resource.class.isAssignableFrom(field.getType())) {
+						throw new IllegalArgumentException(String.format(
+								"Illegal annotation for %s: Omission of annotation subject permitted only for Resource fields.",
+								field.getName()));
+					}
+					subject = AbstractQueryBuilder.makeVar(field.getName());
+					object = AbstractQueryBuilder.makeVar(annotation.object());
+				} else if (isAnnotationWithSubject(annotation)) {
+					// use field as object
+					subject = AbstractQueryBuilder.makeVar(annotation.subject());
+					object = AbstractQueryBuilder.makeVar(field.getName());
+				} else {
+					throw new IllegalArgumentException(String
+							.format("Missing annotation for %s: Either subject or object required.", field.getName()));
+				}
+				// add triple
+				TriplePath triplePath = ((AbstractQueryBuilder<?>) queryBuilder).makeTriplePath(subject, predicate,
+						object);
+				if (Collection.class.isAssignableFrom(field.getType())
+						|| Optional.class.isAssignableFrom(field.getType())) {
+					queryBuilder.addOptional(triplePath);
+				} else {
+					queryBuilder.addWhere(triplePath);
+				}
+			}
 		}
 	}
 
