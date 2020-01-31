@@ -4,15 +4,17 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.Objects;
 
+import org.apache.jena.graph.Graph;
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.ontology.OntModelSpec;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 
 /**
- * Provides a couple of handy methods to easy work with {@link Model}s. 
+ * Provides a couple of handy methods to easy work with {@link Model}s.
  */
 public class Models {
 
@@ -56,6 +58,10 @@ public class Models {
 	public static OntModel getEmptyOntModel() {
 		return ModelFactory.createOntologyModel(OntModelSpec.OWL_MEM);
 	}
+	
+	public static Model getEmptyModel() {
+		return ModelFactory.createModelForGraph(Graph.emptyGraph);
+	}
 
 	public static String getStringSerialization(Model model, String lang) {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -67,6 +73,23 @@ public class Models {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		model.write(out, lang);
 		return out.toByteArray();
+	}
+
+	public static OntModel union(Collection<Model> modelCollection, Model... modelArray) {
+		OntModel union = getEmptyOntModel();
+		modelCollection.forEach(union::addSubModel);
+		for (Model model : modelArray) {
+			union.addSubModel(model);
+		}
+		return union;
+	}
+
+	public static OntModel union(Model... models) {
+		OntModel union = getEmptyOntModel();
+		for (Model model : models) {
+			union.addSubModel(model);
+		}
+		return union;
 	}
 
 }
