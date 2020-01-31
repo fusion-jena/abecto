@@ -3,7 +3,6 @@ package de.uni_jena.cs.fusion.abecto.project;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -156,13 +155,13 @@ class ProjectRestControlerTest {
 				.param("input", transformation1Id)
 				.param("parameters",
 						"{\"patterns\":{\"entity\":\"?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .\"}}")
-				.accept(MediaType.APPLICATION_JSON)).andDo(print()).andExpect(status().isOk()).andDo(buffer);
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		String pattern1Id = buffer.getId();
 		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", ManualCategoryProcessor.class.getTypeName())
 				.param("input", transformation2Id)
 				.param("parameters",
 						"{\"patterns\":{\"entity\":\"?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .\"}}")
-				.accept(MediaType.APPLICATION_JSON)).andDo(print()).andExpect(status().isOk()).andDo(buffer);
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		String pattern2Id = buffer.getId();
 
 		// add mapping
