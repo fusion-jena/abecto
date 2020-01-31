@@ -95,6 +95,7 @@ public class JaroWinklerMappingProcessor extends AbstractMappingProcessor<JaroWi
 		boolean caseSensitive = this.getParameters().case_sensitive;
 		double threshold = this.getParameters().threshold;
 		Collection<String> variables = this.getParameters().variables;
+		String categoryName = this.getParameters().category;
 
 		// get patterns
 		for (Category category : SparqlEntityManager.select(new Category(), this.metaModel)) {
@@ -149,7 +150,7 @@ public class JaroWinklerMappingProcessor extends AbstractMappingProcessor<JaroWi
 					// convert matches into mappings
 					for (Resource resource : secondModelVariableValues.get(label)) {
 						for (Resource matchingResource : matchingResources) {
-							mappings.add(Mapping.of(resource, matchingResource));
+							mappings.add(Mapping.of(resource, matchingResource).setCategories(categoryName));
 						}
 					}
 				}

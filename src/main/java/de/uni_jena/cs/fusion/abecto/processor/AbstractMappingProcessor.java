@@ -18,7 +18,7 @@ public abstract class AbstractMappingProcessor<P extends ParameterModel> extends
 		implements MappingProcessor<P> {
 
 	@Override
-	public Model computeResultModel() throws Exception {
+	public final Model computeResultModel() throws Exception {
 		// collect known mappings
 		Collection<Mapping> knownMappings = SparqlEntityManager.select(PositiveMapping.prototype, this.metaModel);
 		knownMappings.addAll(SparqlEntityManager.select(NegativeMapping.prototype, this.metaModel));
@@ -27,8 +27,10 @@ public abstract class AbstractMappingProcessor<P extends ParameterModel> extends
 		Model resultsModel = ModelFactory.createDefaultModel();
 
 		for (Entry<UUID, Model> i : this.inputGroupModels.entrySet()) {
+			UUID knowledgeBaseId1 = i.getKey();
 			for (Entry<UUID, Model> j : this.inputGroupModels.entrySet()) {
-				if (i.getKey().compareTo(j.getKey()) > 0) {
+				UUID knowledgeBaseId2 = j.getKey();
+				if (knowledgeBaseId1.compareTo(knowledgeBaseId2) > 0) {
 					// compute mapping
 					Collection<Mapping> mappings = computeMapping(i.getValue(), j.getValue());
 
@@ -38,6 +40,8 @@ public abstract class AbstractMappingProcessor<P extends ParameterModel> extends
 					for (Mapping mapping : mappings) {
 						// check if mapping is already known or contradicts to previous known mappings
 						if (!knownMappings.contains(mapping) && !knownMappings.contains(mapping.inverse())) {
+
+							mapping.setKnowledgeBases(knowledgeBaseId1, knowledgeBaseId2);
 
 							if (mapping instanceof PositiveMapping) {
 								positiveMappings.add((PositiveMapping) mapping);
@@ -60,11 +64,13 @@ public abstract class AbstractMappingProcessor<P extends ParameterModel> extends
 	}
 
 	/**
-	 * Compute the mapping of two models.
+	 * Computes the mappings of two models. The mappings may contain category meta
+	 * data. The mappings should not contain knowledge base meta data, as they will
+	 * be overridden by {@link AbstractMappingProcessor#computeResultModel()}.
 	 * 
-	 * @param firstModel  first model to process
-	 * @param secondModel second model to process
-	 * @return computed mapping
+	 * @param firstModel  the first model to process
+	 * @param secondModel the second model to process
+	 * @return the computed mappings
 	 */
 	public abstract Collection<Mapping> computeMapping(Model firstModel, Model secondModel) throws Exception;
 
