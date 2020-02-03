@@ -23,6 +23,10 @@ import de.uni_jena.cs.fusion.abecto.sparq.SparqlPattern;
 public class Category {
 	@SparqlPattern(predicate = "rdf:type", object = "abecto:Category")
 	public Resource category;
+	/**
+	 * The name of the category and simultaneous the name of the primary key
+	 * variable.
+	 */
 	@SparqlPattern(subject = "category", predicate = "abecto:categoryName")
 	public String name;
 	/**

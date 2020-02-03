@@ -22,7 +22,8 @@ public class ManualCategoryProcessor extends AbstractMetaProcessor<ManualCategor
 	@JsonSerialize
 	public static class Parameter implements ParameterModel {
 		/**
-		 * The patterns by knowledge base and category name.
+		 * The patterns by category name. The variable with the same name as the
+		 * category will be assumed to be the primary key.
 		 */
 		public Map<String, String> patterns = new HashMap<>();
 	}
