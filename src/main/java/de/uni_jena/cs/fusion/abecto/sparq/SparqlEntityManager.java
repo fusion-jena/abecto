@@ -888,7 +888,7 @@ public class SparqlEntityManager {
 				Var subject;
 				Path predicate = getAnnotationPropertyPath(field, annotation,
 						((PrologClause<?>) queryBuilder).getPrologHandler().getPrefixes());
-				Var object;
+				Node object;
 
 				if (isAnnotationWithObject(annotation)) {
 					// use field as subject
@@ -898,7 +898,8 @@ public class SparqlEntityManager {
 								field.getName()));
 					}
 					subject = AbstractQueryBuilder.makeVar(field.getName());
-					object = AbstractQueryBuilder.makeVar(annotation.object());
+					object = AbstractQueryBuilder.makeNode(annotation.object(),
+							((PrologClause<?>) queryBuilder).getPrologHandler().getPrefixes());
 				} else if (isAnnotationWithSubject(annotation)) {
 					// use field as object
 					subject = AbstractQueryBuilder.makeVar(annotation.subject());
