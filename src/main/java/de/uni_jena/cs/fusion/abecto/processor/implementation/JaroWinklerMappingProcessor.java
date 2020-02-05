@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.apache.jena.query.QuerySolution;
@@ -89,7 +90,7 @@ public class JaroWinklerMappingProcessor extends AbstractMappingProcessor<JaroWi
 	}
 
 	@Override
-	public Collection<Mapping> computeMapping(Model firstModel, Model secondModel)
+	public Collection<Mapping> computeMapping(Model model1, Model model2, UUID knowledgeBaseId1, UUID knowledgeBaseId2)
 			throws ParseException, IllegalStateException, NullPointerException, ReflectiveOperationException {
 		// get parameters
 		boolean caseSensitive = this.getParameters().case_sensitive;
@@ -107,31 +108,34 @@ public class JaroWinklerMappingProcessor extends AbstractMappingProcessor<JaroWi
 		}
 
 		// get values
-		Map<Var, Map<String, Collection<Resource>>> firstModelValues = getValues(firstModel, caseSensitive);
-		Map<Var, Map<String, Collection<Resource>>> secondModelValues = getValues(secondModel, caseSensitive);
+		Map<Var, Map<String, Collection<Resource>>> model1Values = getValues(model1, caseSensitive);
+		Map<Var, Map<String, Collection<Resource>>> model2Values = getValues(model2, caseSensitive);
 
 		// prepare mappings collection
 		Collection<Mapping> mappings = new ArrayList<>();
 
 		// iterate variables
-		for (Var variable : firstModelValues.keySet()) {
-			if (secondModelValues.containsKey(variable)) {
-				Map<String, Collection<Resource>> firstModelVariableValues;
-				Map<String, Collection<Resource>> secondModelVariableValues;
+		for (Var variable : model1Values.keySet()) {
+			if (model2Values.containsKey(variable)) {
+				Map<String, Collection<Resource>> model1VariableValues;
+				Map<String, Collection<Resource>> model2VariableValues;
 				// ensure first values map is larger
-				if (firstModelValues.get(variable).size() >= secondModelValues.get(variable).size()) {
-					firstModelVariableValues = firstModelValues.get(variable);
-					secondModelVariableValues = secondModelValues.get(variable);
+				boolean swapped;
+				if (model1Values.get(variable).size() >= model2Values.get(variable).size()) {
+					swapped = false;
+					model1VariableValues = model1Values.get(variable);
+					model2VariableValues = model2Values.get(variable);
 				} else {
-					firstModelVariableValues = secondModelValues.get(variable);
-					secondModelVariableValues = firstModelValues.get(variable);
+					swapped = true;
+					model1VariableValues = model2Values.get(variable);
+					model2VariableValues = model1Values.get(variable);
 				}
 				// prepare JaroWinklerSimilarity instance using larger values map
-				JaroWinklerSimilarity<Collection<Resource>> jws = JaroWinklerSimilarity.with(firstModelVariableValues,
+				JaroWinklerSimilarity<Collection<Resource>> jws = JaroWinklerSimilarity.with(model1VariableValues,
 						threshold);
 
 				// iterate smaller values map
-				for (String label : secondModelVariableValues.keySet()) {
+				for (String label : model2VariableValues.keySet()) {
 					// get best matches
 					Map<Collection<Resource>, Double> searchResult = jws.apply(label);
 					Set<Resource> matchingResources = new HashSet<>();
@@ -148,9 +152,15 @@ public class JaroWinklerMappingProcessor extends AbstractMappingProcessor<JaroWi
 						}
 					}
 					// convert matches into mappings
-					for (Resource resource : secondModelVariableValues.get(label)) {
+					for (Resource resource : model2VariableValues.get(label)) {
 						for (Resource matchingResource : matchingResources) {
-							mappings.add(Mapping.of(resource, matchingResource).setCategories(categoryName));
+							if (!swapped) {
+								mappings.add(Mapping.of(matchingResource, resource, knowledgeBaseId1, knowledgeBaseId2,
+										categoryName));
+							} else {
+								mappings.add(Mapping.of(matchingResource, resource, knowledgeBaseId2, knowledgeBaseId1,
+										categoryName));
+							}
 						}
 					}
 				}

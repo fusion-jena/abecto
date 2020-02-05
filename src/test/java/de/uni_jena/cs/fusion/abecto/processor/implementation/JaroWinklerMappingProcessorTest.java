@@ -17,8 +17,6 @@ import org.junit.jupiter.api.Test;
 import de.uni_jena.cs.fusion.abecto.model.Models;
 import de.uni_jena.cs.fusion.abecto.processor.model.Category;
 import de.uni_jena.cs.fusion.abecto.processor.model.Mapping;
-import de.uni_jena.cs.fusion.abecto.processor.model.NegativeMapping;
-import de.uni_jena.cs.fusion.abecto.processor.model.PositiveMapping;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 
 public class JaroWinklerMappingProcessorTest {
@@ -60,7 +58,8 @@ public class JaroWinklerMappingProcessorTest {
 		parameter.variables = Collections.singleton("label");
 		processor.setParameters(parameter);
 		processor.addMetaModels(Collections.singleton(META_GRAPH));
-		Collection<Mapping> mappings = processor.computeMapping(FIRST_GRAPH, SECOND_GRAPH);
+		Collection<Mapping> mappings = processor.computeMapping(FIRST_GRAPH, SECOND_GRAPH, UUID.randomUUID(),
+				UUID.randomUUID());
 		assertEquals(2, mappings.size());
 		assertTrue(mappings.contains(Mapping.of(ResourceFactory.createResource("http://example.org/entity1"),
 				ResourceFactory.createResource("http://example.com/entity1"))));
@@ -81,8 +80,8 @@ public class JaroWinklerMappingProcessorTest {
 				Collections.singleton(SECOND_GRAPH)));
 		processor.addMetaModels(Collections.singleton(META_GRAPH));
 		Model result = processor.computeResultModel();
-		Collection<PositiveMapping> positiveMappings = SparqlEntityManager.select(PositiveMapping.prototype, result);
-		Collection<NegativeMapping> negativeMappings = SparqlEntityManager.select(NegativeMapping.prototype, result);
+		Collection<Mapping> positiveMappings = SparqlEntityManager.select(Mapping.of(), result);
+		Collection<Mapping> negativeMappings = SparqlEntityManager.select(Mapping.not(), result);
 		assertEquals(2, positiveMappings.size());
 		assertTrue(positiveMappings.contains(Mapping.of(ResourceFactory.createResource("http://example.org/entity1"),
 				ResourceFactory.createResource("http://example.com/entity1"))));

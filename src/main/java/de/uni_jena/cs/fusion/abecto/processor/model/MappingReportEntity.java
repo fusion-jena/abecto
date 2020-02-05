@@ -1,8 +1,9 @@
 package de.uni_jena.cs.fusion.abecto.processor.model;
 
-import java.util.Map;
 import java.util.Optional;
+import java.util.SortedMap;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
@@ -16,13 +17,13 @@ public class MappingReportEntity {
 	@SparqlPattern(predicate = "rdf:type", object = "abecto:MappingReportEntity")
 	public Resource id;
 	@SparqlPattern(subject = "id", predicate = "abecto:firstId")
-	public String first;
+	public Optional<String> first;
 	@SparqlPattern(subject = "id", predicate = "abecto:secondId")
-	public String second;
+	public Optional<String> second;
 	@SparqlPattern(subject = "id", predicate = "abecto:firstData")
-	public Map<String, RDFNode> firstData;
+	public Optional<String> firstData;
 	@SparqlPattern(subject = "id", predicate = "abecto:secondData")
-	public Map<String, RDFNode> secondData;
+	public Optional<String> secondData;
 	@SparqlPattern(subject = "id", predicate = "abecto:firstSourceKnowledgeBase")
 	public Optional<String> firstKnowledgeBase;
 	@SparqlPattern(subject = "id", predicate = "abecto:secondSourceKnowledgeBase")
@@ -32,27 +33,47 @@ public class MappingReportEntity {
 	@SparqlPattern(subject = "id", predicate = "abecto:secondCategorisedAs")
 	public Optional<String> secondCategory;
 
-	public MappingReportEntity(String first, String second, Map<String, RDFNode> firstData,
-			Map<String, RDFNode> secondData, String firstKnowledgeBase, String secondKnowledgeBase, String category) {
-		this.first = first;
-		this.second = second;
-		this.firstData = firstData;
-		this.secondData = secondData;
-		this.firstKnowledgeBase = Optional.of(firstKnowledgeBase);
-		this.secondKnowledgeBase = Optional.of(secondKnowledgeBase);
-		this.firstCategory = Optional.of(category);
-		this.secondCategory = Optional.of(category);
+	public static MappingReportEntity ALL = new MappingReportEntity();
+
+	public MappingReportEntity() {
 	}
 
-	public MappingReportEntity(PositiveMapping mapping, Map<String, RDFNode> firstData,
-			Map<String, RDFNode> secondData) {
-		this.first = mapping.first.getURI();
-		this.second = mapping.second.getURI();
-		this.firstData = firstData;
-		this.secondData = secondData;
+	public MappingReportEntity(String first, String second, SortedMap<String, RDFNode> firstData,
+			SortedMap<String, RDFNode> secondData, String firstKnowledgeBase, String secondKnowledgeBase,
+			String category) {
+		this.first = Optional.ofNullable(first);
+		this.second = Optional.ofNullable(second);
+		this.firstData = Optional.ofNullable(formatData(firstData));
+		this.secondData = Optional.ofNullable(formatData(secondData));
+		this.firstKnowledgeBase = Optional.ofNullable(firstKnowledgeBase);
+		this.secondKnowledgeBase = Optional.ofNullable(secondKnowledgeBase);
+		this.firstCategory = Optional.ofNullable(category);
+		this.secondCategory = Optional.ofNullable(category);
+	}
+
+	public MappingReportEntity(Mapping mapping, SortedMap<String, RDFNode> firstData,
+			SortedMap<String, RDFNode> secondData) {
+		if (!mapping.entitiesMap) {
+			throw new IllegalArgumentException("Given mapping is negative.");
+		}
+		this.first = Optional.ofNullable(mapping.first.getURI());
+		this.second = Optional.ofNullable(mapping.second.getURI());
+		this.firstData = Optional.ofNullable(formatData(firstData));
+		this.secondData = Optional.ofNullable(formatData(secondData));
 		this.firstKnowledgeBase = mapping.firstKnowledgeBase.map(UUID::toString);
 		this.secondKnowledgeBase = mapping.secondKnowledgeBase.map(UUID::toString);
 		this.firstCategory = mapping.firstCategory;
 		this.secondCategory = mapping.secondCategory;
 	}
+
+	private static String formatData(SortedMap<String, RDFNode> data) {
+		if (data == null) {
+			return null;
+		}
+		int maxLength = data.keySet().stream().map(String::length).max(Integer::compareTo).orElse(0);
+		return data.entrySet().stream().map((entry) -> {
+			return String.format("%1$" + maxLength + "s: %s", entry.getKey(), entry.getValue().toString());
+		}).collect(Collectors.joining("\n"));
+	}
+
 }

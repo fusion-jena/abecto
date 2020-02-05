@@ -10,8 +10,6 @@ import org.apache.jena.rdf.model.ModelFactory;
 
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.processor.model.Mapping;
-import de.uni_jena.cs.fusion.abecto.processor.model.NegativeMapping;
-import de.uni_jena.cs.fusion.abecto.processor.model.PositiveMapping;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 
 public abstract class AbstractMappingProcessor<P extends ParameterModel> extends AbstractMetaProcessor<P>
@@ -20,8 +18,8 @@ public abstract class AbstractMappingProcessor<P extends ParameterModel> extends
 	@Override
 	public final Model computeResultModel() throws Exception {
 		// collect known mappings
-		Collection<Mapping> knownMappings = SparqlEntityManager.select(PositiveMapping.prototype, this.metaModel);
-		knownMappings.addAll(SparqlEntityManager.select(NegativeMapping.prototype, this.metaModel));
+		Collection<Mapping> knownMappings = SparqlEntityManager.select(Mapping.of(), this.metaModel);
+		knownMappings.addAll(SparqlEntityManager.select(Mapping.not(), this.metaModel));
 
 		// init result model
 		Model resultsModel = ModelFactory.createDefaultModel();
@@ -32,30 +30,19 @@ public abstract class AbstractMappingProcessor<P extends ParameterModel> extends
 				UUID knowledgeBaseId2 = j.getKey();
 				if (knowledgeBaseId1.compareTo(knowledgeBaseId2) > 0) {
 					// compute mapping
-					Collection<Mapping> mappings = computeMapping(i.getValue(), j.getValue());
+					Collection<Mapping> mappings = computeMapping(i.getValue(), j.getValue(), knowledgeBaseId1,
+							knowledgeBaseId2);
 
-					Collection<PositiveMapping> positiveMappings = new HashSet<>();
-					Collection<NegativeMapping> negativeMappings = new HashSet<>();
+					Collection<Mapping> acceptedMappings = new HashSet<>();
 
 					for (Mapping mapping : mappings) {
 						// check if mapping is already known or contradicts to previous known mappings
 						if (!knownMappings.contains(mapping) && !knownMappings.contains(mapping.inverse())) {
-
-							mapping.setKnowledgeBases(knowledgeBaseId1, knowledgeBaseId2);
-
-							if (mapping instanceof PositiveMapping) {
-								positiveMappings.add((PositiveMapping) mapping);
-							} else if (mapping instanceof NegativeMapping) {
-								negativeMappings.add((NegativeMapping) mapping);
-							} else {
-								throw new IllegalStateException(String.format("Mapping is neither a %s nor a %s.",
-										PositiveMapping.class.getName(), NegativeMapping.class.getName()));
-							}
+							acceptedMappings.add(mapping);
 						}
 					}
 					// add mappings to results
-					SparqlEntityManager.insert(positiveMappings, resultsModel);
-					SparqlEntityManager.insert(negativeMappings, resultsModel);
+					SparqlEntityManager.insert(acceptedMappings, resultsModel);
 				}
 			}
 		}
@@ -68,10 +55,13 @@ public abstract class AbstractMappingProcessor<P extends ParameterModel> extends
 	 * data. The mappings should not contain knowledge base meta data, as they will
 	 * be overridden by {@link AbstractMappingProcessor#computeResultModel()}.
 	 * 
-	 * @param firstModel  the first model to process
-	 * @param secondModel the second model to process
+	 * @param model1           the first model to process
+	 * @param model2           the second model to process
+	 * @param knowledgeBaseId2 the knowledge base id of the first model
+	 * @param knowledgeBaseId1 the knowledge base id of the second model
 	 * @return the computed mappings
 	 */
-	public abstract Collection<Mapping> computeMapping(Model firstModel, Model secondModel) throws Exception;
+	public abstract Collection<Mapping> computeMapping(Model model1, Model model2, UUID knowledgeBaseId1,
+			UUID knowledgeBaseId2) throws Exception;
 
 }

@@ -1,25 +1,26 @@
 package de.uni_jena.cs.fusion.abecto.processor.implementation;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Optional;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.UUID;
 
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.Resource;
 
 import de.uni_jena.cs.fusion.abecto.model.Models;
 import de.uni_jena.cs.fusion.abecto.parameter_model.EmptyParameters;
 import de.uni_jena.cs.fusion.abecto.processor.AbstractReportProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.model.Category;
+import de.uni_jena.cs.fusion.abecto.processor.model.Mapping;
 import de.uni_jena.cs.fusion.abecto.processor.model.MappingReportEntity;
-import de.uni_jena.cs.fusion.abecto.processor.model.PositiveMapping;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 
 public class MappingReportProcessor extends AbstractReportProcessor<EmptyParameters> {
@@ -43,14 +44,16 @@ public class MappingReportProcessor extends AbstractReportProcessor<EmptyParamet
 
 		for (String categoryName : categoriesByName.keySet()) {
 			// generate entity collections per knowledge base and category
-			Map<UUID, Map<String, Map<String, RDFNode>>> entitiesByKnowledgeBaseAndKey = new HashMap<>();
+			Map<UUID, Map<String, SortedMap<String, RDFNode>>> entitiesByKnowledgeBaseAndKey = new HashMap<>();
 			for (Category category : categoriesByName.get(categoryName)) {
-				Map<String, Map<String, RDFNode>> entitiesByKey = entitiesByKnowledgeBaseAndKey
-						.put(category.knowledgeBase, new HashMap<>());
+				Map<String, SortedMap<String, RDFNode>> entitiesByKey = entitiesByKnowledgeBaseAndKey
+						.computeIfAbsent(category.knowledgeBase, (x) -> {
+							return new HashMap<>();
+						});
 				ResultSet entitiesQueryResult = category
 						.selectCategory(this.inputGroupModels.get(category.knowledgeBase));
 				entitiesQueryResult.forEachRemaining((querySolution) -> {
-					Map<String, RDFNode> values = new HashMap<>();
+					SortedMap<String, RDFNode> values = new TreeMap<>();
 					querySolution.varNames().forEachRemaining((varName) -> {
 						values.put(varName, querySolution.get(varName));
 					});
@@ -60,41 +63,40 @@ public class MappingReportProcessor extends AbstractReportProcessor<EmptyParamet
 
 			// generate report entities
 			for (UUID knowledgeBase1 : entitiesByKnowledgeBaseAndKey.keySet()) {
-				Map<String, Map<String, RDFNode>> entitiesOfKnowledgeBase1 = entitiesByKnowledgeBaseAndKey
+				Map<String, SortedMap<String, RDFNode>> entitiesOfKnowledgeBase1 = entitiesByKnowledgeBaseAndKey
 						.get(knowledgeBase1);
 				for (UUID knowledgeBase2 : entitiesByKnowledgeBaseAndKey.keySet()) {
-					Map<String, Map<String, RDFNode>> entitiesOfKnowledgeBase2 = entitiesByKnowledgeBaseAndKey
-							.get(knowledgeBase2);
-					// initialize unmapped entity sets of current knowledge base pair
-					Collection<String> unmappedEntities1 = entitiesOfKnowledgeBase1.keySet();
-					Collection<String> unmappedEntities2 = entitiesOfKnowledgeBase2.keySet();
-					// add mappings to results
 					if (knowledgeBase1.compareTo(knowledgeBase2) > 0) {
+						Map<String, SortedMap<String, RDFNode>> entitiesOfKnowledgeBase2 = entitiesByKnowledgeBaseAndKey
+								.get(knowledgeBase2);
+						// initialize unmapped entity sets of current knowledge base pair
+						Collection<String> unmappedEntities1 = entitiesOfKnowledgeBase1.keySet();
+						Collection<String> unmappedEntities2 = entitiesOfKnowledgeBase2.keySet();
+						// add mappings to results
 						SparqlEntityManager
-								.select(new PositiveMapping((Resource) null, (Resource) null,
-										Optional.of(knowledgeBase1), Optional.of(knowledgeBase1),
-										Optional.of(categoryName), Optional.of(categoryName)), this.metaModel)
+								.select(Arrays.asList(Mapping.of(knowledgeBase1, knowledgeBase2, categoryName),
+										Mapping.of(knowledgeBase2, knowledgeBase1, categoryName)), this.metaModel)
 								.forEach((mapping) -> {
-									Map<String, RDFNode> entityData1 = entitiesOfKnowledgeBase1
-											.get(mapping.first.getURI());
-									Map<String, RDFNode> entityDate2 = entitiesOfKnowledgeBase2
-											.get(mapping.second.getURI());
+									SortedMap<String, RDFNode> entityData1 = entitiesOfKnowledgeBase1
+											.get(mapping.getResourceOf(knowledgeBase1).getURI());
+									SortedMap<String, RDFNode> entityDate2 = entitiesOfKnowledgeBase2
+											.get(mapping.getResourceOf(knowledgeBase2).getURI());
 									mappingReportEntities
 											.add(new MappingReportEntity(mapping, entityData1, entityDate2));
-									unmappedEntities1.remove(mapping.first.getURI());
-									unmappedEntities2.remove(mapping.second.getURI());
+									unmappedEntities1.remove(mapping.getResourceOf(knowledgeBase1).getURI());
+									unmappedEntities2.remove(mapping.getResourceOf(knowledgeBase2).getURI());
 								});
-					}
-					// add missing mappings to results
-					for (String unmappedEntity : unmappedEntities1) {
-						mappingReportEntities.add(new MappingReportEntity(unmappedEntity, (String) null,
-								entitiesOfKnowledgeBase1.get(unmappedEntity), (Map<String, RDFNode>) null,
-								knowledgeBase1.toString(), knowledgeBase2.toString(), categoryName));
-					}
-					for (String unmappedEntity : unmappedEntities2) {
-						mappingReportEntities.add(new MappingReportEntity((String) null, unmappedEntity,
-								(Map<String, RDFNode>) null, entitiesOfKnowledgeBase1.get(unmappedEntity),
-								knowledgeBase1.toString(), knowledgeBase2.toString(), categoryName));
+						// add missing mappings to results
+						for (String unmappedEntity : unmappedEntities1) {
+							mappingReportEntities.add(new MappingReportEntity(unmappedEntity, (String) null,
+									entitiesOfKnowledgeBase1.get(unmappedEntity), (SortedMap<String, RDFNode>) null,
+									knowledgeBase1.toString(), knowledgeBase2.toString(), categoryName));
+						}
+						for (String unmappedEntity : unmappedEntities2) {
+							mappingReportEntities.add(new MappingReportEntity((String) null, unmappedEntity,
+									(SortedMap<String, RDFNode>) null, entitiesOfKnowledgeBase2.get(unmappedEntity),
+									knowledgeBase1.toString(), knowledgeBase2.toString(), categoryName));
+						}
 					}
 				}
 			}

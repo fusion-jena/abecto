@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ResourceFactory;
@@ -17,7 +18,8 @@ import de.uni_jena.cs.fusion.abecto.processor.model.Mapping;
 public class ManualMappingProcessor extends AbstractMappingProcessor<ManualMappingProcessor.Parameter> {
 
 	@Override
-	public Collection<Mapping> computeMapping(Model firstModel, Model secondModel) {
+	public Collection<Mapping> computeMapping(Model model1, Model model2, UUID knowledgeBaseId1,
+			UUID knowledgeBaseId2) {
 		Collection<Mapping> mappings = new HashSet<>();
 
 		for (Collection<String> allEquivalent : this.getParameters().mappings.orElse(Collections.emptyList())) {
@@ -32,11 +34,12 @@ public class ManualMappingProcessor extends AbstractMappingProcessor<ManualMappi
 		}
 		for (Collection<String> allEquivalent : this.getParameters().suppressed_mappings
 				.orElse(Collections.emptyList())) {
-			for (String firstEntity : allEquivalent) {
-				for (String secondEntity : allEquivalent) {
-					if (!firstEntity.equals(secondEntity)) {
-						mappings.add(Mapping.not(ResourceFactory.createResource(firstEntity),
-								ResourceFactory.createResource(secondEntity)));
+			for (String entity1 : allEquivalent) {
+				for (String entity2 : allEquivalent) {
+					if (!entity1.equals(entity2)) {
+						mappings.add(Mapping.not(ResourceFactory.createResource(entity1),
+								ResourceFactory.createResource(entity2)));
+						// TODO set knowledge bases
 					}
 				}
 			}
