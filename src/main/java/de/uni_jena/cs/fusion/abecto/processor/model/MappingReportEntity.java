@@ -25,9 +25,9 @@ public class MappingReportEntity {
 	@SparqlPattern(subject = "id", predicate = "abecto:secondData")
 	public Optional<String> secondData;
 	@SparqlPattern(subject = "id", predicate = "abecto:firstSourceKnowledgeBase")
-	public Optional<String> firstKnowledgeBase;
+	public String firstKnowledgeBase;
 	@SparqlPattern(subject = "id", predicate = "abecto:secondSourceKnowledgeBase")
-	public Optional<String> secondKnowledgeBase;
+	public String secondKnowledgeBase;
 	@SparqlPattern(subject = "id", predicate = "abecto:firstCategorisedAs")
 	public Optional<String> firstCategory;
 	@SparqlPattern(subject = "id", predicate = "abecto:secondCategorisedAs")
@@ -41,12 +41,21 @@ public class MappingReportEntity {
 	public MappingReportEntity(String first, String second, SortedMap<String, RDFNode> firstData,
 			SortedMap<String, RDFNode> secondData, String firstKnowledgeBase, String secondKnowledgeBase,
 			String category) {
-		this.first = Optional.ofNullable(first);
-		this.second = Optional.ofNullable(second);
-		this.firstData = Optional.ofNullable(formatData(firstData));
-		this.secondData = Optional.ofNullable(formatData(secondData));
-		this.firstKnowledgeBase = Optional.ofNullable(firstKnowledgeBase);
-		this.secondKnowledgeBase = Optional.ofNullable(secondKnowledgeBase);
+		if (firstKnowledgeBase.compareTo(secondKnowledgeBase) > 0) {
+			this.first = Optional.ofNullable(first);
+			this.second = Optional.ofNullable(second);
+			this.firstData = Optional.ofNullable(formatData(firstData));
+			this.secondData = Optional.ofNullable(formatData(secondData));
+			this.firstKnowledgeBase = firstKnowledgeBase;
+			this.secondKnowledgeBase = secondKnowledgeBase;
+		} else {
+			this.first = Optional.ofNullable(second);
+			this.second = Optional.ofNullable(first);
+			this.firstData = Optional.ofNullable(formatData(secondData));
+			this.secondData = Optional.ofNullable(formatData(firstData));
+			this.firstKnowledgeBase = secondKnowledgeBase;
+			this.secondKnowledgeBase = firstKnowledgeBase;
+		}
 		this.firstCategory = Optional.ofNullable(category);
 		this.secondCategory = Optional.ofNullable(category);
 	}
@@ -56,14 +65,25 @@ public class MappingReportEntity {
 		if (!mapping.entitiesMap) {
 			throw new IllegalArgumentException("Given mapping is negative.");
 		}
-		this.first = Optional.ofNullable(mapping.first.getURI());
-		this.second = Optional.ofNullable(mapping.second.getURI());
-		this.firstData = Optional.ofNullable(formatData(firstData));
-		this.secondData = Optional.ofNullable(formatData(secondData));
-		this.firstKnowledgeBase = mapping.firstKnowledgeBase.map(UUID::toString);
-		this.secondKnowledgeBase = mapping.secondKnowledgeBase.map(UUID::toString);
-		this.firstCategory = mapping.firstCategory;
-		this.secondCategory = mapping.secondCategory;
+		if (mapping.firstKnowledgeBase.get().compareTo(mapping.secondKnowledgeBase.get()) > 0) {
+			this.first = Optional.ofNullable(mapping.first.getURI());
+			this.second = Optional.ofNullable(mapping.second.getURI());
+			this.firstData = Optional.ofNullable(formatData(firstData));
+			this.secondData = Optional.ofNullable(formatData(secondData));
+			this.firstKnowledgeBase = mapping.firstKnowledgeBase.map(UUID::toString).get();
+			this.secondKnowledgeBase = mapping.secondKnowledgeBase.map(UUID::toString).get();
+			this.firstCategory = mapping.firstCategory;
+			this.secondCategory = mapping.secondCategory;
+		} else {
+			this.first = Optional.ofNullable(mapping.second.getURI());
+			this.second = Optional.ofNullable(mapping.first.getURI());
+			this.firstData = Optional.ofNullable(formatData(secondData));
+			this.secondData = Optional.ofNullable(formatData(firstData));
+			this.firstKnowledgeBase = mapping.secondKnowledgeBase.map(UUID::toString).get();
+			this.secondKnowledgeBase = mapping.firstKnowledgeBase.map(UUID::toString).get();
+			this.firstCategory = mapping.secondCategory;
+			this.secondCategory = mapping.firstCategory;
+		}
 	}
 
 	private static String formatData(SortedMap<String, RDFNode> data) {
