@@ -2,7 +2,6 @@ package de.uni_jena.cs.fusion.abecto.processor.model;
 
 import java.util.Optional;
 import java.util.SortedMap;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.apache.jena.rdf.model.RDFNode;
@@ -58,32 +57,6 @@ public class MappingReportEntity {
 		}
 		this.firstCategory = Optional.ofNullable(category);
 		this.secondCategory = Optional.ofNullable(category);
-	}
-
-	public MappingReportEntity(Mapping mapping, SortedMap<String, RDFNode> firstData,
-			SortedMap<String, RDFNode> secondData) {
-		if (!mapping.entitiesMap) {
-			throw new IllegalArgumentException("Given mapping is negative.");
-		}
-		if (mapping.firstKnowledgeBase.get().compareTo(mapping.secondKnowledgeBase.get()) > 0) {
-			this.first = Optional.ofNullable(mapping.first.getURI());
-			this.second = Optional.ofNullable(mapping.second.getURI());
-			this.firstData = Optional.ofNullable(formatData(firstData));
-			this.secondData = Optional.ofNullable(formatData(secondData));
-			this.firstKnowledgeBase = mapping.firstKnowledgeBase.map(UUID::toString).get();
-			this.secondKnowledgeBase = mapping.secondKnowledgeBase.map(UUID::toString).get();
-			this.firstCategory = mapping.firstCategory;
-			this.secondCategory = mapping.secondCategory;
-		} else {
-			this.first = Optional.ofNullable(mapping.second.getURI());
-			this.second = Optional.ofNullable(mapping.first.getURI());
-			this.firstData = Optional.ofNullable(formatData(secondData));
-			this.secondData = Optional.ofNullable(formatData(firstData));
-			this.firstKnowledgeBase = mapping.secondKnowledgeBase.map(UUID::toString).get();
-			this.secondKnowledgeBase = mapping.firstKnowledgeBase.map(UUID::toString).get();
-			this.firstCategory = mapping.secondCategory;
-			this.secondCategory = mapping.firstCategory;
-		}
 	}
 
 	private static String formatData(SortedMap<String, RDFNode> data) {

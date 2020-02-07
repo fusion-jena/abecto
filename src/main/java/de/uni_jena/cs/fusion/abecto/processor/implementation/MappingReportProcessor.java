@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.UUID;
@@ -14,6 +15,8 @@ import org.apache.jena.ontology.OntModel;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
+
+import com.google.common.collect.Sets;
 
 import de.uni_jena.cs.fusion.abecto.model.Models;
 import de.uni_jena.cs.fusion.abecto.parameter_model.EmptyParameters;
@@ -70,31 +73,27 @@ public class MappingReportProcessor extends AbstractReportProcessor<EmptyParamet
 						Map<String, SortedMap<String, RDFNode>> entitiesOfKnowledgeBase2 = entitiesByKnowledgeBaseAndKey
 								.get(knowledgeBase2);
 						// initialize unmapped entity sets of current knowledge base pair
-						Collection<String> unmappedEntities1 = entitiesOfKnowledgeBase1.keySet();
-						Collection<String> unmappedEntities2 = entitiesOfKnowledgeBase2.keySet();
+						Set<String> unmappedEntities1 = entitiesOfKnowledgeBase1.keySet();
+						Set<String> unmappedEntities2 = entitiesOfKnowledgeBase2.keySet();
 						// add mappings to results
 						SparqlEntityManager
 								.select(Arrays.asList(Mapping.of(knowledgeBase1, knowledgeBase2, categoryName),
 										Mapping.of(knowledgeBase2, knowledgeBase1, categoryName)), this.metaModel)
 								.forEach((mapping) -> {
-									SortedMap<String, RDFNode> entityData1 = entitiesOfKnowledgeBase1
-											.get(mapping.getResourceOf(knowledgeBase1).getURI());
-									SortedMap<String, RDFNode> entityDate2 = entitiesOfKnowledgeBase2
-											.get(mapping.getResourceOf(knowledgeBase2).getURI());
-									mappingReportEntities
-											.add(new MappingReportEntity(mapping, entityData1, entityDate2));
-									unmappedEntities1.remove(mapping.getResourceOf(knowledgeBase1).getURI());
-									unmappedEntities2.remove(mapping.getResourceOf(knowledgeBase2).getURI());
+									String entity1 = mapping.getResourceOf(knowledgeBase1).getURI();
+									String entity2 = mapping.getResourceOf(knowledgeBase2).getURI();
+									SortedMap<String, RDFNode> entityData1 = entitiesOfKnowledgeBase1.get(entity1);
+									SortedMap<String, RDFNode> entityDate2 = entitiesOfKnowledgeBase2.get(entity2);
+									mappingReportEntities.add(new MappingReportEntity(entity1, entity2, entityData1,
+											entityDate2, knowledgeBase1.toString(), knowledgeBase2.toString(),
+											categoryName));
+									unmappedEntities1.remove(entity1);
+									unmappedEntities2.remove(entity2);
 								});
 						// add missing mappings to results
-						for (String unmappedEntity : unmappedEntities1) {
+						for (String unmappedEntity : Sets.union(unmappedEntities1, unmappedEntities2)) {
 							mappingReportEntities.add(new MappingReportEntity(unmappedEntity, (String) null,
 									entitiesOfKnowledgeBase1.get(unmappedEntity), (SortedMap<String, RDFNode>) null,
-									knowledgeBase1.toString(), knowledgeBase2.toString(), categoryName));
-						}
-						for (String unmappedEntity : unmappedEntities2) {
-							mappingReportEntities.add(new MappingReportEntity((String) null, unmappedEntity,
-									(SortedMap<String, RDFNode>) null, entitiesOfKnowledgeBase2.get(unmappedEntity),
 									knowledgeBase1.toString(), knowledgeBase2.toString(), categoryName));
 						}
 					}
