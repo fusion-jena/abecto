@@ -65,7 +65,12 @@ public class ProjectRestControler {
 			Collection<UUID> sourceKnowledgeBaseProcessingIds = new ArrayList<>();
 			for (KnowledgeBase knowledgeBase : project.knowledgeBases) {
 				for (Step sourceStep : knowledgeBase.getSources()) {
-					sourceKnowledgeBaseProcessingIds.add(sourceStep.getLastProcessing().getId());
+					try {
+						sourceKnowledgeBaseProcessingIds.add(sourceStep.getLastProcessing().getId());
+					} catch (NoSuchElementException e) {
+						throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+								String.format("No processing of %s not found.", sourceStep));
+					}
 				}
 			}
 			try {

@@ -1,6 +1,6 @@
 """This is the ABECTO module.
 
-This module provides ...
+This module provides handy functions to use the ABECTO REST service, hidding the raw HTTP requests.
 """
 
 __version__ = '0.1'
@@ -31,15 +31,19 @@ class Abecto:
             while not self.running():
                 time.sleep(0.1)
     
-    def project(self, label = ""):
-        return Project(self, label)
+    def project(self, label = "", id = None):
+        if id is None:
+            return Project(self, label = label)
+        else:
+            return Project(self, id = id)        
     
     def projects(self):
-        # TODO return project list
-        raise NotImplementedError
+        r = requests.get(self.base + "project")
+        r.raise_for_status()
+        return list(map(lambda x: self.project(id=x["id"]), r.json()))
 
 class Project:
-    def __init__(self, server, label, id = None):
+    def __init__(self, server, label = "", id = None):
         self.server = server
         if id is None:
             r = requests.post(self.server.base + "project", data = {"label": label})
@@ -55,9 +59,21 @@ class Project:
             return KnowledgeBase(self.server, self, id = id)
     
     def knowledgeBases(self):
-        # TODO return knowledge base list
-        raise NotImplementedError
+        r = requests.get(self.server.base + "knowledgebase", params = {"project": self.id})
+        r.raise_for_status()
+        return list(map(lambda x: self.knowledgeBase(id=x["id"]), r.json()))
     
+    def step(self, id):
+        r = requests.get(self.server.base + "step/" + id)
+        r.raise_for_status()
+        step = r.json()
+        return Step(self.server, self, self.knowledgeBase(id=step["knowledgeBase"]), step["processorClass"], [], step["parameter"], step["id"])
+    
+    def steps(self):
+        r = requests.get(self.server.base + "step", params = {"project": self.id})
+        r.raise_for_status()
+        return list(map(lambda x: self.step(id=x["id"]), r.json()))
+
     def run(self):
         r = requests.get(self.server.base + "project/" + self.id + "/run", params = {"await": False})
         r.raise_for_status()
@@ -65,6 +81,14 @@ class Project:
     def runAndAwait(self):
         r = requests.get(self.server.base + "project/" + self.id + "/run", params = {"await": True})
         r.raise_for_status()
+    
+    def info(self):
+        r = requests.get(self.server.base + "project/" + self.id)
+        r.raise_for_status()
+        return r.json()
+        
+    def __repr__(self):
+        return str(self.info())
 
 class KnowledgeBase:
     def __init__(self, server, project, label = None, id = None):
@@ -80,10 +104,17 @@ class KnowledgeBase:
     def source(self, processorName, parameters={}):
         return Step(self.server, self.project, self, processorName, [], parameters)
     
+    def delete(self):
+        r = requests.delete(self.server.base + "knowledgebase/" + self.id)
+        r.raise_for_status()
+    
     def info(self):
         r = requests.get(self.server.base + "knowledgebase/" + self.id)
         r.raise_for_status()
         return r.json()
+        
+    def __repr__(self):
+        return str(self.info())
     
 class Step:
     def __init__(self, server, project, knowledgeBase, processorName, inputSteps = [], parameters = {}, id = None):
@@ -123,6 +154,9 @@ class Step:
         r = requests.get(self.server.base + "step/" + self.id)
         r.raise_for_status()
         return r.json()
+        
+    def __repr__(self):
+        return str(self.info())
 
 class Steps:
     def __init__(self, steps, step):
