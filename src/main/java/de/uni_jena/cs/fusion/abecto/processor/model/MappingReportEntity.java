@@ -2,11 +2,18 @@ package de.uni_jena.cs.fusion.abecto.processor.model;
 
 import java.util.Optional;
 import java.util.SortedMap;
-import java.util.stream.Collectors;
 
+import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.Version;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+
+import de.uni_jena.cs.fusion.abecto.sparq.LiteralSerializer;
+import de.uni_jena.cs.fusion.abecto.sparq.ResourceSerializer;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlNamespace;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlPattern;
 
@@ -15,31 +22,36 @@ import de.uni_jena.cs.fusion.abecto.sparq.SparqlPattern;
 public class MappingReportEntity {
 	@SparqlPattern(predicate = "rdf:type", object = "abecto:MappingReportEntity")
 	public Resource id;
-	@SparqlPattern(subject = "id", predicate = "abecto:firstId")
+	@SparqlPattern(subject = "id", predicate = "abecto:id1")
 	public Optional<String> first;
-	@SparqlPattern(subject = "id", predicate = "abecto:secondId")
+	@SparqlPattern(subject = "id", predicate = "abecto:id2")
 	public Optional<String> second;
-	@SparqlPattern(subject = "id", predicate = "abecto:firstData")
+	@SparqlPattern(subject = "id", predicate = "abecto:data1")
 	public Optional<String> firstData;
-	@SparqlPattern(subject = "id", predicate = "abecto:secondData")
+	@SparqlPattern(subject = "id", predicate = "abecto:data2")
 	public Optional<String> secondData;
-	@SparqlPattern(subject = "id", predicate = "abecto:firstSourceKnowledgeBase")
+	@SparqlPattern(subject = "id", predicate = "abecto:knowledgeBase1")
 	public String firstKnowledgeBase;
-	@SparqlPattern(subject = "id", predicate = "abecto:secondSourceKnowledgeBase")
+	@SparqlPattern(subject = "id", predicate = "abecto:knowledgeBase2")
 	public String secondKnowledgeBase;
-	@SparqlPattern(subject = "id", predicate = "abecto:firstCategorisedAs")
+	@SparqlPattern(subject = "id", predicate = "abecto:category1")
 	public Optional<String> firstCategory;
-	@SparqlPattern(subject = "id", predicate = "abecto:secondCategorisedAs")
+	@SparqlPattern(subject = "id", predicate = "abecto:category2")
 	public Optional<String> secondCategory;
 
 	public static MappingReportEntity ALL = new MappingReportEntity();
+
+	private final static ObjectMapper JSON = new ObjectMapper()
+			.registerModule(new SimpleModule("ResourceSerializer", new Version(1, 0, 0, null, null, null))
+					.addSerializer(Resource.class, new ResourceSerializer())
+					.addSerializer(Literal.class, new LiteralSerializer()));
 
 	public MappingReportEntity() {
 	}
 
 	public MappingReportEntity(String first, String second, SortedMap<String, RDFNode> firstData,
 			SortedMap<String, RDFNode> secondData, String firstKnowledgeBase, String secondKnowledgeBase,
-			String category) {
+			String category) throws JsonProcessingException {
 		if (firstKnowledgeBase.compareTo(secondKnowledgeBase) > 0) {
 			this.first = Optional.ofNullable(first);
 			this.second = Optional.ofNullable(second);
@@ -59,14 +71,15 @@ public class MappingReportEntity {
 		this.secondCategory = Optional.ofNullable(category);
 	}
 
-	private static String formatData(SortedMap<String, RDFNode> data) {
+	private static String formatData(SortedMap<String, RDFNode> data) throws JsonProcessingException {
 		if (data == null) {
 			return null;
 		}
-		int maxLength = data.keySet().stream().map(String::length).max(Integer::compareTo).orElse(0);
-		return data.entrySet().stream().map((entry) -> {
-			return String.format("%1$" + maxLength + "s: %s", entry.getKey(), entry.getValue().toString());
-		}).collect(Collectors.joining("\n"));
+		return JSON.writeValueAsString(data);
+//		int maxLength = data.keySet().stream().map(String::length).max(Integer::compareTo).orElse(0);
+//		return data.entrySet().stream().map((entry) -> {
+//			return String.format("%" + maxLength + "s: %s", entry.getKey(), entry.getValue().toString());
+//		}).collect(Collectors.joining("\n"));
 	}
 
 }
