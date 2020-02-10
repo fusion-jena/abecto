@@ -76,10 +76,6 @@ public class MappingReportEntity {
 			return null;
 		}
 		return JSON.writeValueAsString(data);
-//		int maxLength = data.keySet().stream().map(String::length).max(Integer::compareTo).orElse(0);
-//		return data.entrySet().stream().map((entry) -> {
-//			return String.format("%" + maxLength + "s: %s", entry.getKey(), entry.getValue().toString());
-//		}).collect(Collectors.joining("\n"));
 	}
 
 }
