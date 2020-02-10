@@ -169,10 +169,7 @@ public class ProcessingRunner {
 		if (!this.processors.containsKey(processing)) {
 			Processor<?> processor = processing.getProcessorClass().getDeclaredConstructor().newInstance();
 			processor.setParameters(processing.getParameter().getParameters());
-			processor.setStatus(processing.getStatus());
-			if (processing.isSucceeded()) {
-				processor.setResultModel(modelRepository.get(processing.getModelHash()));
-			}
+			processor.setStatus(processing.getStatus(), modelRepository.get(processing.getModelHash()));
 			if (processor instanceof SourceProcessor) {
 				((SourceProcessor<?>) processor).setKnowledgBase(processing.getStep().getKnowledgeBase().getId());
 			} else if (processor instanceof RefinementProcessor) {

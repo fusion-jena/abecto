@@ -6,7 +6,6 @@ import java.util.Map.Entry;
 import java.util.UUID;
 
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
 
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.processor.model.Mapping;
@@ -16,13 +15,10 @@ public abstract class AbstractMappingProcessor<P extends ParameterModel> extends
 		implements MappingProcessor<P> {
 
 	@Override
-	public final Model computeResultModel() throws Exception {
+	public final void computeResultModel() throws Exception {
 		// collect known mappings
 		Collection<Mapping> knownMappings = SparqlEntityManager.select(Mapping.of(), this.metaModel);
 		knownMappings.addAll(SparqlEntityManager.select(Mapping.not(), this.metaModel));
-
-		// init result model
-		Model resultsModel = ModelFactory.createDefaultModel();
 
 		for (Entry<UUID, Model> i : this.inputGroupModels.entrySet()) {
 			UUID knowledgeBaseId1 = i.getKey();
@@ -42,12 +38,10 @@ public abstract class AbstractMappingProcessor<P extends ParameterModel> extends
 						}
 					}
 					// add mappings to results
-					SparqlEntityManager.insert(acceptedMappings, resultsModel);
+					SparqlEntityManager.insert(acceptedMappings, this.getResultModel());
 				}
 			}
 		}
-
-		return resultsModel;
 	}
 
 	/**

@@ -5,11 +5,12 @@ import java.util.concurrent.ExecutionException;
 
 import org.apache.jena.rdf.model.Model;
 
+import de.uni_jena.cs.fusion.abecto.model.Models;
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 
 public abstract class AbstractProcessor<P extends ParameterModel> implements Processor<P> {
 
-	private Model resultModel;
+	private Model resultModel = Models.getEmptyOntModel();
 
 	private Status status = Status.NOT_STARTED;
 	private Throwable failureCause;
@@ -35,7 +36,7 @@ public abstract class AbstractProcessor<P extends ParameterModel> implements Pro
 	public Model call() throws Exception {
 		this.status = Status.RUNNING;
 		this.prepare();
-		this.resultModel = this.computeResultModel();
+		this.computeResultModel();
 		this.status = Status.SUCCEEDED;
 		this.alert();
 		return resultModel;
@@ -43,13 +44,12 @@ public abstract class AbstractProcessor<P extends ParameterModel> implements Pro
 
 	/**
 	 * Computes a {@link Model}, or throws an exception if unable to do so. This
-	 * method is used by {@link #call()} should be implemented instead of
+	 * method is used by {@link #call()} and should be implemented instead of
 	 * overwriting {@link #call()}.
 	 * 
-	 * @return computed {@link Model}
 	 * @throws Exception
 	 */
-	protected abstract Model computeResultModel() throws Exception;
+	protected abstract void computeResultModel() throws Exception;
 
 	@Override
 	public void fail(Throwable cause) throws ExecutionException {
@@ -109,6 +109,10 @@ public abstract class AbstractProcessor<P extends ParameterModel> implements Pro
 	 */
 	protected abstract void prepare() throws Exception;
 
+	protected void setModel(Model model) {
+		this.resultModel = Objects.requireNonNull(model);
+	}
+
 	@Override
 	@SuppressWarnings("unchecked")
 	public void setParameters(ParameterModel parameters) {
@@ -116,12 +120,10 @@ public abstract class AbstractProcessor<P extends ParameterModel> implements Pro
 	}
 
 	@Override
-	public void setResultModel(Model model) {
-		this.resultModel = Objects.requireNonNull(model);
-	}
-
-	@Override
-	public void setStatus(Status status) {
+	public void setStatus(Status status, Model model) {
 		this.status = status;
+		if (status.equals(Status.SUCCEEDED)) {
+			this.resultModel = Objects.requireNonNull(model);
+		}
 	}
 }

@@ -7,11 +7,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 
-import org.apache.jena.rdf.model.Model;
-
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-import de.uni_jena.cs.fusion.abecto.model.Models;
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.processor.AbstractMetaProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.model.Category;
@@ -29,7 +26,7 @@ public class ManualCategoryProcessor extends AbstractMetaProcessor<ManualCategor
 	}
 
 	@Override
-	protected Model computeResultModel() throws Exception {
+	protected void computeResultModel() throws Exception {
 		Collection<Category> categories = new ArrayList<>();
 
 		if (this.getParameters().patterns.isEmpty()) {
@@ -44,9 +41,7 @@ public class ManualCategoryProcessor extends AbstractMetaProcessor<ManualCategor
 			categories.add(new Category(categoryName, categoryPattern, knowledgeBase));
 		}
 
-		Model resultModel = Models.getEmptyOntModel();
-		SparqlEntityManager.insert(categories, resultModel);
-		return resultModel;
+		SparqlEntityManager.insert(categories, this.getResultModel());
 	}
 
 }

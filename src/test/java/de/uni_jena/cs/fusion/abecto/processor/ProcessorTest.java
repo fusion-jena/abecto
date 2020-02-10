@@ -59,8 +59,7 @@ public class ProcessorTest {
 		}
 
 		@Override
-		protected Model computeResultModel() throws Exception {
-			return null;
+		protected void computeResultModel() throws Exception {
 		}
 
 		@Override

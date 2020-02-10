@@ -17,7 +17,6 @@ import org.apache.jena.sparql.syntax.ElementGroup;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-import de.uni_jena.cs.fusion.abecto.model.Models;
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.processor.AbstractMetaProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.model.Category;
@@ -43,7 +42,7 @@ public class CategoryCountProcessor extends AbstractMetaProcessor<CategoryCountP
 	}
 
 	@Override
-	protected Model computeResultModel() throws Exception {
+	protected void computeResultModel() throws Exception {
 		// get categories
 		Collection<Category> categories = SparqlEntityManager.select(new Category(), this.metaModel);
 
@@ -85,10 +84,7 @@ public class CategoryCountProcessor extends AbstractMetaProcessor<CategoryCountP
 		}
 
 		// construct result model
-		Model resultModel = Models.getEmptyOntModel();
-		SparqlEntityManager.insert(categoryCountMeasuers, resultModel);
-
-		return resultModel;
+		SparqlEntityManager.insert(categoryCountMeasuers, this.getResultModel());
 	}
 
 	@JsonSerialize

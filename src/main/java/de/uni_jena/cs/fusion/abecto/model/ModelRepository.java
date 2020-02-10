@@ -44,7 +44,11 @@ public class ModelRepository {
 
 	private Model load(String hash) {
 		try {
-			return deserialize(new FileInputStream(file(hash)));
+			if (hash != null) {
+				return deserialize(new FileInputStream(file(hash)));
+			} else {
+				return null;
+			}
 		} catch (FileNotFoundException e) {
 			return null;
 		} catch (IOException e) {

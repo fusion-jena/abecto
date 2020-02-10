@@ -33,7 +33,8 @@ public class ManualCategoryProcessorTest {
 		parameter.patterns.put("good", "?good <" + RDFS.subClassOf + "> <" + OWL.Thing + ">");
 		parameter.patterns.put("bad", "?bad <" + RDF.type + "> <" + RDFS.Class + ">");
 		processor.setParameters(parameter);
-		Model model = processor.computeResultModel();
+		processor.computeResultModel();
+		Model model = processor.getResultModel();
 		Assertions.assertEquals(2, model.listResourcesWithProperty(RDF.type, Vocabulary.CATEGORY).toSet().size());
 
 	}

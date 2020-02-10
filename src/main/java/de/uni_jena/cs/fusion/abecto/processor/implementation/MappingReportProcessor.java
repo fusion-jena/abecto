@@ -13,10 +13,8 @@ import java.util.UUID;
 
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.query.ResultSet;
-import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 
-import de.uni_jena.cs.fusion.abecto.model.Models;
 import de.uni_jena.cs.fusion.abecto.parameter_model.EmptyParameters;
 import de.uni_jena.cs.fusion.abecto.processor.AbstractReportProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.model.Category;
@@ -27,7 +25,7 @@ import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 public class MappingReportProcessor extends AbstractReportProcessor<EmptyParameters> {
 
 	@Override
-	protected Model computeResultModel() throws Exception {
+	protected void computeResultModel() throws Exception {
 		// get meta model union
 		OntModel metaModel = this.metaModel;
 
@@ -103,9 +101,7 @@ public class MappingReportProcessor extends AbstractReportProcessor<EmptyParamet
 			}
 		}
 
-		OntModel resultModel = Models.getEmptyOntModel();
-		SparqlEntityManager.insert(mappingReportEntities, resultModel);
-		return resultModel;
+		SparqlEntityManager.insert(mappingReportEntities, this.getResultModel());
 	}
 
 }

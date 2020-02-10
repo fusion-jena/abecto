@@ -10,7 +10,6 @@ import java.io.InputStream;
 import java.util.HashSet;
 import java.util.UUID;
 
-import org.apache.jena.rdf.model.Model;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,7 +28,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import de.uni_jena.cs.fusion.abecto.ResponseBuffer;
-import de.uni_jena.cs.fusion.abecto.model.Models;
 import de.uni_jena.cs.fusion.abecto.parameter_model.EmptyParameters;
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.processor.AbstractSourceProcessor;
@@ -203,9 +201,8 @@ public class StepRestControllerTest {
 		}
 
 		@Override
-		protected Model computeResultModel() throws Exception {
+		protected void computeResultModel() throws Exception {
 			loaded = true;
-			return Models.getEmptyOntModel();
 		}
 	}
 
@@ -214,9 +211,8 @@ public class StepRestControllerTest {
 		public static boolean loaded;
 
 		@Override
-		protected Model computeResultModel() throws Exception {
+		protected void computeResultModel() throws Exception {
 			loaded = true;
-			return Models.getEmptyOntModel();
 		}
 	}
 
@@ -225,9 +221,8 @@ public class StepRestControllerTest {
 		public static boolean loaded;
 
 		@Override
-		protected Model computeResultModel() throws Exception {
+		protected void computeResultModel() throws Exception {
 			loaded = true;
-			return Models.getEmptyOntModel();
 		}
 	}
 

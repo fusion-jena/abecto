@@ -5,7 +5,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.io.IOException;
 
-import org.apache.jena.rdf.model.Model;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,7 +20,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import de.uni_jena.cs.fusion.abecto.ResponseBuffer;
-import de.uni_jena.cs.fusion.abecto.model.Models;
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.processor.AbstractSourceProcessor;
 import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
@@ -73,9 +71,10 @@ public class ParameterRestControllerTest {
 	}
 
 	public static class ParameterProcessor extends AbstractSourceProcessor<ExampleParameters> {
+
 		@Override
-		protected Model computeResultModel() throws Exception {
-			return Models.getEmptyOntModel();
+		protected void computeResultModel() throws Exception {
+			// do nothing
 		}
 	}
 

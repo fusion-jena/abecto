@@ -39,7 +39,7 @@ public class AbstractRefinementProcessorTest {
 		}
 
 		@Override
-		protected Model computeResultModel() throws Exception {
+		protected void computeResultModel() throws Exception {
 			throw new UnsupportedOperationException();
 		}
 
@@ -77,7 +77,7 @@ public class AbstractRefinementProcessorTest {
 		}
 
 		@Override
-		protected Model computeResultModel() throws Exception {
+		protected void computeResultModel() throws Exception {
 			throw new UnsupportedOperationException();
 		}
 

@@ -118,14 +118,15 @@ public interface Processor<P extends ParameterModel> extends Callable<Model> {
 	/**
 	 * Returns the result {@link Model} produced by this {@link Processor}. The
 	 * returned {@link Model} is either a data {@link Model} or a meta {@link Model}
-	 * depending on the type of this {@link Processor}.
+	 * depending on the type of this {@link Processor}. If called before the
+	 * calculation has succeeded, an empty or intermediate model will be returned.
 	 * 
-	 * @return result {@link Model} produced by this {@link Processor}
+	 * @return result the result produced by this {@link Processor}
 	 */
 	public Model getResultModel();
 
 	/**
-	 * @return {@link Status} of this {@link Processor}
+	 * @return the status of this {@link Processor}
 	 */
 	public Status getStatus();
 
@@ -175,16 +176,11 @@ public interface Processor<P extends ParameterModel> extends Callable<Model> {
 	public void setParameters(ParameterModel parameters);
 
 	/**
-	 * Sets the result {@link Model} for this {@link Processor}.
+	 * Sets the {@link Status} and result {@link Model} for this {@link Processor}.
 	 * 
-	 * @param resultModel {@link Model} to use as result model
+	 * @param status the status of this processor
+	 * @param model  the result model of this processor, if this processor is
+	 *               succeeded, otherwise null is permitted
 	 */
-	public void setResultModel(Model model);
-
-	/**
-	 * Sets the {@link Status} for this {@link Processor}.
-	 * 
-	 * @param resultModel {@link Status} to set
-	 */
-	public void setStatus(Status status);
+	public void setStatus(Status status, Model model);
 }

@@ -60,8 +60,7 @@ class MappingReportProcessorTest {
 				Collections.singleton(SECOND_GRAPH)));
 		mappingProcessor.addMetaModels(Collections.singleton(META_GRAPH));
 		Model mapping = mappingProcessor.call();
-		mappingProcessor.setResultModel(mapping);
-		mappingProcessor.setStatus(Status.SUCCEEDED);
+		mappingProcessor.setStatus(Status.SUCCEEDED, mapping);
 
 		// test
 		MappingReportProcessor reportProcessor = new MappingReportProcessor();

@@ -13,7 +13,6 @@ import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QueryFactory;
-import org.apache.jena.rdf.model.Model;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.BindingHashMap;
@@ -36,7 +35,7 @@ public class ManualRelationSelectionProcessor
 		extends AbstractMetaProcessor<ManualRelationSelectionProcessor.Parameter> {
 
 	@Override
-	protected Model computeResultModel() throws Exception {
+	protected void computeResultModel() throws Exception {
 		Var uuidVar = Var.alloc(NodeFactory.createVariable("uuid"));
 		Var nameVar = Var.alloc(NodeFactory.createVariable("name"));
 		Var pathVar = Var.alloc(NodeFactory.createVariable("path"));
@@ -105,8 +104,8 @@ public class ManualRelationSelectionProcessor
 		// prepare execution
 		QueryExecution queryExecution = QueryExecutionFactory.create(query, this.inputModelUnion);
 
-		// execute and return result
-		return queryExecution.execConstruct();
+		// execute into result model
+		queryExecution.execConstruct(this.getResultModel());
 	}
 
 	@JsonSerialize

@@ -79,7 +79,8 @@ public class JaroWinklerMappingProcessorTest {
 		processor.addInputModelGroups(Map.of(UUID.randomUUID(), Collections.singleton(FIRST_GRAPH), UUID.randomUUID(),
 				Collections.singleton(SECOND_GRAPH)));
 		processor.addMetaModels(Collections.singleton(META_GRAPH));
-		Model result = processor.computeResultModel();
+		processor.computeResultModel();
+		Model result = processor.getResultModel();
 		Collection<Mapping> positiveMappings = SparqlEntityManager.select(Mapping.of(), result);
 		Collection<Mapping> negativeMappings = SparqlEntityManager.select(Mapping.not(), result);
 		assertEquals(2, positiveMappings.size());
