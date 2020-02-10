@@ -33,6 +33,11 @@ public class Mapping {
 				Optional.ofNullable(categorie));
 	}
 
+	public static Mapping not(UUID firstKnowledgeBase, UUID secondKnowledgeBase) {
+		return new Mapping(null, false, null, null, Optional.ofNullable(secondKnowledgeBase),
+				Optional.ofNullable(firstKnowledgeBase), null, null);
+	}
+
 	public static Mapping of() {
 		return new Mapping(null, true, null, null, null, null, null, null);
 	}
@@ -52,6 +57,11 @@ public class Mapping {
 		return new Mapping(null, true, null, null, Optional.ofNullable(firstKnowledgeBase),
 				Optional.ofNullable(secondKnowledgeBase), Optional.ofNullable(categorie),
 				Optional.ofNullable(categorie));
+	}
+
+	public static Mapping of(UUID firstKnowledgeBase, UUID secondKnowledgeBase) {
+		return new Mapping(null, true, null, null, Optional.ofNullable(firstKnowledgeBase),
+				Optional.ofNullable(secondKnowledgeBase), null, null);
 	}
 
 	public static Mapping empty() {

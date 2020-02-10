@@ -47,7 +47,9 @@ public class Category {
 		this.name = name;
 		this.pattern = pattern;
 		this.knowledgeBase = knowledgeBase;
-		this.validate();
+		if (pattern != null) {
+			this.validate();
+		}
 	}
 
 	public ElementGroup getPatternElementGroup() {
