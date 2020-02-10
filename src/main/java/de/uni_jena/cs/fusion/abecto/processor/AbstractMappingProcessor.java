@@ -51,9 +51,8 @@ public abstract class AbstractMappingProcessor<P extends ParameterModel> extends
 	}
 
 	/**
-	 * Computes the mappings of two models. The mappings may contain category meta
-	 * data. The mappings should not contain knowledge base meta data, as they will
-	 * be overridden by {@link AbstractMappingProcessor#computeResultModel()}.
+	 * Computes the mappings of two models. The mappings may contain category and
+	 * knowledge base meta data.
 	 * 
 	 * @param model1           the first model to process
 	 * @param model2           the second model to process
