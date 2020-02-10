@@ -23,22 +23,20 @@ class MappingReportProcessorTest {
 	@Test
 	void test() throws Exception {
 		// preparation
-		Model FIRST_GRAPH = Models.load(new ByteArrayInputStream(("" + //
-				"@base <http://example.org/> .\r\n" + //
-				"@prefix : <http://example.org/> .\r\n" + //
-				"@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\r\n" + //
-				"\r\n" + //
-				":entity1 rdfs:label \"abcdabcdabcdabcdabcd\" .\r\n" + //
-				":entity2 rdfs:label \"efghefghefghefghefgh\" .\r\n" + //
-				":entity3 rdfs:label \"ijklijklijklijklijkl\" .").getBytes()));
-		Model SECOND_GRAPH = Models.load(new ByteArrayInputStream(("" + //
-				"@base <http://example.com/> .\r\n" + //
-				"@prefix : <http://example.com/> .\r\n" + //
-				"@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\r\n" + //
-				"\r\n" + //
-				":entity1 rdfs:label \"abcdabcdabcdabcdabcd\" .\r\n" + //
-				":entity2 rdfs:label \"efghefghefghefghabcd\" .\r\n" + //
-				":entity3 rdfs:label \"mnopmnopmnopmnopmnop\" .").getBytes()));
+		Model FIRST_GRAPH = Models.load(new ByteArrayInputStream((""//
+				+ "@base <http://example.org/> .\n"//
+				+ "@prefix : <http://example.org/> .\n"//
+				+ "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\n"//
+				+ ":entity1 rdfs:label \"abcdabcdabcdabcdabcd\" .\n"//
+				+ ":entity2 rdfs:label \"efghefghefghefghefgh\" .\n"//
+				+ ":entity3 rdfs:label \"ijklijklijklijklijkl\" .").getBytes()));
+		Model SECOND_GRAPH = Models.load(new ByteArrayInputStream((""//
+				+ "@base <http://example.com/> .\n"//
+				+ "@prefix : <http://example.com/> .\n"//
+				+ "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\n"//
+				+ ":entity1 rdfs:label \"abcdabcdabcdabcdabcd\" .\n"//
+				+ ":entity2 rdfs:label \"efghefghefghefghabcd\" .\n"//
+				+ ":entity3 rdfs:label \"mnopmnopmnopmnopmnop\" .").getBytes()));
 		Model META_GRAPH = Models.getEmptyOntModel();
 		UUID FIRST_UUID = UUID.randomUUID();
 		UUID SECOND_UUID = UUID.randomUUID();
