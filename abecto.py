@@ -19,6 +19,17 @@ class Abecto:
         self.base = base
         self.jar = jar
     
+    def project(self, label = "", id = None):
+        if id is None:
+            return Project(self, label = label)
+        else:
+            return Project(self, id = id)        
+    
+    def projects(self):
+        r = requests.get(self.base + "project")
+        r.raise_for_status()
+        return list(map(lambda x: self.project(id=x["id"]), r.json()))
+    
     def running(self):
         try:
             return requests.get(self.base).status_code == 200
@@ -30,17 +41,6 @@ class Abecto:
             subprocess.Popen(["java","-jar",self.jar])
             while not self.running():
                 time.sleep(0.1)
-    
-    def project(self, label = "", id = None):
-        if id is None:
-            return Project(self, label = label)
-        else:
-            return Project(self, id = id)        
-    
-    def projects(self):
-        r = requests.get(self.base + "project")
-        r.raise_for_status()
-        return list(map(lambda x: self.project(id=x["id"]), r.json()))
 
 class Project:
     def __init__(self, server, label = "", id = None):
@@ -51,6 +51,18 @@ class Project:
             self.id = r.json()["id"]
         else:
             self.id = id
+        
+    def __repr__(self):
+        return str(self.info())
+    
+    def delete(self):
+        r = requests.delete(self.server.base + "project/" + self.id)
+        r.raise_for_status()
+    
+    def info(self):
+        r = requests.get(self.server.base + "project/" + self.id)
+        r.raise_for_status()
+        return r.json()
 
     def knowledgeBase(self, label = "", id = None):
         if id is None:
@@ -81,14 +93,6 @@ class Project:
     def runAndAwait(self):
         r = requests.get(self.server.base + "project/" + self.id + "/run", params = {"await": True})
         r.raise_for_status()
-    
-    def info(self):
-        r = requests.get(self.server.base + "project/" + self.id)
-        r.raise_for_status()
-        return r.json()
-        
-    def __repr__(self):
-        return str(self.info())
 
 class KnowledgeBase:
     def __init__(self, server, project, label = None, id = None):
@@ -100,9 +104,9 @@ class KnowledgeBase:
             self.id = r.json()["id"]
         else:
             self.id = id
-
-    def source(self, processorName, parameters={}):
-        return Step(self.server, self.project, self, processorName, [], parameters)
+        
+    def __repr__(self):
+        return str(self.info())
     
     def delete(self):
         r = requests.delete(self.server.base + "knowledgebase/" + self.id)
@@ -112,9 +116,9 @@ class KnowledgeBase:
         r = requests.get(self.server.base + "knowledgebase/" + self.id)
         r.raise_for_status()
         return r.json()
-        
-    def __repr__(self):
-        return str(self.info())
+
+    def source(self, processorName, parameters={}):
+        return Step(self.server, self.project, self, processorName, [], parameters)
     
 class Step:
     def __init__(self, server, project, knowledgeBase, processorName, inputSteps = [], parameters = {}, id = None):
@@ -133,6 +137,31 @@ class Step:
             self.id = r.json()["id"]
         else:
             self.id = id
+        
+    def __repr__(self):
+        return str(self.info())
+    
+    def info(self):
+        r = requests.get(self.server.base + "step/" + self.id)
+        r.raise_for_status()
+        return r.json()
+    
+    def into(self, processorName, parameters = {}):
+        return Step(self.server, self.project, None, processorName, [self], parameters)
+    
+    def last(self):
+        r = requests.get(self.server.base + "step/" + self.id + "/processing/last")
+        r.raise_for_status()
+        return Processing(self.server, self.project, self, r.json()["id"])
+    
+    def processings(self):
+        
+        if id is None:
+            r = requests.post(self.server.base + "step", data = {"class": processorName, "input" : inputStepIds, "knowledgebase": knowledgeBaseId, "parameters": json.dumps(parameters)})
+            r.raise_for_status()
+            self.id = r.json()["id"]
+        else:
+            self.id = id
     
     def load(self, file):
         r = requests.post(self.server.base + "step/" + self.id + "/load", files = {"file": file})
@@ -141,22 +170,6 @@ class Step:
     
     def plus(self, step):
         return Steps(self, step)
-    
-    def into(self, processorName, parameters = {}):
-        return Step(self.server, self.project, None, processorName, [self], parameters)
-    
-    def lastProcessing(self):
-        r = requests.get(self.server.base + "step/" + self.id + "/processing/last")
-        r.raise_for_status()
-        return Processing(self.server, self.project, self, r.json()["id"])
-    
-    def info(self):
-        r = requests.get(self.server.base + "step/" + self.id)
-        r.raise_for_status()
-        return r.json()
-        
-    def __repr__(self):
-        return str(self.info())
 
 class Steps:
     def __init__(self, steps, step):
@@ -175,12 +188,12 @@ class Steps:
         self.server = step.server
         self.project = step.project
         self.knowledgeBase = step.knowledgeBase
-    
-    def plus(self, step):
-        return Steps(self, step)
 
     def into(self, processorName, parameters = {}):
         return Step(self.server, self.project, None, processorName, self.stepList, parameters)
+    
+    def plus(self, step):
+        return Steps(self, step)
 
 class Processing:
     def __init__(self, server, project, step, id):
@@ -202,6 +215,9 @@ class Processing:
         Report.of(self)
         
 class Report:
+        
+    def default(cls, processing):
+        return processing.graphAsDataFrame()
     
     def mappingReport(cls, processing):
         display(HTML("<h1>Mapping Report</h1>"))
@@ -226,14 +242,14 @@ class Report:
                 for index, row in data.iterrows():
                     table += "<tr>"
                     table += "<td>" + (row.id1 if not row.isna().id1 else "") + "</td>"
-                    table += "<td>" + (cls.entityDataToHtml(row.data1) if not row.isna().data1 else "") + "</td>"
-                    table += "<td>" + (cls.entityDataToHtml(row.data2) if not row.isna().data2 else "") + "</td>"
+                    table += "<td>" + (cls.mappingReportEntityDataToHtml(row.data1) if not row.isna().data1 else "") + "</td>"
+                    table += "<td>" + (cls.mappingReportEntityDataToHtml(row.data2) if not row.isna().data2 else "") + "</td>"
                     table += "<td>" + (row.id2 if not row.isna().id2 else "") + "</td>"
                     table += "</tr>"
                 table += "</table>"
                 display(HTML(table))
             
-    def entityDataToHtml(entityDataJson):
+    def mappingReportEntityDataToHtml(entityDataJson):
         entityData = json.loads(entityDataJson)
         html = "<table>"
         for key, value in entityData.items():
@@ -243,15 +259,12 @@ class Report:
             html += "</tr>"
         html += "</table>"
         return html
-        
-    def default(cls, processing):
-        return processing.graphAsDataFrame()
-    
-    switcher = {
-        "de.uni_jena.cs.fusion.abecto.processor.implementation.MappingReportProcessor": mappingReport
-    }
     
     @classmethod
     def of(cls, processing):
         method = cls.switcher.get(processing.step.info()["processorClass"], cls.default)
         method(cls, processing)
+    
+    switcher = {
+        "de.uni_jena.cs.fusion.abecto.processor.implementation.MappingReportProcessor": mappingReport
+    }
