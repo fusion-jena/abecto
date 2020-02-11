@@ -3,6 +3,7 @@ package de.uni_jena.cs.fusion.abecto.processor.implementation;
 import java.util.UUID;
 
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
@@ -11,7 +12,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import de.uni_jena.cs.fusion.abecto.TestDataGenerator;
-import de.uni_jena.cs.fusion.abecto.util.Vocabulary;
 
 public class ManualCategoryProcessorTest {
 
@@ -35,7 +35,13 @@ public class ManualCategoryProcessorTest {
 		processor.setParameters(parameter);
 		processor.computeResultModel();
 		Model model = processor.getResultModel();
-		Assertions.assertEquals(2, model.listResourcesWithProperty(RDF.type, Vocabulary.CATEGORY).toSet().size());
+		Assertions
+				.assertEquals(
+						2, model
+								.listResourcesWithProperty(RDF.type,
+										ResourceFactory.createResource(
+												"http://fusion.cs.uni-jena.de/ontology/abecto#Category"))
+								.toSet().size());
 
 	}
 

@@ -10,7 +10,7 @@ import de.uni_jena.cs.fusion.abecto.sparq.SparqlNamespace;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlPattern;
 
 @SparqlNamespace(prefix = "rdf", namespace = "http://www.w3.org/1999/02/22-rdf-syntax-ns#")
-@SparqlNamespace(prefix = "abecto", namespace = "http://fusion.cs.uni-jena.de/ontology/abecto/")
+@SparqlNamespace(prefix = "abecto", namespace = "http://fusion.cs.uni-jena.de/ontology/abecto#")
 public class Mapping {
 	public static Mapping not() {
 		return new Mapping(null, false, null, null, null, null, null, null);
