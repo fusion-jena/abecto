@@ -62,28 +62,36 @@ public class CategoryCountProcessorTest {
 		String dataPropertyName = generator.generateDataPropertyName(0);
 		CategoryCountMeasurement measure;
 
-		measure = SparqlEntityManager.selectOne(new CategoryCountMeasurement(categoryName, Optional.empty(), null, sourceUUID1),
-				resultModel);
+		measure = SparqlEntityManager
+				.selectOne(new CategoryCountMeasurement(categoryName, Optional.empty(), null, sourceUUID1), resultModel)
+				.orElseThrow();
 		Assertions.assertEquals(100L, measure.value);
 
-		measure = SparqlEntityManager
-				.selectOne(new CategoryCountMeasurement(categoryName, Optional.of(objectPropertyName), null, sourceUUID1), resultModel);
+		measure = SparqlEntityManager.selectOne(
+				new CategoryCountMeasurement(categoryName, Optional.of(objectPropertyName), null, sourceUUID1),
+				resultModel).orElseThrow();
 		Assertions.assertEquals(98L, measure.value);
 
 		measure = SparqlEntityManager
-				.selectOne(new CategoryCountMeasurement(categoryName, Optional.of(dataPropertyName), null, sourceUUID1), resultModel);
+				.selectOne(new CategoryCountMeasurement(categoryName, Optional.of(dataPropertyName), null, sourceUUID1),
+						resultModel)
+				.orElseThrow();
 		Assertions.assertEquals(98L, measure.value);
 
-		measure = SparqlEntityManager.selectOne(new CategoryCountMeasurement(categoryName, Optional.empty(), null, sourceUUID2),
-				resultModel);
+		measure = SparqlEntityManager
+				.selectOne(new CategoryCountMeasurement(categoryName, Optional.empty(), null, sourceUUID2), resultModel)
+				.orElseThrow();
 		Assertions.assertEquals(100L, measure.value);
 
-		measure = SparqlEntityManager
-				.selectOne(new CategoryCountMeasurement(categoryName, Optional.of(objectPropertyName), null, sourceUUID2), resultModel);
+		measure = SparqlEntityManager.selectOne(
+				new CategoryCountMeasurement(categoryName, Optional.of(objectPropertyName), null, sourceUUID2),
+				resultModel).orElseThrow();
 		Assertions.assertEquals(95L, measure.value);
 
 		measure = SparqlEntityManager
-				.selectOne(new CategoryCountMeasurement(categoryName, Optional.of(dataPropertyName), null, sourceUUID2), resultModel);
+				.selectOne(new CategoryCountMeasurement(categoryName, Optional.of(dataPropertyName), null, sourceUUID2),
+						resultModel)
+				.orElseThrow();
 		Assertions.assertEquals(95L, measure.value);
 	}
 

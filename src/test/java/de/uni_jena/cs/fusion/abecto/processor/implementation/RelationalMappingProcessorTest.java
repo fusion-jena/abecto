@@ -106,7 +106,7 @@ class RelationalMappingProcessorTest {
 
 		assertTrue(SparqlEntityManager.select(Mapping.of(), processor.getResultModel()).isEmpty());
 
-		Issue issue = SparqlEntityManager.selectOne(new Issue(), processor.getResultModel());
+		Issue issue = SparqlEntityManager.selectOne(new Issue(), processor.getResultModel()).orElseThrow();
 		assertEquals(ResourceFactory.createResource("http://example.org/1/entity3a"), issue.entity);
 		assertEquals(id1, issue.knowledgeBase);
 		assertEquals("UnexpectedValueType", issue.type);

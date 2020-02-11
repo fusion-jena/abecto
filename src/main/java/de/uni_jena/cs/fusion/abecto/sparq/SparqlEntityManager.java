@@ -833,18 +833,17 @@ public class SparqlEntityManager {
 	 *                                      multiple results have been found
 	 * @throws NullPointerException         if the model annotation is not
 	 *                                      sufficient
-	 * @throws NoSuchElementException       if no result has been found
 	 */
-	public static <T> T selectOne(T prototype, Model source)
+	public static <T> Optional<T> selectOne(T prototype, Model source)
 			throws IllegalStateException, NullPointerException, ReflectiveOperationException {
 		Set<T> result = select(prototype, source);
 		if (result.isEmpty()) {
-			throw new NoSuchElementException();
+			return Optional.empty();
 		}
 		if (result.size() > 1) {
 			throw new IllegalStateException("Selected multiple results.");
 		}
-		return result.iterator().next();
+		return Optional.of(result.iterator().next());
 	}
 
 	private static void validateAnnotation(SparqlPattern annotation, Field field) {
