@@ -95,9 +95,9 @@ public class RelationalMappingProcessor extends AbstractMappingProcessor<Relatio
 						}).add(entity);
 					} catch (ClassCastException e) {
 						// value is not a resource
-						Issue error = new Issue(null, knowledgeBaseId2, entity, "UnexpectedValueType",
+						Issue issue = new Issue(null, knowledgeBaseId2, entity, "UnexpectedValueType",
 								String.format("Value of property %s is not a resource.", variable, entity.getURI()));
-						SparqlEntityManager.insert(error, this.getResultModel());
+						SparqlEntityManager.insert(issue, this.getResultModel());
 						continue resultLoop;
 					}
 				}
