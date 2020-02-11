@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import de.uni_jena.cs.fusion.abecto.TestDataGenerator;
-import de.uni_jena.cs.fusion.abecto.processor.model.CategoryCountMeasure;
+import de.uni_jena.cs.fusion.abecto.processor.model.CategoryCountMeasurement;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 
 public class CategoryCountProcessorTest {
@@ -60,30 +60,30 @@ public class CategoryCountProcessorTest {
 		String categoryName = generator.generateClassName(0);
 		String objectPropertyName = generator.generateObjectPropertyName(0);
 		String dataPropertyName = generator.generateDataPropertyName(0);
-		CategoryCountMeasure measure;
+		CategoryCountMeasurement measure;
 
-		measure = SparqlEntityManager.selectOne(new CategoryCountMeasure(categoryName, Optional.empty(), null, sourceUUID1),
+		measure = SparqlEntityManager.selectOne(new CategoryCountMeasurement(categoryName, Optional.empty(), null, sourceUUID1),
 				resultModel);
 		Assertions.assertEquals(100L, measure.value);
 
 		measure = SparqlEntityManager
-				.selectOne(new CategoryCountMeasure(categoryName, Optional.of(objectPropertyName), null, sourceUUID1), resultModel);
+				.selectOne(new CategoryCountMeasurement(categoryName, Optional.of(objectPropertyName), null, sourceUUID1), resultModel);
 		Assertions.assertEquals(98L, measure.value);
 
 		measure = SparqlEntityManager
-				.selectOne(new CategoryCountMeasure(categoryName, Optional.of(dataPropertyName), null, sourceUUID1), resultModel);
+				.selectOne(new CategoryCountMeasurement(categoryName, Optional.of(dataPropertyName), null, sourceUUID1), resultModel);
 		Assertions.assertEquals(98L, measure.value);
 
-		measure = SparqlEntityManager.selectOne(new CategoryCountMeasure(categoryName, Optional.empty(), null, sourceUUID2),
+		measure = SparqlEntityManager.selectOne(new CategoryCountMeasurement(categoryName, Optional.empty(), null, sourceUUID2),
 				resultModel);
 		Assertions.assertEquals(100L, measure.value);
 
 		measure = SparqlEntityManager
-				.selectOne(new CategoryCountMeasure(categoryName, Optional.of(objectPropertyName), null, sourceUUID2), resultModel);
+				.selectOne(new CategoryCountMeasurement(categoryName, Optional.of(objectPropertyName), null, sourceUUID2), resultModel);
 		Assertions.assertEquals(95L, measure.value);
 
 		measure = SparqlEntityManager
-				.selectOne(new CategoryCountMeasure(categoryName, Optional.of(dataPropertyName), null, sourceUUID2), resultModel);
+				.selectOne(new CategoryCountMeasurement(categoryName, Optional.of(dataPropertyName), null, sourceUUID2), resultModel);
 		Assertions.assertEquals(95L, measure.value);
 	}
 

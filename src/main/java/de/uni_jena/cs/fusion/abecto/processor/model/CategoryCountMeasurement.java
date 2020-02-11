@@ -10,7 +10,7 @@ import de.uni_jena.cs.fusion.abecto.sparq.SparqlPattern;
 
 @SparqlNamespace(prefix = "rdf", namespace = "http://www.w3.org/1999/02/22-rdf-syntax-ns#")
 @SparqlNamespace(prefix = "abecto", namespace = "http://fusion.cs.uni-jena.de/ontology/abecto/")
-public class CategoryCountMeasure {
+public class CategoryCountMeasurement {
 	@SparqlPattern(predicate = "rdf:type", object = "abecto:CategoryCountMeasure")
 	public Resource id;
 	/**
@@ -35,10 +35,10 @@ public class CategoryCountMeasure {
 	@SparqlPattern(subject = "id", predicate = "abecto:knowledgeBase")
 	public UUID knowledgeBase;
 
-	public CategoryCountMeasure() {
+	public CategoryCountMeasurement() {
 	}
 
-	public CategoryCountMeasure(String categoryName, Optional<String> variableName, Long value, UUID knowledgeBase) {
+	public CategoryCountMeasurement(String categoryName, Optional<String> variableName, Long value, UUID knowledgeBase) {
 		this.categoryName = categoryName;
 		this.variableName = variableName;
 		this.value = value;

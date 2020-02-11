@@ -15,15 +15,13 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.apache.jena.sparql.syntax.ElementGroup;
 
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-
-import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
+import de.uni_jena.cs.fusion.abecto.parameter_model.EmptyParameters;
 import de.uni_jena.cs.fusion.abecto.processor.AbstractMetaProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.model.Category;
-import de.uni_jena.cs.fusion.abecto.processor.model.CategoryCountMeasure;
+import de.uni_jena.cs.fusion.abecto.processor.model.CategoryCountMeasurement;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 
-public class CategoryCountProcessor extends AbstractMetaProcessor<CategoryCountProcessor.Parameter> {
+public class CategoryCountProcessor extends AbstractMetaProcessor<EmptyParameters> {
 
 	private static Query countQuery(String category, ElementGroup pattern, String target) {
 		try {
@@ -47,7 +45,7 @@ public class CategoryCountProcessor extends AbstractMetaProcessor<CategoryCountP
 		Collection<Category> categories = SparqlEntityManager.select(new Category(), this.metaModel);
 
 		// initialize result set
-		Collection<CategoryCountMeasure> categoryCountMeasuers = new ArrayList<CategoryCountMeasure>();
+		Collection<CategoryCountMeasurement> categoryCountMeasuers = new ArrayList<CategoryCountMeasurement>();
 
 		for (Category category : categories) {
 			// get category data
@@ -75,7 +73,7 @@ public class CategoryCountProcessor extends AbstractMetaProcessor<CategoryCountP
 					Long count = categoryQueryResult.next().getLiteral("count").getLong();
 					// add count to results
 					// TODO build sum for multiple entries per kb and name
-					categoryCountMeasuers.add(new CategoryCountMeasure(category.name, Optional.ofNullable(target),
+					categoryCountMeasuers.add(new CategoryCountMeasurement(category.name, Optional.ofNullable(target),
 							count, category.knowledgeBase));
 				} else {
 					throw new IllegalStateException();
@@ -83,12 +81,7 @@ public class CategoryCountProcessor extends AbstractMetaProcessor<CategoryCountP
 			}
 		}
 
-		// construct result model
+		// write into result model
 		SparqlEntityManager.insert(categoryCountMeasuers, this.getResultModel());
-	}
-
-	@JsonSerialize
-	public static class Parameter implements ParameterModel {
-
 	}
 }
