@@ -215,7 +215,45 @@ class Processing:
         Report.of(self)
         
 class Report:
-        
+
+    def countReport(cls, processing):
+        display(HTML("<h1>Category Count Report</h1>"))
+        totalData = processing.graphAsDataFrame()
+        knowledgeBaseIds = list(totalData.filter(["knowledgeBase"]).drop_duplicates()["knowledgeBase"])
+        categoryNames = list(totalData.filter(["categoryName"]).drop_duplicates()["categoryName"])
+        # table header
+        table = "<table>"
+        table += "<tr>"
+        table += "<th>Category</th>"
+        table += "<th >Variable</th>"
+        for knowledgeBaseId in knowledgeBaseIds:
+            knowledgeBaseLabel = processing.project.knowledgeBase(id = knowledgeBaseId).info()["label"]
+            table += "<th>" + knowledgeBaseLabel + "</th>"
+        table += "</tr>"
+        # iterate categories
+        for categoryName in categoryNames:
+            categoryData = totalData[totalData.categoryName.eq(categoryName)]
+            varialbeNames = list(categoryData[categoryData.variableName.notna()].filter(["variableName"]).drop_duplicates().sort_values("variableName")["variableName"])
+            # category total
+            table += "<tr>"
+            table += "<th>" + categoryName + "</th>"
+            table += "<th></th>"
+            for knowledgeBaseId in knowledgeBaseIds:
+                value = categoryData[categoryData.variableName.isna() & categoryData.knowledgeBase.eq(knowledgeBaseId)]["value"].iat[-1]
+                table += "<td>" + value + "</td>"
+            table += "</tr>"
+            # category variable
+            for varialbeName in varialbeNames:
+                table += "<tr>"
+                table += "<th>" + categoryName + "</th>"
+                table += "<th>" + varialbeName + "</th>"
+                for knowledgeBaseId in knowledgeBaseIds:
+                    value = categoryData[categoryData.variableName.eq(varialbeName) & categoryData.knowledgeBase.eq(knowledgeBaseId)]["value"].iat[-1]
+                    table += "<td>" + str(value) + "</td>"
+                table += "</tr>"
+        table += "</table>"
+        display(HTML(table))
+
     def default(cls, processing):
         return processing.graphAsDataFrame()
     
@@ -266,5 +304,6 @@ class Report:
         method(cls, processing)
     
     switcher = {
-        "de.uni_jena.cs.fusion.abecto.processor.implementation.MappingReportProcessor": mappingReport
+        "de.uni_jena.cs.fusion.abecto.processor.implementation.MappingReportProcessor": mappingReport,
+        "de.uni_jena.cs.fusion.abecto.processor.implementation.CategoryCountProcessor": countReport
     }
