@@ -3,6 +3,7 @@ package de.uni_jena.cs.fusion.abecto.processor.implementation;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -26,9 +27,9 @@ import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 
 public class LiteralDeviationProcessor extends AbstractMetaProcessor<LiteralDeviationProcessor.Parameter> {
 
-	public class Parameter implements ParameterModel {
+	public static class Parameter implements ParameterModel {
 		/**
-		 * Name of variables by name of categories to process.
+		 * Variables to process by categories.
 		 */
 		Map<String, Collection<String>> variables;
 	}
@@ -84,10 +85,8 @@ public class LiteralDeviationProcessor extends AbstractMetaProcessor<LiteralDevi
 										try {
 											valuesByVariable2.put(variableName, result2.getLiteral(variableName));
 										} catch (ClassCastException e) {
-											Issue issue = new Issue(null, knowledgeBaseId2, resoure2,
-													"UnexpectedValueType",
-													String.format("Value of property %s is not a literal.",
-															variableName, resoure2.getURI()));
+											Issue issue = Issue.unexpectedValueType(knowledgeBaseId2, resoure2,
+													variableName, "literal");
 											SparqlEntityManager.insert(issue, this.getResultModel());
 										}
 									}
@@ -104,20 +103,19 @@ public class LiteralDeviationProcessor extends AbstractMetaProcessor<LiteralDevi
 									if (result1.contains(variableName)) {
 										try {
 											Literal value1 = result1.getLiteral(variableName);
-											for (Resource resource2 : mappings.get(resource1)) {
+											for (Resource resource2 : mappings.getOrDefault(resource1,
+													Collections.emptySet())) {
 												Literal value2 = valuesByVariableByResource2.get(resource2)
 														.get(variableName);
 												if (!value1.sameValueAs(value2)) {
 													deviations.add(new ValueDeviation(null, categoryName, variableName,
 															resource1, resource2, knowledgeBaseId1, knowledgeBaseId2,
-															value1.getLexicalForm(), value2.getLexicalForm()));
+															value1.toString(), value2.toString()));
 												}
 											}
 										} catch (ClassCastException e) {
-											Issue issue = new Issue(null, knowledgeBaseId1, resource1,
-													"UnexpectedValueType",
-													String.format("Value of property %s is not a literal.",
-															variableName, resource1.getURI()));
+											Issue issue = Issue.unexpectedValueType(knowledgeBaseId1, resource1,
+													variableName, "literal");
 											SparqlEntityManager.insert(issue, this.getResultModel());
 										}
 

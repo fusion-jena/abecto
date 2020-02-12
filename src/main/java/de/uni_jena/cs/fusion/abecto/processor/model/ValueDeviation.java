@@ -1,5 +1,6 @@
 package de.uni_jena.cs.fusion.abecto.processor.model;
 
+import java.util.Objects;
 import java.util.UUID;
 
 import org.apache.jena.rdf.model.Resource;
@@ -73,6 +74,26 @@ public class ValueDeviation {
 		} else {
 			throw new IllegalArgumentException("Unknown knowledge base.");
 		}
+	}
+
+	@Override
+	public boolean equals(Object other) {
+		if (!(other instanceof ValueDeviation)) {
+			return false;
+		}
+		ValueDeviation o = (ValueDeviation) other;
+		return Objects.equals(this.categoryName, o.categoryName) && Objects.equals(this.variableName, o.variableName)
+				&& Objects.equals(this.resource1, o.resource1) && Objects.equals(this.resource2, o.resource2)
+				&& Objects.equals(this.knowledgeBaseId1, o.knowledgeBaseId1)
+				&& Objects.equals(this.knowledgeBaseId2, o.knowledgeBaseId2) && Objects.equals(this.value1, o.value1)
+				&& Objects.equals(this.value2, o.value2);
+	}
+
+	@Override
+	public int hashCode() {
+		return this.categoryName.hashCode() + this.variableName.hashCode() + this.resource1.hashCode()
+				+ this.resource2.hashCode() + this.knowledgeBaseId1.hashCode() + this.knowledgeBaseId2.hashCode()
+				+ this.value1.hashCode() + this.value2.hashCode();
 	}
 
 }
