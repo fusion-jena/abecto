@@ -12,6 +12,8 @@ import org.apache.jena.ontology.OntModel;
 import org.apache.jena.ontology.OntModelSpec;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.riot.RDFWriter;
 
 /**
  * Provides a couple of handy methods to easy work with {@link Model}s.
@@ -58,14 +60,18 @@ public class Models {
 	public static OntModel getEmptyOntModel() {
 		return ModelFactory.createOntologyModel(OntModelSpec.OWL_MEM);
 	}
-	
+
 	public static Model getEmptyModel() {
 		return ModelFactory.createModelForGraph(Graph.emptyGraph);
 	}
 
-	public static String getStringSerialization(Model model, String lang) {
+	public static String getStringSerialization(Model model, ModelSerializationLanguage lang) {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		model.write(out, lang);
+		if (lang.equals(ModelSerializationLanguage.JSONLD)) {
+			RDFWriter.create().format(RDFFormat.JSONLD_FLATTEN_PRETTY).source(model).build().output(out);
+		} else {
+			model.write(out, lang.getApacheJenaKey());
+		}
 		return out.toString();
 	}
 

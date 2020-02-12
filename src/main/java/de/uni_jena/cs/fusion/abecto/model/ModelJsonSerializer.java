@@ -14,6 +14,6 @@ public class ModelJsonSerializer extends JsonSerializer<Model> {
 
 	@Override
 	public void serialize(Model value, JsonGenerator gen, SerializerProvider provider) throws IOException {
-		gen.writeRaw(Models.getStringSerialization(value, ModelSerializationLanguage.JSONLD.getApacheJenaKey()));
+		gen.writeRaw(Models.getStringSerialization(value, ModelSerializationLanguage.JSONLD));
 	}
 }
