@@ -36,16 +36,16 @@ public class RelationalMappingProcessor extends AbstractMappingProcessor<Relatio
 		String categoryName = this.getParameters().category;
 		Category category1;
 		try {
-			category1 = SparqlEntityManager.selectOne(new Category(categoryName, null, knowledgeBaseId1),
-					this.metaModel).orElseThrow();
+			category1 = SparqlEntityManager
+					.selectOne(new Category(categoryName, null, knowledgeBaseId1), this.metaModel).orElseThrow();
 		} catch (IllegalStateException | NullPointerException | ReflectiveOperationException
 				| NoSuchElementException e) {
 			throw new Exception("Failed to load category definition for knowledge base 1.", e);
 		}
 		Category category2;
 		try {
-			category2 = SparqlEntityManager.selectOne(new Category(categoryName, null, knowledgeBaseId2),
-					this.metaModel).orElseThrow();
+			category2 = SparqlEntityManager
+					.selectOne(new Category(categoryName, null, knowledgeBaseId2), this.metaModel).orElseThrow();
 		} catch (IllegalStateException | NullPointerException | ReflectiveOperationException
 				| NoSuchElementException e) {
 			throw new Exception("Failed to load category definition for knowledge base 2.", e);
@@ -95,8 +95,7 @@ public class RelationalMappingProcessor extends AbstractMappingProcessor<Relatio
 						}).add(entity);
 					} catch (ClassCastException e) {
 						// value is not a resource
-						Issue issue = new Issue(null, knowledgeBaseId2, entity, "UnexpectedValueType",
-								String.format("Value of property %s is not a resource.", variable, entity.getURI()));
+						Issue issue = Issue.unexpectedValueType(knowledgeBaseId2, entity, variable, "resource");
 						SparqlEntityManager.insert(issue, this.getResultModel());
 						continue resultLoop;
 					}
@@ -121,9 +120,8 @@ public class RelationalMappingProcessor extends AbstractMappingProcessor<Relatio
 						}
 					} catch (ClassCastException e) {
 						// value is not a resource
-						Issue error = new Issue(null, knowledgeBaseId1, entity, "UnexpectedValueType",
-								String.format("Value of property %s is not a resource.", variable, entity.getURI()));
-						SparqlEntityManager.insert(error, this.getResultModel());
+						Issue issue = Issue.unexpectedValueType(knowledgeBaseId1, entity, variable, "resource");
+						SparqlEntityManager.insert(issue, this.getResultModel());
 						continue resultLoop;
 					}
 				}

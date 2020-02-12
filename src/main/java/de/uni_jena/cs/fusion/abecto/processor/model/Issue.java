@@ -1,5 +1,6 @@
 package de.uni_jena.cs.fusion.abecto.processor.model;
 
+import java.util.Objects;
 import java.util.UUID;
 
 import org.apache.jena.rdf.model.Resource;
@@ -41,14 +42,23 @@ public class Issue {
 
 	@Override
 	public boolean equals(Object other) {
-		return other instanceof Issue && this.knowledgeBase == ((Issue) other).knowledgeBase
-				&& this.entity == ((Issue) other).entity && this.type == ((Issue) other).type
-				&& this.message == ((Issue) other).message;
+		if (!(other instanceof Issue)) {
+			return false;
+		}
+		Issue o = (Issue) other;
+		return Objects.equals(this.knowledgeBase, o.knowledgeBase) && Objects.equals(this.entity, o.entity)
+				&& Objects.equals(this.type, o.type) && Objects.equals(this.message, o.message);
 	}
 
 	@Override
 	public int hashCode() {
 		return this.entity.hashCode() + this.type.hashCode() + this.knowledgeBase.hashCode() + this.message.hashCode();
+	}
+
+	public static Issue unexpectedValueType(UUID knowledgeBase, Resource resource, String variableName,
+			String expectedType) {
+		return new Issue(null, knowledgeBase, resource, "UnexpectedValueType",
+				String.format("Value of property \"%s\" is not a %s.", variableName, expectedType));
 	}
 
 }
