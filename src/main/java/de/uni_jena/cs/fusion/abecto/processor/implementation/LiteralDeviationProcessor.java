@@ -5,10 +5,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.HashSet;
 import java.util.UUID;
 
 import org.apache.jena.query.QuerySolution;
@@ -31,7 +31,7 @@ public class LiteralDeviationProcessor extends AbstractMetaProcessor<LiteralDevi
 		/**
 		 * Variables to process by categories.
 		 */
-		Map<String, Collection<String>> variables;
+		public Map<String, Collection<String>> variables;
 	}
 
 	@Override
@@ -44,8 +44,8 @@ public class LiteralDeviationProcessor extends AbstractMetaProcessor<LiteralDevi
 		for (UUID knowledgeBaseId1 : knowledgeBaseIds) {
 			Model model1 = this.inputGroupModels.get(knowledgeBaseId1);
 			for (UUID knowledgeBaseId2 : knowledgeBaseIds) {
-				Model model2 = this.inputGroupModels.get(knowledgeBaseId2);
 				if (knowledgeBaseId1.compareTo(knowledgeBaseId2) > 0) {
+					Model model2 = this.inputGroupModels.get(knowledgeBaseId2);
 					// iterate categories
 					for (String categoryName : this.getParameters().variables.keySet()) {
 						Optional<Category> category1Optional = SparqlEntityManager
@@ -97,7 +97,6 @@ public class LiteralDeviationProcessor extends AbstractMetaProcessor<LiteralDevi
 							while (results1.hasNext()) {
 								QuerySolution result1 = results1.next();
 								Resource resource1 = result1.getResource(categoryName);
-
 								// iterate variables
 								for (String variableName : variableNames) {
 									if (result1.contains(variableName)) {
@@ -107,7 +106,7 @@ public class LiteralDeviationProcessor extends AbstractMetaProcessor<LiteralDevi
 													Collections.emptySet())) {
 												Literal value2 = valuesByVariableByResource2.get(resource2)
 														.get(variableName);
-												if (!value1.sameValueAs(value2)) {
+												if (value2 != null && !value1.sameValueAs(value2)) {
 													deviations.add(new ValueDeviation(null, categoryName, variableName,
 															resource1, resource2, knowledgeBaseId1, knowledgeBaseId2,
 															value1.toString(), value2.toString()));
@@ -118,7 +117,6 @@ public class LiteralDeviationProcessor extends AbstractMetaProcessor<LiteralDevi
 													variableName, "literal");
 											SparqlEntityManager.insert(issue, this.getResultModel());
 										}
-
 									}
 								}
 							}
