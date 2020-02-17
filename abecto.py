@@ -153,15 +153,14 @@ class Step:
         r = requests.get(self.server.base + "step/" + self.id + "/processing/last")
         r.raise_for_status()
         return Processing(self.server, self.project, self, r.json()["id"])
+
+    def processing(self, id):
+        return Processing(self.server, self.project, self, id)
     
     def processings(self):
-        
-        if id is None:
-            r = requests.post(self.server.base + "step", data = {"class": processorName, "input" : inputStepIds, "knowledgebase": knowledgeBaseId, "parameters": json.dumps(parameters)})
-            r.raise_for_status()
-            self.id = r.json()["id"]
-        else:
-            self.id = id
+        r = requests.get(self.server.base + "step/" + self.id + "/processing")
+        r.raise_for_status()
+        return list(map(lambda x: self.processing(id=x["id"]), r.json()))
     
     def load(self, file):
         r = requests.post(self.server.base + "step/" + self.id + "/load", files = {"file": file})
@@ -201,6 +200,9 @@ class Processing:
         self.project = project
         self.step = step
         self.id = id
+        
+    def __repr__(self):
+        return str(self.info())
 
     def graph(self):
         r = requests.get(self.server.base + "processing/" + self.id + "/result")
@@ -213,6 +215,11 @@ class Processing:
     
     def report(self):
         Report.of(self)
+    
+    def info(self):
+        r = requests.get(self.server.base + "processing/" + self.id)
+        r.raise_for_status()
+        return r.json()
         
 class Report:
 
@@ -248,14 +255,58 @@ class Report:
                 table += "<th>" + categoryName + "</th>"
                 table += "<th>" + varialbeName + "</th>"
                 for knowledgeBaseId in knowledgeBaseIds:
-                    value = categoryData[categoryData.variableName.eq(varialbeName) & categoryData.knowledgeBase.eq(knowledgeBaseId)]["value"].iat[-1]
-                    table += "<td>" + str(value) + "</td>"
+                    valueSeries =categoryData[categoryData.variableName.eq(varialbeName) & categoryData.knowledgeBase.eq(knowledgeBaseId)]["value"]
+                    if valueSeries.size == 0:
+                        table += "<td></td>"
+                    else:
+                        table += "<td>" + str(valueSeries.iat[-1]) + "</td>"
                 table += "</tr>"
         table += "</table>"
         display(HTML(table))
 
     def default(cls, processing):
         return processing.graphAsDataFrame()
+    
+    def deviationReport(cls, processing):
+        display(HTML("<h1>Value Deviation Report</h1>"))
+        totalData = processing.graphAsDataFrame()
+        categoryNames = list(totalData.filter(["categoryName"]).drop_duplicates()["categoryName"])
+        # iterate categories
+        for categoryName in categoryNames:
+            display(HTML("<h2>Category: " + categoryName + "</h2>"))
+            categoryData = totalData[totalData.categoryName.eq(categoryName)]
+            kbPairs = categoryData.filter(["knowledgeBaseId1","knowledgeBaseId2"]).drop_duplicates().sort_values(["knowledgeBaseId1","knowledgeBaseId2"])
+             # iterate knowledge bases
+            for index, kbPair in kbPairs.iterrows():
+                kb1Label = processing.project.knowledgeBase(id = kbPair["knowledgeBaseId1"]).info()["label"]
+                kb2Label = processing.project.knowledgeBase(id = kbPair["knowledgeBaseId2"]).info()["label"]
+                kbsData = categoryData[categoryData.knowledgeBaseId1.eq(kbPair["knowledgeBaseId1"]) & categoryData.knowledgeBaseId2.eq(kbPair["knowledgeBaseId2"])]
+                kbsData = kbsData.sort_values(["knowledgeBaseId1","knowledgeBaseId2"])
+                table = "<table>"
+                table += "<tr>"
+                table += "<th style=\"text-align:center;\" colspan=\"3\">" + kb1Label + "</th>"
+                table += "<th style=\"text-align:center;\" colspan=\"3\">" + kb2Label + "</th>"
+                table += "</tr>"
+                resourcePairs = kbsData.filter(["resource1","resource2"]).drop_duplicates().sort_values(["resource1","resource2"])
+                # iterate resources
+                for index, resourcePair in resourcePairs.iterrows():
+                    resourceData = kbsData[categoryData.resource1.eq(resourcePair["resource1"]) & categoryData.resource2.eq(resourcePair["resource2"])].sort_values(["resource1","resource2"])
+                    variablesCount = len(resourceData)
+                    firstRow = True
+                    for index, row in resourceData.iterrows():
+                        table += "<tr rowspan=\"variablesCount\">"
+                        if firstRow:
+                            table += "<td>" + resourcePair["resource1"] + "</td>"
+                        table += "<td>" + row.variableName + "</td>"
+                        table += "<td>" + (row.value1 if not row.isna().value1 else "") + "</td>"
+                        table += "<td>" + (row.value2 if not row.isna().value2 else "") + "</td>"
+                        table += "<td>" + row.variableName + "</td>"
+                        if firstRow:
+                            table += "<td>" + resourcePair["resource2"] + "</td>"
+                            firstRow = False
+                        table += "</tr>"
+                table += "</table>"
+                display(HTML(table))
     
     def mappingReport(cls, processing):
         display(HTML("<h1>Mapping Report</h1>"))
@@ -305,5 +356,6 @@ class Report:
     
     switcher = {
         "de.uni_jena.cs.fusion.abecto.processor.implementation.MappingReportProcessor": mappingReport,
-        "de.uni_jena.cs.fusion.abecto.processor.implementation.CategoryCountProcessor": countReport
+        "de.uni_jena.cs.fusion.abecto.processor.implementation.CategoryCountProcessor": countReport,
+        "de.uni_jena.cs.fusion.abecto.processor.implementation.LiteralDeviationProcessor": deviationReport
     }
