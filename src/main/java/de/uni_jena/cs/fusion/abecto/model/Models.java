@@ -69,7 +69,9 @@ public class Models {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		if (lang.equals(ModelSerializationLanguage.JSONLD)) {
 			RDFWriter.create().format(RDFFormat.JSONLD_FLATTEN_PRETTY).source(model).build().output(out);
-		} else {
+		} else if (model instanceof OntModel){
+			((OntModel) model).writeAll(out, lang.getApacheJenaKey());
+		}else {
 			model.write(out, lang.getApacheJenaKey());
 		}
 		return out.toString();
