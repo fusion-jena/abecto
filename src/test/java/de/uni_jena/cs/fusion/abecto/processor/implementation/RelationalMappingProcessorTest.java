@@ -110,6 +110,6 @@ class RelationalMappingProcessorTest {
 		assertEquals(ResourceFactory.createResource("http://example.org/1/entity3a"), issue.entity);
 		assertEquals(id1, issue.knowledgeBase);
 		assertEquals("UnexpectedValueType", issue.type);
-		assertEquals("Value of property ref3b is not a resource.", issue.message);
+		assertEquals("Value of property \"ref3b\" is not a resource.", issue.message);
 	}
 }

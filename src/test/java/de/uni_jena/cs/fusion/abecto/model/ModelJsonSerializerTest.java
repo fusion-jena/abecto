@@ -3,6 +3,8 @@ package de.uni_jena.cs.fusion.abecto.model;
 import java.io.ByteArrayOutputStream;
 
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.riot.RDFWriter;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,7 +34,7 @@ public class ModelJsonSerializerTest {
 	public void serialize() throws JsonProcessingException {
 		Model model = new TestDataGenerator().generateOntology(1);
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		model.write(out, "JSON-LD");
+		RDFWriter.create().format(RDFFormat.JSONLD_FLATTEN_PRETTY).source(model).build().output(out);
 		String expected = out.toString();
 		Assertions.assertEquals(expected, objectMapper.writeValueAsString(model));
 	}
