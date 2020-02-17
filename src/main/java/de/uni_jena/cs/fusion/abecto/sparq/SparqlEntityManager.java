@@ -21,6 +21,7 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -78,33 +79,48 @@ public class SparqlEntityManager {
 		update.addInsert(new Triple(subject, predicate, object));
 	}
 
-	@SuppressWarnings("unchecked")
-	private static <I, O> O convertType(I value, Class<O> out) {
-		if (out.isInstance(value)) {
-			return out.cast(value);
+	private static <I> Object convertInsertValue(I value) {
+		// work around for https://issues.apache.org/jira/browse/JENA-1841
+		if (value instanceof UUID) {
+			return value.toString();
 		}
-		if (value instanceof Number && Number.class.isAssignableFrom(out)) {
-			if (Long.class.isAssignableFrom(out)) {
-				return (O) Long.valueOf(((Number) value).longValue());
+		return value;
+	}
+
+	@SuppressWarnings("unchecked")
+	private static <IN, OUT> OUT convertSelectValue(IN value, Class<OUT> type) {
+		if (type.isInstance(value)) {
+			return type.cast(value);
+		}
+		if (value instanceof Number && Number.class.isAssignableFrom(type)) {
+			if (Long.class.isAssignableFrom(type)) {
+				return (OUT) Long.valueOf(((Number) value).longValue());
 			}
-			if (Integer.class.isAssignableFrom(out)) {
-				return (O) Integer.valueOf(((Number) value).intValue());
+			if (Integer.class.isAssignableFrom(type)) {
+				return (OUT) Integer.valueOf(((Number) value).intValue());
 			}
-			if (Byte.class.isAssignableFrom(out)) {
-				return (O) Byte.valueOf(((Number) value).byteValue());
+			if (Byte.class.isAssignableFrom(type)) {
+				return (OUT) Byte.valueOf(((Number) value).byteValue());
 			}
-			if (Short.class.isAssignableFrom(out)) {
-				return (O) Short.valueOf(((Number) value).shortValue());
+			if (Short.class.isAssignableFrom(type)) {
+				return (OUT) Short.valueOf(((Number) value).shortValue());
 			}
-			if (Double.class.isAssignableFrom(out)) {
-				return (O) Double.valueOf(((Number) value).doubleValue());
+			if (Double.class.isAssignableFrom(type)) {
+				return (OUT) Double.valueOf(((Number) value).doubleValue());
 			}
-			if (Float.class.isAssignableFrom(out)) {
-				return (O) Float.valueOf(((Number) value).floatValue());
+			if (Float.class.isAssignableFrom(type)) {
+				return (OUT) Float.valueOf(((Number) value).floatValue());
 			}
+		}
+		// work around for https://issues.apache.org/jira/browse/JENA-1841
+		if (value instanceof String && UUID.class.isAssignableFrom(type)) {
+			return (OUT) UUID.fromString((String) value);
+		}
+		if (String.class.isAssignableFrom(type)) {
+			return (OUT) value.toString();
 		}
 		// otherwise give them a try
-		return (O) value;
+		return (OUT) value;
 	}
 
 	private static Node getAnnotationObject(Field field, SparqlPattern annotation, Prologue prologue)
@@ -190,13 +206,14 @@ public class SparqlEntityManager {
 		}
 	}
 
-	private static Object getFieldValue(RDFNode node, Field field) {
+	@SuppressWarnings("unchecked")
+	private static <T> T getFieldValue(RDFNode node, Class<T> type) {
 		if (node.isLiteral()) {
-			return node.asLiteral().getValue();
-		} else if (node.isResource()) {
-			return node.asResource();
+			return convertSelectValue(node.asLiteral().getValue(), type);
+		} else if (node.isResource() && Resource.class.isAssignableFrom(type)) {
+			return (T) node.asResource();
 		} else {
-			throw new IllegalStateException(String.format("Illegal value for member %s.", field.getName()));
+			throw new IllegalArgumentException();
 		}
 	}
 
@@ -221,19 +238,20 @@ public class SparqlEntityManager {
 			if (Collection.class.isAssignableFrom(field.getType())) {
 				Collection<Object> collection = new ArrayList<Object>();
 				if (node != null) {
-					collection.add(getFieldValue(node, field));
+					collection.add(getFieldValue(node, getFirstTypeParameter(field)));
 				}
 				fieldValues.put(field.getName(), collection);
 			} else {
 				if (Optional.class.isAssignableFrom(field.getType())) {
 					if (node != null) {
-						fieldValues.put(field.getName(), Optional.of(getFieldValue(node, field)));
+						fieldValues.put(field.getName(),
+								Optional.of(getFieldValue(node, getFirstTypeParameter(field))));
 					} else {
 						fieldValues.put(field.getName(), Optional.empty());
 					}
 				} else {
 					if (node != null) {
-						fieldValues.put(field.getName(), getFieldValue(node, field));
+						fieldValues.put(field.getName(), getFieldValue(node, field.getType()));
 					} else {
 						// this might occur, if there is a field not connected to other fields
 						throw new IllegalStateException(
@@ -242,8 +260,11 @@ public class SparqlEntityManager {
 				}
 			}
 		}
-
 		return fieldValues;
+	}
+
+	private static Class<?> getFirstTypeParameter(Field field) {
+		return (Class<?>) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
 	}
 
 	/**
@@ -337,7 +358,7 @@ public class SparqlEntityManager {
 
 								// use element as object
 								Node subject = AbstractQueryBuilder.makeVar(annotation.subject());
-								Node object = select.makeNode(element);
+								Node object = select.makeNode(convertInsertValue(element));
 
 								// add triple
 								existsClause.addWhere(select.makeTriplePath(subject, predicate, object));
@@ -355,7 +376,7 @@ public class SparqlEntityManager {
 				} else if (value instanceof Optional<?>) {
 					if (((Optional<?>) value).isPresent()) {
 						expressions.add(factory.eq(AbstractQueryBuilder.makeVar(field.getName()),
-								select.makeNode(((Optional<?>) value).get())));
+								select.makeNode(convertInsertValue(((Optional<?>) value).get()))));
 					} else {
 						SelectBuilder notExistsClause = new SelectBuilder();
 						for (SparqlPattern annotation : field.getAnnotationsByType(SparqlPattern.class)) {
@@ -369,7 +390,8 @@ public class SparqlEntityManager {
 						expressions.add(factory.notexists(notExistsClause));
 					}
 				} else {
-					expressions.add(factory.eq(AbstractQueryBuilder.makeVar(field.getName()), select.makeNode(value)));
+					expressions.add(factory.eq(AbstractQueryBuilder.makeVar(field.getName()),
+							select.makeNode(convertInsertValue(value))));
 				}
 			}
 		}
@@ -446,16 +468,16 @@ public class SparqlEntityManager {
 									String.format("Missing value for member %s.", field.getName()));
 						}
 					} else if (value instanceof Resource) {
-						resources.put(field, update.makeNode(value));
+						resources.put(field, update.makeNode(convertInsertValue(value)));
 					} else if (value instanceof Optional) {
 						if (((Optional<?>) value).isPresent()) {
 							Object enclosedValue = ((Optional<?>) value).get();
 							if (enclosedValue instanceof Resource) {
 								// add to resources, not to optionalResources, to assure insertion of provided
 								// data
-								resources.put(field, update.makeNode(enclosedValue));
+								resources.put(field, update.makeNode(convertInsertValue(enclosedValue)));
 							} else {
-								literals.put(field, update.makeNode(enclosedValue));
+								literals.put(field, update.makeNode(convertInsertValue(enclosedValue)));
 							}
 						} else if (((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0]
 								.equals(Resource.class)) {
@@ -467,9 +489,10 @@ public class SparqlEntityManager {
 									String.format("Null element contained in member collection %s.", field.getName()));
 						}
 						collections.put(field,
-								((Collection<?>) value).stream().map(update::makeNode).collect(Collectors.toSet()));
+								((Collection<?>) value).stream().map(SparqlEntityManager::convertInsertValue)
+										.map(update::makeNode).collect(Collectors.toSet()));
 					} else {
-						literals.put(field, update.makeNode(value));
+						literals.put(field, update.makeNode(convertInsertValue(value)));
 					}
 				} catch (IllegalArgumentException | IllegalAccessException e) {
 					throw new RuntimeException("Failed to access member " + field.getName(), e);
@@ -599,10 +622,10 @@ public class SparqlEntityManager {
 					Collection<Object> collection = ((Collection<Object>) field.get(object));
 					// if a collection add all values
 					((Collection<Object>) fieldValues.get(fieldName)).stream()
-							.map((v) -> convertType(v, field.getType())).forEach(collection::add);
+							.map((v) -> convertSelectValue(v, field.getType())).forEach(collection::add);
 				} else {
 					// if not a collection set value
-					field.set(object, convertType(fieldValues.get(fieldName), field.getType()));
+					field.set(object, convertSelectValue(fieldValues.get(fieldName), field.getType()));
 				}
 			}
 		} else {
@@ -718,19 +741,15 @@ public class SparqlEntityManager {
 		T prototype = filterObjects.stream().findAny().get();
 		List<Field> fields = getPublicNonstaticFields(prototype);
 
-		// get plain query
+		// build and execute query
 		SelectBuilder select = getSelectQuery(prototype.getClass());
-
-		// add entity filters to query
 		writeFilter(select, filterObjects);
-
-		// execute query
 		ResultSet querySolutions = QueryExecutionFactory.create(select.build(), source).execSelect();
 
 		// generate result set
 		Set<T> results = new HashSet<T>();
 
-		// get constructor for entities
+		// get entity constructor
 		Constructor<T> constructor = getParameterizedConstructor(prototype)
 				.orElseGet(() -> getPlainConstructor(prototype));
 
