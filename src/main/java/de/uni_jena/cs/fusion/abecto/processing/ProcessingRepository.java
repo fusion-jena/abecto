@@ -8,4 +8,6 @@ import de.uni_jena.cs.fusion.abecto.step.Step;
 
 public interface ProcessingRepository extends CrudRepository<Processing, UUID> {
 	Processing findTopByStepOrderByStartDateTimeDesc(Step step);
+
+	Iterable<Processing> findByStepOrderByStartDateTime(Step step);
 }

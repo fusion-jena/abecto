@@ -132,6 +132,11 @@ public class StepRestController {
 		return processing;
 	}
 
+	@GetMapping("/step/{uuid}/processing")
+	public Iterable<Processing> processings(@PathVariable("uuid") UUID stepId) {
+		return processingRepository.findByStepOrderByStartDateTime(get(stepId));
+	}
+
 	@GetMapping("/step/{uuid}/processing/last")
 	public Processing lastProcessing(@PathVariable("uuid") UUID stepId) {
 		return processingRepository.findTopByStepOrderByStartDateTimeDesc(get(stepId));
