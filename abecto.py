@@ -7,6 +7,7 @@ __version__ = '0.1'
 __author__ = 'Jan Martin Keil'
 
 from IPython.core.display import HTML
+import html
 import json
 import pandas as pd
 import requests
@@ -204,10 +205,19 @@ class Processing:
     def __repr__(self):
         return str(self.info())
 
+    def raw(self):
+        r = requests.get(self.server.base + "processing/" + self.id + "/result")
+        r.raise_for_status()
+        return r.text
+
     def graph(self):
         r = requests.get(self.server.base + "processing/" + self.id + "/result")
         r.raise_for_status()
-        return r.json()["@graph"]
+        json = r.json()
+        if "@graph"  in json:
+            return r.json()["@graph"]
+        else:
+            return []
     
     def graphAsDataFrame(self):
         graph = self.graph()
@@ -226,117 +236,142 @@ class Report:
     def countReport(cls, processing):
         display(HTML("<h1>Category Count Report</h1>"))
         totalData = processing.graphAsDataFrame()
-        knowledgeBaseIds = list(totalData.filter(["knowledgeBase"]).drop_duplicates()["knowledgeBase"])
-        categoryNames = list(totalData.filter(["categoryName"]).drop_duplicates()["categoryName"])
-        # table header
-        table = "<table>"
-        table += "<tr>"
-        table += "<th>Category</th>"
-        table += "<th >Variable</th>"
-        for knowledgeBaseId in knowledgeBaseIds:
-            knowledgeBaseLabel = processing.project.knowledgeBase(id = knowledgeBaseId).info()["label"]
-            table += "<th>" + knowledgeBaseLabel + "</th>"
-        table += "</tr>"
-        # iterate categories
-        for categoryName in categoryNames:
-            categoryData = totalData[totalData.categoryName.eq(categoryName)]
-            varialbeNames = list(categoryData[categoryData.variableName.notna()].filter(["variableName"]).drop_duplicates().sort_values("variableName")["variableName"])
-            # category total
+        if not totalData.empty:
+            knowledgeBaseIds = list(totalData.filter(["knowledgeBase"]).drop_duplicates()["knowledgeBase"])
+            categoryNames = list(totalData.filter(["categoryName"]).drop_duplicates()["categoryName"])
+            # table header
+            table = "<table>"
             table += "<tr>"
-            table += "<th>" + categoryName + "</th>"
-            table += "<th></th>"
+            table += "<th>Category</th>"
+            table += "<th >Variable</th>"
             for knowledgeBaseId in knowledgeBaseIds:
-                value = categoryData[categoryData.variableName.isna() & categoryData.knowledgeBase.eq(knowledgeBaseId)]["value"].iat[-1]
-                table += "<td>" + value + "</td>"
+                knowledgeBaseLabel = processing.project.knowledgeBase(id = knowledgeBaseId).info()["label"]
+                table += "<th>" + knowledgeBaseLabel + "</th>"
             table += "</tr>"
-            # category variable
-            for varialbeName in varialbeNames:
+            # iterate categories
+            for categoryName in categoryNames:
+                categoryData = totalData[totalData.categoryName.eq(categoryName)]
+                varialbeNames = list(categoryData[categoryData.variableName.notna()].filter(["variableName"]).drop_duplicates().sort_values("variableName")["variableName"])
+                # category total
                 table += "<tr>"
                 table += "<th>" + categoryName + "</th>"
-                table += "<th>" + varialbeName + "</th>"
+                table += "<th></th>"
                 for knowledgeBaseId in knowledgeBaseIds:
-                    valueSeries =categoryData[categoryData.variableName.eq(varialbeName) & categoryData.knowledgeBase.eq(knowledgeBaseId)]["value"]
-                    if valueSeries.size == 0:
-                        table += "<td></td>"
-                    else:
-                        table += "<td>" + str(valueSeries.iat[-1]) + "</td>"
+                    value = categoryData[categoryData.variableName.isna() & categoryData.knowledgeBase.eq(knowledgeBaseId)]["value"].iat[-1]
+                    table += "<td>" + value + "</td>"
                 table += "</tr>"
-        table += "</table>"
-        display(HTML(table))
+                # category variable
+                for varialbeName in varialbeNames:
+                    table += "<tr>"
+                    table += "<th>" + categoryName + "</th>"
+                    table += "<th>" + varialbeName + "</th>"
+                    for knowledgeBaseId in knowledgeBaseIds:
+                        valueSeries =categoryData[categoryData.variableName.eq(varialbeName) & categoryData.knowledgeBase.eq(knowledgeBaseId)]["value"]
+                        if valueSeries.size == 0:
+                            table += "<td></td>"
+                        else:
+                            table += "<td>" + str(valueSeries.iat[-1]) + "</td>"
+                    table += "</tr>"
+            table += "</table>"
+            display(HTML(table))
 
     def default(cls, processing):
-        return processing.graphAsDataFrame()
+        display(processing.graphAsDataFrame())
     
     def deviationReport(cls, processing):
-        display(HTML("<h1>Value Deviation Report</h1>"))
+        display(HTML("<h1>Deviation Report</h1>"))
         totalData = processing.graphAsDataFrame()
-        categoryNames = list(totalData.filter(["categoryName"]).drop_duplicates()["categoryName"])
-        # iterate categories
-        for categoryName in categoryNames:
-            display(HTML("<h2>Category: " + categoryName + "</h2>"))
-            categoryData = totalData[totalData.categoryName.eq(categoryName)]
-            kbPairs = categoryData.filter(["knowledgeBaseId1","knowledgeBaseId2"]).drop_duplicates().sort_values(["knowledgeBaseId1","knowledgeBaseId2"])
-             # iterate knowledge bases
-            for index, kbPair in kbPairs.iterrows():
-                kb1Label = processing.project.knowledgeBase(id = kbPair["knowledgeBaseId1"]).info()["label"]
-                kb2Label = processing.project.knowledgeBase(id = kbPair["knowledgeBaseId2"]).info()["label"]
-                kbsData = categoryData[categoryData.knowledgeBaseId1.eq(kbPair["knowledgeBaseId1"]) & categoryData.knowledgeBaseId2.eq(kbPair["knowledgeBaseId2"])]
-                kbsData = kbsData.sort_values(["knowledgeBaseId1","knowledgeBaseId2"])
-                table = "<table>"
+        if not totalData.empty:
+            categoryNames = list(totalData.filter(["categoryName"]).drop_duplicates()["categoryName"])
+            # iterate categories
+            for categoryName in categoryNames:
+                display(HTML("<h2>Category: " + categoryName + "</h2>"))
+                categoryData = totalData[totalData.categoryName.eq(categoryName)]
+                kbPairs = categoryData.filter(["knowledgeBaseId1","knowledgeBaseId2"]).drop_duplicates().sort_values(["knowledgeBaseId1","knowledgeBaseId2"])
+                 # iterate knowledge bases
+                for index, kbPair in kbPairs.iterrows():
+                    kb1Label = processing.project.knowledgeBase(id = kbPair["knowledgeBaseId1"]).info()["label"]
+                    kb2Label = processing.project.knowledgeBase(id = kbPair["knowledgeBaseId2"]).info()["label"]
+                    kbsData = categoryData[categoryData.knowledgeBaseId1.eq(kbPair["knowledgeBaseId1"]) & categoryData.knowledgeBaseId2.eq(kbPair["knowledgeBaseId2"])]
+                    kbsData = kbsData.sort_values(["knowledgeBaseId1","knowledgeBaseId2"])
+                    table = "<table>"
+                    table += "<tr>"
+                    table += "<th style=\"text-align:center;\" colspan=\"3\">" + kb1Label + "</th>"
+                    table += "<th style=\"text-align:center;\" colspan=\"3\">" + kb2Label + "</th>"
+                    table += "</tr>"
+                    resourcePairs = kbsData.filter(["resource1","resource2"]).drop_duplicates().sort_values(["resource1","resource2"])
+                    # iterate resources
+                    for index, resourcePair in resourcePairs.iterrows():
+                        resourceData = kbsData[kbsData.resource1.eq(resourcePair["resource1"]) & kbsData.resource2.eq(resourcePair["resource2"])].sort_values(["resource1","resource2"])
+                        variablesCount = len(resourceData)
+                        firstRow = True
+                        for index, row in resourceData.iterrows():
+                            table += "<tr rowspan=\"variablesCount\">"
+                            if firstRow:
+                                table += "<td>" + resourcePair["resource1"] + "</td>"
+                            table += "<td>" + row.variableName + "</td>"
+                            table += "<td>" + html.escape(row.value1 if not row.isna().value1 else "") + "</td>"
+                            table += "<td>" + html.escape(row.value2 if not row.isna().value2 else "") + "</td>"
+                            table += "<td>" + row.variableName + "</td>"
+                            if firstRow:
+                                table += "<td>" + resourcePair["resource2"] + "</td>"
+                                firstRow = False
+                            table += "</tr>"
+                    table += "</table>"
+                    display(HTML(table))
+
+    def issueReport(cls, processing):
+        display(HTML("<h1>Issue Report</h1>"))
+        totalData = processing.graphAsDataFrame().sort_values(["affectedKnowledgeBase","affectedEntity"])
+        knowledgeBaseIds = set(totalData.filter(["affectedKnowledgeBase"])["affectedKnowledgeBase"])
+        for knowledgeBaseId in knowledgeBaseIds:
+            display(HTML("<h2>Knowledge Base: " + processing.project.knowledgeBase(id = knowledgeBaseId).info()["label"] + "</h2>"))
+            kbData = totalData[totalData.affectedKnowledgeBase.eq(knowledgeBaseId)]
+            table = "<table>"
+            table += "<tr>"
+            table += "<th>" + "Issue Type" + "</th>"
+            table += "<th>" + "Affected Entity" + "</th>"
+            table += "<th>" + "Message" + "</th>"
+            table += "</tr>"
+            for index, issue in kbData.iterrows():
                 table += "<tr>"
-                table += "<th style=\"text-align:center;\" colspan=\"3\">" + kb1Label + "</th>"
-                table += "<th style=\"text-align:center;\" colspan=\"3\">" + kb2Label + "</th>"
+                table += "<td>" + issue["issueType"] + "</td>"
+                table += "<td>" + issue["affectedEntity"] + "</td>"
+                table += "<td>" + issue["issueMessage"] + "</td>"
                 table += "</tr>"
-                resourcePairs = kbsData.filter(["resource1","resource2"]).drop_duplicates().sort_values(["resource1","resource2"])
-                # iterate resources
-                for index, resourcePair in resourcePairs.iterrows():
-                    resourceData = kbsData[categoryData.resource1.eq(resourcePair["resource1"]) & categoryData.resource2.eq(resourcePair["resource2"])].sort_values(["resource1","resource2"])
-                    variablesCount = len(resourceData)
-                    firstRow = True
-                    for index, row in resourceData.iterrows():
-                        table += "<tr rowspan=\"variablesCount\">"
-                        if firstRow:
-                            table += "<td>" + resourcePair["resource1"] + "</td>"
-                        table += "<td>" + row.variableName + "</td>"
-                        table += "<td>" + (row.value1 if not row.isna().value1 else "") + "</td>"
-                        table += "<td>" + (row.value2 if not row.isna().value2 else "") + "</td>"
-                        table += "<td>" + row.variableName + "</td>"
-                        if firstRow:
-                            table += "<td>" + resourcePair["resource2"] + "</td>"
-                            firstRow = False
-                        table += "</tr>"
-                table += "</table>"
-                display(HTML(table))
+            table += "</table>"
+            display(HTML(table))
     
     def mappingReport(cls, processing):
         display(HTML("<h1>Mapping Report</h1>"))
         totalData = processing.graphAsDataFrame()
-        categoryPairs = totalData.filter(["category1","category2"]).drop_duplicates().sort_values(["category1","category2"])
-        # iterate categories
-        for index, categoryPair in categoryPairs.iterrows():
-            display(HTML("<h2>Category: " + categoryPair["category1"] + "</h2>"))
-            categoryData = totalData[totalData.category1.eq(categoryPair["category1"]) & totalData.category2.eq(categoryPair["category2"])]
-            kbPairs = categoryData.filter(["knowledgeBase1","knowledgeBase2"]).drop_duplicates().sort_values(["knowledgeBase1","knowledgeBase2"])
-            # iterate knowledge bases
-            for index, kbPair in kbPairs.iterrows():
-                kb1Label = processing.project.knowledgeBase(id = kbPair["knowledgeBase1"]).info()["label"]
-                kb2Label = processing.project.knowledgeBase(id = kbPair["knowledgeBase2"]).info()["label"]
-                data = categoryData[categoryData.knowledgeBase1.eq(kbPair["knowledgeBase1"]) & categoryData.knowledgeBase2.eq(kbPair["knowledgeBase2"])]
-                data = data.sort_values(["id1","id2"])
-                table = "<table>"
-                table += "<tr>"
-                table += "<th style=\"text-align:center;\" colspan=\"2\">" + kb1Label + "</th>"
-                table += "<th style=\"text-align:center;\" colspan=\"2\">" + kb2Label + "</th>"
-                table += "</tr>"
-                for index, row in data.iterrows():
+        if not totalData.empty:
+            categoryPairs = totalData.filter(["category1","category2"]).drop_duplicates().sort_values(["category1","category2"])
+            # iterate categories
+            for index, categoryPair in categoryPairs.iterrows():
+                display(HTML("<h2>Category: " + categoryPair["category1"] + "</h2>"))
+                categoryData = totalData[totalData.category1.eq(categoryPair["category1"]) & totalData.category2.eq(categoryPair["category2"])]
+                kbPairs = categoryData.filter(["knowledgeBase1","knowledgeBase2"]).drop_duplicates().sort_values(["knowledgeBase1","knowledgeBase2"])
+                # iterate knowledge bases
+                for index, kbPair in kbPairs.iterrows():
+                    kb1Label = processing.project.knowledgeBase(id = kbPair["knowledgeBase1"]).info()["label"]
+                    kb2Label = processing.project.knowledgeBase(id = kbPair["knowledgeBase2"]).info()["label"]
+                    data = categoryData[categoryData.knowledgeBase1.eq(kbPair["knowledgeBase1"]) & categoryData.knowledgeBase2.eq(kbPair["knowledgeBase2"])]
+                    data = data.sort_values(["id1","id2"])
+                    table = "<table>"
                     table += "<tr>"
-                    table += "<td>" + (row.id1 if not row.isna().id1 else "") + "</td>"
-                    table += "<td>" + (cls.mappingReportEntityDataToHtml(row.data1) if not row.isna().data1 else "") + "</td>"
-                    table += "<td>" + (cls.mappingReportEntityDataToHtml(row.data2) if not row.isna().data2 else "") + "</td>"
-                    table += "<td>" + (row.id2 if not row.isna().id2 else "") + "</td>"
+                    table += "<th style=\"text-align:center;\" colspan=\"2\">" + kb1Label + "</th>"
+                    table += "<th style=\"text-align:center;\" colspan=\"2\">" + kb2Label + "</th>"
                     table += "</tr>"
-                table += "</table>"
-                display(HTML(table))
+                    for index, row in data.iterrows():
+                        table += "<tr>"
+                        table += "<td>" + (row.id1 if not row.isna().id1 else "") + "</td>"
+                        table += "<td>" + (cls.mappingReportEntityDataToHtml(row.data1) if not row.isna().data1 else "") + "</td>"
+                        table += "<td>" + (cls.mappingReportEntityDataToHtml(row.data2) if not row.isna().data2 else "") + "</td>"
+                        table += "<td>" + (row.id2 if not row.isna().id2 else "") + "</td>"
+                        table += "</tr>"
+                    table += "</table>"
+                    display(HTML(table))
             
     def mappingReportEntityDataToHtml(entityDataJson):
         entityData = json.loads(entityDataJson)
@@ -357,5 +392,6 @@ class Report:
     switcher = {
         "de.uni_jena.cs.fusion.abecto.processor.implementation.MappingReportProcessor": mappingReport,
         "de.uni_jena.cs.fusion.abecto.processor.implementation.CategoryCountProcessor": countReport,
-        "de.uni_jena.cs.fusion.abecto.processor.implementation.LiteralDeviationProcessor": deviationReport
+        "de.uni_jena.cs.fusion.abecto.processor.implementation.DeviationReportProcessor": deviationReport,
+        "de.uni_jena.cs.fusion.abecto.processor.implementation.IssueReportProcessor": issueReport
     }
