@@ -86,7 +86,7 @@ public class SparqlEntityManager {
 		}
 		// workaround for https://issues.apache.org/jira/browse/JENA-1841
 		if (value instanceof UUID) {
-			NodeFactory.createLiteral(LiteralLabelFactory.createTypedLiteral(value.toString()));
+			return NodeFactory.createLiteral(LiteralLabelFactory.createTypedLiteral(value.toString()));
 		}
 		return NodeFactory.createLiteral(LiteralLabelFactory.createTypedLiteral(value));
 	}
