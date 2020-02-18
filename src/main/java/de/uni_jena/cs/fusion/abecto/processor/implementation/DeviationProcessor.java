@@ -12,15 +12,14 @@ import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 
 import de.uni_jena.cs.fusion.abecto.processor.AbstractDeviationProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.model.Category;
-import de.uni_jena.cs.fusion.abecto.processor.model.Issue;
 import de.uni_jena.cs.fusion.abecto.processor.model.ValueDeviation;
-import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 
-public class LiteralDeviationProcessor extends AbstractDeviationProcessor<AbstractDeviationProcessor.Parameter> {
+public class DeviationProcessor extends AbstractDeviationProcessor<AbstractDeviationProcessor.Parameter> {
 
 	@Override
 	public Collection<ValueDeviation> computeDeviations(Model model1, Model model2, UUID knowledgeBaseId1,
@@ -29,24 +28,19 @@ public class LiteralDeviationProcessor extends AbstractDeviationProcessor<Abstra
 
 		Collection<ValueDeviation> deviations = new ArrayList<>();
 
-		Map<Resource, Map<String, Literal>> valuesByVariableByResource2 = new HashMap<>();
+		Map<Resource, Map<String, RDFNode>> valuesByVariableByResource2 = new HashMap<>();
 		ResultSet results2 = category2.selectCategory(model2);
 		while (results2.hasNext()) {
 			QuerySolution result2 = results2.next();
 			Resource resoure2 = result2.getResource(categoryName);
 
-			Map<String, Literal> valuesByVariable2 = valuesByVariableByResource2.computeIfAbsent(resoure2, (x) -> {
+			Map<String, RDFNode> valuesByVariable2 = valuesByVariableByResource2.computeIfAbsent(resoure2, (x) -> {
 				return new HashMap<>();
 			});
 			// iterate variables
 			for (String variableName : variableNames) {
 				if (result2.contains(variableName)) {
-					try {
-						valuesByVariable2.put(variableName, result2.getLiteral(variableName));
-					} catch (ClassCastException e) {
-						Issue issue = Issue.unexpectedValueType(knowledgeBaseId2, resoure2, variableName, "literal");
-						SparqlEntityManager.insert(issue, this.getResultModel());
-					}
+					valuesByVariable2.put(variableName, result2.get(variableName));
 				}
 			}
 		}
@@ -58,19 +52,33 @@ public class LiteralDeviationProcessor extends AbstractDeviationProcessor<Abstra
 			// iterate variables
 			for (String variableName : variableNames) {
 				if (result1.contains(variableName)) {
-					try {
-						Literal value1 = result1.getLiteral(variableName);
-						for (Resource resource2 : mappings.getOrDefault(resource1, Collections.emptySet())) {
-							Literal value2 = valuesByVariableByResource2.get(resource2).get(variableName);
-							if (value2 != null && !value1.sameValueAs(value2)) {
+					for (Resource resource2 : mappings.getOrDefault(resource1, Collections.emptySet())) {
+						RDFNode node1 = result1.get(variableName);
+						RDFNode node2 = valuesByVariableByResource2.get(resource2).get(variableName);
+						if (node2 != null) {
+							if (node1.isLiteral() && node2.isLiteral()) {
+								Literal value1 = node1.asLiteral();
+								Literal value2 = node2.asLiteral();
+								if (value2 != null && !value1.sameValueAs(value2)) {
+									deviations.add(new ValueDeviation(null, categoryName, variableName, resource1,
+											resource2, knowledgeBaseId1, knowledgeBaseId2, value1.toString(),
+											value2.toString()));
+								}
+							} else if (node1.isResource() && node2.isResource()) {
+								Resource value1 = node1.asResource();
+								Resource value2 = node2.asResource();
+								if (!mappings.containsKey(value1) || !mappings.get(value1).contains(value2)) {
+									deviations.add(new ValueDeviation(null, categoryName, variableName, resource1,
+											resource2, knowledgeBaseId1, knowledgeBaseId2,
+											"<" + value1.toString() + ">", "<" + value2.toString() + ">"));
+									// TODO format values
+								}
+							} else {
 								deviations.add(new ValueDeviation(null, categoryName, variableName, resource1,
-										resource2, knowledgeBaseId1, knowledgeBaseId2, value1.toString(),
-										value2.toString()));
+										resource2, knowledgeBaseId1, knowledgeBaseId2, node1.toString(),
+										node2.toString()));
 							}
 						}
-					} catch (ClassCastException e) {
-						Issue issue = Issue.unexpectedValueType(knowledgeBaseId1, resource1, variableName, "literal");
-						SparqlEntityManager.insert(issue, this.getResultModel());
 					}
 				}
 			}
