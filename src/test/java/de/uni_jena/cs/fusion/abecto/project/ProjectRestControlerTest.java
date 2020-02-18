@@ -177,7 +177,8 @@ class ProjectRestControlerTest {
 
 		// check processings
 		for (JsonNode processingNode : buffer.getJson()) {
-			Assertions.assertEquals("SUCCEEDED", processingNode.get("status").asText());
+			Assertions.assertEquals("SUCCEEDED", processingNode.get("status").asText(),
+					processingNode.get("stackTrace").asText());
 		}
 	}
 }
