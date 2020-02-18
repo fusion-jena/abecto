@@ -34,6 +34,7 @@ import org.apache.jena.arq.querybuilder.clauses.WhereClause;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.graph.impl.LiteralLabelFactory;
 import org.apache.jena.query.QueryException;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QuerySolution;
@@ -79,16 +80,19 @@ public class SparqlEntityManager {
 		update.addInsert(new Triple(subject, predicate, object));
 	}
 
-	private static <I> Object convertInsertValue(I value) {
-		// work around for https://issues.apache.org/jira/browse/JENA-1841
-		if (value instanceof UUID) {
-			return value.toString();
+	private static Node convertToNode(Object value) {
+		if (value instanceof Resource) {
+			return ((Resource) value).asNode();
 		}
-		return value;
+		// workaround for https://issues.apache.org/jira/browse/JENA-1841
+		if (value instanceof UUID) {
+			NodeFactory.createLiteral(LiteralLabelFactory.createTypedLiteral(value.toString()));
+		}
+		return NodeFactory.createLiteral(LiteralLabelFactory.createTypedLiteral(value));
 	}
 
 	@SuppressWarnings("unchecked")
-	private static <IN, OUT> OUT convertSelectValue(IN value, Class<OUT> type) {
+	private static <OUT> OUT convertSelectValue(Object value, Class<OUT> type) {
 		if (type.isInstance(value)) {
 			return type.cast(value);
 		}
@@ -358,7 +362,7 @@ public class SparqlEntityManager {
 
 								// use element as object
 								Node subject = AbstractQueryBuilder.makeVar(annotation.subject());
-								Node object = select.makeNode(convertInsertValue(element));
+								Node object = convertToNode(element);
 
 								// add triple
 								existsClause.addWhere(select.makeTriplePath(subject, predicate, object));
@@ -376,7 +380,7 @@ public class SparqlEntityManager {
 				} else if (value instanceof Optional<?>) {
 					if (((Optional<?>) value).isPresent()) {
 						expressions.add(factory.eq(AbstractQueryBuilder.makeVar(field.getName()),
-								select.makeNode(convertInsertValue(((Optional<?>) value).get()))));
+								convertToNode(((Optional<?>) value).get())));
 					} else {
 						SelectBuilder notExistsClause = new SelectBuilder();
 						for (SparqlPattern annotation : field.getAnnotationsByType(SparqlPattern.class)) {
@@ -390,8 +394,7 @@ public class SparqlEntityManager {
 						expressions.add(factory.notexists(notExistsClause));
 					}
 				} else {
-					expressions.add(factory.eq(AbstractQueryBuilder.makeVar(field.getName()),
-							select.makeNode(convertInsertValue(value))));
+					expressions.add(factory.eq(AbstractQueryBuilder.makeVar(field.getName()), convertToNode(value)));
 				}
 			}
 		}
@@ -468,16 +471,16 @@ public class SparqlEntityManager {
 									String.format("Missing value for member %s.", field.getName()));
 						}
 					} else if (value instanceof Resource) {
-						resources.put(field, update.makeNode(convertInsertValue(value)));
+						resources.put(field, convertToNode(value));
 					} else if (value instanceof Optional) {
 						if (((Optional<?>) value).isPresent()) {
 							Object enclosedValue = ((Optional<?>) value).get();
 							if (enclosedValue instanceof Resource) {
 								// add to resources, not to optionalResources, to assure insertion of provided
 								// data
-								resources.put(field, update.makeNode(convertInsertValue(enclosedValue)));
+								resources.put(field, convertToNode(enclosedValue));
 							} else {
-								literals.put(field, update.makeNode(convertInsertValue(enclosedValue)));
+								literals.put(field, convertToNode(enclosedValue));
 							}
 						} else if (((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0]
 								.equals(Resource.class)) {
@@ -488,11 +491,10 @@ public class SparqlEntityManager {
 							throw new NullPointerException(
 									String.format("Null element contained in member collection %s.", field.getName()));
 						}
-						collections.put(field,
-								((Collection<?>) value).stream().map(SparqlEntityManager::convertInsertValue)
-										.map(update::makeNode).collect(Collectors.toSet()));
+						collections.put(field, ((Collection<?>) value).stream().map(SparqlEntityManager::convertToNode)
+								.collect(Collectors.toSet()));
 					} else {
-						literals.put(field, update.makeNode(convertInsertValue(value)));
+						literals.put(field, convertToNode(value));
 					}
 				} catch (IllegalArgumentException | IllegalAccessException e) {
 					throw new RuntimeException("Failed to access member " + field.getName(), e);
