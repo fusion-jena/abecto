@@ -16,7 +16,7 @@ import org.apache.jena.rdf.model.Resource;
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.processor.model.Category;
 import de.uni_jena.cs.fusion.abecto.processor.model.Mapping;
-import de.uni_jena.cs.fusion.abecto.processor.model.ValueDeviation;
+import de.uni_jena.cs.fusion.abecto.processor.model.Deviation;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 
 public abstract class AbstractDeviationProcessor<Parameter>
@@ -33,7 +33,7 @@ public abstract class AbstractDeviationProcessor<Parameter>
 	public final void computeResultModel() throws Exception {
 		Set<UUID> knowledgeBaseIds = this.inputGroupModels.keySet();
 
-		Collection<ValueDeviation> deviations = new ArrayList<>();
+		Collection<Deviation> deviations = new ArrayList<>();
 
 		// iterate knowledge base pairs
 		for (UUID knowledgeBaseId1 : knowledgeBaseIds) {
@@ -75,7 +75,7 @@ public abstract class AbstractDeviationProcessor<Parameter>
 		SparqlEntityManager.insert(deviations, this.getResultModel());
 	}
 
-	public abstract Collection<ValueDeviation> computeDeviations(Model model1, Model model2, UUID knowledgeBaseId1,
+	public abstract Collection<Deviation> computeDeviations(Model model1, Model model2, UUID knowledgeBaseId1,
 			UUID knowledgeBaseId2, String categoryName, Collection<String> variableNames, Category category1,
 			Category category2, Map<Resource, Set<Resource>> mappings) throws Exception;
 

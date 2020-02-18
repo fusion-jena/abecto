@@ -11,8 +11,8 @@ import de.uni_jena.cs.fusion.abecto.sparq.SparqlPattern;
 
 @SparqlNamespace(prefix = "rdf", namespace = "http://www.w3.org/1999/02/22-rdf-syntax-ns#")
 @SparqlNamespace(prefix = "abecto", namespace = "http://fusion.cs.uni-jena.de/ontology/abecto#")
-public class ValueDeviation {
-	@SparqlPattern(predicate = "rdf:type", object = "abecto:ValueDeviation")
+public class Deviation {
+	@SparqlPattern(predicate = "rdf:type", object = "abecto:Deviation")
 	public Resource id;
 	@SparqlPattern(subject = "id", predicate = "abecto:categoryName")
 	public final String categoryName;
@@ -31,7 +31,7 @@ public class ValueDeviation {
 	@SparqlPattern(subject = "id", predicate = "abecto:value2")
 	public final String value2;
 
-	public ValueDeviation(@Member("id") Resource id, @Member("categoryName") String categoryName,
+	public Deviation(@Member("id") Resource id, @Member("categoryName") String categoryName,
 			@Member("variableName") String variableName, @Member("resource1") Resource resource1,
 			@Member("resource2") Resource resource2, @Member("knowledgeBaseId1") UUID knowledgeBaseId1,
 			@Member("knowledgeBaseId2") UUID knowledgeBaseId2, @Member("value1") String value1,
@@ -78,10 +78,10 @@ public class ValueDeviation {
 
 	@Override
 	public boolean equals(Object other) {
-		if (!(other instanceof ValueDeviation)) {
+		if (!(other instanceof Deviation)) {
 			return false;
 		}
-		ValueDeviation o = (ValueDeviation) other;
+		Deviation o = (Deviation) other;
 		return Objects.equals(this.categoryName, o.categoryName) && Objects.equals(this.variableName, o.variableName)
 				&& Objects.equals(this.resource1, o.resource1) && Objects.equals(this.resource2, o.resource2)
 				&& Objects.equals(this.knowledgeBaseId1, o.knowledgeBaseId1)
