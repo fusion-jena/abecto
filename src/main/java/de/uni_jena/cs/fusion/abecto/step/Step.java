@@ -142,6 +142,7 @@ public class Step extends AbstractEntityWithUUID {
 	 * @return {@code true} if the processor is a {@link MappingProcessor},
 	 *         otherwise {@code false}
 	 */
+	@JsonIgnore
 	public boolean isMapping() {
 		return MappingProcessor.class.isAssignableFrom(this.processor);
 	}
@@ -150,6 +151,7 @@ public class Step extends AbstractEntityWithUUID {
 	 * @return {@code true} if the processor is a {@link MetaProcessor}, otherwise
 	 *         {@code false}
 	 */
+	@JsonIgnore
 	public boolean isMeta() {
 		return MetaProcessor.class.isAssignableFrom(this.processor);
 	}
@@ -158,6 +160,7 @@ public class Step extends AbstractEntityWithUUID {
 	 * @return {@code true} if the processor is a {@link RefinementProcessor},
 	 *         otherwise {@code false}
 	 */
+	@JsonIgnore
 	public boolean isRefinement() {
 		return RefinementProcessor.class.isAssignableFrom(this.processor);
 	}
@@ -166,6 +169,7 @@ public class Step extends AbstractEntityWithUUID {
 	 * @return {@code true} if the processor is a {@link SourceProcessor}, otherwise
 	 *         {@code false}
 	 */
+	@JsonIgnore
 	public boolean isSource() {
 		return SourceProcessor.class.isAssignableFrom(this.processor);
 	}
@@ -174,6 +178,7 @@ public class Step extends AbstractEntityWithUUID {
 	 * @return {@code true} if the processor is a {@link TransformationProcessor},
 	 *         otherwise {@code false}
 	 */
+	@JsonIgnore
 	public boolean isTransformation() {
 		return TransformationProcessor.class.isAssignableFrom(this.processor);
 	}
