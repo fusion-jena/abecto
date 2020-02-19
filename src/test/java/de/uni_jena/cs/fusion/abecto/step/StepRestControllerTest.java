@@ -28,8 +28,11 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import de.uni_jena.cs.fusion.abecto.ResponseBuffer;
+import de.uni_jena.cs.fusion.abecto.knowledgebase.KnowledgeBaseRepository;
+import de.uni_jena.cs.fusion.abecto.parameter.ParameterRepository;
 import de.uni_jena.cs.fusion.abecto.parameter_model.EmptyParameters;
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
+import de.uni_jena.cs.fusion.abecto.processing.ProcessingRepository;
 import de.uni_jena.cs.fusion.abecto.processor.AbstractSourceProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.UploadSourceProcessor;
 import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
@@ -48,11 +51,26 @@ public class StepRestControllerTest {
 
 	private String projectId;
 	private String knowledgBaseId;
-
+	
 	@Autowired
 	ProjectRepository projectRepository;
 	@Autowired
+	KnowledgeBaseRepository knowledgeBaseRepository;
+	@Autowired
 	StepRepository stepRepository;
+	@Autowired
+	ProcessingRepository processingRepository;
+	@Autowired
+	ParameterRepository parameterRepository;
+
+	@AfterEach
+	public void cleanup() throws Exception {
+		processingRepository.deleteAll();
+		stepRepository.deleteAll();
+		parameterRepository.deleteAll();
+		knowledgeBaseRepository.deleteAll();
+		projectRepository.deleteAll();
+	}
 
 	@BeforeEach
 	public void init() throws Exception {
@@ -63,12 +81,6 @@ public class StepRestControllerTest {
 		mvc.perform(MockMvcRequestBuilders.post("/knowledgebase").param("project", projectId)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		knowledgBaseId = buffer.getId();
-	}
-
-	@AfterEach
-	public void cleanup() throws IOException, Exception {
-		projectRepository.deleteAll();
-		stepRepository.deleteAll();
 	}
 
 	@Test

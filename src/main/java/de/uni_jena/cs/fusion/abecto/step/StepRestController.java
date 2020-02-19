@@ -26,6 +26,7 @@ import de.uni_jena.cs.fusion.abecto.parameter.ParameterRepository;
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.processing.Processing;
 import de.uni_jena.cs.fusion.abecto.processing.ProcessingRepository;
+import de.uni_jena.cs.fusion.abecto.processing.ProcessingRestController;
 import de.uni_jena.cs.fusion.abecto.processing.ProcessingRunner;
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
 import de.uni_jena.cs.fusion.abecto.processor.SourceProcessor;
@@ -36,19 +37,22 @@ import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
 public class StepRestController {
 
 	@Autowired
+	ProcessingRunner processorRunner;
+	@Autowired
+	ObjectMapper JSON;
+
+	@Autowired
 	ProjectRepository projectRepository;
 	@Autowired
 	KnowledgeBaseRepository knowledgeBaseRepository;
 	@Autowired
 	StepRepository stepRepository;
 	@Autowired
-	ParameterRepository parameterRepository;
-	@Autowired
 	ProcessingRepository processingRepository;
 	@Autowired
-	ProcessingRunner processorRunner;
+	ProcessingRestController processingRestController;
 	@Autowired
-	ObjectMapper JSON;
+	ParameterRepository parameterRepository;
 
 	/**
 	 * Creates a new Refinement Processor Node in the processing pipeline.
@@ -135,6 +139,15 @@ public class StepRestController {
 	@GetMapping("/step/{uuid}/processing")
 	public Iterable<Processing> processings(@PathVariable("uuid") UUID stepId) {
 		return processingRepository.findByStepOrderByStartDateTime(get(stepId));
+	}
+
+	@GetMapping("/step/{uuid}/delete")
+	public void delete(@PathVariable("uuid") UUID uuid) {
+		Step step = this.get(uuid);
+		for (Processing processing : processingRepository.findAllByStep(step)) {
+			processingRestController.delete(processing.getId());
+		}
+		stepRepository.delete(step);
 	}
 
 	@GetMapping("/step/{uuid}/processing/last")

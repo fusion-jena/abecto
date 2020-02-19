@@ -10,4 +10,6 @@ public interface ProcessingRepository extends CrudRepository<Processing, UUID> {
 	Processing findTopByStepOrderByStartDateTimeDesc(Step step);
 
 	Iterable<Processing> findByStepOrderByStartDateTime(Step step);
+
+	Iterable<Processing> findAllByStep(Step step);
 }

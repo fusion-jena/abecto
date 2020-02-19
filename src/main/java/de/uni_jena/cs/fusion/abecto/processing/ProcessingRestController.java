@@ -23,9 +23,14 @@ public class ProcessingRestController {
 	ModelRepository modelRepository;
 
 	@GetMapping("/processing/{uuid}")
-	public Processing getProcessing(@PathVariable("uuid") UUID processingId) throws IOException {
+	public Processing getProcessing(@PathVariable("uuid") UUID processingId) {
 		return processingRepository.findById(processingId)
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Processing not found."));
+	}
+
+	@GetMapping("/processing/{uuid}/delete")
+	public void delete(@PathVariable("uuid") UUID uuid) {
+		processingRepository.delete(this.getProcessing(uuid));
 	}
 
 	/**

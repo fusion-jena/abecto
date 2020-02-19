@@ -8,7 +8,6 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.Lob;
@@ -38,22 +37,21 @@ public class Processing extends AbstractEntityWithUUID {
 	 * processing refer to {@link #processor}, {@link #parameter}, and
 	 * {@link #inputProcessings}.
 	 */
-	@ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+	@ManyToOne
 	@JsonSerialize(converter = EntityToIdConverter.class)
 	private Step step;
 	/**
-	 * {@link Processor} used to produce the result {@link RdfModel}.
+	 * {@link Processor} used to produce the result model.
 	 */
 	@SuppressWarnings("rawtypes")
 	private Class<? extends Processor> processor;
 	/**
-	 * {@link Parameter} used to produce the result {@link RdfModel}.
+	 * {@link Parameter} used to produce the result model.
 	 */
-	@ManyToOne(cascade = CascadeType.PERSIST)
+	@ManyToOne
 	private Parameter parameter;
 	/**
-	 * Collection of {@link Processing}s used to produce the result
-	 * {@link RdfModel}.
+	 * Collection of {@link Processing}s used to produce the result model.
 	 */
 	@ManyToMany(fetch = FetchType.EAGER)
 	@JsonSerialize(contentConverter = EntityToIdConverter.class)

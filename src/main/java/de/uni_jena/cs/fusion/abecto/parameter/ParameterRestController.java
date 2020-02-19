@@ -72,11 +72,9 @@ public class ParameterRestController {
 						throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
 								String.format("Failed to pares value of type \"%s\".", type));
 					}
-					// update step
-					step.setParameter(newParameter);
-					// persist changes
+					// update step and persist
+					step.setParameter(parameterRepository.save(newParameter));
 					stepRepository.save(step);
-					parameterRepository.save(newParameter);
 				} catch (SecurityException | InstantiationException | IllegalArgumentException
 						| InvocationTargetException | NoSuchMethodException e) {
 					log.error("Failed to copy ProcessingParameter.", e);

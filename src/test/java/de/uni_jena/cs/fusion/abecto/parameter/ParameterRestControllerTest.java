@@ -3,8 +3,6 @@ package de.uni_jena.cs.fusion.abecto.parameter;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.io.IOException;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,9 +18,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import de.uni_jena.cs.fusion.abecto.ResponseBuffer;
+import de.uni_jena.cs.fusion.abecto.knowledgebase.KnowledgeBaseRepository;
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
+import de.uni_jena.cs.fusion.abecto.processing.ProcessingRepository;
 import de.uni_jena.cs.fusion.abecto.processor.AbstractSourceProcessor;
 import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
+import de.uni_jena.cs.fusion.abecto.step.StepRepository;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -37,9 +38,21 @@ public class ParameterRestControllerTest {
 
 	@Autowired
 	ProjectRepository projectRepository;
+	@Autowired
+	KnowledgeBaseRepository knowledgeBaseRepository;
+	@Autowired
+	StepRepository stepRepository;
+	@Autowired
+	ProcessingRepository processingRepository;
+	@Autowired
+	ParameterRepository parameterRepository;
 
 	@AfterEach
-	public void cleanup() throws IOException, Exception {
+	public void cleanup() throws Exception {
+		processingRepository.deleteAll();
+		stepRepository.deleteAll();
+		parameterRepository.deleteAll();
+		knowledgeBaseRepository.deleteAll();
 		projectRepository.deleteAll();
 	}
 

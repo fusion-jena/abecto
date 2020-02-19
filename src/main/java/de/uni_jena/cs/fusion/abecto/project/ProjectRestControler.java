@@ -3,7 +3,6 @@ package de.uni_jena.cs.fusion.abecto.project;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,13 +17,28 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.uni_jena.cs.fusion.abecto.knowledgebase.KnowledgeBase;
+import de.uni_jena.cs.fusion.abecto.knowledgebase.KnowledgeBaseRepository;
+import de.uni_jena.cs.fusion.abecto.knowledgebase.KnowledgeBaseRestController;
 import de.uni_jena.cs.fusion.abecto.processing.Processing;
+import de.uni_jena.cs.fusion.abecto.processing.ProcessingRepository;
 import de.uni_jena.cs.fusion.abecto.step.Step;
+import de.uni_jena.cs.fusion.abecto.step.StepRepository;
+import de.uni_jena.cs.fusion.abecto.step.StepRestController;
 
 @RestController
 public class ProjectRestControler {
 	@Autowired
 	ProjectRepository projectRepository;
+	@Autowired
+	ProcessingRepository processingRepository;
+	@Autowired
+	KnowledgeBaseRepository knowledgeBaseRepository;
+	@Autowired
+	KnowledgeBaseRestController knowledgeBaseRestController;
+	@Autowired
+	StepRepository stepRepository;
+	@Autowired
+	StepRestController stepRestController;
 	@Autowired
 	ProjectRunner projectRunner;
 
@@ -36,12 +50,14 @@ public class ProjectRestControler {
 	@DeleteMapping("/project/{uuid}")
 	@ResponseStatus(code = HttpStatus.NO_CONTENT)
 	public void delete(@PathVariable("uuid") UUID uuid) {
-		Optional<Project> project = projectRepository.findById(uuid);
-		if (project.isPresent()) {
-			projectRepository.delete(project.get());
-		} else {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found.");
+		Project project = this.get(uuid);
+		for (Step step : stepRepository.findAllByProject(project)) {
+			stepRestController.delete(step.getId());
 		}
+		for (KnowledgeBase knowledgeBase : knowledgeBaseRepository.findAllByProject(project)) {
+			knowledgeBaseRestController.delete(knowledgeBase.getId());
+		}
+		projectRepository.delete(project);
 	}
 
 	@GetMapping("/project/{uuid}")
@@ -63,10 +79,11 @@ public class ProjectRestControler {
 		try {
 			Project project = projectRepository.findById(projectUuid).orElseThrow();
 			Collection<UUID> sourceKnowledgeBaseProcessingIds = new ArrayList<>();
-			for (KnowledgeBase knowledgeBase : project.knowledgeBases) {
+			for (KnowledgeBase knowledgeBase : knowledgeBaseRepository.findAllByProject(project)) {
 				for (Step sourceStep : knowledgeBase.getSources()) {
 					try {
-						sourceKnowledgeBaseProcessingIds.add(sourceStep.getLastProcessing().getId());
+						sourceKnowledgeBaseProcessingIds
+								.add(processingRepository.findTopByStepOrderByStartDateTimeDesc(sourceStep).getId());
 					} catch (NoSuchElementException e) {
 						throw new ResponseStatusException(HttpStatus.NOT_FOUND,
 								String.format("No processing of %s not found.", sourceStep));

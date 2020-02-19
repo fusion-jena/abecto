@@ -6,7 +6,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.io.IOException;
 import java.util.UUID;
 
 import org.junit.jupiter.api.AfterEach;
@@ -26,10 +25,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import de.uni_jena.cs.fusion.abecto.ResponseBuffer;
 import de.uni_jena.cs.fusion.abecto.TestDataGenerator;
+import de.uni_jena.cs.fusion.abecto.knowledgebase.KnowledgeBaseRepository;
+import de.uni_jena.cs.fusion.abecto.parameter.ParameterRepository;
+import de.uni_jena.cs.fusion.abecto.processing.ProcessingRepository;
 import de.uni_jena.cs.fusion.abecto.processor.implementation.JaroWinklerMappingProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.implementation.ManualCategoryProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.implementation.RdfFileSourceProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.implementation.SparqlConstructProcessor;
+import de.uni_jena.cs.fusion.abecto.step.StepRepository;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -43,9 +46,21 @@ class ProjectRestControlerTest {
 
 	@Autowired
 	ProjectRepository projectRepository;
+	@Autowired
+	KnowledgeBaseRepository knowledgeBaseRepository;
+	@Autowired
+	StepRepository stepRepository;
+	@Autowired
+	ProcessingRepository processingRepository;
+	@Autowired
+	ParameterRepository parameterRepository;
 
 	@AfterEach
-	public void cleanup() throws IOException, Exception {
+	public void cleanup() throws Exception {
+		processingRepository.deleteAll();
+		stepRepository.deleteAll();
+		parameterRepository.deleteAll();
+		knowledgeBaseRepository.deleteAll();
 		projectRepository.deleteAll();
 	}
 
@@ -150,23 +165,20 @@ class ProjectRestControlerTest {
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		String transformation2Id = buffer.getId();
 
-		// add pattern
+		// add categories
+		String categoryParameter = "{\"patterns\":{\"entity\":\"?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .\"}}";
 		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", ManualCategoryProcessor.class.getTypeName())
-				.param("input", transformation1Id)
-				.param("parameters",
-						"{\"patterns\":{\"entity\":\"?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .\"}}")
+				.param("input", transformation1Id).param("parameters", categoryParameter)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
-		String pattern1Id = buffer.getId();
+		String category1Id = buffer.getId();
 		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", ManualCategoryProcessor.class.getTypeName())
-				.param("input", transformation2Id)
-				.param("parameters",
-						"{\"patterns\":{\"entity\":\"?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .\"}}")
+				.param("input", transformation2Id).param("parameters", categoryParameter)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
-		String pattern2Id = buffer.getId();
+		String category2Id = buffer.getId();
 
 		// add mapping
 		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", JaroWinklerMappingProcessor.class.getTypeName())
-				.param("input", pattern1Id, pattern2Id)
+				.param("input", category1Id, category2Id)
 				.param("parameters",
 						"{\"threshold\":0.9,\"case_sensitive\":false,\"category\":\"entity\",\"variables\":[\"label\"]}")
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
@@ -178,7 +190,7 @@ class ProjectRestControlerTest {
 		// check processings
 		for (JsonNode processingNode : buffer.getJson()) {
 			Assertions.assertEquals("SUCCEEDED", processingNode.get("status").asText(),
-					processingNode.get("stackTrace").asText());
+					"Some processings failed:\n" + buffer.getString() + "\n");
 		}
 	}
 }

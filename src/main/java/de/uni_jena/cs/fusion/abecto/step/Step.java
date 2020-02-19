@@ -1,24 +1,18 @@
 package de.uni_jena.cs.fusion.abecto.step;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.NoSuchElementException;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import de.uni_jena.cs.fusion.abecto.knowledgebase.KnowledgeBase;
 import de.uni_jena.cs.fusion.abecto.parameter.Parameter;
-import de.uni_jena.cs.fusion.abecto.processing.Processing;
 import de.uni_jena.cs.fusion.abecto.processor.MappingProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.MetaProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
@@ -35,7 +29,7 @@ public class Step extends AbstractEntityWithUUID {
 	/**
 	 * The {@link Project} this {@link Step} belongs to.
 	 */
-	@ManyToOne(fetch = FetchType.LAZY, optional = false)
+	@ManyToOne(optional = false)
 	@JsonSerialize(converter = EntityToIdConverter.class)
 	protected Project project;
 	/**
@@ -43,7 +37,7 @@ public class Step extends AbstractEntityWithUUID {
 	 * belongs to or {@code null}, if this does not belong to a
 	 * {@link SourceProcessor}.
 	 */
-	@ManyToOne(fetch = FetchType.LAZY)
+	@ManyToOne
 	@JsonSerialize(converter = EntityToIdConverter.class)
 	protected KnowledgeBase knowledgeBase;
 
@@ -51,12 +45,10 @@ public class Step extends AbstractEntityWithUUID {
 	protected Class<? extends Processor> processor;
 	@ManyToOne
 	protected Parameter parameter;
-	@ManyToMany(fetch = FetchType.LAZY)
+	@ManyToMany
 	protected Collection<Step> inputStep = new HashSet<>();
-	@ManyToMany(fetch = FetchType.LAZY, mappedBy = "inputStep", cascade = CascadeType.REMOVE)
+	@ManyToMany(mappedBy = "inputStep")
 	protected Collection<Step> outputSteps = new HashSet<>();
-	@OneToMany(fetch = FetchType.LAZY, mappedBy = "step", cascade = CascadeType.REMOVE)
-	protected Collection<Processing> processings = new HashSet<>();
 
 	protected Step() {
 	}
@@ -185,20 +177,6 @@ public class Step extends AbstractEntityWithUUID {
 
 	public void setParameter(Parameter parameter) {
 		this.parameter = parameter;
-	}
-
-	@JsonIgnore
-	public Processing getLastProcessing() {
-		return Collections.max(this.processings, new Comparator<Processing>() {
-			@Override
-			public int compare(Processing o1, Processing o2) {
-				if (!o1.isFailed() && !o2.isFailed()) {
-					return o1.getStartDateTime().compareTo(o2.getStartDateTime());
-				} else {
-					return Boolean.compare(!o1.isFailed(), !o2.isFailed());
-				}
-			}
-		});
 	}
 
 }

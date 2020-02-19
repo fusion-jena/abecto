@@ -16,6 +16,9 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.uni_jena.cs.fusion.abecto.project.Project;
 import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
+import de.uni_jena.cs.fusion.abecto.step.Step;
+import de.uni_jena.cs.fusion.abecto.step.StepRepository;
+import de.uni_jena.cs.fusion.abecto.step.StepRestController;
 
 @RestController
 public class KnowledgeBaseRestController {
@@ -24,6 +27,10 @@ public class KnowledgeBaseRestController {
 	KnowledgeBaseRepository knowledgeBaseRepository;
 	@Autowired
 	ProjectRepository projectRepository;
+	@Autowired
+	StepRepository stepRepository;
+	@Autowired
+	StepRestController stepRestController;
 
 	@PostMapping("/knowledgebase")
 	public KnowledgeBase create(@RequestParam("project") UUID projectId,
@@ -39,12 +46,11 @@ public class KnowledgeBaseRestController {
 	@DeleteMapping("/knowledgebase/{uuid}")
 	@ResponseStatus(code = HttpStatus.NO_CONTENT)
 	public void delete(@PathVariable("uuid") UUID uuid) {
-		Optional<KnowledgeBase> knowledgeBase = knowledgeBaseRepository.findById(uuid);
-		if (knowledgeBase.isPresent()) {
-			knowledgeBaseRepository.delete(knowledgeBase.get());
-		} else {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "KnowledgeBase not found.");
+		KnowledgeBase knowledgeBase = this.get(uuid);
+		for (Step step : stepRepository.findAllByKnowledgeBase(knowledgeBase)) {
+			stepRestController.delete(step.getId());
 		}
+		knowledgeBaseRepository.delete(knowledgeBase);
 	}
 
 	@GetMapping("/knowledgebase/{uuid}")

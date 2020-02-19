@@ -2,9 +2,7 @@ package de.uni_jena.cs.fusion.abecto.knowledgebase;
 
 import java.util.Collection;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 
@@ -26,11 +24,11 @@ public class KnowledgeBase extends AbstractEntityWithUUID {
 
 	protected String label;
 
-	@ManyToOne(fetch = FetchType.LAZY, optional = false)
+	@ManyToOne(optional = false)
 	@JsonSerialize(converter = EntityToIdConverter.class)
 	protected Project project;
 
-	@OneToMany(mappedBy = "knowledgeBase", cascade = CascadeType.REMOVE)
+	@OneToMany(mappedBy = "knowledgeBase")
 	protected Collection<Step> sources;
 
 	protected KnowledgeBase() {

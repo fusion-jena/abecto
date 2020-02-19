@@ -17,8 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.uni_jena.cs.fusion.abecto.model.ModelRepository;
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
@@ -50,7 +48,6 @@ public class ProcessingRunner {
 	 * @throws InterruptedException         if the current thread was interrupted
 	 *                                      while waiting for termination.
 	 */
-	@Transactional(readOnly = true, isolation = Isolation.READ_COMMITTED)
 	public void await(UUID processingId)
 			throws ReflectiveOperationException, NoSuchElementException, InterruptedException {
 		this.getProcessor(processingRepository.findById(processingId).orElseThrow()).await();
@@ -64,7 +61,6 @@ public class ProcessingRunner {
 	 * @throws IllegalStateException  if the {@link Processing} was already started.
 	 */
 	@Async
-	@Transactional
 	public Future<Processing> asyncExecute(UUID processingId) throws NoSuchElementException, IllegalStateException {
 		Processing processing = processingRepository.findById(processingId).orElseThrow();
 		return new AsyncResult<Processing>(syncExecute(processing));
@@ -133,14 +129,14 @@ public class ProcessingRunner {
 			String modelHash = modelRepository.save(model);
 			log.debug(String.format("Processor for %s succeded.", processing));
 			return processingRepository.save(processing.setStateSuccess(modelHash));
-		} catch (Exception e) {
+		} catch (Throwable t) {
 			log.debug(String.format("Processor for %s failed.", processing));
 			try {
-				processor.fail(e);
+				processor.fail(t);
 			} catch (ExecutionException e1) {
 				// do nothing
 			}
-			return processingRepository.save(processing.setStateFail(e));
+			return processingRepository.save(processing.setStateFail(t));
 		}
 	}
 
