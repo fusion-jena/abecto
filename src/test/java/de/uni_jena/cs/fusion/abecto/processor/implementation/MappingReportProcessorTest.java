@@ -1,7 +1,7 @@
 package de.uni_jena.cs.fusion.abecto.processor.implementation;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.util.Collection;
@@ -12,7 +12,6 @@ import java.util.UUID;
 import org.apache.jena.rdf.model.Model;
 import org.junit.jupiter.api.Test;
 
-import de.uni_jena.cs.fusion.abecto.model.ModelSerializationLanguage;
 import de.uni_jena.cs.fusion.abecto.model.Models;
 import de.uni_jena.cs.fusion.abecto.processor.Processor.Status;
 import de.uni_jena.cs.fusion.abecto.processor.model.Category;
@@ -65,7 +64,6 @@ class MappingReportProcessorTest {
 		reportProcessor.addMetaModels(mappingProcessor.getMetaModels());
 		reportProcessor.addInputModelGroups(mappingProcessor.getDataModels());
 		Model report = reportProcessor.call();
-		report.write(System.out, ModelSerializationLanguage.JSONLD.getApacheJenaKey());
 		Collection<MappingReportEntity> reportEntities = SparqlEntityManager.select(MappingReportEntity.ALL, report);
 
 		assertEquals(4, reportEntities.size());

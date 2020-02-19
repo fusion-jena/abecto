@@ -1,7 +1,7 @@
 package de.uni_jena.cs.fusion.abecto.processor.implementation;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.util.Arrays;
@@ -17,9 +17,9 @@ import org.junit.jupiter.api.Test;
 
 import de.uni_jena.cs.fusion.abecto.model.Models;
 import de.uni_jena.cs.fusion.abecto.processor.model.Category;
+import de.uni_jena.cs.fusion.abecto.processor.model.Deviation;
 import de.uni_jena.cs.fusion.abecto.processor.model.Issue;
 import de.uni_jena.cs.fusion.abecto.processor.model.Mapping;
-import de.uni_jena.cs.fusion.abecto.processor.model.Deviation;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 
 class LiteralDeviationProcessorTest {
@@ -116,13 +116,13 @@ class LiteralDeviationProcessorTest {
 		processor.addMetaModels(Collections.singleton(metaModel));
 		processor.call();
 
-		Collection<Deviation> deviations = SparqlEntityManager.select(
-				new Deviation(null, null, null, null, null, id1, id2, null, null), processor.getResultModel());
+		Collection<Deviation> deviations = SparqlEntityManager
+				.select(new Deviation(null, null, null, null, null, id1, id2, null, null), processor.getResultModel());
 		assertEquals(5, deviations.size());
 		Resource resource1 = ResourceFactory.createResource("http://example.org/1/wrong");
 		Resource resource2 = ResourceFactory.createResource("http://example.org/2/wrong");
-		assertTrue(deviations.contains(
-				new Deviation(null, "entity", "string", resource1, resource2, id1, id2, "value1", "value2")));
+		assertTrue(deviations
+				.contains(new Deviation(null, "entity", "string", resource1, resource2, id1, id2, "value1", "value2")));
 		assertTrue(deviations.contains(new Deviation(null, "entity", "integer", resource1, resource2, id1, id2,
 				"-5^^http://www.w3.org/2001/XMLSchema#integer", "-4^^http://www.w3.org/2001/XMLSchema#integer")));
 		assertTrue(deviations.contains(new Deviation(null, "entity", "decimal", resource1, resource2, id1, id2,
