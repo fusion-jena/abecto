@@ -171,6 +171,9 @@ class Step:
     def plus(self, step):
         return Steps(self, step)
 
+    def report(self):
+        return self.last().report()
+
 class Steps:
     def __init__(self, steps, step):
         if steps.server != step.server:
