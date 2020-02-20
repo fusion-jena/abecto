@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.util.Collection;
 import java.util.UUID;
 
+import org.apache.jena.arq.querybuilder.ExprFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.ResultSet;
@@ -12,6 +13,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.apache.jena.sparql.lang.sparql_11.SPARQLParser11;
+import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.PatternVars;
 
@@ -53,7 +55,7 @@ public class Category {
 	}
 
 	public ElementGroup getPatternElementGroup() {
-		// TODO cache element group
+		// TODO cache element group (and copy in #contains())
 		try {
 			SPARQLParser11 parser = new SPARQLParser11(new ByteArrayInputStream(this.pattern.getBytes()));
 			return (ElementGroup) parser.GroupGraphPatternSub();
@@ -77,6 +79,15 @@ public class Category {
 
 	public ResultSet selectCategory(Model model) {
 		return QueryExecutionFactory.create(this.getQuery(), model).execSelect();
+	}
+
+	public boolean contains(Model model, Resource resource) {
+		Query query = new Query();
+		query.setQueryAskType();
+		ElementGroup pattern = this.getPatternElementGroup();
+		pattern.addElementFilter(new ElementFilter(new ExprFactory().eq(Var.alloc(name), resource.asNode())));
+		query.setQueryPattern(pattern);
+		return QueryExecutionFactory.create(query, model).execAsk();
 	}
 
 	public void validate() throws IllegalArgumentException {
