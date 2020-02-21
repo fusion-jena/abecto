@@ -351,7 +351,7 @@ class Report:
                     table += "</tr>"
                 table += "</table>"
                 display(HTML(table))
-    
+
     def mappingReport(cls, processing):
         display(HTML("<h1>Mapping Report</h1>"))
         totalData = processing.graphAsDataFrame()
@@ -394,17 +394,6 @@ class Report:
                                 table += "</tr>"
                     table += "</table>"
                     display(HTML(table))
-            
-    def mappingReportEntityDataToHtml(entityDataJson):
-        entityData = json.loads(entityDataJson)
-        html = "<table>"
-        for key, value in entityData.items():
-            html += "<tr>"
-            html += "<td>" + key + "</td>"
-            html += "<td>" + str(value) + "</td>"
-            html += "</tr>"
-        html += "</table>"
-        return html
     
     @classmethod
     def of(cls, processing):
