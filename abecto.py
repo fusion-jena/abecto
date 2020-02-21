@@ -94,6 +94,11 @@ class Project:
     def runAndAwait(self):
         r = requests.get(self.server.base + "project/" + self.id + "/run", params = {"await": True})
         r.raise_for_status()
+        for processing in r.json():
+            if processing["status"] != "SUCCEEDED":
+                html = "<h3>" + processing["processorClass"] + ": " + processing["status"] + "</h3>"
+                html += "<pre>" + processing["stackTrace"] + "</pre>"
+                display(HTML(html))
 
 class KnowledgeBase:
     def __init__(self, server, project, label = None, id = None):
@@ -325,25 +330,27 @@ class Report:
 
     def issueReport(cls, processing):
         display(HTML("<h1>Issue Report</h1>"))
-        totalData = processing.graphAsDataFrame().sort_values(["affectedKnowledgeBase","affectedEntity"])
-        knowledgeBaseIds = set(totalData.filter(["affectedKnowledgeBase"])["affectedKnowledgeBase"])
-        for knowledgeBaseId in knowledgeBaseIds:
-            display(HTML("<h2>Knowledge Base: " + processing.project.knowledgeBase(id = knowledgeBaseId).info()["label"] + "</h2>"))
-            kbData = totalData[totalData.affectedKnowledgeBase.eq(knowledgeBaseId)]
-            table = "<table>"
-            table += "<tr>"
-            table += "<th>" + "Issue Type" + "</th>"
-            table += "<th>" + "Affected Entity" + "</th>"
-            table += "<th>" + "Message" + "</th>"
-            table += "</tr>"
-            for index, issue in kbData.iterrows():
+        totalData = processing.graphAsDataFrame()
+        if not totalData.empty:
+            totalData = totalData.sort_values(["affectedKnowledgeBase","affectedEntity"])
+            knowledgeBaseIds = set(totalData.filter(["affectedKnowledgeBase"])["affectedKnowledgeBase"])
+            for knowledgeBaseId in knowledgeBaseIds:
+                display(HTML("<h2>Knowledge Base: " + processing.project.knowledgeBase(id = knowledgeBaseId).info()["label"] + "</h2>"))
+                kbData = totalData[totalData.affectedKnowledgeBase.eq(knowledgeBaseId)]
+                table = "<table>"
                 table += "<tr>"
-                table += "<td>" + issue["issueType"] + "</td>"
-                table += "<td>" + issue["affectedEntity"] + "</td>"
-                table += "<td>" + issue["issueMessage"] + "</td>"
+                table += "<th>" + "Issue Type" + "</th>"
+                table += "<th>" + "Affected Entity" + "</th>"
+                table += "<th>" + "Message" + "</th>"
                 table += "</tr>"
-            table += "</table>"
-            display(HTML(table))
+                for index, issue in kbData.iterrows():
+                    table += "<tr>"
+                    table += "<td>" + issue["issueType"] + "</td>"
+                    table += "<td>" + issue["affectedEntity"] + "</td>"
+                    table += "<td>" + issue["issueMessage"] + "</td>"
+                    table += "</tr>"
+                table += "</table>"
+                display(HTML(table))
     
     def mappingReport(cls, processing):
         display(HTML("<h1>Mapping Report</h1>"))
