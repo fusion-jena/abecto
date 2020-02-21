@@ -359,7 +359,8 @@ class Report:
             categoryPairs = totalData.filter(["category1","category2"]).drop_duplicates().sort_values(["category1","category2"])
             # iterate categories
             for index, categoryPair in categoryPairs.iterrows():
-                display(HTML("<h2>Category: " + categoryPair["category1"] + "</h2>"))
+                categoryName = categoryPair["category1"]
+                display(HTML("<h2>Category: " + categoryName + "</h2>"))
                 categoryData = totalData[totalData.category1.eq(categoryPair["category1"]) & totalData.category2.eq(categoryPair["category2"])]
                 kbPairs = categoryData.filter(["knowledgeBase1","knowledgeBase2"]).drop_duplicates().sort_values(["knowledgeBase1","knowledgeBase2"])
                 # iterate knowledge bases
@@ -370,16 +371,27 @@ class Report:
                     data = data.sort_values(["id1","id2"])
                     table = "<table>"
                     table += "<tr>"
-                    table += "<th style=\"text-align:center;\" colspan=\"2\">" + kb1Label + "</th>"
-                    table += "<th style=\"text-align:center;\" colspan=\"2\">" + kb2Label + "</th>"
+                    table += "<th style=\"text-align:center;font-size:larger;\">" + kb1Label + "</th>"
+                    table += "<th></th>"
+                    table += "<th style=\"text-align:center;font-size:larger;\">" + kb2Label + "</th>"
                     table += "</tr>"
                     for index, row in data.iterrows():
-                        table += "<tr>"
-                        table += "<td>" + (row.id1 if not row.isna().id1 else "") + "</td>"
-                        table += "<td>" + (cls.mappingReportEntityDataToHtml(row.data1) if not row.isna().data1 else "") + "</td>"
-                        table += "<td>" + (cls.mappingReportEntityDataToHtml(row.data2) if not row.isna().data2 else "") + "</td>"
-                        table += "<td>" + (row.id2 if not row.isna().id2 else "") + "</td>"
+                        entityData1 = json.loads(row.data1) if not row.isna().data1 else {}
+                        entityData2 = json.loads(row.data2) if not row.isna().data2 else {}
+                        keys = set(list(entityData1)).union(set(list(entityData2)))
+                        keys.discard(categoryName)
+                        table += "<tr style=\"border-top:solid 1px #000\">"
+                        table += "<th style=\"text-align:right;\">" + (row.id1 if not row.isna().id1 else "") + "</th>"
+                        table += "<td></td>"
+                        table += "<th style=\"text-align:left;\">" + (row.id2 if not row.isna().id2 else "") + "</th>"
                         table += "</tr>"
+                        if any(keys):
+                            for key in sorted(keys):
+                                table += "<tr>"
+                                table += "<td style=\"text-align:right;\">" + entityData1.get(key,"") + "</td>"
+                                table += "<td style=\"text-align:center;\">" + key + "</td>"
+                                table += "<td style=\"text-align:left;\">" + entityData2.get(key,"") + "</td>"
+                                table += "</tr>"
                     table += "</table>"
                     display(HTML(table))
             
