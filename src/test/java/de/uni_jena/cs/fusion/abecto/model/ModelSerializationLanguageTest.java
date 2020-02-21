@@ -70,6 +70,9 @@ public class ModelSerializationLanguageTest {
 				+ "        rdfs:comment \"label3\" .";
 		assertEquals(ModelSerializationLanguage.TURTLE, ModelSerializationLanguage.determine(documentStart));
 
+		documentStart = ":s :p :o.";
+		assertEquals(ModelSerializationLanguage.TURTLE, ModelSerializationLanguage.determine(documentStart));
+
 	}
 
 	@Test

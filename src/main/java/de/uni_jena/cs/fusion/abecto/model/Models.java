@@ -45,10 +45,9 @@ public class Models {
 			try {
 				lang = ModelSerializationLanguage.determine(new String(bytes));
 			} catch (IllegalArgumentException e) {
-				if (bytes.length == lookForwardRange) {
+				if (bytes.length == lookForwardRange && lookForwardRange >= MAX_LOOK_FORWARD_RANGE) {
 					lookForwardRange *= 2;
-				}
-				if (lookForwardRange >= MAX_LOOK_FORWARD_RANGE) {
+				} else {
 					throw e;
 				}
 			}
@@ -62,10 +61,12 @@ public class Models {
 			in.mark(lookForwardRange);
 			byte[] bytes = in.readNBytes(lookForwardRange);
 			base = lang.determineBase(new String(bytes));
+			in.reset();
 			if (base == null && bytes.length == lookForwardRange) {
 				lookForwardRange *= 2;
+			} else {
+				break;
 			}
-			in.reset();
 		}
 		// read Model
 		Model model = ModelFactory.createDefaultModel();
