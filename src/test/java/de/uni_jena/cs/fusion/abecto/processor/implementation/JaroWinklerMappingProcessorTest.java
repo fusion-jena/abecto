@@ -91,4 +91,100 @@ public class JaroWinklerMappingProcessorTest {
 		assertTrue(negativeMappings.isEmpty());
 	}
 
+	@Test
+	public void handelOptionalValue() throws Exception {
+		Model model1 = Models.load(new ByteArrayInputStream((""//
+				+ "@base <http://example.org/> .\n"//
+				+ "@prefix : <http://example.org/> .\n"//
+				+ ":entity1 :type  :Thing  .\n"//
+				+ ":entity2 :type  :Thing  ;\n"//
+				+ "         :label \"def\" .").getBytes()));
+		Model model2 = Models.load(new ByteArrayInputStream((""//
+				+ "@base <http://example.org/> .\n"//
+				+ "@prefix : <http://example.org/> .\n"//
+				+ ":entity3 :type  :Thing  ;\n"//
+				+ "         :label \"abc\" .\n"//
+				+ ":entity4 :type  :Thing  .").getBytes()));
+		Model metaModel = Models.getEmptyOntModel();
+		SparqlEntityManager.insert(new Category("entity", ""//
+				+ "?entity <http://example.org/type> <http://example.org/Thing> ."//
+				+ "OPTIONAL {?entity <http://example.org/label> ?label}"//
+				, UUID.randomUUID()), metaModel);
+		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor();
+		JaroWinklerMappingProcessor.Parameter parameter = new JaroWinklerMappingProcessor.Parameter();
+		parameter.case_sensitive = false;
+		parameter.threshold = 0.90D;
+		parameter.category = "entity";
+		parameter.variables = Collections.singleton("label");
+		processor.setParameters(parameter);
+		processor.addInputModelGroups(Map.of(UUID.randomUUID(), Collections.singleton(model1), UUID.randomUUID(),
+				Collections.singleton(model2)));
+		processor.addMetaModels(Collections.singleton(metaModel));
+		processor.computeResultModel();
+		Model result = processor.getResultModel();
+		Collection<Mapping> positiveMappings = SparqlEntityManager.select(Mapping.of(), result);
+		Collection<Mapping> negativeMappings = SparqlEntityManager.select(Mapping.not(), result);
+		assertTrue(positiveMappings.isEmpty());
+		assertTrue(negativeMappings.isEmpty());
+	}
+
+	@Test
+	public void handelEmptyModels() throws Exception {
+		Model model = Models.load(new ByteArrayInputStream((""//
+				+ "@base <http://example.org/> .\n"//
+				+ "@prefix : <http://example.org/> .\n"//
+				+ ":entity1 :label \"abc\"  .\n"//
+				+ ":entity2 :label \"def\" .").getBytes()));
+		Model modelEmpty = Models.getEmptyOntModel();
+		Model metaModel = Models.getEmptyOntModel();
+		SparqlEntityManager.insert(
+				new Category("entity", "?entity <http://example.org/label> ?label .", UUID.randomUUID()), metaModel);
+		JaroWinklerMappingProcessor processor;
+		JaroWinklerMappingProcessor.Parameter parameter = new JaroWinklerMappingProcessor.Parameter();
+		parameter.case_sensitive = false;
+		parameter.threshold = 0.90D;
+		parameter.category = "entity";
+		parameter.variables = Collections.singleton("label");
+
+		// direction 1
+		processor = new JaroWinklerMappingProcessor();
+		processor.setParameters(parameter);
+		processor.addInputModelGroups(Map.of(UUID.randomUUID(), Collections.singleton(modelEmpty), UUID.randomUUID(),
+				Collections.singleton(model)));
+		processor.addMetaModels(Collections.singleton(metaModel));
+		processor.computeResultModel();
+
+		// direction 2
+		processor = new JaroWinklerMappingProcessor();
+		processor.setParameters(parameter);
+		processor.addInputModelGroups(Map.of(UUID.randomUUID(), Collections.singleton(model), UUID.randomUUID(),
+				Collections.singleton(modelEmpty)));
+		processor.addMetaModels(Collections.singleton(metaModel));
+		processor.computeResultModel();
+	}
+	
+	@Test
+	public void handleZeroMappings() throws Exception {
+		Model model1 = Models.load(new ByteArrayInputStream((""//
+				+ "@prefix : <http://example.org/> .\n"//
+				+ ":entity1 :label \"abc\" .").getBytes()));
+		Model model2 = Models.load(new ByteArrayInputStream((""//
+				+ "@prefix : <http://example.org/> .\n"//
+				+ ":entity2 :label \"def\" .").getBytes()));
+		Model metaModel = Models.getEmptyOntModel();
+		SparqlEntityManager.insert(
+				new Category("entity", "?entity <http://example.org/label> ?label .", UUID.randomUUID()), metaModel);
+		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor();
+		JaroWinklerMappingProcessor.Parameter parameter = new JaroWinklerMappingProcessor.Parameter();
+		parameter.case_sensitive = false;
+		parameter.threshold = 0.90D;
+		parameter.category = "entity";
+		parameter.variables = Collections.singleton("label");
+		processor.setParameters(parameter);
+		processor.addInputModelGroups(Map.of(UUID.randomUUID(), Collections.singleton(model1), UUID.randomUUID(),
+				Collections.singleton(model2)));
+		processor.addMetaModels(Collections.singleton(metaModel));
+		processor.computeResultModel();
+	}
+
 }

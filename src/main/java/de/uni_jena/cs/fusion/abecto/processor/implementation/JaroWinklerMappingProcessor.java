@@ -77,10 +77,12 @@ public class JaroWinklerMappingProcessor extends AbstractMappingProcessor<JaroWi
 
 					// iterate result variables
 					for (Var variable : variables) {
-						String value = result.get(variable.getVarName()).toString();
+						if (result.contains(variable.getVarName())) {
+							String value = result.get(variable.getVarName()).toString();
 
-						// add result variable value to values
-						modelValues.get(variable).computeIfAbsent(value, v -> new HashSet<>()).add(entity);
+							// add result variable value to values
+							modelValues.get(variable).computeIfAbsent(value, v -> new HashSet<>()).add(entity);
+						}
 					}
 				}
 
