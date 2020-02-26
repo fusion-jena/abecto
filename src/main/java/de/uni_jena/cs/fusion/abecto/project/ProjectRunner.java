@@ -18,6 +18,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import de.uni_jena.cs.fusion.abecto.execution.Execution;
+import de.uni_jena.cs.fusion.abecto.execution.ExecutionRepository;
 import de.uni_jena.cs.fusion.abecto.processing.Processing;
 import de.uni_jena.cs.fusion.abecto.processing.ProcessingRepository;
 import de.uni_jena.cs.fusion.abecto.processing.ProcessingRunner;
@@ -34,6 +36,8 @@ public class ProjectRunner {
 	@Autowired
 	StepRepository stepRepository;
 	@Autowired
+	ExecutionRepository executionRepository;
+	@Autowired
 	ProcessingRunner processingRunner;
 
 	/**
@@ -46,7 +50,7 @@ public class ProjectRunner {
 	 * @throws InterruptedException if the current thread was interrupted while
 	 *                              waiting for the {@link Processing}s termination
 	 */
-	public Collection<Processing> execute(UUID projectId, Collection<UUID> inputProcessingIds, boolean await)
+	public Execution execute(UUID projectId, Collection<UUID> inputProcessingIds, boolean await)
 			throws InterruptedException {
 		// get project
 		Project project = projectRepository.findById(projectId).orElseThrow();
@@ -79,6 +83,7 @@ public class ProjectRunner {
 		// initialize result processing collection
 		Collection<Processing> processingsToReturn = new ArrayList<>();
 
+
 		// interlink processings
 		for (Step step : steps) {
 			Processing processing = processingsByStep.get(step);
@@ -92,8 +97,9 @@ public class ProjectRunner {
 			}
 		}
 
-		// save processings
+		// save processings and execution
 		Iterable<Processing> processingsToExecute = processingRepository.saveAll(processingsByStep.values());
+		Execution execution = executionRepository.save(new Execution(project, processingsToExecute));
 
 		Map<Processing, Future<Processing>> futureProcessings = new HashMap<>();
 
@@ -123,6 +129,6 @@ public class ProjectRunner {
 			}
 		}
 
-		return processingsToReturn;
+		return execution;
 	}
 }

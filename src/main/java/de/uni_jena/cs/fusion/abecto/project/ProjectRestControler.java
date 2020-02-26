@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import de.uni_jena.cs.fusion.abecto.execution.Execution;
 import de.uni_jena.cs.fusion.abecto.knowledgebase.KnowledgeBase;
 import de.uni_jena.cs.fusion.abecto.knowledgebase.KnowledgeBaseRepository;
 import de.uni_jena.cs.fusion.abecto.knowledgebase.KnowledgeBaseRestController;
@@ -74,7 +75,7 @@ public class ProjectRestControler {
 	 * @return
 	 */
 	@GetMapping("/project/{uuid}/run")
-	public Collection<Processing> run(@PathVariable("uuid") UUID projectUuid,
+	public Execution run(@PathVariable("uuid") UUID projectUuid,
 			@RequestParam(name = "await", defaultValue = "false") boolean await) {
 		try {
 			Project project = projectRepository.findById(projectUuid).orElseThrow();

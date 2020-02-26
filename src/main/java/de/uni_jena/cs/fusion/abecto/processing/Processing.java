@@ -25,7 +25,7 @@ import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
 import de.uni_jena.cs.fusion.abecto.util.EntityToIdConverter;
 
 /**
- * Represents a actual execution of a processor.
+ * Represents a actual execution of a {@link Processor}.
  *
  */
 @Entity

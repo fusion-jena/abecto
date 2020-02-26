@@ -10,7 +10,6 @@ import java.io.InputStream;
 import java.util.HashSet;
 import java.util.UUID;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,19 +27,16 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import de.uni_jena.cs.fusion.abecto.ResponseBuffer;
-import de.uni_jena.cs.fusion.abecto.knowledgebase.KnowledgeBaseRepository;
-import de.uni_jena.cs.fusion.abecto.parameter.ParameterRepository;
+import de.uni_jena.cs.fusion.abecto.AbstractRepositoryConsumingTest;
 import de.uni_jena.cs.fusion.abecto.parameter_model.EmptyParameters;
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
-import de.uni_jena.cs.fusion.abecto.processing.ProcessingRepository;
 import de.uni_jena.cs.fusion.abecto.processor.AbstractSourceProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.UploadSourceProcessor;
-import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @AutoConfigureMockMvc
-public class StepRestControllerTest {
+public class StepRestControllerTest extends AbstractRepositoryConsumingTest {
 
 	@Autowired
 	MockMvc mvc;
@@ -51,26 +47,6 @@ public class StepRestControllerTest {
 
 	private String projectId;
 	private String knowledgBaseId;
-	
-	@Autowired
-	ProjectRepository projectRepository;
-	@Autowired
-	KnowledgeBaseRepository knowledgeBaseRepository;
-	@Autowired
-	StepRepository stepRepository;
-	@Autowired
-	ProcessingRepository processingRepository;
-	@Autowired
-	ParameterRepository parameterRepository;
-
-	@AfterEach
-	public void cleanup() throws Exception {
-		processingRepository.deleteAll();
-		stepRepository.deleteAll();
-		parameterRepository.deleteAll();
-		knowledgeBaseRepository.deleteAll();
-		projectRepository.deleteAll();
-	}
 
 	@BeforeEach
 	public void init() throws Exception {

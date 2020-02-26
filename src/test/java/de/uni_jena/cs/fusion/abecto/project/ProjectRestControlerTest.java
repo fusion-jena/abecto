@@ -3,13 +3,13 @@ package de.uni_jena.cs.fusion.abecto.project;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.UUID;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,45 +24,22 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import de.uni_jena.cs.fusion.abecto.ResponseBuffer;
+import de.uni_jena.cs.fusion.abecto.AbstractRepositoryConsumingTest;
 import de.uni_jena.cs.fusion.abecto.TestDataGenerator;
-import de.uni_jena.cs.fusion.abecto.knowledgebase.KnowledgeBaseRepository;
-import de.uni_jena.cs.fusion.abecto.parameter.ParameterRepository;
-import de.uni_jena.cs.fusion.abecto.processing.ProcessingRepository;
 import de.uni_jena.cs.fusion.abecto.processor.implementation.JaroWinklerMappingProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.implementation.ManualCategoryProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.implementation.RdfFileSourceProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.implementation.SparqlConstructProcessor;
-import de.uni_jena.cs.fusion.abecto.step.StepRepository;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @AutoConfigureMockMvc
-class ProjectRestControlerTest {
+class ProjectRestControlerTest extends AbstractRepositoryConsumingTest {
 
 	@Autowired
 	MockMvc mvc;
 	private final ResponseBuffer buffer = new ResponseBuffer();
 	private final String unknownUuid = UUID.randomUUID().toString();
-
-	@Autowired
-	ProjectRepository projectRepository;
-	@Autowired
-	KnowledgeBaseRepository knowledgeBaseRepository;
-	@Autowired
-	StepRepository stepRepository;
-	@Autowired
-	ProcessingRepository processingRepository;
-	@Autowired
-	ParameterRepository parameterRepository;
-
-	@AfterEach
-	public void cleanup() throws Exception {
-		processingRepository.deleteAll();
-		stepRepository.deleteAll();
-		parameterRepository.deleteAll();
-		knowledgeBaseRepository.deleteAll();
-		projectRepository.deleteAll();
-	}
 
 	@Test
 	public void test() throws Exception {
@@ -185,12 +162,13 @@ class ProjectRestControlerTest {
 
 		// run project
 		mvc.perform(MockMvcRequestBuilders.get(String.format("/project/%s/run", projectId)).param("await", "true")
-				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(print()).andDo(buffer);
 
 		// check processings
-		for (JsonNode processingNode : buffer.getJson()) {
-			Assertions.assertEquals("SUCCEEDED", processingNode.get("status").asText(),
-					"Some processings failed:\n" + buffer.getString() + "\n");
+		for (JsonNode processingId : buffer.getJson().get("processings")) {
+			mvc.perform(MockMvcRequestBuilders.get(String.format("/processing/%s", processingId.asText()))
+					.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
+					.andExpect(jsonPath("$.status").value("SUCCEEDED")).andDo(buffer);
 		}
 	}
 }

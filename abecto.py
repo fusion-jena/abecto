@@ -94,11 +94,13 @@ class Project:
     def runAndAwait(self):
         r = requests.get(self.server.base + "project/" + self.id + "/run", params = {"await": True})
         r.raise_for_status()
-        for processing in r.json():
-            if processing["status"] != "SUCCEEDED":
-                html = "<h3>" + processing["processorClass"] + ": " + processing["status"] + "</h3>"
-                html += "<pre>" + processing["stackTrace"] + "</pre>"
+        execution = Execution(self.server, self, r.json())
+        for processing in execution.processings:
+            if processing.info()["status"] != "SUCCEEDED":
+                html = "<h3>" + processing.info()["processorClass"] + ": " + processing.info()["status"] + "</h3>"
+                html += "<pre>" + processing.info()["stackTrace"] + "</pre>"
                 display(HTML(html))
+        return execution
 
 class KnowledgeBase:
     def __init__(self, server, project, label = None, id = None):
@@ -238,7 +240,16 @@ class Processing:
         r = requests.get(self.server.base + "processing/" + self.id)
         r.raise_for_status()
         return r.json()
-        
+
+class Execution:
+    def __init__(self, server, project, data):
+        self.server = server
+        self.project = project
+        self.id = data["id"]
+        self.processings = []
+        for processingId in data["processings"]:
+            self.processings.append(Processing(server, project, None, processingId))
+
 class Report:
 
     def countReport(cls, processing):

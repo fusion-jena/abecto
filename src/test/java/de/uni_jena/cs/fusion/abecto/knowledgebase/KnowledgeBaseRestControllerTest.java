@@ -5,10 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.io.IOException;
 import java.util.UUID;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,25 +18,17 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import de.uni_jena.cs.fusion.abecto.ResponseBuffer;
-import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
+import de.uni_jena.cs.fusion.abecto.AbstractRepositoryConsumingTest;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @AutoConfigureMockMvc
-public class KnowledgeBaseRestControllerTest {
+public class KnowledgeBaseRestControllerTest extends AbstractRepositoryConsumingTest {
 
 	@Autowired
 	MockMvc mvc;
 	private final ResponseBuffer buffer = new ResponseBuffer();
 	private final String unknownUuid = UUID.randomUUID().toString();
-
-	@Autowired
-	ProjectRepository projectRepository;
-
-	@AfterEach
-	public void cleanup() throws IOException, Exception {
-		projectRepository.deleteAll();
-	}
 
 	@Test
 	public void test() throws Exception {
@@ -47,7 +37,7 @@ public class KnowledgeBaseRestControllerTest {
 				.andExpect(status().isOk()).andDo(buffer);
 		String projectId = buffer.getId();
 
-		String kowledgBaseLabel = "knowledgbase label";
+		String knowledgBaseLabel = "knowledgbase label";
 
 		// return empty knowledgeBase list
 		mvc.perform(MockMvcRequestBuilders.get("/knowledgebase").accept(MediaType.APPLICATION_JSON))
@@ -59,28 +49,28 @@ public class KnowledgeBaseRestControllerTest {
 
 		// return created knowledgeBase
 		mvc.perform(MockMvcRequestBuilders.post("/knowledgebase").param("project", projectId)
-				.param("label", kowledgBaseLabel).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
+				.param("label", knowledgBaseLabel).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
-		assertEquals(kowledgBaseLabel, buffer.getJson().path("label").asText());
+		assertEquals(knowledgBaseLabel, buffer.getJson().path("label").asText());
 		String knowledgeBaseId = buffer.getId();
 
 		// return selected knowledgeBase
 		mvc.perform(MockMvcRequestBuilders.get("/knowledgebase/" + knowledgeBaseId).accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(buffer);
-		assertEquals(kowledgBaseLabel, buffer.getJson().path("label").asText());
+		assertEquals(knowledgBaseLabel, buffer.getJson().path("label").asText());
 		assertEquals(knowledgeBaseId, buffer.getId());
 
 		// return not empty knowledgeBase list
 		mvc.perform(MockMvcRequestBuilders.get("/knowledgebase").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(buffer);
-		assertTrue(buffer.getJson().findValuesAsText("label").contains(kowledgBaseLabel));
+		assertTrue(buffer.getJson().findValuesAsText("label").contains(knowledgBaseLabel));
 		assertTrue(buffer.getJson().findValuesAsText("project").contains(projectId));
 		assertTrue(buffer.getIds().contains(knowledgeBaseId));
 
 		// return not empty knowledgeBase list by project
 		mvc.perform(MockMvcRequestBuilders.get("/knowledgebase").param("project", projectId)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
-		assertTrue(buffer.getJson().findValuesAsText("label").contains(kowledgBaseLabel));
+		assertTrue(buffer.getJson().findValuesAsText("label").contains(knowledgBaseLabel));
 		assertTrue(buffer.getJson().findValuesAsText("project").contains(projectId));
 		assertTrue(buffer.getIds().contains(knowledgeBaseId));
 

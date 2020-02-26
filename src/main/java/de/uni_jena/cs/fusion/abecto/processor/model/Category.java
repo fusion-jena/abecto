@@ -2,11 +2,17 @@ package de.uni_jena.cs.fusion.abecto.processor.model;
 
 import java.io.ByteArrayInputStream;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import org.apache.jena.arq.querybuilder.ExprFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
@@ -79,6 +85,22 @@ public class Category {
 
 	public ResultSet selectCategory(Model model) {
 		return QueryExecutionFactory.create(this.getQuery(), model).execSelect();
+	}
+
+	public Map<String, Map<String, Set<String>>> getCategoryData(Model model) {
+		ResultSet solutions = this.selectCategory(model);
+		List<String> variables = solutions.getResultVars();
+		variables.remove(name);
+		Map<String, Map<String, Set<String>>> results = new HashMap<>();
+		while (solutions.hasNext()) {
+			QuerySolution solution = solutions.next();
+			String uri = solution.getResource(name).getURI();
+			Map<String, Set<String>> result = results.computeIfAbsent(uri, (x) -> new HashMap<>());
+			for (String variable : variables) {
+				result.computeIfAbsent(variable, (x) -> new HashSet<String>()).add(solution.get(variable).toString());
+			}
+		}
+		return results;
 	}
 
 	public boolean contains(Model model, Resource resource) {
