@@ -875,6 +875,7 @@ public class SparqlEntityManager {
 		}
 	}
 
+	@Deprecated
 	public static <T> void wirteJsonTable(OutputStream out, Collection<T> filterObjects, Model source)
 			throws IllegalStateException, NullPointerException, NoSuchElementException, ReflectiveOperationException,
 			JsonGenerationException, JsonMappingException, IOException {
