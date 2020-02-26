@@ -9,6 +9,7 @@ import java.util.function.Supplier;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -141,7 +142,7 @@ public class StepRestController {
 		return processingRepository.findByStepOrderByStartDateTime(get(stepId));
 	}
 
-	@GetMapping("/step/{uuid}/delete")
+	@DeleteMapping("/step/{uuid}")
 	public void delete(@PathVariable("uuid") UUID uuid) {
 		Step step = this.get(uuid);
 		for (Processing processing : processingRepository.findAllByStep(step)) {
