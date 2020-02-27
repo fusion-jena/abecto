@@ -45,19 +45,19 @@ public class ExecutionRestController {
 		executionRepository.delete(this.getExecution(executionId));
 	}
 
-	@GetMapping("/execution/{uuid}/report")
-	public Collection<Object> getResultObjects(@PathVariable("uuid") UUID executionId,
-			@RequestParam(name = "class", required = true) String modelClassName)
+	@GetMapping("/execution/{uuid}/results")
+	public Collection<Object> getResults(@PathVariable("uuid") UUID executionId,
+			@RequestParam(name = "type", required = true) String modelClassName)
 			throws IllegalStateException, NullPointerException, ReflectiveOperationException {
 		Execution execution = getExecution(executionId);
 		Class<?> modelClass = getModelClass(modelClassName);
-		Object prototype = modelClass.getConstructor().newInstance();
+		Object prototype = modelClass.getDeclaredConstructor().newInstance();
 		Model metaModel = metaModel(execution);
 		return SparqlEntityManager.select(prototype, metaModel);
 	}
 
 	@GetMapping("/execution/{uuid}/data")
-	public Map<String, Map<String, Set<String>>> getResultObjects(@PathVariable("uuid") UUID executionId,
+	public Map<String, Map<String, Set<String>>> getData(@PathVariable("uuid") UUID executionId,
 			@RequestParam(name = "category", required = true) String categoryName,
 			@RequestParam(name = "knowledgebase", required = true) UUID knowledgeBaseId) throws NoSuchElementException,
 			IllegalStateException, NullPointerException, IllegalArgumentException, ReflectiveOperationException {
