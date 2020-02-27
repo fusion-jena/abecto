@@ -87,7 +87,7 @@ public class CategoryCountProcessor extends AbstractMetaProcessor<EmptyParameter
 	}
 
 	protected static Measurement measurement(UUID knowledgeBase, String categoryName, String variableName, Long value) {
-		return new Measurement((Resource) null, knowledgeBase, "CategoryCount", value, Optional.of("categoryName"),
-				Optional.of(categoryName), Optional.of("variableName"), Optional.ofNullable(variableName));
+		return new Measurement((Resource) null, knowledgeBase, "Category Count", value, Optional.of("Category"),
+				Optional.of(categoryName), Optional.of("Variable"), Optional.ofNullable(variableName));
 	}
 }

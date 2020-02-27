@@ -19,17 +19,36 @@ class Abecto:
     def __init__(self, base, jar):
         self.base = base
         self.jar = jar
-    
-    def project(self, label = "", id = None):
-        if id is None:
-            return Project(self, label = label)
-        else:
-            return Project(self, id = id)        
+
+    def getExecution(self, id):
+        r = requests.get(self.base + "execution/" + id)
+        r.raise_for_status()
+        return Execution(self, r.json())
+
+    def getProcessing(self, id):
+        r = requests.get(self.base + "processing/" + id)
+        r.raise_for_status()
+        return Processing(self, r.json())
+
+    def getKnowledgeBase(self, id):
+        r = requests.get(self.base + "knowledgebase/" + id)
+        r.raise_for_status()
+        return KnowledgeBase(self, r.json())
+
+    def getProject(self, id):
+        r = requests.get(self.base + "project/" + id)
+        r.raise_for_status()
+        return Project(self, r.json())
+
+    def project(self, label = ""):
+        r = requests.post(self.base + "project", data = {"label": label})
+        r.raise_for_status()
+        return Project(self, r.json())        
     
     def projects(self):
         r = requests.get(self.base + "project")
         r.raise_for_status()
-        return list(map(lambda x: self.project(id=x["id"]), r.json()))
+        return list(map(lambda projectData: Project(self, projectData), r.json()))
     
     def running(self):
         try:
@@ -44,14 +63,9 @@ class Abecto:
                 time.sleep(0.1)
 
 class Project:
-    def __init__(self, server, label = "", id = None):
+    def __init__(self, server, data):
         self.server = server
-        if id is None:
-            r = requests.post(self.server.base + "project", data = {"label": label})
-            r.raise_for_status()
-            self.id = r.json()["id"]
-        else:
-            self.id = id
+        self.id = data["id"]
         
     def __repr__(self):
         return str(self.info())
@@ -65,16 +79,15 @@ class Project:
         r.raise_for_status()
         return r.json()
 
-    def knowledgeBase(self, label = "", id = None):
-        if id is None:
-            return KnowledgeBase(self.server, self, label = label)
-        else:
-            return KnowledgeBase(self.server, self, id = id)
+    def knowledgeBase(self, label = ""):
+        r = requests.post(self.server.base + "knowledgebase", data = {"project": self.id, "label": label})
+        r.raise_for_status()
+        return KnowledgeBase(self.server, r.json())
     
     def knowledgeBases(self):
         r = requests.get(self.server.base + "knowledgebase", params = {"project": self.id})
         r.raise_for_status()
-        return list(map(lambda x: self.knowledgeBase(id=x["id"]), r.json()))
+        return list(map(lambda knowledgeBaseData: KnowledgeBase(self.server, knowledgeBaseData), r.json()))
     
     def step(self, id):
         r = requests.get(self.server.base + "step/" + id)
@@ -85,7 +98,7 @@ class Project:
     def steps(self):
         r = requests.get(self.server.base + "step", params = {"project": self.id})
         r.raise_for_status()
-        return list(map(lambda x: self.step(id=x["id"]), r.json()))
+        return list(map(lambda stepData: self.step(id=stepData["id"]), r.json()))
 
     def run(self):
         r = requests.get(self.server.base + "project/" + self.id + "/run", params = {"await": False})
@@ -94,7 +107,7 @@ class Project:
     def runAndAwait(self):
         r = requests.get(self.server.base + "project/" + self.id + "/run", params = {"await": True})
         r.raise_for_status()
-        execution = Execution(self.server, self, r.json())
+        execution = Execution(self.server, r.json())
         for processing in execution.processings:
             if processing.info()["status"] != "SUCCEEDED":
                 html = "<h3>" + processing.info()["processorClass"] + ": " + processing.info()["status"] + "</h3>"
@@ -103,15 +116,9 @@ class Project:
         return execution
 
 class KnowledgeBase:
-    def __init__(self, server, project, label = None, id = None):
+    def __init__(self, server, data):
         self.server = server
-        self.project = project
-        if id is None:
-            r = requests.post(self.server.base + "knowledgebase", data = {"project": project.id, "label": label})
-            r.raise_for_status()
-            self.id = r.json()["id"]
-        else:
-            self.id = id
+        self.id = data["id"]
         
     def __repr__(self):
         return str(self.info())
@@ -126,12 +133,11 @@ class KnowledgeBase:
         return r.json()
 
     def source(self, processorName, parameters={}):
-        return Step(self.server, self.project, self, processorName, [], parameters)
+        return Step(self.server, self, processorName, [], parameters)
     
 class Step:
-    def __init__(self, server, project, knowledgeBase, processorName, inputSteps = [], parameters = {}, id = None):
+    def __init__(self, server, knowledgeBase, processorName, inputSteps = [], parameters = {}, id = None):
         self.server = server
-        self.project = project
         self.knowledgeBase = knowledgeBase
         self.inputSteps = inputSteps
         if knowledgeBase is not None:
@@ -155,20 +161,17 @@ class Step:
         return r.json()
     
     def into(self, processorName, parameters = {}):
-        return Step(self.server, self.project, None, processorName, [self], parameters)
+        return Step(self.server, None, processorName, [self], parameters)
     
     def last(self):
         r = requests.get(self.server.base + "step/" + self.id + "/processing/last")
         r.raise_for_status()
-        return Processing(self.server, self.project, self, r.json()["id"])
-
-    def processing(self, id):
-        return Processing(self.server, self.project, self, id)
+        return Processing(self.server, r.json()["id"])
     
     def processings(self):
         r = requests.get(self.server.base + "step/" + self.id + "/processing")
         r.raise_for_status()
-        return list(map(lambda x: self.processing(id=x["id"]), r.json()))
+        return list(map(lambda processingData: Processing(self.server, processingData), r.json()))
     
     def load(self, file):
         r = requests.post(self.server.base + "step/" + self.id + "/load", files = {"file": file})
@@ -185,8 +188,6 @@ class Steps:
     def __init__(self, steps, step):
         if steps.server != step.server:
             raise ValueError("steps must belonge to the same server")
-        if steps.project != step.project:
-            raise ValueError("steps must belonge to the same project")
         if steps.knowledgeBase == step.knowledgeBase:
             self.knowledgeBase = step.knowledgeBase
         else:
@@ -196,21 +197,18 @@ class Steps:
         elif isinstance(steps, Step):
             self.stepList = [steps, step]
         self.server = step.server
-        self.project = step.project
         self.knowledgeBase = step.knowledgeBase
 
     def into(self, processorName, parameters = {}):
-        return Step(self.server, self.project, None, processorName, self.stepList, parameters)
+        return Step(self.server, None, processorName, self.stepList, parameters)
     
     def plus(self, step):
         return Steps(self, step)
 
 class Processing:
-    def __init__(self, server, project, step, id):
+    def __init__(self, server, data):
         self.server = server
-        self.project = project
-        self.step = step
-        self.id = id
+        self.id = data["id"]
         
     def __repr__(self):
         return str(self.info())
@@ -242,16 +240,82 @@ class Processing:
         return r.json()
 
 class Execution:
-    def __init__(self, server, project, data):
+    def __init__(self, server, data):
         self.server = server
-        self.project = project
         self.id = data["id"]
         self.processings = []
         for processingId in data["processings"]:
-            self.processings.append(Processing(server, project, None, processingId))
+            self.processings.append(server.getProcessing(processingId))
+
+    def results(self, resultType):
+        r = requests.get(self.server.base + "execution/" + self.id + "/results", params = {"type": resultType})
+        r.raise_for_status()
+        return r.json()
+
+    def data(self, categoryName, knowledgeBaseId):
+        r = requests.get(self.server.base + "execution/" + self.id + "/data", params = {"category": categoryName, "knowledgebase": knowledgeBaseId})
+        r.raise_for_status()
+        return r.json()
+    
+    def measures(self):
+        data = pd.DataFrame.from_records(self.results("Measurement"))
+        if not data.empty:
+            knowledgeBases = sorted({ knowledgeBaseId : self.server.getKnowledgeBase(knowledgeBaseId).info()["label"] for knowledgeBaseId in set(data["knowledgeBase"]) }.items(), key = lambda x:x[1])
+            for measure in set(data["measure"]):
+                html = "<h1>" + measure + " Report</h1>"
+                measureData = data[data.measure.eq(measure)]
+                dimension1Used = any(set(data["dimension1Value"]))
+                dimension2Used = any(set(data["dimension2Value"]))
+                html += "<table>"
+                html += "<tr>"
+                if dimension1Used:
+                    html += "<th>" + "/".join(set(data["dimension1Key"])) + "</th>"
+                if dimension2Used:
+                    html += "<th>" + "/".join(set(data["dimension2Key"])) + "</th>"
+                for (kbId, kbLabel) in knowledgeBases:
+                    html += "<th>" + kbLabel + "</th>"
+                html += "</tr>"
+                # total row
+                totalData = measureData[measureData.dimension1Value.isna() & measureData.dimension2Value.isna()]
+                if totalData.size > 0:
+                    html += "<tr>"
+                    if dimension1Used:
+                        html += "<td></td>"
+                    if dimension2Used:
+                        html += "<td></td>"
+                    for (kbId, kbLabel) in knowledgeBases:
+                        row = totalData[totalData.knowledgeBase.eq(kbId)]
+                        html += "<td>" + (str(row["value"].iat[-1]) if row.size > 0 else "") + "</td>"
+                    html += "</tr>"
+                # dimension 1 rows
+                for dimension1Value in set(measureData["dimension1Value"]):
+                    d1Data = measureData[measureData.dimension1Value.notna() & measureData.dimension1Value.eq(dimension1Value)]
+                    # dimension 1 total row
+                    d1TotalData = d1Data[d1Data.dimension2Value.isna()]
+                    if d1TotalData.size > 0:
+                        html += "<tr>"
+                        html += "<td>" + dimension1Value + "</td>"
+                        if dimension2Used:
+                            html += "<td></td>"
+                        for (kbId, kbLabel) in knowledgeBases:
+                            row = d1TotalData[d1TotalData.knowledgeBase.eq(kbId)]
+                            html += "<td>" + (str(row["value"].iat[-1]) if row.size > 0 else "") + "</td>"
+                        html += "</tr>"
+                    # dimension 2 rows
+                    for dimension2Value in set(d1Data["dimension2Value"]):
+                        d2Data = d1Data[d1Data.dimension2Value.notna() & d1Data.dimension2Value.eq(dimension2Value)]
+                        if d2Data.size > 0:
+                            html += "<tr>"
+                            html += "<td>" + dimension1Value + "</td>"
+                            html += "<td>" + dimension2Value + "</td>"
+                            for (kbId, kbLabel) in knowledgeBases:
+                                row = d2Data[d2Data.knowledgeBase.eq(kbId)]
+                                html += "<td>" + (str(row["value"].iat[-1]) if row.size > 0 else "") + "</td>"
+                            html += "</tr>"
+                html += "</table>"
+                display(HTML(html))
 
 class Report:
-
     def countReport(cls, processing):
         display(HTML("<h1>Category Count Report</h1>"))
         totalData = processing.graphAsDataFrame()
