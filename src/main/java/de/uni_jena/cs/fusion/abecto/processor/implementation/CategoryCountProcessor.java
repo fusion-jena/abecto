@@ -6,19 +6,21 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.apache.jena.sparql.syntax.ElementGroup;
 
 import de.uni_jena.cs.fusion.abecto.parameter_model.EmptyParameters;
 import de.uni_jena.cs.fusion.abecto.processor.AbstractMetaProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.model.Category;
-import de.uni_jena.cs.fusion.abecto.processor.model.CategoryCountMeasurement;
+import de.uni_jena.cs.fusion.abecto.processor.model.Measurement;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 
 public class CategoryCountProcessor extends AbstractMetaProcessor<EmptyParameters> {
@@ -45,7 +47,7 @@ public class CategoryCountProcessor extends AbstractMetaProcessor<EmptyParameter
 		Collection<Category> categories = SparqlEntityManager.select(new Category(), this.metaModel);
 
 		// initialize result set
-		Collection<CategoryCountMeasurement> categoryCountMeasuers = new ArrayList<CategoryCountMeasurement>();
+		Collection<Measurement> measurements = new ArrayList<Measurement>();
 
 		for (Category category : categories) {
 			// get category data
@@ -73,8 +75,7 @@ public class CategoryCountProcessor extends AbstractMetaProcessor<EmptyParameter
 					Long count = categoryQueryResult.next().getLiteral("count").getLong();
 					// add count to results
 					// TODO build sum for multiple entries per kb and name
-					categoryCountMeasuers.add(new CategoryCountMeasurement(category.name, Optional.ofNullable(target),
-							count, category.knowledgeBase));
+					measurements.add(measurement(category.knowledgeBase, category.name, target, count));
 				} else {
 					throw new IllegalStateException();
 				}
@@ -82,6 +83,11 @@ public class CategoryCountProcessor extends AbstractMetaProcessor<EmptyParameter
 		}
 
 		// write into result model
-		SparqlEntityManager.insert(categoryCountMeasuers, this.getResultModel());
+		SparqlEntityManager.insert(measurements, this.getResultModel());
+	}
+
+	protected static Measurement measurement(UUID knowledgeBase, String categoryName, String variableName, Long value) {
+		return new Measurement((Resource) null, knowledgeBase, "CategoryCount", value, Optional.of("categoryName"),
+				Optional.of(categoryName), Optional.of("variableName"), Optional.ofNullable(variableName));
 	}
 }

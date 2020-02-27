@@ -1,7 +1,6 @@
 package de.uni_jena.cs.fusion.abecto.processor.implementation;
 
 import java.io.InputStream;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.apache.jena.rdf.model.Model;
@@ -9,7 +8,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import de.uni_jena.cs.fusion.abecto.TestDataGenerator;
-import de.uni_jena.cs.fusion.abecto.processor.model.CategoryCountMeasurement;
+import de.uni_jena.cs.fusion.abecto.processor.model.Measurement;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 
 public class CategoryCountProcessorTest {
@@ -60,39 +59,41 @@ public class CategoryCountProcessorTest {
 		String categoryName = generator.generateClassName(0);
 		String objectPropertyName = generator.generateObjectPropertyName(0);
 		String dataPropertyName = generator.generateDataPropertyName(0);
-		CategoryCountMeasurement measure;
+		Measurement measurement;
 
-		measure = SparqlEntityManager
-				.selectOne(new CategoryCountMeasurement(categoryName, Optional.empty(), null, sourceUUID1), resultModel)
+		measurement = SparqlEntityManager
+				.selectOne(CategoryCountProcessor.measurement(sourceUUID1, categoryName, null, null), resultModel)
 				.orElseThrow();
-		Assertions.assertEquals(100L, measure.value);
+		Assertions.assertEquals(100L, measurement.value);
 
-		measure = SparqlEntityManager.selectOne(
-				new CategoryCountMeasurement(categoryName, Optional.of(objectPropertyName), null, sourceUUID1),
-				resultModel).orElseThrow();
-		Assertions.assertEquals(98L, measure.value);
-
-		measure = SparqlEntityManager
-				.selectOne(new CategoryCountMeasurement(categoryName, Optional.of(dataPropertyName), null, sourceUUID1),
+		measurement = SparqlEntityManager
+				.selectOne(CategoryCountProcessor.measurement(sourceUUID1, categoryName, objectPropertyName, null),
 						resultModel)
 				.orElseThrow();
-		Assertions.assertEquals(98L, measure.value);
+		Assertions.assertEquals(98L, measurement.value);
 
-		measure = SparqlEntityManager
-				.selectOne(new CategoryCountMeasurement(categoryName, Optional.empty(), null, sourceUUID2), resultModel)
-				.orElseThrow();
-		Assertions.assertEquals(100L, measure.value);
-
-		measure = SparqlEntityManager.selectOne(
-				new CategoryCountMeasurement(categoryName, Optional.of(objectPropertyName), null, sourceUUID2),
-				resultModel).orElseThrow();
-		Assertions.assertEquals(95L, measure.value);
-
-		measure = SparqlEntityManager
-				.selectOne(new CategoryCountMeasurement(categoryName, Optional.of(dataPropertyName), null, sourceUUID2),
+		measurement = SparqlEntityManager
+				.selectOne(CategoryCountProcessor.measurement(sourceUUID1, categoryName, dataPropertyName, null),
 						resultModel)
 				.orElseThrow();
-		Assertions.assertEquals(95L, measure.value);
+		Assertions.assertEquals(98L, measurement.value);
+
+		measurement = SparqlEntityManager
+				.selectOne(CategoryCountProcessor.measurement(sourceUUID2, categoryName, null, null), resultModel)
+				.orElseThrow();
+		Assertions.assertEquals(100L, measurement.value);
+
+		measurement = SparqlEntityManager
+				.selectOne(CategoryCountProcessor.measurement(sourceUUID2, categoryName, objectPropertyName, null),
+						resultModel)
+				.orElseThrow();
+		Assertions.assertEquals(95L, measurement.value);
+
+		measurement = SparqlEntityManager
+				.selectOne(CategoryCountProcessor.measurement(sourceUUID2, categoryName, dataPropertyName, null),
+						resultModel)
+				.orElseThrow();
+		Assertions.assertEquals(95L, measurement.value);
 	}
 
 }
