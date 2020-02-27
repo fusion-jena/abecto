@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -22,6 +23,8 @@ import org.apache.jena.sparql.lang.sparql_11.SPARQLParser11;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.PatternVars;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlNamespace;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlPattern;
@@ -60,6 +63,7 @@ public class Category {
 		}
 	}
 
+	@JsonIgnore
 	public ElementGroup getPatternElementGroup() {
 		// TODO cache element group (and copy in #contains())
 		try {
@@ -70,10 +74,12 @@ public class Category {
 		}
 	}
 
+	@JsonIgnore
 	public Collection<Var> getPatternVariables() {
 		return PatternVars.vars(this.getPatternElementGroup());
 	}
 
+	@JsonIgnore
 	public Query getQuery() {
 		Query query = new Query();
 		query.setQuerySelectType();
@@ -87,6 +93,7 @@ public class Category {
 		return QueryExecutionFactory.create(this.getQuery(), model).execSelect();
 	}
 
+	@JsonIgnore
 	public Map<String, Map<String, Set<String>>> getCategoryData(Model model) {
 		ResultSet solutions = this.selectCategory(model);
 		List<String> variables = solutions.getResultVars();
@@ -116,5 +123,20 @@ public class Category {
 		if (!this.getPatternVariables().stream().anyMatch((v) -> v.getVarName().equals(this.name))) {
 			throw new IllegalArgumentException("Template does not contain variable named \"" + this.name + "\".");
 		}
+	}
+
+	@Override
+	public int hashCode() {
+		return this.name.hashCode() + this.pattern.hashCode() + this.knowledgeBase.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof Category) {
+			Category other = (Category) obj;
+			return Objects.equals(this.name, other.name) && Objects.equals(this.pattern, other.pattern)
+					&& Objects.equals(this.knowledgeBase, other.knowledgeBase);
+		}
+		return false;
 	}
 }

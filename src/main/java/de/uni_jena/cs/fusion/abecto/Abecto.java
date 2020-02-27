@@ -32,7 +32,7 @@ public class Abecto {
 		executor.initialize();
 		return executor;
 	}
-	
+
 	@GetMapping("")
 	public String create() {
 		return "ABECTO is running.";

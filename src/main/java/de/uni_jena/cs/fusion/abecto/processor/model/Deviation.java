@@ -31,6 +31,10 @@ public class Deviation {
 	@SparqlPattern(subject = "id", predicate = "abecto:value2")
 	public final String value2;
 
+	public Deviation() {
+		this(null, null, null, null, null, null, null, null, null);
+	}
+
 	public Deviation(@Member("id") Resource id, @Member("categoryName") String categoryName,
 			@Member("variableName") String variableName, @Member("resource1") Resource resource1,
 			@Member("resource2") Resource resource2, @Member("knowledgeBaseId1") UUID knowledgeBaseId1,

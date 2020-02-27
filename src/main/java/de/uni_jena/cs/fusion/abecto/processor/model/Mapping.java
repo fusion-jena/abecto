@@ -65,7 +65,7 @@ public class Mapping {
 	}
 
 	public static Mapping empty() {
-		return new Mapping(null, null, null, null, null, null, null, null);
+		return new Mapping();
 	}
 
 	@SparqlPattern(predicate = "rdf:type", object = "abecto:Mapping")
@@ -93,6 +93,10 @@ public class Mapping {
 	public Optional<String> secondCategory;
 
 	private final boolean switched;
+
+	public Mapping() {
+		this(null, null, null, null, null, null, null, null);
+	}
 
 	public Mapping(@Member("id") Resource id, @Member("entitiesMap") Boolean entitiesMap,
 			@Member("first") Resource first, @Member("second") Resource second,
