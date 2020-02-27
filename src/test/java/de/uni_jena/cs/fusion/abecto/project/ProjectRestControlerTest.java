@@ -3,7 +3,6 @@ package de.uni_jena.cs.fusion.abecto.project;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -23,8 +22,8 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import de.uni_jena.cs.fusion.abecto.ResponseBuffer;
 import de.uni_jena.cs.fusion.abecto.AbstractRepositoryConsumingTest;
+import de.uni_jena.cs.fusion.abecto.ResponseBuffer;
 import de.uni_jena.cs.fusion.abecto.TestDataGenerator;
 import de.uni_jena.cs.fusion.abecto.processor.implementation.JaroWinklerMappingProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.implementation.ManualCategoryProcessor;
@@ -91,12 +90,12 @@ class ProjectRestControlerTest extends AbstractRepositoryConsumingTest {
 				.andExpect(status().isOk()).andDo(buffer);
 		String projectId = buffer.getId();
 
-		// create a KowledgBase 1
+		// create knowledge base 1
 		mvc.perform(MockMvcRequestBuilders.post("/knowledgebase").param("project", projectId)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		String knowledgBase1Id = buffer.getId();
 
-		// create a KowledgBase 2
+		// create knowledge base 2
 		mvc.perform(MockMvcRequestBuilders.post("/knowledgebase").param("project", projectId)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		String knowledgBase2Id = buffer.getId();
@@ -162,7 +161,7 @@ class ProjectRestControlerTest extends AbstractRepositoryConsumingTest {
 
 		// run project
 		mvc.perform(MockMvcRequestBuilders.get(String.format("/project/%s/run", projectId)).param("await", "true")
-				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(print()).andDo(buffer);
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 
 		// check processings
 		for (JsonNode processingId : buffer.getJson().get("processings")) {
