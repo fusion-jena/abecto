@@ -162,7 +162,7 @@ public class JaroWinklerMappingProcessorTest {
 		processor.addMetaModels(Collections.singleton(metaModel));
 		processor.computeResultModel();
 	}
-	
+
 	@Test
 	public void handleZeroMappings() throws Exception {
 		Model model1 = Models.load(new ByteArrayInputStream((""//
@@ -185,6 +185,67 @@ public class JaroWinklerMappingProcessorTest {
 				Collections.singleton(model2)));
 		processor.addMetaModels(Collections.singleton(metaModel));
 		processor.computeResultModel();
+	}
+
+	@Test
+	public void commutativ() throws Exception {
+		Model model1 = Models.load(new ByteArrayInputStream((""//
+				+ "@prefix : <http://example.org/> .\n"//
+				+ ":entity1 :label \"aaaaaaaaaaa\"  .\n"//
+				+ ":entity2 :label \"aaaaaaaaaab\" .").getBytes()));
+		Model model2 = Models.load(new ByteArrayInputStream((""//
+				+ "@prefix : <http://example.org/> .\n"//
+				+ ":entity3 :label \"aaaaaaaaaaa\" .\n"//
+				+ ":entity4 :label \"ccccccccccc\" .").getBytes()));
+		Model metaModel = Models.getEmptyOntModel();
+		SparqlEntityManager.insert(new Category("entity", ""//
+				+ "?entity <http://example.org/label> ?label"//
+				, UUID.randomUUID()), metaModel);
+
+		JaroWinklerMappingProcessor.Parameter parameter = new JaroWinklerMappingProcessor.Parameter();
+		parameter.case_sensitive = false;
+		parameter.threshold = 0.90D;
+		parameter.category = "entity";
+		parameter.variables = Collections.singleton("label");
+
+		UUID uuid1 = UUID.fromString("00000000-0000-0000-0000-000000000001");
+		UUID uuid2 = UUID.fromString("00000000-0000-0000-0000-000000000002");
+
+		// direction 1
+		{
+			JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor();
+			processor.setParameters(parameter);
+			processor.addInputModelGroups(
+					Map.of(uuid1, Collections.singleton(model1), uuid2, Collections.singleton(model2)));
+			processor.addMetaModels(Collections.singleton(metaModel));
+			processor.computeResultModel();
+			Model result = processor.getResultModel();
+
+			Collection<Mapping> positiveMappings = SparqlEntityManager.select(Mapping.of(), result);
+			assertEquals(1, positiveMappings.size());
+			assertTrue(
+					positiveMappings.contains(Mapping.of(ResourceFactory.createResource("http://example.org/entity1"),
+							ResourceFactory.createResource("http://example.org/entity3"))));
+			assertTrue(SparqlEntityManager.select(Mapping.not(), result).isEmpty());
+		}
+		// direction 2
+		{
+			JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor();
+			processor.setParameters(parameter);
+			processor.addInputModelGroups(
+					Map.of(uuid1, Collections.singleton(model2), uuid2, Collections.singleton(model1)));
+			processor.addMetaModels(Collections.singleton(metaModel));
+			processor.computeResultModel();
+			Model result = processor.getResultModel();
+
+			Collection<Mapping> positiveMappings = SparqlEntityManager.select(Mapping.of(), result);
+			assertEquals(1, positiveMappings.size());
+			assertTrue(
+					positiveMappings.contains(Mapping.of(ResourceFactory.createResource("http://example.org/entity1"),
+							ResourceFactory.createResource("http://example.org/entity3"))));
+			assertTrue(SparqlEntityManager.select(Mapping.not(), result).isEmpty());
+		}
+
 	}
 
 }

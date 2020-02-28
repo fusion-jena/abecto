@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -109,53 +109,43 @@ public class JaroWinklerMappingProcessor extends AbstractMappingProcessor<JaroWi
 		}
 
 		// get values
-		Map<Var, Map<String, Collection<Resource>>> model1Values = getValues(model1, caseSensitive);
-		Map<Var, Map<String, Collection<Resource>>> model2Values = getValues(model2, caseSensitive);
+		Map<Var, Map<String, Collection<Resource>>> valuesByVariable1 = getValues(model1, caseSensitive);
+		Map<Var, Map<String, Collection<Resource>>> valuesByVariable2 = getValues(model2, caseSensitive);
 
 		// prepare mappings collection
 		Collection<Mapping> mappings = new ArrayList<>();
 
 		// iterate variables
-		for (Var variable : model1Values.keySet()) {
-			if (model2Values.containsKey(variable)) {
-				Map<String, Collection<Resource>> model1VariableValues;
-				Map<String, Collection<Resource>> model2VariableValues;
-				// ensure first values map is larger
-				boolean swapped;
-				if (model1Values.get(variable).size() >= model2Values.get(variable).size()) {
-					swapped = false;
-					model1VariableValues = model1Values.get(variable);
-					model2VariableValues = model2Values.get(variable);
-				} else {
-					swapped = true;
-					model1VariableValues = model2Values.get(variable);
-					model2VariableValues = model1Values.get(variable);
-				}
-				// prepare JaroWinklerSimilarity instance using larger values map
-				JaroWinklerSimilarity<Collection<Resource>> jws = JaroWinklerSimilarity.with(model1VariableValues,
-						threshold);
+		for (Var variable : valuesByVariable1.keySet()) {
+			if (valuesByVariable1.containsKey(variable) && valuesByVariable2.containsKey(variable)) {
 
-				// iterate smaller values map
-				for (String label : model2VariableValues.keySet()) {
-					// get best matches
-					Map<Collection<Resource>, Double> searchResult = jws.apply(label);
-					Set<Resource> matchingResources = new HashSet<>();
-					double maxSimilarity = 0d;
-					for (Entry<Collection<Resource>, Double> entry : searchResult.entrySet()) {
-						if (entry.getValue() > maxSimilarity) {
-							matchingResources.clear();
-							maxSimilarity = entry.getValue();
-							matchingResources.addAll(entry.getKey());
-						} else if (entry.getValue().equals(maxSimilarity)) {
-							matchingResources.addAll(entry.getKey());
-						} else {
-							// do nothing
-						}
-					}
-					// convert matches into mappings
-					for (Resource resource : model2VariableValues.get(label)) {
-						for (Resource matchingResource : matchingResources) {
-							mappings.add(Mapping.of(matchingResource, resource));
+				Map<String, Collection<Resource>> values1 = valuesByVariable1.get(variable);
+				Map<String, Collection<Resource>> values2 = valuesByVariable2.get(variable);
+
+				JaroWinklerSimilarity<String> matcher1 = JaroWinklerSimilarity.with(values1.keySet(), threshold);
+				JaroWinklerSimilarity<String> matcher2 = JaroWinklerSimilarity.with(values2.keySet(), threshold);
+
+				// match from first to second
+				Map<String, Collection<String>> matches1 = new HashMap<>();
+				for (String value1 : values1.keySet()) {
+					matches1.put(value1, maxValue(matcher2.apply(value1)));
+				}
+
+				// match from second to first
+				for (String value2 : values2.keySet()) {
+					for (String value1 : maxValue(matcher1.apply(value2))) {
+						if (matches1.get(value1).contains(value2)) { // is bidirectional match
+							/*
+							 * NOTE: bidirectional matches are required to make the processor commutative
+							 * regarding knowledge base order
+							 */
+
+							// convert match into mappings
+							for (Resource resource1 : values1.get(value1)) {
+								for (Resource resource2 : values2.get(value2)) {
+									mappings.add(Mapping.of(resource1, resource2));
+								}
+							}
 						}
 					}
 				}
@@ -163,5 +153,22 @@ public class JaroWinklerMappingProcessor extends AbstractMappingProcessor<JaroWi
 		}
 
 		return mappings;
+	}
+
+	private Collection<String> maxValue(Map<String, Double> map) {
+		List<String> bestMatches = new ArrayList<>();
+		double maxSimilarity = 0d;
+		for (Entry<String, Double> entry : map.entrySet()) {
+			if (entry.getValue() < maxSimilarity) {
+				// do nothing
+			} else if (entry.getValue().equals(maxSimilarity)) {
+				bestMatches.add(entry.getKey());
+			} else {
+				bestMatches.clear();
+				maxSimilarity = entry.getValue();
+				bestMatches.add(entry.getKey());
+			}
+		}
+		return bestMatches;
 	}
 }
