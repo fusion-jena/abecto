@@ -104,7 +104,10 @@ public class Category {
 			String uri = solution.getResource(name).getURI();
 			Map<String, Set<String>> result = results.computeIfAbsent(uri, (x) -> new HashMap<>());
 			for (String variable : variables) {
-				result.computeIfAbsent(variable, (x) -> new HashSet<String>()).add(solution.get(variable).toString());
+				if (solution.contains(variable)) {
+					result.computeIfAbsent(variable, (x) -> new HashSet<String>())
+							.add(solution.get(variable).toString());
+				}
 			}
 		}
 		return results;
