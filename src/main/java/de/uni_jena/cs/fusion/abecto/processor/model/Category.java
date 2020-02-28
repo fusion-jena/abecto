@@ -33,22 +33,22 @@ import de.uni_jena.cs.fusion.abecto.sparq.SparqlPattern;
 @SparqlNamespace(prefix = "abecto", namespace = "http://fusion.cs.uni-jena.de/ontology/abecto#")
 public class Category {
 	@SparqlPattern(predicate = "rdf:type", object = "abecto:Category")
-	public Resource category;
+	public Resource id;
 	/**
 	 * The name of the category and simultaneous the name of the primary key
 	 * variable.
 	 */
-	@SparqlPattern(subject = "category", predicate = "abecto:categoryName")
+	@SparqlPattern(subject = "id", predicate = "abecto:categoryName")
 	public String name;
 	/**
 	 * The pattern describing the category.
 	 */
-	@SparqlPattern(subject = "category", predicate = "abecto:categoryPattern")
+	@SparqlPattern(subject = "id", predicate = "abecto:categoryPattern")
 	public String pattern;
 	/**
 	 * The knowledge base this category definition belongs to.
 	 */
-	@SparqlPattern(subject = "category", predicate = "abecto:knowledgeBase")
+	@SparqlPattern(subject = "id", predicate = "abecto:knowledgeBase")
 	public UUID knowledgeBase;
 
 	public Category() {
