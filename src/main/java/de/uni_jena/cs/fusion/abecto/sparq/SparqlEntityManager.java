@@ -1,7 +1,5 @@
 package de.uni_jena.cs.fusion.abecto.sparq;
 
-import java.io.IOException;
-import java.io.OutputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -54,12 +52,6 @@ import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.path.PathParser;
 import org.apache.jena.update.UpdateAction;
 
-import com.fasterxml.jackson.core.JsonGenerationException;
-import com.fasterxml.jackson.core.Version;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-
 /**
  * Provides methods to insert or select objects into or from a {@link Model} via
  * SPARQL.
@@ -71,10 +63,6 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 public class SparqlEntityManager {
 
 	private final static Map<Class<?>, SelectBuilder> SELECT_QUERY_CACHE = new HashMap<>();
-
-	private final static ObjectMapper JSON = new ObjectMapper()
-			.registerModule(new SimpleModule("ResourceSerializer", new Version(1, 0, 0, null, null, null))
-					.addSerializer(Resource.class, new ResourceSerializer()));
 
 	private static void addInsert(UpdateBuilder update, Node subject, Node predicate, Node object) {
 		update.addInsert(new Triple(subject, predicate, object));
@@ -873,13 +861,6 @@ public class SparqlEntityManager {
 			throw new IllegalArgumentException(
 					String.format("Illegal annotation for %s: Either subject or object required.", field.getName()));
 		}
-	}
-
-	@Deprecated
-	public static <T> void wirteJsonTable(OutputStream out, Collection<T> filterObjects, Model source)
-			throws IllegalStateException, NullPointerException, NoSuchElementException, ReflectiveOperationException,
-			JsonGenerationException, JsonMappingException, IOException {
-		JSON.writeValue(out, select(filterObjects, source));
 	}
 
 	private static <T> void writeFilter(WhereClause<?> queryBuilder, Collection<T> filterObjects)

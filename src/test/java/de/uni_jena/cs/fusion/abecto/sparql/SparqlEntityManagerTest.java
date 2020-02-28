@@ -1,27 +1,19 @@
 package de.uni_jena.cs.fusion.abecto.sparql;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
-import org.json.JSONException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.skyscreamer.jsonassert.JSONAssert;
-
-import com.fasterxml.jackson.core.JsonGenerationException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 
 import de.uni_jena.cs.fusion.abecto.model.Models;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
@@ -399,27 +391,5 @@ public class SparqlEntityManagerTest {
 				new HashSet<>(select.stream().filter((x) -> x.name.equals("Alice")).findAny().get().friends));
 		Assertions.assertEquals(new HashSet<>(bob.friends),
 				new HashSet<>(select.stream().filter((x) -> x.name.equals("Bob")).findAny().get().friends));
-	}
-
-	@Test
-	public void wirteJsonTable() throws IllegalStateException, NullPointerException, ReflectiveOperationException,
-			JsonGenerationException, JsonMappingException, NoSuchElementException, IOException, JSONException {
-		EntityWithResourceCollection alice = new EntityWithResourceCollection();
-		alice.name = "Alice";
-		alice.friends = Arrays.asList(ResourceFactory.createResource("http://example.org/Bob"),
-				ResourceFactory.createResource("http://example.org/Charlie"));
-		EntityWithResourceCollection bob = new EntityWithResourceCollection();
-		bob.name = "Bob";
-		bob.friends = Arrays.asList(ResourceFactory.createResource("http://example.org/Alice"),
-				ResourceFactory.createResource("http://example.org/Charlie"));
-
-		SparqlEntityManager.insert(Arrays.asList(alice, bob), model);
-
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		SparqlEntityManager.wirteJsonTable(out, Collections.singleton(new EntityWithResourceCollection()), model);
-
-		JSONAssert.assertEquals(
-				"[{\"id\":null,\"name\":\"Alice\",\"friends\":[\"http://example.org/Bob\",\"http://example.org/Charlie\"]},{\"id\":null,\"name\":\"Bob\",\"friends\":[\"http://example.org/Alice\",\"http://example.org/Charlie\"]}]",
-				out.toString(), false);
 	}
 }
