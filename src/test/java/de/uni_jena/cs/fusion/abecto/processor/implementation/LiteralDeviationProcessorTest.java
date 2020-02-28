@@ -99,11 +99,11 @@ class LiteralDeviationProcessorTest {
 				metaModel);
 		SparqlEntityManager.insert(Arrays.asList(//
 				Mapping.of(ResourceFactory.createResource("http://example.org/1/right"),
-						ResourceFactory.createResource("http://example.org/2/right"), "entity"),
+						ResourceFactory.createResource("http://example.org/2/right")),
 				Mapping.of(ResourceFactory.createResource("http://example.org/1/wrong"),
-						ResourceFactory.createResource("http://example.org/2/wrong"), "entity"),
+						ResourceFactory.createResource("http://example.org/2/wrong")),
 				Mapping.of(ResourceFactory.createResource("http://example.org/1/missing"),
-						ResourceFactory.createResource("http://example.org/2/missing"), "entity")),
+						ResourceFactory.createResource("http://example.org/2/missing"))),
 				metaModel);
 
 		// result test

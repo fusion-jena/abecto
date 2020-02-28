@@ -1,7 +1,5 @@
 package de.uni_jena.cs.fusion.abecto.processor.model;
 
-import java.util.Optional;
-
 import org.apache.jena.rdf.model.Resource;
 
 import de.uni_jena.cs.fusion.abecto.sparq.Member;
@@ -12,35 +10,19 @@ import de.uni_jena.cs.fusion.abecto.sparq.SparqlPattern;
 @SparqlNamespace(prefix = "abecto", namespace = "http://fusion.cs.uni-jena.de/ontology/abecto#")
 public class Mapping {
 	public static Mapping not() {
-		return new Mapping(null, false, null, null, null);
+		return new Mapping(null, false, null, null);
 	}
 
 	public static Mapping not(Resource resource1, Resource resource2) {
-		return new Mapping(null, false, resource1, resource2, null);
-	}
-
-	public static Mapping not(Resource resource1, Resource resource2, String categorie) {
-		return new Mapping(null, false, resource1, resource2, Optional.ofNullable(categorie));
-	}
-
-	public static Mapping not(String categorie) {
-		return new Mapping(null, false, null, null, Optional.ofNullable(categorie));
+		return new Mapping(null, false, resource1, resource2);
 	}
 
 	public static Mapping of() {
-		return new Mapping(null, true, null, null, null);
+		return new Mapping(null, true, null, null);
 	}
 
 	public static Mapping of(Resource resource1, Resource resource2) {
-		return new Mapping(null, true, resource1, resource2, null);
-	}
-
-	public static Mapping of(Resource resource1, Resource resource2, String categorie) {
-		return new Mapping(null, true, resource1, resource2, Optional.ofNullable(categorie));
-	}
-
-	public static Mapping of(String categorie) {
-		return new Mapping(null, true, null, null, Optional.ofNullable(categorie));
+		return new Mapping(null, true, resource1, resource2);
 	}
 
 	/**
@@ -62,26 +44,20 @@ public class Mapping {
 	@SparqlPattern(subject = "id", predicate = "abecto:mappedResource2")
 	public final Resource resource2;
 
-	@SparqlPattern(subject = "id", predicate = "abecto:category")
-	public Optional<String> category;
-
 	public Mapping() {
-		this(null, null, null, null, null);
+		this(null, null, null, null);
 	}
 
 	public Mapping(@Member("id") Resource id, @Member("resourcesMap") Boolean entitiesMap,
-			@Member("resource1") Resource resource1, @Member("resource2") Resource resource2,
-			@Member("category") Optional<String> category) {
+			@Member("resource1") Resource resource1, @Member("resource2") Resource resource2) {
 		this.id = id;
 		this.resourcesMap = entitiesMap;
 		if (resource1 == null || resource2 != null && resource1.getURI().compareTo(resource2.getURI()) < 0) {
 			this.resource1 = resource1;
 			this.resource2 = resource2;
-			this.category = category;
 		} else {
 			this.resource1 = resource2;
 			this.resource2 = resource1;
-			this.category = category;
 		}
 	}
 
@@ -100,11 +76,6 @@ public class Mapping {
 	}
 
 	public Mapping inverse() {
-		return new Mapping(null, !this.resourcesMap, this.resource1, this.resource2, this.category);
-	}
-
-	public Mapping setCategory(String categorie) {
-		this.category = Optional.ofNullable(categorie);
-		return this;
+		return new Mapping(null, !this.resourcesMap, this.resource1, this.resource2);
 	}
 }

@@ -72,9 +72,9 @@ class RelationalMappingProcessorTest {
 				metaModel);
 		SparqlEntityManager.insert(Arrays.asList(//
 				Mapping.of(ResourceFactory.createResource("http://example.org/1/entity1a"),
-						ResourceFactory.createResource("http://example.org/2/entity1a"), "dummy"),
+						ResourceFactory.createResource("http://example.org/2/entity1a")),
 				Mapping.of(ResourceFactory.createResource("http://example.org/1/entity1b"),
-						ResourceFactory.createResource("http://example.org/2/entity1b"), "dummy")),
+						ResourceFactory.createResource("http://example.org/2/entity1b"))),
 				metaModel);
 
 		// result test

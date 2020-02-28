@@ -135,7 +135,7 @@ public class RelationalMappingProcessor extends AbstractMappingProcessor<Relatio
 				}
 				// add left candidates to mappings
 				for (Resource mappedEntity : mappedEntities) {
-					mappings.add(Mapping.of(entity, mappedEntity, categoryName));
+					mappings.add(Mapping.of(entity, mappedEntity));
 				}
 			}
 		}

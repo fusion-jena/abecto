@@ -2,8 +2,6 @@ package de.uni_jena.cs.fusion.abecto.processor.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.util.Optional;
-
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,7 +24,7 @@ public class MappingTest {
 	public void deSerializeation() throws JsonProcessingException {
 		Mapping mapping = new Mapping(ResourceFactory.createResource(), true,
 				ResourceFactory.createResource("http://example.org/a"),
-				ResourceFactory.createResource("http://example.org/b"), Optional.of("the category"));
+				ResourceFactory.createResource("http://example.org/b"));
 		String serialized = mapper.writeValueAsString(mapping);
 		Mapping deserialized = mapper.readValue(serialized, mapping.getClass());
 		assertEquals(mapping, deserialized);
