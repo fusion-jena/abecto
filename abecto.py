@@ -169,29 +169,28 @@ class Step:
         r.raise_for_status()
         return self
     
-    def plus(self, step):
-        return Steps(self, step)
+    def __add__(self, other):
+        if self.server != other.server:
+            raise ValueError("steps must belonge to the same server")
+        return Steps(self.server, [self.id, other.id])
 
     def report(self):
         return self.last().report()
 
 class Steps:
-    def __init__(self, steps, step):
-        if steps.server != step.server:
-            raise ValueError("steps must belonge to the same server")
-        self.server = step.server
-        if isinstance(steps, Steps):
-            self.stepList = steps.stepList + [step.id]
-        elif isinstance(steps, Step):
-            self.stepList = [steps.id, step.id]
+    def __init__(self, server, stepList):
+        self.server = server
+        self.stepList = stepList
 
     def into(self, processorName, parameters = {}):
         r = requests.post(self.server.base + "step", data = {"class": processorName, "input" : self.stepList, "parameters": json.dumps(parameters)})
         r.raise_for_status()
         return Step(self.server, r.json())
     
-    def plus(self, step):
-        return Steps(self, step)
+    def __add__(self, other):
+        if self.server != other.server:
+            raise ValueError("steps must belonge to the same server")
+        return Steps(self.server, self.stepList + [other.id])
 
 class Processing:
     def __init__(self, server, data):
@@ -378,7 +377,6 @@ class Execution:
     def mappings(self):
         display(HTML("<h1>Mapping Report</h1>"))
         totalData =  self.resultDataFrame("MappingReportEntity")
-        display(totalData)
         if not totalData.empty:
             knowledgeBases = self.sortedKnowledgeBases(set(totalData["firstKnowledgeBase"]).union(set(totalData["secondKnowledgeBase"])))
             categories = set(totalData["firstCategory"]).union(set(totalData["secondCategory"]))
