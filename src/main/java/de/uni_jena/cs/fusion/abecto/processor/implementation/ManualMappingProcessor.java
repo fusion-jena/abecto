@@ -41,8 +41,7 @@ public class ManualMappingProcessor extends AbstractMappingProcessor<ManualMappi
 								for (Category category2 : categories2) {
 									if (category1.name.equals(category2.name)
 											&& category1.contains(model2, resource2)) {
-										mappings.add(Mapping.of(resource1, resource2, knowledgeBaseId1,
-												knowledgeBaseId2, category1.name));
+										mappings.add(Mapping.of(resource1, resource2, category1.name));
 									}
 								}
 							}
@@ -63,8 +62,7 @@ public class ManualMappingProcessor extends AbstractMappingProcessor<ManualMappi
 								for (Category category2 : categories2) {
 									if (category1.name.equals(category2.name)
 											&& category1.contains(model2, resource2)) {
-										mappings.add(Mapping.not(resource1, resource2, knowledgeBaseId1,
-												knowledgeBaseId2, category1.name));
+										mappings.add(Mapping.not(resource1, resource2, category1.name));
 									}
 								}
 							}

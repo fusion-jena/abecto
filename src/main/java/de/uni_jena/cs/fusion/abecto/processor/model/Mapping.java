@@ -1,7 +1,6 @@
 package de.uni_jena.cs.fusion.abecto.processor.model;
 
 import java.util.Optional;
-import java.util.UUID;
 
 import org.apache.jena.rdf.model.Resource;
 
@@ -13,115 +12,76 @@ import de.uni_jena.cs.fusion.abecto.sparq.SparqlPattern;
 @SparqlNamespace(prefix = "abecto", namespace = "http://fusion.cs.uni-jena.de/ontology/abecto#")
 public class Mapping {
 	public static Mapping not() {
-		return new Mapping(null, false, null, null, null, null, null, null);
+		return new Mapping(null, false, null, null, null);
 	}
 
-	public static Mapping not(Resource first, Resource second) {
-		return new Mapping(null, false, first, second, null, null, null, null);
+	public static Mapping not(Resource resource1, Resource resource2) {
+		return new Mapping(null, false, resource1, resource2, null);
 	}
 
-	public static Mapping not(Resource first, Resource second, UUID firstKnowledgeBase, UUID secondKnowledgeBase,
-			String categorie) {
-		return new Mapping(null, false, first, second, Optional.ofNullable(secondKnowledgeBase),
-				Optional.ofNullable(firstKnowledgeBase), Optional.ofNullable(categorie),
-				Optional.ofNullable(categorie));
+	public static Mapping not(Resource resource1, Resource resource2, String categorie) {
+		return new Mapping(null, false, resource1, resource2, Optional.ofNullable(categorie));
 	}
 
-	public static Mapping not(UUID firstKnowledgeBase, UUID secondKnowledgeBase, String categorie) {
-		return new Mapping(null, false, null, null, Optional.ofNullable(secondKnowledgeBase),
-				Optional.ofNullable(firstKnowledgeBase), Optional.ofNullable(categorie),
-				Optional.ofNullable(categorie));
-	}
-
-	public static Mapping not(UUID firstKnowledgeBase, UUID secondKnowledgeBase) {
-		return new Mapping(null, false, null, null, Optional.ofNullable(secondKnowledgeBase),
-				Optional.ofNullable(firstKnowledgeBase), null, null);
+	public static Mapping not(String categorie) {
+		return new Mapping(null, false, null, null, Optional.ofNullable(categorie));
 	}
 
 	public static Mapping of() {
-		return new Mapping(null, true, null, null, null, null, null, null);
+		return new Mapping(null, true, null, null, null);
 	}
 
-	public static Mapping of(Resource first, Resource second) {
-		return new Mapping(null, true, first, second, null, null, null, null);
+	public static Mapping of(Resource resource1, Resource resource2) {
+		return new Mapping(null, true, resource1, resource2, null);
 	}
 
-	public static Mapping of(Resource first, Resource second, UUID firstKnowledgeBase, UUID secondKnowledgeBase,
-			String categorie) {
-		return new Mapping(null, true, first, second, Optional.ofNullable(firstKnowledgeBase),
-				Optional.ofNullable(secondKnowledgeBase), Optional.ofNullable(categorie),
-				Optional.ofNullable(categorie));
+	public static Mapping of(Resource resource1, Resource resource2, String categorie) {
+		return new Mapping(null, true, resource1, resource2, Optional.ofNullable(categorie));
 	}
 
-	public static Mapping of(UUID firstKnowledgeBase, UUID secondKnowledgeBase, String categorie) {
-		return new Mapping(null, true, null, null, Optional.ofNullable(firstKnowledgeBase),
-				Optional.ofNullable(secondKnowledgeBase), Optional.ofNullable(categorie),
-				Optional.ofNullable(categorie));
+	public static Mapping of(String categorie) {
+		return new Mapping(null, true, null, null, Optional.ofNullable(categorie));
 	}
 
-	public static Mapping of(UUID firstKnowledgeBase, UUID secondKnowledgeBase) {
-		return new Mapping(null, true, null, null, Optional.ofNullable(firstKnowledgeBase),
-				Optional.ofNullable(secondKnowledgeBase), null, null);
-	}
-
-	public static Mapping empty() {
+	/**
+	 * @return prototype without any restrictions
+	 */
+	public static Mapping any() {
 		return new Mapping();
 	}
 
 	@SparqlPattern(predicate = "rdf:type", object = "abecto:Mapping")
 	public Resource id;
 
-	@SparqlPattern(subject = "id", predicate = "abecto:entitiesMap")
-	public final Boolean entitiesMap;
+	@SparqlPattern(subject = "id", predicate = "abecto:resourcesMap")
+	public final Boolean resourcesMap;
 
-	@SparqlPattern(subject = "id", predicate = "abecto:firstId")
-	public final Resource first;
+	@SparqlPattern(subject = "id", predicate = "abecto:mappedResource1")
+	public final Resource resource1;
 
-	@SparqlPattern(subject = "id", predicate = "abecto:secondId")
-	public final Resource second;
+	@SparqlPattern(subject = "id", predicate = "abecto:mappedResource2")
+	public final Resource resource2;
 
-	@SparqlPattern(subject = "id", predicate = "abecto:firstSourceKnowledgeBase")
-	public Optional<UUID> firstKnowledgeBase;
-
-	@SparqlPattern(subject = "id", predicate = "abecto:secondSourceKnowledgeBase")
-	public Optional<UUID> secondKnowledgeBase;
-
-	@SparqlPattern(subject = "id", predicate = "abecto:firstCategorisedAs")
-	public Optional<String> firstCategory;
-
-	@SparqlPattern(subject = "id", predicate = "abecto:secondCategorisedAs")
-	public Optional<String> secondCategory;
-
-	private final boolean switched;
+	@SparqlPattern(subject = "id", predicate = "abecto:category")
+	public Optional<String> category;
 
 	public Mapping() {
-		this(null, null, null, null, null, null, null, null);
+		this(null, null, null, null, null);
 	}
 
-	public Mapping(@Member("id") Resource id, @Member("entitiesMap") Boolean entitiesMap,
-			@Member("first") Resource first, @Member("second") Resource second,
-			@Member("firstKnowledgeBase") Optional<UUID> firstKnowledgeBase,
-			@Member("secondKnowledgeBase") Optional<UUID> secondKnowledgeBase,
-			@Member("firstCategory") Optional<String> firstCategory,
-			@Member("secondCategory") Optional<String> secondCategory) {
+	public Mapping(@Member("id") Resource id, @Member("resourcesMap") Boolean entitiesMap,
+			@Member("resource1") Resource resource1, @Member("resource2") Resource resource2,
+			@Member("category") Optional<String> category) {
 		this.id = id;
-		this.entitiesMap = entitiesMap;
-		if (first == null || second != null && first.getURI().compareTo(second.getURI()) < 0) {
-			this.switched = false;
-			this.first = first;
-			this.second = second;
-			this.firstKnowledgeBase = firstKnowledgeBase;
-			this.secondKnowledgeBase = secondKnowledgeBase;
-			this.firstCategory = firstCategory;
-			this.secondCategory = secondCategory;
+		this.resourcesMap = entitiesMap;
+		if (resource1 == null || resource2 != null && resource1.getURI().compareTo(resource2.getURI()) < 0) {
+			this.resource1 = resource1;
+			this.resource2 = resource2;
+			this.category = category;
 		} else {
-			this.switched = true;
-			this.first = second;
-			this.second = first;
-			this.firstKnowledgeBase = secondKnowledgeBase;
-			this.secondKnowledgeBase = firstKnowledgeBase;
-			this.firstCategory = secondCategory;
-			this.secondCategory = firstCategory;
+			this.resource1 = resource2;
+			this.resource2 = resource1;
+			this.category = category;
 		}
 	}
 
@@ -130,44 +90,21 @@ public class Mapping {
 		if (!(o instanceof Mapping))
 			return false;
 		Mapping other = (Mapping) o;
-		return this.entitiesMap.equals(other.entitiesMap) && this.first.equals(other.first)
-				&& this.second.equals(other.second);
+		return this.resourcesMap.equals(other.resourcesMap) && this.resource1.equals(other.resource1)
+				&& this.resource2.equals(other.resource2);
 	}
 
 	@Override
 	public int hashCode() {
-		return this.first.getURI().hashCode() + this.second.getURI().hashCode() + (this.entitiesMap ? 1 : 0);
+		return this.resource1.getURI().hashCode() + this.resource2.getURI().hashCode() + (this.resourcesMap ? 1 : 0);
 	}
 
 	public Mapping inverse() {
-		return new Mapping(null, !this.entitiesMap, this.first, this.second, this.firstKnowledgeBase,
-				this.secondKnowledgeBase, this.firstCategory, this.secondCategory);
+		return new Mapping(null, !this.resourcesMap, this.resource1, this.resource2, this.category);
 	}
 
-	public Mapping setCategories(String categorie) {
-		this.firstCategory = Optional.ofNullable(categorie);
-		this.secondCategory = Optional.ofNullable(categorie);
+	public Mapping setCategory(String categorie) {
+		this.category = Optional.ofNullable(categorie);
 		return this;
-	}
-
-	public Mapping setKnowledgeBases(UUID firstKnowledgeBase, UUID secondKnowledgeBase) {
-		if (!this.switched) {
-			this.firstKnowledgeBase = Optional.ofNullable(firstKnowledgeBase);
-			this.secondKnowledgeBase = Optional.ofNullable(secondKnowledgeBase);
-		} else {
-			this.firstKnowledgeBase = Optional.ofNullable(secondKnowledgeBase);
-			this.secondKnowledgeBase = Optional.ofNullable(firstKnowledgeBase);
-		}
-		return this;
-	}
-
-	public Resource getResourceOf(UUID knowledgeBase) {
-		if (this.firstKnowledgeBase != null && knowledgeBase.equals(this.firstKnowledgeBase.get())) {
-			return this.first;
-		} else if (this.secondKnowledgeBase != null && knowledgeBase.equals(this.secondKnowledgeBase.get())) {
-			return this.second;
-		} else {
-			throw new IllegalArgumentException("Unknown knowledge base.");
-		}
 	}
 }

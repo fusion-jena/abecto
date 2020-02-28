@@ -61,11 +61,12 @@ public class LiteralDeviationProcessor extends AbstractDeviationProcessor<Abstra
 					try {
 						Literal value1 = result1.getLiteral(variableName);
 						for (Resource resource2 : mappings.getOrDefault(resource1, Collections.emptySet())) {
-							Literal value2 = valuesByVariableByResource2.get(resource2).get(variableName);
-							if (value2 != null && !value1.sameValueAs(value2)) {
-								deviations.add(new Deviation(null, categoryName, variableName, resource1,
-										resource2, knowledgeBaseId1, knowledgeBaseId2, value1.toString(),
-										value2.toString()));
+							if (valuesByVariableByResource2.containsKey(resource2)) {
+								Literal value2 = valuesByVariableByResource2.get(resource2).get(variableName);
+								if (value2 != null && !value1.sameValueAs(value2)) {
+									deviations.add(new Deviation(null, categoryName, variableName, resource1, resource2,
+											knowledgeBaseId1, knowledgeBaseId2, value1.toString(), value2.toString()));
+								}
 							}
 						}
 					} catch (ClassCastException e) {

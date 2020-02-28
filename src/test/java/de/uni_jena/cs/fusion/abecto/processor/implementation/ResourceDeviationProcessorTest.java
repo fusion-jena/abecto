@@ -72,11 +72,11 @@ class ResourceDeviationProcessorTest {
 				metaModel);
 		SparqlEntityManager.insert(Arrays.asList(//
 				Mapping.of(ResourceFactory.createResource("http://example.org/1/right"),
-						ResourceFactory.createResource("http://example.org/2/right"), id1, id2, "entity"),
+						ResourceFactory.createResource("http://example.org/2/right"), "entity"),
 				Mapping.of(ResourceFactory.createResource("http://example.org/1/wrong"),
-						ResourceFactory.createResource("http://example.org/2/wrong"), id1, id2, "entity"),
+						ResourceFactory.createResource("http://example.org/2/wrong"), "entity"),
 				Mapping.of(ResourceFactory.createResource("http://example.org/1/missing"),
-						ResourceFactory.createResource("http://example.org/2/missing"), id1, id2, "entity")),
+						ResourceFactory.createResource("http://example.org/2/missing"), "entity")),
 				metaModel);
 
 		// result test

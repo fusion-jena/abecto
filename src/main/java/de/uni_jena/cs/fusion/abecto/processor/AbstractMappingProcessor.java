@@ -17,8 +17,7 @@ public abstract class AbstractMappingProcessor<P extends ParameterModel> extends
 	@Override
 	public final void computeResultModel() throws Exception {
 		// collect known mappings
-		Collection<Mapping> knownMappings = SparqlEntityManager.select(Mapping.of(), this.metaModel);
-		knownMappings.addAll(SparqlEntityManager.select(Mapping.not(), this.metaModel));
+		Collection<Mapping> knownMappings = SparqlEntityManager.select(Mapping.any(), this.metaModel);
 
 		for (Entry<UUID, Model> i : this.inputGroupModels.entrySet()) {
 			UUID knowledgeBaseId1 = i.getKey();
@@ -45,13 +44,12 @@ public abstract class AbstractMappingProcessor<P extends ParameterModel> extends
 	}
 
 	/**
-	 * Computes the mappings of two models. The mappings may contain category and
-	 * knowledge base meta data.
+	 * Computes the mappings of two models. The mappings may contain category meta data.
 	 * 
 	 * @param model1           the first model to process
 	 * @param model2           the second model to process
-	 * @param knowledgeBaseId2 the knowledge base id of the first model
-	 * @param knowledgeBaseId1 the knowledge base id of the second model
+	 * @param knowledgeBaseId1 the knowledge base id of the first model
+	 * @param knowledgeBaseId2 the knowledge base id of the second model
 	 * @return the computed mappings
 	 */
 	public abstract Collection<Mapping> computeMapping(Model model1, Model model2, UUID knowledgeBaseId1,

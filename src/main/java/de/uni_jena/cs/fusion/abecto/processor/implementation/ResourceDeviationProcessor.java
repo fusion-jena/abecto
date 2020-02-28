@@ -60,12 +60,14 @@ public class ResourceDeviationProcessor extends AbstractDeviationProcessor<Abstr
 					try {
 						Resource value1 = result1.getResource(variableName);
 						for (Resource resource2 : mappings.getOrDefault(resource1, Collections.emptySet())) {
-							Resource value2 = valuesByVariableByResource2.get(resource2).get(variableName);
-							if (value2 != null
-									&& (!mappings.containsKey(value1) || !mappings.get(value1).contains(value2))) {
-								deviations.add(new Deviation(null, categoryName, variableName, resource1,
-										resource2, knowledgeBaseId1, knowledgeBaseId2, "<" + value1.getURI() + ">",
-										"<" + value2.getURI() + ">"));
+							if (valuesByVariableByResource2.containsKey(resource2)) {
+								Resource value2 = valuesByVariableByResource2.get(resource2).get(variableName);
+								if (value2 != null
+										&& (!mappings.containsKey(value1) || !mappings.get(value1).contains(value2))) {
+									deviations.add(new Deviation(null, categoryName, variableName, resource1, resource2,
+											knowledgeBaseId1, knowledgeBaseId2, "<" + value1.getURI() + ">",
+											"<" + value2.getURI() + ">"));
+								}
 							}
 						}
 					} catch (ClassCastException e) {

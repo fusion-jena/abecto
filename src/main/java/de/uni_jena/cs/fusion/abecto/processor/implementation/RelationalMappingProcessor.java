@@ -1,7 +1,6 @@
 package de.uni_jena.cs.fusion.abecto.processor.implementation;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -66,12 +65,13 @@ public class RelationalMappingProcessor extends AbstractMappingProcessor<Relatio
 		// load mappings form knowledge base 1 to knowledge base 2
 		Map<Resource, Collection<Resource>> mappingIndex = new HashMap<>();
 		try {
-			for (Mapping mapping : SparqlEntityManager
-					.select(Arrays.asList(Mapping.of(knowledgeBaseId1, knowledgeBaseId2),
-							Mapping.of(knowledgeBaseId2, knowledgeBaseId1)), this.metaModel)) {
-				mappingIndex.computeIfAbsent(mapping.getResourceOf(knowledgeBaseId1), (v) -> {
+			for (Mapping mapping : SparqlEntityManager.select(Mapping.of(), this.metaModel)) {
+				mappingIndex.computeIfAbsent(mapping.resource1, (v) -> {
 					return new ArrayList<Resource>();
-				}).add(mapping.getResourceOf(knowledgeBaseId2));
+				}).add(mapping.resource2);
+				mappingIndex.computeIfAbsent(mapping.resource2, (v) -> {
+					return new ArrayList<Resource>();
+				}).add(mapping.resource1);
 			}
 		} catch (IllegalStateException | NullPointerException | ReflectiveOperationException e) {
 			throw new Exception("Failed to load existing mappings.", e);
@@ -135,7 +135,7 @@ public class RelationalMappingProcessor extends AbstractMappingProcessor<Relatio
 				}
 				// add left candidates to mappings
 				for (Resource mappedEntity : mappedEntities) {
-					mappings.add(Mapping.of(entity, mappedEntity, knowledgeBaseId1, knowledgeBaseId2, categoryName));
+					mappings.add(Mapping.of(entity, mappedEntity, categoryName));
 				}
 			}
 		}

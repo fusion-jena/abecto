@@ -156,13 +156,7 @@ public class JaroWinklerMappingProcessor extends AbstractMappingProcessor<JaroWi
 					// convert matches into mappings
 					for (Resource resource : model2VariableValues.get(label)) {
 						for (Resource matchingResource : matchingResources) {
-							if (!swapped) {
-								mappings.add(Mapping.of(matchingResource, resource, knowledgeBaseId1, knowledgeBaseId2,
-										categoryName));
-							} else {
-								mappings.add(Mapping.of(matchingResource, resource, knowledgeBaseId2, knowledgeBaseId1,
-										categoryName));
-							}
+							mappings.add(Mapping.of(matchingResource, resource, categoryName));
 						}
 					}
 				}
