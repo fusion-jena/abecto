@@ -42,7 +42,7 @@ public class ParameterRestController {
 
 	@PostMapping({ "/step/{step}/parameter" })
 	public void add(@PathVariable("step") UUID stepId,
-			@RequestParam(name = "key", required = false) String parameterPath,
+			@RequestParam(name = "key", defaultValue = "") String parameterPath,
 			@RequestParam(name = "value", required = false) String parameterValue) {
 
 		Step step = stepRepository.findById(stepId)
@@ -90,6 +90,7 @@ public class ParameterRestController {
 	@DeleteMapping({ "/step/{step}/parameter" })
 	public void delete(@PathVariable("step") UUID stepId) {
 		// TODO
+		throw new UnsupportedOperationException();
 	}
 
 	@GetMapping({ "/step/{step}/parameter" })
@@ -118,6 +119,7 @@ public class ParameterRestController {
 	@PutMapping({ "/step/{step}/parameter" })
 	public void update(@PathVariable("step") UUID stepId) {
 		// TODO
+		throw new UnsupportedOperationException();
 	}
 
 }

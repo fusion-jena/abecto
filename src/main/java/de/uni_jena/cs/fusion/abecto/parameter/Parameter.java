@@ -71,11 +71,11 @@ public class Parameter extends AbstractEntityWithUUID {
 	 * @throws SecurityException
 	 */
 	public Object get(String path) throws NoSuchFieldException, IllegalAccessException, SecurityException {
-		return get(splitPath(path), 0);
+		return get(parsePath(path), 0);
 	}
 
 	public Class<?> getType(String path) throws NoSuchFieldException, SecurityException {
-		return getType(splitPath(path));
+		return getType(parsePath(path));
 	}
 
 	public Class<?> getType(String[] keys) throws NoSuchFieldException, SecurityException {
@@ -94,7 +94,7 @@ public class Parameter extends AbstractEntityWithUUID {
 	 */
 	public boolean containsKey(String path) throws IllegalAccessException, SecurityException {
 		try {
-			return get(splitPath(path), 0) != null;
+			return get(parsePath(path), 0) != null;
 		} catch (NoSuchFieldException | NullPointerException e) {
 			return false;
 		}
@@ -107,7 +107,7 @@ public class Parameter extends AbstractEntityWithUUID {
 
 	public Parameter put(String path, Object value)
 			throws NoSuchFieldException, IllegalAccessException, SecurityException {
-		return put(splitPath(path), value);
+		return put(parsePath(path), value);
 	}
 
 	private Parameter put(String[] keys, Object value)
@@ -118,7 +118,7 @@ public class Parameter extends AbstractEntityWithUUID {
 		return this;
 	}
 
-	private String[] splitPath(String path) {
+	private String[] parsePath(String path) {
 		if (path.isEmpty()) {
 			return new String[] {};
 		} else {
