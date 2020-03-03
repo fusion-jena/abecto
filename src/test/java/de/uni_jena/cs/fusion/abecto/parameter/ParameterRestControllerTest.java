@@ -48,12 +48,12 @@ public class ParameterRestControllerTest extends AbstractRepositoryConsumingTest
 
 		// set parameter value
 		String parameterValue = "parameterValue";
-		mvc.perform(MockMvcRequestBuilders.post(String.format("/step/%s/parameter", configurationId))
+		mvc.perform(MockMvcRequestBuilders.post(String.format("/step/%s/parameters", configurationId))
 				.param("key", "parameterName").param("value", JSON.writeValueAsString(parameterValue))
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
 
 		// get parameter value
-		mvc.perform(MockMvcRequestBuilders.get(String.format("/step/%s/parameter", configurationId))
+		mvc.perform(MockMvcRequestBuilders.get(String.format("/step/%s/parameters", configurationId))
 				.param("key", "parameterName").accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 		assertEquals(parameterValue, buffer.getString());

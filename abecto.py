@@ -1,3 +1,4 @@
+from __future__ import print_function
 """This is the ABECTO module.
 
 This module provides handy functions to use the ABECTO REST service, hidding the raw HTTP requests.
@@ -14,6 +15,9 @@ import requests
 import subprocess
 import tempfile
 import time
+
+from ipywidgets import interact, interactive, fixed, interact_manual
+import ipywidgets as widgets
 
 class Abecto:
     def __init__(self, base, jar):
@@ -66,6 +70,10 @@ class Abecto:
             subprocess.Popen(["java","-jar",self.jar])
             while not self.running():
                 time.sleep(0.1)
+    
+    def stop(self):
+        r = requests.post(self.base + "actuator/shutdown")
+        r.raise_for_status()
 
 class Project:
     def __init__(self, server, data):
@@ -158,7 +166,16 @@ class Step:
         r = requests.get(self.server.base + "step/" + self.id + "/processing/last")
         r.raise_for_status()
         return Processing(self.server, r.json())
-    
+
+    def parameters(self):
+        r = requests.get(self.server.base + "step/" + self.id + "/parameters")
+        r.raise_for_status()
+        return r.json()
+
+    def setParameter(self, key, value):
+        r = requests.post(self.server.base + "step/" + self.id + "/parameters", data = {"key": key, "value": json.dumps(value)})
+        r.raise_for_status()
+
     def processings(self):
         r = requests.get(self.server.base + "step/" + self.id + "/processing")
         r.raise_for_status()
@@ -243,6 +260,9 @@ class Execution:
         r = requests.get(self.server.base + "execution/" + self.id + "/data", params = {"category": categoryName, "knowledgebase": knowledgeBaseId})
         r.raise_for_status()
         return r.json()
+    
+    def dataDataFrame(self, categoryName, knowledgeBaseId):
+        return pd.DataFrame.from_records(self.data(categoryName, knowledgeBaseId))
     
     def sortedKnowledgeBases(self, knowledgeBaseIds):
         return sorted({ knowledgeBaseId : self.server.getKnowledgeBase(knowledgeBaseId).info()["label"] for knowledgeBaseId in knowledgeBaseIds }.items(), key = lambda x:x[1])

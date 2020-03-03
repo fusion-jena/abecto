@@ -92,7 +92,7 @@ public class StepRestControllerTest extends AbstractRepositoryConsumingTest {
 				.andExpect(status().isBadRequest());
 
 		// use unknown step id
-		mvc.perform(MockMvcRequestBuilders.post(String.format("/step/%s/parameter", unknownUuid))
+		mvc.perform(MockMvcRequestBuilders.post(String.format("/step/%s/parameters", unknownUuid))
 				.param("key", "parameterName").param("value", "some value").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isBadRequest());
 		mvc.perform(
