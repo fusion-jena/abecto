@@ -22,9 +22,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
-@Component
 public class ModelRepository {
 	private final static Logger log = LoggerFactory.getLogger(ModelRepository.class);
 
@@ -33,8 +31,8 @@ public class ModelRepository {
 	private final File basePath;
 	private final Map<String, Model> models = Collections.synchronizedMap(new WeakHashMap<String, Model>());
 
-	public ModelRepository() {
-		this.basePath = new File(System.getProperty("user.home") + "/.abecto/models");
+	public ModelRepository(File basePath) {
+		this.basePath = basePath;
 		this.basePath.mkdirs();
 	}
 
