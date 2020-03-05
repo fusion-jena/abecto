@@ -72,8 +72,11 @@ class Abecto:
                 time.sleep(0.1)
     
     def stop(self):
-        r = requests.post(self.base + "actuator/shutdown")
-        r.raise_for_status()
+        if self.running():
+            r = requests.post(self.base + "actuator/shutdown")
+            r.raise_for_status()
+        while self.running():
+            time.sleep(0.1)
 
 class Project:
     def __init__(self, server, data):
@@ -162,7 +165,7 @@ class Step:
         r.raise_for_status()
         return Step(self.server, r.json())
     
-    def last(self):
+    def lastProcessing(self):
         r = requests.get(self.server.base + "step/" + self.id + "/processing/last")
         r.raise_for_status()
         return Processing(self.server, r.json())
@@ -190,9 +193,6 @@ class Step:
         if self.server != other.server:
             raise ValueError("steps must belonge to the same server")
         return Steps(self.server, [self.id, other.id])
-
-    def report(self):
-        return self.last().report()
 
 class Steps:
     def __init__(self, server, stepList):
@@ -225,14 +225,10 @@ class Processing:
     def graph(self):
         r = requests.get(self.server.base + "processing/" + self.id + "/result")
         r.raise_for_status()
-        json = r.json()
-        if "@graph"  in json:
-            return r.json()["@graph"]
-        else:
-            return []
+        return r.json()
     
-    def graphAsDataFrame(self):
-        graph = self.graph()
+    def dataFrame(self):
+        graph = self.graph()["@graph"]
         return pd.DataFrame.from_records(graph)
     
     def info(self):
