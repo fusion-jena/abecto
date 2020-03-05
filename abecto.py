@@ -10,7 +10,9 @@ __author__ = 'Jan Martin Keil'
 from IPython.core.display import HTML
 import html
 import json
+import os
 import pandas as pd
+import random
 import requests
 import subprocess
 import tempfile
@@ -20,8 +22,10 @@ from ipywidgets import interact, interactive, fixed, interact_manual
 import ipywidgets as widgets
 
 class Abecto:
-    def __init__(self, base, jar):
-        self.base = base
+    def __init__(self, jar, host="http://localhost", port=random.randrange(49152, 65535), storage="./.abecto"):
+        self.base = host + ":" + str(port) + "/"
+        self.port = port
+        self.storage = os.path.abspath(storage)
         self.jar = jar
 
     def getExecution(self, id):
@@ -67,7 +71,7 @@ class Abecto:
 
     def start(self):
         if not self.running():
-            subprocess.Popen(["java","-jar",self.jar])
+            subprocess.Popen(["java","-jar", self.jar, "--server.port=" + str(self.port), "--abecto.storage=" + self.storage])
             while not self.running():
                 time.sleep(0.1)
     
@@ -263,7 +267,7 @@ class Execution:
     def sortedKnowledgeBases(self, knowledgeBaseIds):
         return sorted({ knowledgeBaseId : self.server.getKnowledgeBase(knowledgeBaseId).info()["label"] for knowledgeBaseId in knowledgeBaseIds }.items(), key = lambda x:x[1])
     
-    def measures(self):
+    def measurements(self):
         data = self.resultDataFrame("Measurement")
         if not data.empty:
             knowledgeBases = self.sortedKnowledgeBases(set(data["knowledgeBase"]))

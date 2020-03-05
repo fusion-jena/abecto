@@ -9,3 +9,6 @@
 ## Jupyter Notebook
 \.ipynb_checkpoints
 /__pycache__
+
+# ABECTO
+/.abecto
