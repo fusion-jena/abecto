@@ -53,6 +53,16 @@ public class ModelSerializationLanguageTest {
 				+ "<owl:Ontology rdf:about=\"http:/example.org/rdf#\">";
 		assertEquals(ModelSerializationLanguage.RDFXML, ModelSerializationLanguage.determine(documentStart));
 
+		documentStart = ""//
+				+ "<?xml version=\"1.0\"?>\n"//
+				+ "<!DOCTYPE rdf:RDF [\n"//
+				+ "  <!ENTITY rdf     \"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">\n"//
+				+ "  <!ENTITY rdfs    \"http://www.w3.org/2000/01/rdf-schema#\">\n"//
+				+ "  <!ENTITY owl     \"http://www.w3.org/2002/07/owl#\" >\n"//
+				+ "  <!ENTITY dc      \"http://purl.org/dc/elements/1.1/\">\n"//
+				+ "  <!ENTITY dct     \"http://purl.org/dc/terms/\">\n";
+		assertEquals(ModelSerializationLanguage.RDFXML, ModelSerializationLanguage.determine(documentStart));
+
 		// TURTLE
 
 		documentStart = "@base <http://example.org/rdf#> .\n" //

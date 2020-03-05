@@ -54,7 +54,7 @@ public enum ModelSerializationLanguage {
 	 * The RDF XML Serialization as defined in <a href=
 	 * "https://www.w3.org/TR/rdf-syntax-grammar/">https://www.w3.org/TR/rdf-syntax-grammar/</a>.
 	 */
-	RDFXML("application/rdf+xml", "rdf", "RDF/XML", Pattern.compile("<rdf:RDF"),
+	RDFXML("application/rdf+xml", "rdf", "RDF/XML", Pattern.compile("<rdf:RDF|<!DOCTYPE rdf:RDF"),
 			Pattern.compile("(xml:base=\"|<owl:Ontology rdf:about=\")(?<base>[^\\\"]+)\"")),
 	/**
 	 * The Turtle Serialization as defined in <a href=
