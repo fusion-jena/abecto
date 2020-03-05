@@ -123,10 +123,7 @@ class Project:
         r.raise_for_status()
         execution = Execution(self.server, r.json())
         for processing in execution.processings:
-            if processing.info()["status"] != "SUCCEEDED":
-                html = "<h3>" + processing.info()["processorClass"] + ": " + processing.info()["status"] + "</h3>"
-                html += "<pre>" + processing.info()["stackTrace"] + "</pre>"
-                display(HTML(html))
+            processing.raiseForStatus()
         return execution
 
 class KnowledgeBase:
@@ -191,8 +188,9 @@ class Step:
     def load(self, file):
         r = requests.post(self.server.base + "step/" + self.id + "/load", files = {"file": file})
         r.raise_for_status()
+        Processing(self.server, r.json()).raiseForStatus()
         return self
-    
+
     def __add__(self, other):
         if self.server != other.server:
             raise ValueError("steps must belonge to the same server")
@@ -217,6 +215,9 @@ class Processing:
     def __init__(self, server, data):
         self.server = server
         self.id = data["id"]
+        self.stepId = data["step"]
+        self.status = data["status"]
+        self.stackTrace = data["stackTrace"]
         
     def __repr__(self):
         return str(self.info())
@@ -239,6 +240,10 @@ class Processing:
         r = requests.get(self.server.base + "processing/" + self.id)
         r.raise_for_status()
         return r.json()
+
+    def raiseForStatus(self):
+        if self.status != "SUCCEEDED" and not self.stackTrace.startswith("java.util.concurrent.ExecutionException"):
+            raise Exception("Step " + str(self.server.getStep(self.stepId)) + " has status " + self.status + ":\n" + self.stackTrace.replace("\\n","\n"))
 
 class Execution:
     def __init__(self, server, data):
@@ -409,15 +414,15 @@ class Execution:
                 if any(list(resourceData)):
                     for key in sorted(resourceData):
                         table += "<tr>"
-                        table += "<td style=\"text-align:center;\">" + key + "</td>"
-                        table += "<td style=\"text-align:right;\">" + ", ".join(resourceData[key]) + "</td>"
+                        table += "<td>" + key + "</td>"
+                        table += "<td>" + ", ".join(resourceData[key]) + "</td>"
                         table += "</tr>"
                 table += "</table>"
                 button = widgets.Button(description=resource, tooltip='Use', layout={'width': 'max-content'})
                 def use(b):
                     resourceSink.value = resource
                 button.on_click(use)
-                return widgets.VBox([button, widgets.HTML(value=table)], layout={'border': 'solid 1px lightgrey'})
+                return widgets.VBox([button, widgets.HTML(value=table)], layout={'border': 'solid 1px lightgrey', 'height': 'max-content'})
 
         def mappingPairWidget(resource1, resource2, resource1Data, resource1Data2, value):
             with output:
@@ -432,7 +437,7 @@ class Execution:
                         table += "</tr>"
                 table += "</table>"
                 button = widgets.ToggleButtons(options=[accepted,retained,rejected],value=value,tooltips=["Accept", "Retain", "Reject"], style={'button_width': 'auto'})
-                return widgets.HBox([button, widgets.HTML(value=table)], layout={'border': 'solid 1px lightgrey'})
+                return widgets.HBox([button, widgets.HTML(value=table)], layout={'border': 'solid 1px lightgrey', 'height': 'max-content'})
 
         def newMappingWidget(resource1, resource2, newMappingSink):
             with output:
