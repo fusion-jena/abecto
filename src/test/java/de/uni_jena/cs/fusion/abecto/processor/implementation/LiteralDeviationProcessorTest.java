@@ -82,19 +82,21 @@ class LiteralDeviationProcessorTest {
 		UUID id1 = UUID.randomUUID();
 		UUID id2 = UUID.randomUUID();
 		SparqlEntityManager.insert(Arrays.asList(//
-				new Category("entity", ""//
+				new Category("entity", "{"//
 						+ "?entity <http://example.org/1/string>  ?string  ."//
 						+ "?entity <http://example.org/1/integer> ?integer ."//
 						+ "?entity <http://example.org/1/decimal> ?decimal ."//
 						+ "?entity <http://example.org/1/double>  ?double  ."//
 						+ "?entity <http://example.org/1/boolean> ?boolean ."//
+						+ "}"//
 						, id1),
-				new Category("entity", ""//
+				new Category("entity", "{"//
 						+ "?entity <http://example.org/2/string>  ?string  ."//
 						+ "?entity <http://example.org/2/integer> ?integer ."//
 						+ "?entity <http://example.org/2/decimal> ?decimal ."//
 						+ "?entity <http://example.org/2/double>  ?double  ."//
 						+ "?entity <http://example.org/2/boolean> ?boolean ."//
+						+ "}"//
 						, id2)),
 				metaModel);
 		SparqlEntityManager.insert(Arrays.asList(//

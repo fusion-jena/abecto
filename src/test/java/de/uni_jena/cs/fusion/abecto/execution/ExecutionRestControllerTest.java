@@ -49,7 +49,7 @@ public class ExecutionRestControllerTest extends AbstractRepositoryConsumingTest
 				.andExpect(status().isOk());
 
 		// add category
-		String categoryParameter = "{\"patterns\":{\"entity\":\"?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .\"}}";
+		String categoryParameter = "{\"patterns\":{\"entity\":\"{?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .}\"}}";
 		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", ManualCategoryProcessor.class.getTypeName())
 				.param("input", sourceId).param("parameters", categoryParameter).accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(buffer);
@@ -98,7 +98,7 @@ public class ExecutionRestControllerTest extends AbstractRepositoryConsumingTest
 				.andExpect(status().isOk());
 
 		// add category
-		String categoryParameter = "{\"patterns\":{\"entity\":\"?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .\"}}";
+		String categoryParameter = "{\"patterns\":{\"entity\":\"{?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .}\"}}";
 		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", ManualCategoryProcessor.class.getTypeName())
 				.param("input", sourceId).param("parameters", categoryParameter).accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(buffer);
@@ -114,7 +114,7 @@ public class ExecutionRestControllerTest extends AbstractRepositoryConsumingTest
 
 		JSONAssert.assertEquals("[{"//
 				+ "\"name\":\"entity\","//
-				+ "\"pattern\":\"?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .\","//
+				+ "\"pattern\":\"{?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .}\","//
 				+ "\"knowledgeBase\":\"" + knowledgBaseId + "\""//
 				+ "}]", buffer.getString(), JSONCompareMode.LENIENT);
 	}

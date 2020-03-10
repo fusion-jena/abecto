@@ -45,7 +45,7 @@ public class JaroWinklerMappingProcessorTest {
 				":entity3 rdfs:label \"mnopmnopmnopmnopmnop\" .").getBytes()));
 		META_GRAPH = Models.getEmptyOntModel();
 		SparqlEntityManager.insert(new Category("entity",
-				"?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .", UUID.randomUUID()), META_GRAPH);
+				"{?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .}", UUID.randomUUID()), META_GRAPH);
 	}
 
 	@Test
@@ -106,9 +106,10 @@ public class JaroWinklerMappingProcessorTest {
 				+ "         :label \"abc\" .\n"//
 				+ ":entity4 :type  :Thing  .").getBytes()));
 		Model metaModel = Models.getEmptyOntModel();
-		SparqlEntityManager.insert(new Category("entity", ""//
+		SparqlEntityManager.insert(new Category("entity", "{"//
 				+ "?entity <http://example.org/type> <http://example.org/Thing> ."//
 				+ "OPTIONAL {?entity <http://example.org/label> ?label}"//
+				+ "}"//
 				, UUID.randomUUID()), metaModel);
 		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor();
 		JaroWinklerMappingProcessor.Parameter parameter = new JaroWinklerMappingProcessor.Parameter();
@@ -138,7 +139,7 @@ public class JaroWinklerMappingProcessorTest {
 		Model modelEmpty = Models.getEmptyOntModel();
 		Model metaModel = Models.getEmptyOntModel();
 		SparqlEntityManager.insert(
-				new Category("entity", "?entity <http://example.org/label> ?label .", UUID.randomUUID()), metaModel);
+				new Category("entity", "{?entity <http://example.org/label> ?label .}", UUID.randomUUID()), metaModel);
 		JaroWinklerMappingProcessor processor;
 		JaroWinklerMappingProcessor.Parameter parameter = new JaroWinklerMappingProcessor.Parameter();
 		parameter.case_sensitive = false;
@@ -173,7 +174,7 @@ public class JaroWinklerMappingProcessorTest {
 				+ ":entity2 :label \"def\" .").getBytes()));
 		Model metaModel = Models.getEmptyOntModel();
 		SparqlEntityManager.insert(
-				new Category("entity", "?entity <http://example.org/label> ?label .", UUID.randomUUID()), metaModel);
+				new Category("entity", "{?entity <http://example.org/label> ?label .}", UUID.randomUUID()), metaModel);
 		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor();
 		JaroWinklerMappingProcessor.Parameter parameter = new JaroWinklerMappingProcessor.Parameter();
 		parameter.case_sensitive = false;
@@ -198,8 +199,9 @@ public class JaroWinklerMappingProcessorTest {
 				+ ":entity3 :label \"aaaaaaaaaaa\" .\n"//
 				+ ":entity4 :label \"ccccccccccc\" .").getBytes()));
 		Model metaModel = Models.getEmptyOntModel();
-		SparqlEntityManager.insert(new Category("entity", ""//
+		SparqlEntityManager.insert(new Category("entity", "{"//
 				+ "?entity <http://example.org/label> ?label"//
+				+ "}"//
 				, UUID.randomUUID()), metaModel);
 
 		JaroWinklerMappingProcessor.Parameter parameter = new JaroWinklerMappingProcessor.Parameter();

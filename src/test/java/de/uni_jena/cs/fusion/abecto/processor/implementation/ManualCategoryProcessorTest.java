@@ -30,8 +30,8 @@ public class ManualCategoryProcessorTest {
 		ManualCategoryProcessor processor = new ManualCategoryProcessor();
 		processor.addInputProcessor(source);
 		ManualCategoryProcessor.Parameter parameter = new ManualCategoryProcessor.Parameter();
-		parameter.patterns.put("good", "?good <" + RDFS.subClassOf + "> <" + OWL.Thing + ">");
-		parameter.patterns.put("bad", "?bad <" + RDF.type + "> <" + RDFS.Class + ">");
+		parameter.patterns.put("good", "{?good <" + RDFS.subClassOf + "> <" + OWL.Thing + ">}");
+		parameter.patterns.put("bad", "{?bad <" + RDF.type + "> <" + RDFS.Class + ">}");
 		processor.setParameters(parameter);
 		processor.computeResultModel();
 		Model model = processor.getResultModel();
@@ -46,13 +46,25 @@ public class ManualCategoryProcessorTest {
 	}
 
 	@Test
-	public void invalidTemplate() {
+	public void invalidPattern() {
+		ManualCategoryProcessor processor = new ManualCategoryProcessor();
+		processor.addInputProcessor(source);
+		ManualCategoryProcessor.Parameter parameter = new ManualCategoryProcessor.Parameter();
+		parameter.patterns.put("test", "{}");
+		processor.setParameters(parameter);
+		Assertions.assertThrows(IllegalArgumentException.class, () -> {
+			processor.computeResultModel();
+		});
+	}
+
+	@Test
+	public void notParsablePattern() {
 		ManualCategoryProcessor processor = new ManualCategoryProcessor();
 		processor.addInputProcessor(source);
 		ManualCategoryProcessor.Parameter parameter = new ManualCategoryProcessor.Parameter();
 		parameter.patterns.put("test", "");
 		processor.setParameters(parameter);
-		Assertions.assertThrows(IllegalArgumentException.class, () -> {
+		Assertions.assertThrows(IllegalStateException.class, () -> {
 			processor.computeResultModel();
 		});
 	}

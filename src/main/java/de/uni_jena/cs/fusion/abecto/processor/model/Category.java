@@ -68,7 +68,7 @@ public class Category {
 		// TODO cache element group (and copy in #contains())
 		try {
 			SPARQLParser11 parser = new SPARQLParser11(new ByteArrayInputStream(this.pattern.getBytes()));
-			return (ElementGroup) parser.GroupGraphPatternSub();
+			return (ElementGroup) parser.GroupGraphPattern();
 		} catch (ParseException e) {
 			throw new IllegalStateException("Failed to parse category pattern.", e);
 		}

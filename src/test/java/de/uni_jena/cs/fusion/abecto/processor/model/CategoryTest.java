@@ -22,7 +22,7 @@ public class CategoryTest {
 
 	@Test
 	public void deSerializeation() throws JsonProcessingException {
-		Category category = new Category("entity", "?entity a ?entity", UUID.randomUUID());
+		Category category = new Category("entity", "{?entity a ?entity}", UUID.randomUUID());
 		String serialized = mapper.writeValueAsString(category);
 		Category deserialized = mapper.readValue(serialized, category.getClass());
 		assertEquals(category, deserialized);

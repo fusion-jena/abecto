@@ -61,13 +61,15 @@ class ResourceDeviationProcessorTest {
 		UUID id1 = UUID.randomUUID();
 		UUID id2 = UUID.randomUUID();
 		SparqlEntityManager.insert(Arrays.asList(//
-				new Category("entity", ""//
+				new Category("entity", "{"//
 						+ "?entity <http://example.org/1/other> ?other ."//
 						+ "?entity <http://example.org/1/self>  ?self  ."//
+						+ "}"//
 						, id1),
-				new Category("entity", ""//
+				new Category("entity", "{"//
 						+ "?entity <http://example.org/2/other> ?other ."//
 						+ "?entity <http://example.org/2/self>  ?self  ."//
+						+ "}"//
 						, id2)),
 				metaModel);
 		SparqlEntityManager.insert(Arrays.asList(//

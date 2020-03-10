@@ -94,7 +94,7 @@ public class TestDataGenerator {
 		Map<String, String> patterns = new HashMap<>();
 
 		for (int classNumber = 0; classNumber < classFactor; classNumber++) {
-			StringBuilder pattern = new StringBuilder();
+			StringBuilder pattern = new StringBuilder("{");
 			String className = generateClassName(classNumber);
 
 			pattern.append("?" + className + " <" + RDF.type + "> <" + getUri(className) + "> .");
@@ -113,6 +113,7 @@ public class TestDataGenerator {
 						"OPTIONAL { ?" + className + " <" + getUri(dataPropertyName) + "> ?" + dataPropertyName + " }");
 			}
 
+			pattern.append("}");
 			patterns.put(className, pattern.toString());
 		}
 		return patterns;

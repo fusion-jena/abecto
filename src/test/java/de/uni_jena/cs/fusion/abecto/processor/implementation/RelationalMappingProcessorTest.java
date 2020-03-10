@@ -47,27 +47,33 @@ class RelationalMappingProcessorTest {
 		UUID id1 = UUID.randomUUID();
 		UUID id2 = UUID.randomUUID();
 		SparqlEntityManager.insert(Arrays.asList(//
-				new Category("dummy", ""//
+				new Category("dummy", "{"//
 						+ "?dummy <http://example.org/1/label> ?label ."//
+						+ "}"//
 						, id1),
-				new Category("valid", ""//
+				new Category("valid", "{"//
 						+ "?valid ^<http://example.org/1/ref2a> ?ref2a ."//
 						+ "?valid ^<http://example.org/1/ref2b> ?ref2b ."//
+						+ "}"//
 						, id1),
-				new Category("invalid", ""//
+				new Category("invalid", "{"//
 						+ "?invalid <http://example.org/1/ref3a> ?ref3a ."//
 						+ "?invalid <http://example.org/1/ref3b> ?ref3b ."//
+						+ "}"//
 						, id1),
-				new Category("dummy", ""//
+				new Category("dummy", "{"//
 						+ "?dummy <http://example.org/2/label> ?label ."//
+						+ "}"//
 						, id2),
-				new Category("valid", ""//
+				new Category("valid", "{"//
 						+ "?valid <http://example.org/2/ref2a> ?ref2a ."//
 						+ "?valid <http://example.org/2/ref2b> ?ref2b ."//
+						+ "}"//
 						, id2),
-				new Category("invalid", ""//
+				new Category("invalid", "{"//
 						+ "?invalid <http://example.org/2/ref3a> ?ref3a ."//
 						+ "?invalid <http://example.org/2/ref3b> ?ref3b ."//
+						+ "}"//
 						, id2)),
 				metaModel);
 		SparqlEntityManager.insert(Arrays.asList(//

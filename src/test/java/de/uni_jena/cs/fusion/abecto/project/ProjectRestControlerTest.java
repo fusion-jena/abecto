@@ -142,7 +142,7 @@ class ProjectRestControlerTest extends AbstractRepositoryConsumingTest {
 		String transformation2Id = buffer.getId();
 
 		// add categories
-		String categoryParameter = "{\"patterns\":{\"entity\":\"?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .\"}}";
+		String categoryParameter = "{\"patterns\":{\"entity\":\"{?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .}\"}}";
 		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", ManualCategoryProcessor.class.getTypeName())
 				.param("input", transformation1Id).param("parameters", categoryParameter)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
