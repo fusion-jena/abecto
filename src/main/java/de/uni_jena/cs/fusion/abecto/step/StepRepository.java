@@ -4,11 +4,11 @@ import java.util.UUID;
 
 import org.springframework.data.repository.CrudRepository;
 
-import de.uni_jena.cs.fusion.abecto.knowledgebase.KnowledgeBase;
+import de.uni_jena.cs.fusion.abecto.ontology.Ontology;
 import de.uni_jena.cs.fusion.abecto.project.Project;
 
 public interface StepRepository extends CrudRepository<Step, UUID> {
 	public Iterable<Step> findAllByProject(Project project);
 
-	public Iterable<Step> findAllByKnowledgeBase(KnowledgeBase knowledgeBase);
+	public Iterable<Step> findAllByOntology(Ontology ontology);
 }

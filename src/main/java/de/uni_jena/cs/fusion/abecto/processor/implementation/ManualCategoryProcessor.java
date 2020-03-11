@@ -33,12 +33,12 @@ public class ManualCategoryProcessor extends AbstractMetaProcessor<ManualCategor
 			throw new IllegalArgumentException("Empty pattern list.");
 		}
 
-		UUID knowledgeBase = this.getKnowledgeBase();
+		UUID ontology = this.getOntology();
 
 		for (Entry<String, String> patternOfCategory : this.getParameters().patterns.entrySet()) {
 			String categoryName = patternOfCategory.getKey();
 			String categoryPattern = patternOfCategory.getValue();
-			categories.add(new Category(categoryName, categoryPattern, knowledgeBase));
+			categories.add(new Category(categoryName, categoryPattern, ontology));
 		}
 
 		SparqlEntityManager.insert(categories, this.getResultModel());

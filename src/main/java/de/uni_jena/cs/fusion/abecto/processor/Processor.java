@@ -131,13 +131,13 @@ public interface Processor<P extends ParameterModel> extends Callable<Model> {
 	public Status getStatus();
 
 	/**
-	 * Provides the identifier of the knowledge base, this {@link Processor} belongs
+	 * Provides the identifier of the ontology, this {@link Processor} belongs
 	 * to. <strong>Using this method restricts the Processor to work on exact one
-	 * knowledge base.</strong>
+	 * ontology.</strong>
 	 * 
-	 * @return the knowledge base identifier
+	 * @return the ontology identifier
 	 */
-	public UUID getKnowledgeBase();
+	public UUID getOntology();
 
 	/**
 	 * 

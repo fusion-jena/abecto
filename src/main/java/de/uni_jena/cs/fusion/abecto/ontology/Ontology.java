@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.knowledgebase;
+package de.uni_jena.cs.fusion.abecto.ontology;
 
 import java.util.Collection;
 
@@ -15,12 +15,12 @@ import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
 import de.uni_jena.cs.fusion.abecto.util.EntityToIdConverter;
 
 /**
- * Provides a representation of a knowledge base that can be persisted.
+ * Provides a representation of a ontology that can be persisted.
  *
- * Knowledge bases consist of sources represented by {@link Step}s.
+ * Ontologies consist of sources represented by {@link Step}s.
  */
 @Entity
-public class KnowledgeBase extends AbstractEntityWithUUID {
+public class Ontology extends AbstractEntityWithUUID {
 
 	protected String label;
 
@@ -28,13 +28,13 @@ public class KnowledgeBase extends AbstractEntityWithUUID {
 	@JsonSerialize(converter = EntityToIdConverter.class)
 	protected Project project;
 
-	@OneToMany(mappedBy = "knowledgeBase")
+	@OneToMany(mappedBy = "ontology")
 	protected Collection<Step> sources;
 
-	protected KnowledgeBase() {
+	protected Ontology() {
 	}
 
-	public KnowledgeBase(Project project, String label) {
+	public Ontology(Project project, String label) {
 		this.project = project;
 		this.label = label;
 	}

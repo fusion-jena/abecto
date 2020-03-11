@@ -20,8 +20,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.uni_jena.cs.fusion.abecto.knowledgebase.KnowledgeBase;
-import de.uni_jena.cs.fusion.abecto.knowledgebase.KnowledgeBaseRepository;
+import de.uni_jena.cs.fusion.abecto.ontology.Ontology;
+import de.uni_jena.cs.fusion.abecto.ontology.OntologyRepository;
 import de.uni_jena.cs.fusion.abecto.parameter.Parameter;
 import de.uni_jena.cs.fusion.abecto.parameter.ParameterRepository;
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
@@ -45,7 +45,7 @@ public class StepRestController {
 	@Autowired
 	ProjectRepository projectRepository;
 	@Autowired
-	KnowledgeBaseRepository knowledgeBaseRepository;
+	OntologyRepository ontologyRepository;
 	@Autowired
 	StepRepository stepRepository;
 	@Autowired
@@ -64,7 +64,7 @@ public class StepRestController {
 	 */
 	@PostMapping("/step")
 	public Step create(@RequestParam("class") String processorClassName,
-			@RequestParam(name = "knowledgebase", required = false) UUID knowledgebaseId,
+			@RequestParam(name = "ontology", required = false) UUID ontologyId,
 			@RequestParam(name = "input", required = false) Collection<UUID> inputStepIds,
 			@RequestParam(name = "parameters", required = false) String parameterJson) {
 
@@ -77,23 +77,23 @@ public class StepRestController {
 						"Parameter \"input\" not permited for SourceProcessors.");
 			}
 
-			// check knowledgebase parameter
-			KnowledgeBase knowledgeBase = knowledgeBaseRepository.findById(knowledgebaseId)
+			// check ontology parameter
+			Ontology ontology = ontologyRepository.findById(ontologyId)
 					.orElseThrow(new Supplier<ResponseStatusException>() {
 						@Override
 						public ResponseStatusException get() {
-							return new ResponseStatusException(HttpStatus.BAD_REQUEST, "KnowledgeBase not found.");
+							return new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ontology not found.");
 						}
 					});
 			// create step
 			Parameter parameter = parameterRepository.save(new Parameter(getParameter(processorClass, parameterJson)));
-			return stepRepository.save(new Step(processorClass, parameter, knowledgeBase));
+			return stepRepository.save(new Step(processorClass, parameter, ontology));
 
 		} else {
-			// check knowledgebase parameter
-			if (knowledgebaseId != null) {
+			// check ontology parameter
+			if (ontologyId != null) {
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-						"Parameter \"knowledgebase\" only permited for SourceProcessors.");
+						"Parameter \"ontology\" only permited for SourceProcessors.");
 			}
 			// check input parameter
 			for (UUID inputStepId : inputStepIds) {

@@ -46,7 +46,7 @@ public class StepRestControllerTest extends AbstractRepositoryConsumingTest {
 	private final String unknownUuid = UUID.randomUUID().toString();
 
 	private String projectId;
-	private String knowledgBaseId;
+	private String ontologyId;
 
 	@BeforeEach
 	public void init() throws Exception {
@@ -54,9 +54,9 @@ public class StepRestControllerTest extends AbstractRepositoryConsumingTest {
 		mvc.perform(MockMvcRequestBuilders.post("/project").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(buffer);
 		projectId = buffer.getId();
-		mvc.perform(MockMvcRequestBuilders.post("/knowledgebase").param("project", projectId)
+		mvc.perform(MockMvcRequestBuilders.post("/ontology").param("project", projectId)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
-		knowledgBaseId = buffer.getId();
+		ontologyId = buffer.getId();
 	}
 
 	@Test
@@ -69,14 +69,14 @@ public class StepRestControllerTest extends AbstractRepositoryConsumingTest {
 		// create new step without parameter
 		mvc.perform(MockMvcRequestBuilders.post("/step")
 				.param("class", "de.uni_jena.cs.fusion.abecto.step.StepRestControllerTest$ParameterProcessor")
-				.param("knowledgebase", knowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
+				.param("ontology", ontologyId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 
 		// create new step with parameter
 		String parametersJson = "{\"parameterName\":\"parameterValue\"}";
 		mvc.perform(MockMvcRequestBuilders.post("/step")
 				.param("class", "de.uni_jena.cs.fusion.abecto.step.StepRestControllerTest$ParameterProcessor")
-				.param("parameters", parametersJson).param("knowledgebase", knowledgBaseId)
+				.param("parameters", parametersJson).param("ontology", ontologyId)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 
 		// get step
@@ -85,10 +85,10 @@ public class StepRestControllerTest extends AbstractRepositoryConsumingTest {
 		JSONAssert.assertEquals(parametersJson, buffer.getJson().path("parameter").path("parameters").toString(),
 				false);
 
-		// use unknown knowledgeBase id
+		// use unknown ontology id
 		mvc.perform(MockMvcRequestBuilders.post("/step")
 				.param("class", "de.uni_jena.cs.fusion.abecto.step.StepRestControllerTest$ParameterProcessor")
-				.param("knowledgebase", unknownUuid).accept(MediaType.APPLICATION_JSON))
+				.param("ontology", unknownUuid).accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isBadRequest());
 
 		// use unknown step id
@@ -105,7 +105,7 @@ public class StepRestControllerTest extends AbstractRepositoryConsumingTest {
 		// create new source without parameter
 		mvc.perform(MockMvcRequestBuilders.post("/step")
 				.param("class", "de.uni_jena.cs.fusion.abecto.step.StepRestControllerTest$NoUploadProcessor")
-				.param("knowledgebase", knowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
+				.param("ontology", ontologyId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 
 		mvc.perform(MockMvcRequestBuilders.post(String.format("/step/%s/load", buffer.getId()))
@@ -119,7 +119,7 @@ public class StepRestControllerTest extends AbstractRepositoryConsumingTest {
 		// create new source without parameter
 		mvc.perform(MockMvcRequestBuilders.post("/step")
 				.param("class", "de.uni_jena.cs.fusion.abecto.step.StepRestControllerTest$UploadProcessor")
-				.param("knowledgebase", knowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
+				.param("ontology", ontologyId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 
 		String content = "File Content";
@@ -138,7 +138,7 @@ public class StepRestControllerTest extends AbstractRepositoryConsumingTest {
 
 		// add source
 		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", "RdfFileSourceProcessor")
-				.param("knowledgebase", knowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
+				.param("ontology", ontologyId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 		String sourceId = buffer.getId();
 
@@ -166,7 +166,7 @@ public class StepRestControllerTest extends AbstractRepositoryConsumingTest {
 		for (int i = 0; i < 1; i++) {
 			mvc.perform(MockMvcRequestBuilders.post("/step")
 					.param("class", "de.uni_jena.cs.fusion.abecto.step.StepRestControllerTest$ParameterProcessor")
-					.param("knowledgebase", knowledgBaseId).accept(MediaType.APPLICATION_JSON))
+					.param("ontology", ontologyId).accept(MediaType.APPLICATION_JSON))
 					.andExpect(status().isOk()).andDo(buffer);
 			expected.add(buffer.getId());
 		}

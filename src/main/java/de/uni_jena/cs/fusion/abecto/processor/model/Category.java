@@ -46,18 +46,18 @@ public class Category {
 	@SparqlPattern(subject = "id", predicate = "abecto:categoryPattern")
 	public String pattern;
 	/**
-	 * The knowledge base this category definition belongs to.
+	 * The ontology this category definition belongs to.
 	 */
-	@SparqlPattern(subject = "id", predicate = "abecto:knowledgeBase")
-	public UUID knowledgeBase;
+	@SparqlPattern(subject = "id", predicate = "abecto:ontology")
+	public UUID ontology;
 
 	public Category() {
 	}
 
-	public Category(String name, String pattern, UUID knowledgeBase) throws IllegalArgumentException {
+	public Category(String name, String pattern, UUID ontology) throws IllegalArgumentException {
 		this.name = name;
 		this.pattern = pattern;
-		this.knowledgeBase = knowledgeBase;
+		this.ontology = ontology;
 		if (pattern != null) {
 			this.validate();
 		}
@@ -130,7 +130,7 @@ public class Category {
 
 	@Override
 	public int hashCode() {
-		return this.name.hashCode() + this.pattern.hashCode() + this.knowledgeBase.hashCode();
+		return this.name.hashCode() + this.pattern.hashCode() + this.ontology.hashCode();
 	}
 
 	@Override
@@ -138,7 +138,7 @@ public class Category {
 		if (obj instanceof Category) {
 			Category other = (Category) obj;
 			return Objects.equals(this.name, other.name) && Objects.equals(this.pattern, other.pattern)
-					&& Objects.equals(this.knowledgeBase, other.knowledgeBase);
+					&& Objects.equals(this.ontology, other.ontology);
 		}
 		return false;
 	}

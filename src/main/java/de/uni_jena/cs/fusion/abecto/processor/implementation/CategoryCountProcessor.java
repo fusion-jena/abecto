@@ -64,18 +64,18 @@ public class CategoryCountProcessor extends AbstractMetaProcessor<EmptyParameter
 			targets.forEach(
 					(target) -> categoryQueries.put(target, countQuery(category.name, categoryPattern, target)));
 
-			// use the model destined by the knowledge base parameter of the category
-			Model knowledgeBaseModel = this.inputGroupModels.get(category.knowledgeBase);
+			// use the model destined by the ontology parameter of the category
+			Model ontologyModel = this.inputGroupModels.get(category.ontology);
 
 			for (String target : targets) {
-				// get counts for current category, knowledge base and target
+				// get counts for current category, ontology and target
 				ResultSet categoryQueryResult = QueryExecutionFactory
-						.create(categoryQueries.get(target), knowledgeBaseModel).execSelect();
+						.create(categoryQueries.get(target), ontologyModel).execSelect();
 				if (categoryQueryResult.hasNext()) {
 					Long count = categoryQueryResult.next().getLiteral("count").getLong();
 					// add count to results
 					// TODO build sum for multiple entries per kb and name
-					measurements.add(measurement(category.knowledgeBase, category.name, target, count));
+					measurements.add(measurement(category.ontology, category.name, target, count));
 				} else {
 					throw new IllegalStateException();
 				}

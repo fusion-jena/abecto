@@ -17,9 +17,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.uni_jena.cs.fusion.abecto.execution.Execution;
-import de.uni_jena.cs.fusion.abecto.knowledgebase.KnowledgeBase;
-import de.uni_jena.cs.fusion.abecto.knowledgebase.KnowledgeBaseRepository;
-import de.uni_jena.cs.fusion.abecto.knowledgebase.KnowledgeBaseRestController;
+import de.uni_jena.cs.fusion.abecto.ontology.Ontology;
+import de.uni_jena.cs.fusion.abecto.ontology.OntologyRepository;
+import de.uni_jena.cs.fusion.abecto.ontology.OntologyRestController;
 import de.uni_jena.cs.fusion.abecto.processing.Processing;
 import de.uni_jena.cs.fusion.abecto.processing.ProcessingRepository;
 import de.uni_jena.cs.fusion.abecto.step.Step;
@@ -33,9 +33,9 @@ public class ProjectRestControler {
 	@Autowired
 	ProcessingRepository processingRepository;
 	@Autowired
-	KnowledgeBaseRepository knowledgeBaseRepository;
+	OntologyRepository ontologyRepository;
 	@Autowired
-	KnowledgeBaseRestController knowledgeBaseRestController;
+	OntologyRestController ontologyRestController;
 	@Autowired
 	StepRepository stepRepository;
 	@Autowired
@@ -55,8 +55,8 @@ public class ProjectRestControler {
 		for (Step step : stepRepository.findAllByProject(project)) {
 			stepRestController.delete(step.getId());
 		}
-		for (KnowledgeBase knowledgeBase : knowledgeBaseRepository.findAllByProject(project)) {
-			knowledgeBaseRestController.delete(knowledgeBase.getId());
+		for (Ontology ontology : ontologyRepository.findAllByProject(project)) {
+			ontologyRestController.delete(ontology.getId());
 		}
 		projectRepository.delete(project);
 	}
@@ -79,11 +79,11 @@ public class ProjectRestControler {
 			@RequestParam(name = "await", defaultValue = "false") boolean await) {
 		try {
 			Project project = projectRepository.findById(projectUuid).orElseThrow();
-			Collection<UUID> sourceKnowledgeBaseProcessingIds = new ArrayList<>();
-			for (KnowledgeBase knowledgeBase : knowledgeBaseRepository.findAllByProject(project)) {
-				for (Step sourceStep : knowledgeBase.getSources()) {
+			Collection<UUID> sourceOntologyProcessingIds = new ArrayList<>();
+			for (Ontology ontology : ontologyRepository.findAllByProject(project)) {
+				for (Step sourceStep : ontology.getSources()) {
 					try {
-						sourceKnowledgeBaseProcessingIds
+						sourceOntologyProcessingIds
 								.add(processingRepository.findTopByStepOrderByStartDateTimeDesc(sourceStep).getId());
 					} catch (NoSuchElementException e) {
 						throw new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -92,7 +92,7 @@ public class ProjectRestControler {
 				}
 			}
 			try {
-				return projectRunner.execute(projectUuid, sourceKnowledgeBaseProcessingIds, await);
+				return projectRunner.execute(projectUuid, sourceOntologyProcessingIds, await);
 			} catch (InterruptedException e) {
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
 						"Waiting for termination of Project execution interrupted.", e);

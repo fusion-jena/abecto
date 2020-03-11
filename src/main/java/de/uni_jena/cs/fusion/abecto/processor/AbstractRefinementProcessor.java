@@ -36,28 +36,28 @@ public abstract class AbstractRefinementProcessor<P extends ParameterModel> exte
 	 */
 	protected final Set<Model> metaSubModels = new HashSet<>();
 	/**
-	 * Unions of the input group models by knowledge base.
+	 * Unions of the input group models by ontology.
 	 * 
 	 * @see {@link #inputGroupSubModels} provides the single input group models by
-	 *      knowledge base.
-	 * @see {@link #inputModelUnion} provides a union over all knowledge bases. .
+	 *      ontology.
+	 * @see {@link #inputModelUnion} provides a union over all ontologies.
 	 */
 	protected final Map<UUID, Model> inputGroupModels = new HashMap<>();
 	/**
-	 * The input group models by knowledge base.
+	 * The input group models by ontology.
 	 * 
 	 * @see {@link #inputGroupModels} provides a union of he input group models by
-	 *      knowledge base.
-	 * @see {@link #inputModelUnion} provides a union over all knowledge bases. .
+	 *      ontology.
+	 * @see {@link #inputModelUnion} provides a union over all ontologies.
 	 */
 	protected final Map<UUID, Collection<Model>> inputGroupSubModels = new HashMap<>();
 	/**
 	 * Unions of all input group models.
 	 * 
 	 * @see {@link #inputGroupModels} provides a union of he input group models by
-	 *      knowledge base.
+	 *      ontology.
 	 * @see {@link #inputGroupSubModels} provides the single input group models by
-	 *      knowledge base.
+	 *      ontology.
 	 */
 	protected final OntModel inputModelUnion = Models.getEmptyOntModel();
 
@@ -85,13 +85,12 @@ public abstract class AbstractRefinementProcessor<P extends ParameterModel> exte
 	}
 
 	@Override
-	public UUID getKnowledgeBase() {
-		return this.inputProcessors.stream().map(Processor::getKnowledgeBase).reduce((a, b) -> {
+	public UUID getOntology() {
+		return this.inputProcessors.stream().map(Processor::getOntology).reduce((a, b) -> {
 			if (a.equals(b)) {
 				return a;
 			} else {
-				throw new IllegalStateException(
-						"Failed to get knowledge base UUID. Found multiple knowledge base UUID.");
+				throw new IllegalStateException("Failed to get ontology UUID. Found multiple ontology UUID.");
 			}
 		}).orElseThrow();
 	}

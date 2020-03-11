@@ -28,7 +28,7 @@ import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 public class RelationalMappingProcessor extends AbstractMappingProcessor<RelationalMappingProcessor.Parameter> {
 
 	@Override
-	public Collection<Mapping> computeMapping(Model model1, Model model2, UUID knowledgeBaseId1, UUID knowledgeBaseId2)
+	public Collection<Mapping> computeMapping(Model model1, Model model2, UUID ontologyId1, UUID ontologyId2)
 			throws Exception {
 
 		// load categories
@@ -36,18 +36,18 @@ public class RelationalMappingProcessor extends AbstractMappingProcessor<Relatio
 		Category category1;
 		try {
 			category1 = SparqlEntityManager
-					.selectOne(new Category(categoryName, null, knowledgeBaseId1), this.metaModel).orElseThrow();
+					.selectOne(new Category(categoryName, null, ontologyId1), this.metaModel).orElseThrow();
 		} catch (IllegalStateException | NullPointerException | ReflectiveOperationException
 				| NoSuchElementException e) {
-			throw new Exception("Failed to load category definition for knowledge base 1.", e);
+			throw new Exception("Failed to load category definition for ontology 1.", e);
 		}
 		Category category2;
 		try {
 			category2 = SparqlEntityManager
-					.selectOne(new Category(categoryName, null, knowledgeBaseId2), this.metaModel).orElseThrow();
+					.selectOne(new Category(categoryName, null, ontologyId2), this.metaModel).orElseThrow();
 		} catch (IllegalStateException | NullPointerException | ReflectiveOperationException
 				| NoSuchElementException e) {
-			throw new Exception("Failed to load category definition for knowledge base 2.", e);
+			throw new Exception("Failed to load category definition for ontology 2.", e);
 		}
 
 		// check variablesF
@@ -62,7 +62,7 @@ public class RelationalMappingProcessor extends AbstractMappingProcessor<Relatio
 			}
 		}
 
-		// load mappings form knowledge base 1 to knowledge base 2
+		// load mappings form ontology 1 to ontology 2
 		Map<Resource, Collection<Resource>> mappingIndex = new HashMap<>();
 		try {
 			for (Mapping mapping : SparqlEntityManager.select(Mapping.of(), this.metaModel)) {
@@ -77,7 +77,7 @@ public class RelationalMappingProcessor extends AbstractMappingProcessor<Relatio
 			throw new Exception("Failed to load existing mappings.", e);
 		}
 
-		// prepare entity index of knowledge base 2
+		// prepare entity index of ontology 2
 		Map<String, Map<Resource, Collection<Resource>>> index = new HashMap<>();
 		for (String variable : variables) {
 			index.put(variable, new HashMap<>());
@@ -95,7 +95,7 @@ public class RelationalMappingProcessor extends AbstractMappingProcessor<Relatio
 						}).add(entity);
 					} catch (ClassCastException e) {
 						// value is not a resource
-						Issue issue = Issue.unexpectedValueType(knowledgeBaseId2, entity, variable, "resource");
+						Issue issue = Issue.unexpectedValueType(ontologyId2, entity, variable, "resource");
 						SparqlEntityManager.insert(issue, this.getResultModel());
 						continue resultLoop;
 					}
@@ -120,7 +120,7 @@ public class RelationalMappingProcessor extends AbstractMappingProcessor<Relatio
 						}
 					} catch (ClassCastException e) {
 						// value is not a resource
-						Issue issue = Issue.unexpectedValueType(knowledgeBaseId1, entity, variable, "resource");
+						Issue issue = Issue.unexpectedValueType(ontologyId1, entity, variable, "resource");
 						SparqlEntityManager.insert(issue, this.getResultModel());
 						continue resultLoop;
 					}

@@ -8,7 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import de.uni_jena.cs.fusion.abecto.execution.ExecutionRepository;
-import de.uni_jena.cs.fusion.abecto.knowledgebase.KnowledgeBaseRepository;
+import de.uni_jena.cs.fusion.abecto.ontology.OntologyRepository;
 import de.uni_jena.cs.fusion.abecto.parameter.ParameterRepository;
 import de.uni_jena.cs.fusion.abecto.processing.ProcessingRepository;
 import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
@@ -23,7 +23,7 @@ public abstract class AbstractRepositoryConsumingTest {
 	@Autowired
 	ProjectRepository projectRepository;
 	@Autowired
-	KnowledgeBaseRepository knowledgeBaseRepository;
+	OntologyRepository ontologyRepository;
 	@Autowired
 	StepRepository stepRepository;
 	@Autowired
@@ -37,7 +37,7 @@ public abstract class AbstractRepositoryConsumingTest {
 		processingRepository.deleteAll();
 		stepRepository.deleteAll();
 		parameterRepository.deleteAll();
-		knowledgeBaseRepository.deleteAll();
+		ontologyRepository.deleteAll();
 		projectRepository.deleteAll();
 	}
 }

@@ -37,12 +37,12 @@ public class ParameterRestControllerTest extends AbstractRepositoryConsumingTest
 		mvc.perform(MockMvcRequestBuilders.post("/project").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(buffer);
 		String projectId = buffer.getId();
-		mvc.perform(MockMvcRequestBuilders.post("/knowledgebase").param("project", projectId)
+		mvc.perform(MockMvcRequestBuilders.post("/ontology").param("project", projectId)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		String kowledgBaseId = buffer.getId();
 		mvc.perform(MockMvcRequestBuilders.post("/step")
 				.param("class", "de.uni_jena.cs.fusion.abecto.parameter.ParameterRestControllerTest$ParameterProcessor")
-				.param("knowledgebase", kowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
+				.param("ontology", kowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 		String configurationId = buffer.getId();
 

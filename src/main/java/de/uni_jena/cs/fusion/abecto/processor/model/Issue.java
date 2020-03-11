@@ -14,8 +14,8 @@ import de.uni_jena.cs.fusion.abecto.sparq.SparqlPattern;
 public class Issue {
 	@SparqlPattern(predicate = "rdf:type", object = "abecto:Issue")
 	public Resource id;
-	@SparqlPattern(subject = "id", predicate = "abecto:affectedKnowledgeBase")
-	public final UUID knowledgeBase;
+	@SparqlPattern(subject = "id", predicate = "abecto:affectedOntology")
+	public final UUID ontology;
 	@SparqlPattern(subject = "id", predicate = "abecto:affectedEntity")
 	public final Resource entity;
 	@SparqlPattern(subject = "id", predicate = "abecto:issueType")
@@ -25,16 +25,16 @@ public class Issue {
 
 	public Issue() {
 		this.id = null;
-		this.knowledgeBase = null;
+		this.ontology = null;
 		this.entity = null;
 		this.type = null;
 		this.message = null;
 	}
 
-	public Issue(@Member("id") Resource id, @Member("knowledgeBase") UUID knowledgeBase,
+	public Issue(@Member("id") Resource id, @Member("ontology") UUID ontology,
 			@Member("entity") Resource entity, @Member("type") String type, @Member("message") String message) {
 		this.id = id;
-		this.knowledgeBase = knowledgeBase;
+		this.ontology = ontology;
 		this.entity = entity;
 		this.type = type;
 		this.message = message;
@@ -46,18 +46,18 @@ public class Issue {
 			return false;
 		}
 		Issue o = (Issue) other;
-		return Objects.equals(this.knowledgeBase, o.knowledgeBase) && Objects.equals(this.entity, o.entity)
+		return Objects.equals(this.ontology, o.ontology) && Objects.equals(this.entity, o.entity)
 				&& Objects.equals(this.type, o.type) && Objects.equals(this.message, o.message);
 	}
 
 	@Override
 	public int hashCode() {
-		return this.entity.hashCode() + this.type.hashCode() + this.knowledgeBase.hashCode() + this.message.hashCode();
+		return this.entity.hashCode() + this.type.hashCode() + this.ontology.hashCode() + this.message.hashCode();
 	}
 
-	public static Issue unexpectedValueType(UUID knowledgeBase, Resource resource, String variableName,
+	public static Issue unexpectedValueType(UUID ontology, Resource resource, String variableName,
 			String expectedType) {
-		return new Issue(null, knowledgeBase, resource, "UnexpectedValueType",
+		return new Issue(null, ontology, resource, "UnexpectedValueType",
 				String.format("Value of property \"%s\" is not a %s.", variableName, expectedType));
 	}
 

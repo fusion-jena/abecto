@@ -24,7 +24,7 @@ public class Measurement {
 	 * The knowledge base on which the value was measured.
 	 */
 	@SparqlPattern(subject = "id", predicate = "abecto:knowledgeBase")
-	public final UUID knowledgeBase;
+	public final UUID ontology;
 	/**
 	 * The measurement type.
 	 */
@@ -54,7 +54,7 @@ public class Measurement {
 	public Measurement() {
 		this.id = null;
 		this.value = null;
-		this.knowledgeBase = null;
+		this.ontology = null;
 		this.measure = null;
 		this.dimension1Key = null;
 		this.dimension1Value = null;
@@ -62,7 +62,7 @@ public class Measurement {
 		this.dimension2Value = null;
 	}
 
-	public Measurement(@Member("id") Resource id, @Member("knowledgeBase") UUID knowledgeBase,
+	public Measurement(@Member("id") Resource id, @Member("ontology") UUID ontology,
 			@Member("measure") String measure, @Member("value") Long value,
 			@Member("dimension1Key") Optional<String> dimension1Key,
 			@Member("dimension1Value") Optional<String> dimension1Value,
@@ -70,7 +70,7 @@ public class Measurement {
 			@Member("dimension2Value") Optional<String> dimension2Value) {
 		this.id = id;
 		this.value = value;
-		this.knowledgeBase = knowledgeBase;
+		this.ontology = ontology;
 		this.measure = measure;
 		this.dimension1Key = dimension1Key;
 		this.dimension1Value = dimension1Value;
@@ -80,7 +80,7 @@ public class Measurement {
 
 	@Override
 	public int hashCode() {
-		return value.hashCode() + knowledgeBase.hashCode() + measure.hashCode() + dimension1Key.hashCode()
+		return value.hashCode() + ontology.hashCode() + measure.hashCode() + dimension1Key.hashCode()
 				+ dimension1Value.hashCode() + dimension2Key.hashCode() + dimension2Value.hashCode();
 	}
 
@@ -88,7 +88,7 @@ public class Measurement {
 	public boolean equals(Object obj) {
 		if (obj instanceof Measurement) {
 			Measurement other = (Measurement) obj;
-			return Objects.equal(this.value, other.value) && Objects.equal(this.knowledgeBase, other.knowledgeBase)
+			return Objects.equal(this.value, other.value) && Objects.equal(this.ontology, other.ontology)
 					&& Objects.equal(this.measure, other.measure)
 					&& Objects.equal(this.dimension1Key, other.dimension1Key)
 					&& Objects.equal(this.dimension1Value, other.dimension1Value)

@@ -30,7 +30,7 @@ public abstract class AbstractDeviationProcessor<Parameter>
 
 	@Override
 	public final void computeResultModel() throws Exception {
-		Set<UUID> knowledgeBaseIds = this.inputGroupModels.keySet();
+		Set<UUID> ontologyIds = this.inputGroupModels.keySet();
 
 		Collection<Deviation> deviations = new ArrayList<>();
 
@@ -45,26 +45,26 @@ public abstract class AbstractDeviationProcessor<Parameter>
 			}).add(mapping.resource1);
 		}
 
-		// iterate knowledge base pairs
-		for (UUID knowledgeBaseId1 : knowledgeBaseIds) {
-			Model model1 = this.inputGroupModels.get(knowledgeBaseId1);
-			for (UUID knowledgeBaseId2 : knowledgeBaseIds) {
-				if (knowledgeBaseId1.compareTo(knowledgeBaseId2) > 0) { // do not do work twice
-					Model model2 = this.inputGroupModels.get(knowledgeBaseId2);
+		// iterate ontology pairs
+		for (UUID ontologyId1 : ontologyIds) {
+			Model model1 = this.inputGroupModels.get(ontologyId1);
+			for (UUID ontologyId2 : ontologyIds) {
+				if (ontologyId1.compareTo(ontologyId2) > 0) { // do not do work twice
+					Model model2 = this.inputGroupModels.get(ontologyId2);
 
 					// iterate categories
 					for (String categoryName : this.getParameters().variables.keySet()) {
 						Optional<Category> category1Optional = SparqlEntityManager
-								.selectOne(new Category(categoryName, null, knowledgeBaseId1), this.metaModel);
+								.selectOne(new Category(categoryName, null, ontologyId1), this.metaModel);
 						Optional<Category> category2Optional = SparqlEntityManager
-								.selectOne(new Category(categoryName, null, knowledgeBaseId2), this.metaModel);
+								.selectOne(new Category(categoryName, null, ontologyId2), this.metaModel);
 						if (category1Optional.isPresent() && category2Optional.isPresent()) {
 							Category category1 = category1Optional.orElseThrow();
 							Category category2 = category2Optional.orElseThrow();
 
 							Collection<String> variableNames = this.getParameters().variables.get(categoryName);
 
-							deviations.addAll(computeDeviations(model1, model2, knowledgeBaseId1, knowledgeBaseId2,
+							deviations.addAll(computeDeviations(model1, model2, ontologyId1, ontologyId2,
 									categoryName, variableNames, category1, category2, mappings));
 						}
 					}
@@ -78,21 +78,21 @@ public abstract class AbstractDeviationProcessor<Parameter>
 	/**
 	 * Computes the deviations of two models.
 	 * 
-	 * @param model1           the first model to process
-	 * @param model2           the second model to process
-	 * @param knowledgeBaseId1 the knowledge base id of the first model
-	 * @param knowledgeBaseId2 the knowledge base id of the second model
+	 * @param model1        the first model to process
+	 * @param model2        the second model to process
+	 * @param ontologyId1   the ontology id of the first model
+	 * @param ontologyId2   the ontology id of the second model
 	 * @param categoryName
 	 * @param variableNames
 	 * @param category1
 	 * @param category2
-	 * @param mappings         the given mappings, resources may not belong to the
-	 *                         given knowledge bases
+	 * @param mappings      the given mappings, resources may not belong to the
+	 *                      given ontologies
 	 * @return the computed deviations
 	 * @throws Exception
 	 */
-	public abstract Collection<Deviation> computeDeviations(Model model1, Model model2, UUID knowledgeBaseId1,
-			UUID knowledgeBaseId2, String categoryName, Collection<String> variableNames, Category category1,
+	public abstract Collection<Deviation> computeDeviations(Model model1, Model model2, UUID ontologyId1,
+			UUID ontologyId2, String categoryName, Collection<String> variableNames, Category category1,
 			Category category2, Map<Resource, Set<Resource>> mappings) throws Exception;
 
 }

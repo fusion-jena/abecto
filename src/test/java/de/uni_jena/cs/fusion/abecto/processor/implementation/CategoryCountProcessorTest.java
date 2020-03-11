@@ -27,8 +27,8 @@ public class CategoryCountProcessorTest {
 		source2.setUploadStream(model2);
 		UUID sourceUUID1 = UUID.randomUUID();
 		UUID sourceUUID2 = UUID.randomUUID();
-		source1.setKnowledgBase(sourceUUID1);
-		source2.setKnowledgBase(sourceUUID2);
+		source1.setOntology(sourceUUID1);
+		source2.setOntology(sourceUUID2);
 		source1.call();
 		source2.call();
 

@@ -21,7 +21,7 @@ public class ManualCategoryProcessorTest {
 	public static void init() throws Exception {
 		source = new RdfFileSourceProcessor();
 		source.setUploadStream(new TestDataGenerator().stream(1));
-		source.setKnowledgBase(UUID.randomUUID());
+		source.setOntology(UUID.randomUUID());
 		source.call();
 	}
 

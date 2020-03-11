@@ -17,10 +17,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import de.uni_jena.cs.fusion.abecto.knowledgebase.KnowledgeBase;
-import de.uni_jena.cs.fusion.abecto.knowledgebase.KnowledgeBaseRepository;
 import de.uni_jena.cs.fusion.abecto.model.ModelRepository;
 import de.uni_jena.cs.fusion.abecto.model.Models;
+import de.uni_jena.cs.fusion.abecto.ontology.Ontology;
+import de.uni_jena.cs.fusion.abecto.ontology.OntologyRepository;
 import de.uni_jena.cs.fusion.abecto.processing.Processing;
 import de.uni_jena.cs.fusion.abecto.processor.model.Category;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
@@ -30,7 +30,7 @@ public class ExecutionRestController {
 	@Autowired
 	ExecutionRepository executionRepository;
 	@Autowired
-	KnowledgeBaseRepository knowledgeBaseRepository;
+	OntologyRepository ontologyRepository;
 	@Autowired
 	ModelRepository modelRepository;
 
@@ -59,20 +59,20 @@ public class ExecutionRestController {
 	@GetMapping("/execution/{uuid}/data")
 	public Map<String, Map<String, Set<String>>> getData(@PathVariable("uuid") UUID executionId,
 			@RequestParam(name = "category", required = true) String categoryName,
-			@RequestParam(name = "knowledgebase", required = true) UUID knowledgeBaseId) throws NoSuchElementException,
+			@RequestParam(name = "ontology", required = true) UUID ontologyId) throws NoSuchElementException,
 			IllegalStateException, NullPointerException, IllegalArgumentException, ReflectiveOperationException {
 		Execution execution = getExecution(executionId);
-		KnowledgeBase knowledeBase = knowledgeBaseRepository.findById(knowledgeBaseId)
-				.orElseThrow(() -> new NoSuchElementException("Knowledge base not found."));
+		Ontology knowledeBase = ontologyRepository.findById(ontologyId)
+				.orElseThrow(() -> new NoSuchElementException("Ontology not found."));
 		Model metaModel = metaModel(execution);
-		Category category = SparqlEntityManager.selectOne(new Category(categoryName, null, knowledgeBaseId), metaModel)
+		Category category = SparqlEntityManager.selectOne(new Category(categoryName, null, ontologyId), metaModel)
 				.orElseThrow(() -> new NoSuchElementException("Category not found."));
 		return category.getCategoryData(dataModel(execution, knowledeBase));
 	}
 
-	private Model dataModel(Execution execution, KnowledgeBase knowlegeBase) {
+	private Model dataModel(Execution execution, Ontology knowlegeBase) {
 		Collection<Model> models = execution.getProcessings().stream().filter((processing) -> {
-			return !processing.getStep().isMeta() && processing.getStep().getKnowledgeBase().equals(knowlegeBase);
+			return !processing.getStep().isMeta() && processing.getStep().getOntology().equals(knowlegeBase);
 		}).map(Processing::getModelHash).map(modelRepository::get).collect(Collectors.toList());
 		return Models.union(models);
 	}

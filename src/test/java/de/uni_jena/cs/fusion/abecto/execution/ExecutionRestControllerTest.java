@@ -32,13 +32,13 @@ public class ExecutionRestControllerTest extends AbstractRepositoryConsumingTest
 		String projectId = buffer.getId();
 
 		// create a KowledgBase
-		mvc.perform(MockMvcRequestBuilders.post("/knowledgebase").param("project", projectId)
+		mvc.perform(MockMvcRequestBuilders.post("/ontology").param("project", projectId)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		String knowledgBaseId = buffer.getId();
 
 		// add source
 		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", RdfFileSourceProcessor.class.getTypeName())
-				.param("knowledgebase", knowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
+				.param("ontology", knowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 		String sourceId = buffer.getId();
 
@@ -61,7 +61,7 @@ public class ExecutionRestControllerTest extends AbstractRepositoryConsumingTest
 
 		// get execution
 		mvc.perform(MockMvcRequestBuilders.get(String.format("/execution/%s/data", executionId))
-				.param("category", "entity").param("knowledgebase", knowledgBaseId).accept(MediaType.APPLICATION_JSON))
+				.param("category", "entity").param("ontology", knowledgBaseId).accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(print()).andDo(buffer);
 
 		JSONAssert.assertEquals("{"//
@@ -78,13 +78,13 @@ public class ExecutionRestControllerTest extends AbstractRepositoryConsumingTest
 		String projectId = buffer.getId();
 
 		// create a KowledgBase
-		mvc.perform(MockMvcRequestBuilders.post("/knowledgebase").param("project", projectId)
+		mvc.perform(MockMvcRequestBuilders.post("/ontology").param("project", projectId)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		String knowledgBaseId = buffer.getId();
 
 		// add source
 		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", RdfFileSourceProcessor.class.getTypeName())
-				.param("knowledgebase", knowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
+				.param("ontology", knowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 		String sourceId = buffer.getId();
 
@@ -115,7 +115,7 @@ public class ExecutionRestControllerTest extends AbstractRepositoryConsumingTest
 		JSONAssert.assertEquals("[{"//
 				+ "\"name\":\"entity\","//
 				+ "\"pattern\":\"{?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .}\","//
-				+ "\"knowledgeBase\":\"" + knowledgBaseId + "\""//
+				+ "\"ontology\":\"" + knowledgBaseId + "\""//
 				+ "}]", buffer.getString(), JSONCompareMode.LENIENT);
 	}
 

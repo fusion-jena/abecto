@@ -20,13 +20,13 @@ public abstract class AbstractMappingProcessor<P extends ParameterModel> extends
 		Collection<Mapping> knownMappings = SparqlEntityManager.select(Mapping.any(), this.metaModel);
 
 		for (Entry<UUID, Model> i : this.inputGroupModels.entrySet()) {
-			UUID knowledgeBaseId1 = i.getKey();
+			UUID ontologyId1 = i.getKey();
 			for (Entry<UUID, Model> j : this.inputGroupModels.entrySet()) {
-				UUID knowledgeBaseId2 = j.getKey();
-				if (knowledgeBaseId1.compareTo(knowledgeBaseId2) > 0) {
+				UUID ontologyId2 = j.getKey();
+				if (ontologyId1.compareTo(ontologyId2) > 0) {
 					// compute mapping
-					Collection<Mapping> mappings = computeMapping(i.getValue(), j.getValue(), knowledgeBaseId1,
-							knowledgeBaseId2);
+					Collection<Mapping> mappings = computeMapping(i.getValue(), j.getValue(), ontologyId1,
+							ontologyId2);
 
 					Collection<Mapping> acceptedMappings = new HashSet<>();
 
@@ -44,15 +44,16 @@ public abstract class AbstractMappingProcessor<P extends ParameterModel> extends
 	}
 
 	/**
-	 * Computes the mappings of two models. The mappings may contain category meta data.
+	 * Computes the mappings of two models. The mappings may contain category meta
+	 * data.
 	 * 
-	 * @param model1           the first model to process
-	 * @param model2           the second model to process
-	 * @param knowledgeBaseId1 the knowledge base id of the first model
-	 * @param knowledgeBaseId2 the knowledge base id of the second model
+	 * @param model1      the first model to process
+	 * @param model2      the second model to process
+	 * @param ontologyId1 the ontology id of the first model
+	 * @param ontologyId2 the ontology id of the second model
 	 * @return the computed mappings
 	 */
-	public abstract Collection<Mapping> computeMapping(Model model1, Model model2, UUID knowledgeBaseId1,
-			UUID knowledgeBaseId2) throws Exception;
+	public abstract Collection<Mapping> computeMapping(Model model1, Model model2, UUID ontologyId1,
+			UUID ontologyId2) throws Exception;
 
 }

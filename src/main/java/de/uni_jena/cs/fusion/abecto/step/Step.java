@@ -11,7 +11,7 @@ import javax.persistence.ManyToOne;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-import de.uni_jena.cs.fusion.abecto.knowledgebase.KnowledgeBase;
+import de.uni_jena.cs.fusion.abecto.ontology.Ontology;
 import de.uni_jena.cs.fusion.abecto.parameter.Parameter;
 import de.uni_jena.cs.fusion.abecto.processor.MappingProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.MetaProcessor;
@@ -33,13 +33,12 @@ public class Step extends AbstractEntityWithUUID {
 	@JsonSerialize(converter = EntityToIdConverter.class)
 	protected Project project;
 	/**
-	 * The {@link KnowledgeBase} this {@link Step} of a {@link SourceProcessor}
-	 * belongs to or {@code null}, if this does not belong to a
-	 * {@link SourceProcessor}.
+	 * The {@link Ontology} this {@link Step} of a {@link SourceProcessor} belongs
+	 * to or {@code null}, if this does not belong to a {@link SourceProcessor}.
 	 */
 	@ManyToOne
 	@JsonSerialize(converter = EntityToIdConverter.class)
-	protected KnowledgeBase knowledgeBase;
+	protected Ontology ontology;
 
 	@SuppressWarnings("rawtypes")
 	protected Class<? extends Processor> processor;
@@ -81,15 +80,14 @@ public class Step extends AbstractEntityWithUUID {
 	/**
 	 * Creates a {@link Step} for a {@link SourceProcessor}.
 	 * 
-	 * @param parameter           The {@link Parameter} to use.
-	 * @param processor           The {@link SourceProcessor} to use.
-	 * @param knowledgeBaseModule The {@link KnowledgeBaseModule} to assign the
-	 *                            {@link Step} to.
+	 * @param parameter The {@link Parameter} to use.
+	 * @param processor The {@link SourceProcessor} to use.
+	 * @param ontology  The {@link Ontology} to assign the {@link Step} to.
 	 */
-	public Step(Class<Processor<?>> processor, Parameter parameter, KnowledgeBase knowledgeBase) {
+	public Step(Class<Processor<?>> processor, Parameter parameter, Ontology ontology) {
 		this(processor, parameter);
-		this.knowledgeBase = knowledgeBase;
-		this.project = knowledgeBase.getProject();
+		this.ontology = ontology;
+		this.project = ontology.getProject();
 	}
 
 	/**
@@ -113,8 +111,8 @@ public class Step extends AbstractEntityWithUUID {
 		return this.inputStep;
 	}
 
-	public KnowledgeBase getKnowledgeBase() {
-		return this.knowledgeBase;
+	public Ontology getOntology() {
+		return this.ontology;
 	}
 
 	public Parameter getParameter() {

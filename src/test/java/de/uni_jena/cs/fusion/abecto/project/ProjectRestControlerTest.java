@@ -90,25 +90,27 @@ class ProjectRestControlerTest extends AbstractRepositoryConsumingTest {
 				.andExpect(status().isOk()).andDo(buffer);
 		String projectId = buffer.getId();
 
-		// create knowledge base 1
-		mvc.perform(MockMvcRequestBuilders.post("/knowledgebase").param("project", projectId)
-				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
+		// create ontology 1
+		mvc.perform(
+				MockMvcRequestBuilders.post("/ontology").param("project", projectId).accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andDo(buffer);
 		String knowledgBase1Id = buffer.getId();
 
-		// create knowledge base 2
-		mvc.perform(MockMvcRequestBuilders.post("/knowledgebase").param("project", projectId)
-				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
+		// create ontology 2
+		mvc.perform(
+				MockMvcRequestBuilders.post("/ontology").param("project", projectId).accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andDo(buffer);
 		String knowledgBase2Id = buffer.getId();
 
 		// add source 1
 		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", RdfFileSourceProcessor.class.getTypeName())
-				.param("knowledgebase", knowledgBase1Id).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
+				.param("ontology", knowledgBase1Id).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 		String source1Id = buffer.getId();
 
 		// add source 2
 		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", RdfFileSourceProcessor.class.getTypeName())
-				.param("knowledgebase", knowledgBase2Id).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
+				.param("ontology", knowledgBase2Id).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 		String source2Id = buffer.getId();
 

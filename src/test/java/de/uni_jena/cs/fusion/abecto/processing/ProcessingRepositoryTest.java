@@ -47,11 +47,11 @@ public class ProcessingRepositoryTest extends AbstractRepositoryConsumingTest {
 		String projectId = buffer.getId();
 
 		// create a KowledgBase
-		mvc.perform(MockMvcRequestBuilders.post("/knowledgebase").param("project", projectId)
+		mvc.perform(MockMvcRequestBuilders.post("/ontology").param("project", projectId)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		String knowledgBaseId = buffer.getId();// add source
 		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", "RdfFileSourceProcessor")
-				.param("knowledgebase", knowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
+				.param("ontology", knowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 		String sourceId = buffer.getId();
 

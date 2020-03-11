@@ -9,6 +9,6 @@ public interface SourceProcessor<P extends ParameterModel> extends Processor<P> 
 	/**
 	 * @param uuid {@link UUID} of the knowledge base
 	 */
-	public void setKnowledgBase(UUID uuid);
+	public void setOntology(UUID uuid);
 
 }

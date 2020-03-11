@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.knowledgebase;
+package de.uni_jena.cs.fusion.abecto.ontology;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -21,10 +21,10 @@ import de.uni_jena.cs.fusion.abecto.step.StepRepository;
 import de.uni_jena.cs.fusion.abecto.step.StepRestController;
 
 @RestController
-public class KnowledgeBaseRestController {
+public class OntologyRestController {
 
 	@Autowired
-	KnowledgeBaseRepository knowledgeBaseRepository;
+	OntologyRepository ontologyRepository;
 	@Autowired
 	ProjectRepository projectRepository;
 	@Autowired
@@ -32,48 +32,48 @@ public class KnowledgeBaseRestController {
 	@Autowired
 	StepRestController stepRestController;
 
-	@PostMapping("/knowledgebase")
-	public KnowledgeBase create(@RequestParam("project") UUID projectId,
+	@PostMapping("/ontology")
+	public Ontology create(@RequestParam("project") UUID projectId,
 			@RequestParam(name = "label", defaultValue = "") String label) {
 		Optional<Project> project = projectRepository.findById(projectId);
 		if (project.isPresent()) {
-			return knowledgeBaseRepository.save(new KnowledgeBase(project.get(), label));
+			return ontologyRepository.save(new Ontology(project.get(), label));
 		} else {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Project not found.");
 		}
 	}
 
-	@DeleteMapping("/knowledgebase/{uuid}")
+	@DeleteMapping("/ontology/{uuid}")
 	@ResponseStatus(code = HttpStatus.NO_CONTENT)
 	public void delete(@PathVariable("uuid") UUID uuid) {
-		KnowledgeBase knowledgeBase = this.get(uuid);
-		for (Step step : stepRepository.findAllByKnowledgeBase(knowledgeBase)) {
+		Ontology ontology = this.get(uuid);
+		for (Step step : stepRepository.findAllByOntology(ontology)) {
 			stepRestController.delete(step.getId());
 		}
-		knowledgeBaseRepository.delete(knowledgeBase);
+		ontologyRepository.delete(ontology);
 	}
 
-	@GetMapping("/knowledgebase/{uuid}")
-	public KnowledgeBase get(@PathVariable("uuid") UUID uuid) {
-		Optional<KnowledgeBase> knowledgeBase = knowledgeBaseRepository.findById(uuid);
-		if (knowledgeBase.isPresent()) {
-			return knowledgeBase.get();
+	@GetMapping("/ontology/{uuid}")
+	public Ontology get(@PathVariable("uuid") UUID uuid) {
+		Optional<Ontology> ontology = ontologyRepository.findById(uuid);
+		if (ontology.isPresent()) {
+			return ontology.get();
 		} else {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "KnowledgeBase not found.");
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Ontology not found.");
 		}
 	}
 
-	@GetMapping("/knowledgebase")
-	public Iterable<KnowledgeBase> list(@RequestParam(name = "project", required = false) UUID projectId) {
+	@GetMapping("/ontology")
+	public Iterable<Ontology> list(@RequestParam(name = "project", required = false) UUID projectId) {
 		if (projectId != null) {
 			Optional<Project> project = projectRepository.findById(projectId);
 			if (project.isPresent()) {
-				return knowledgeBaseRepository.findAllByProject(project.get());
+				return ontologyRepository.findAllByProject(project.get());
 			} else {
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Project not found.");
 			}
 		} else {
-			return knowledgeBaseRepository.findAll();
+			return ontologyRepository.findAll();
 		}
 	}
 

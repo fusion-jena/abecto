@@ -38,10 +38,10 @@ class Abecto:
         r.raise_for_status()
         return Processing(self, r.json())
 
-    def getKnowledgeBase(self, id):
-        r = requests.get(self.base + "knowledgebase/" + id)
+    def getOntology(self, id):
+        r = requests.get(self.base + "ontology/" + id)
         r.raise_for_status()
-        return KnowledgeBase(self, r.json())
+        return Ontology(self, r.json())
 
     def getProject(self, id):
         r = requests.get(self.base + "project/" + id)
@@ -99,15 +99,15 @@ class Project:
         r.raise_for_status()
         return r.json()
 
-    def knowledgeBase(self, label = ""):
-        r = requests.post(self.server.base + "knowledgebase", data = {"project": self.id, "label": label})
+    def ontology(self, label = ""):
+        r = requests.post(self.server.base + "ontology", data = {"project": self.id, "label": label})
         r.raise_for_status()
-        return KnowledgeBase(self.server, r.json())
+        return Ontology(self.server, r.json())
     
-    def knowledgeBases(self):
-        r = requests.get(self.server.base + "knowledgebase", params = {"project": self.id})
+    def ontologies(self):
+        r = requests.get(self.server.base + "ontology", params = {"project": self.id})
         r.raise_for_status()
-        return list(map(lambda knowledgeBaseData: KnowledgeBase(self.server, knowledgeBaseData), r.json()))
+        return list(map(lambda ontologyData: Ontology(self.server, ontologyData), r.json()))
 
     def steps(self):
         r = requests.get(self.server.base + "step", params = {"project": self.id})
@@ -126,7 +126,7 @@ class Project:
             processing.raiseForStatus()
         return execution
 
-class KnowledgeBase:
+class Ontology:
     def __init__(self, server, data):
         self.server = server
         self.id = data["id"]
@@ -135,16 +135,16 @@ class KnowledgeBase:
         return str(self.info())
     
     def delete(self):
-        r = requests.delete(self.server.base + "knowledgebase/" + self.id)
+        r = requests.delete(self.server.base + "ontology/" + self.id)
         r.raise_for_status()
     
     def info(self):
-        r = requests.get(self.server.base + "knowledgebase/" + self.id)
+        r = requests.get(self.server.base + "ontology/" + self.id)
         r.raise_for_status()
         return r.json()
 
     def source(self, processorName, parameters={}):
-        r = requests.post(self.server.base + "step", data = {"class": processorName, "knowledgebase" : self.id, "parameters": json.dumps(parameters)})
+        r = requests.post(self.server.base + "step", data = {"class": processorName, "ontology" : self.id, "parameters": json.dumps(parameters)})
         r.raise_for_status()
         return Step(self.server, r.json())
     
@@ -262,25 +262,25 @@ class Execution:
     def resultDataFrame(self, resultType):
         return pd.DataFrame.from_records(self.results(resultType))
 
-    def data(self, categoryName, knowledgeBaseId):
+    def data(self, categoryName, ontologyId):
         if categoryName not in self.resourcesData:
             self.resourcesData[categoryName] = {}
-        if knowledgeBaseId not in self.resourcesData[categoryName]:
-            r = requests.get(self.server.base + "execution/" + self.id + "/data", params = {"category": categoryName, "knowledgebase": knowledgeBaseId})
+        if ontologyId not in self.resourcesData[categoryName]:
+            r = requests.get(self.server.base + "execution/" + self.id + "/data", params = {"category": categoryName, "ontology": ontologyId})
             r.raise_for_status()
-            self.resourcesData[categoryName][knowledgeBaseId] = r.json()
-        return self.resourcesData[categoryName][knowledgeBaseId]
+            self.resourcesData[categoryName][ontologyId] = r.json()
+        return self.resourcesData[categoryName][ontologyId]
     
-    def dataDataFrame(self, categoryName, knowledgeBaseId):
-        return pd.DataFrame.from_records(self.data(categoryName, knowledgeBaseId))
+    def dataDataFrame(self, categoryName, ontologyId):
+        return pd.DataFrame.from_records(self.data(categoryName, ontologyId))
     
-    def sortedKnowledgeBases(self, knowledgeBaseIds):
-        return sorted({ knowledgeBaseId : self.server.getKnowledgeBase(knowledgeBaseId).info()["label"] for knowledgeBaseId in knowledgeBaseIds }.items(), key = lambda x:x[1])
+    def sortedOntologies(self, ontologyIds):
+        return sorted({ ontologyId : self.server.getOntology(ontologyId).info()["label"] for ontologyId in ontologyIds }.items(), key = lambda x:x[1])
     
     def measurements(self):
         data = self.resultDataFrame("Measurement")
         if not data.empty:
-            knowledgeBases = self.sortedKnowledgeBases(set(data["knowledgeBase"]))
+            ontologies = self.sortedOntologies(set(data["ontology"]))
             for measure in set(data["measure"]):
                 html = "<h1>" + measure + " Report</h1>"
                 measureData = data[data.measure.eq(measure)]
@@ -292,8 +292,8 @@ class Execution:
                     html += "<th>" + "/".join(set(data["dimension1Key"])) + "</th>"
                 if dimension2Used:
                     html += "<th>" + "/".join(set(data["dimension2Key"])) + "</th>"
-                for (kbId, kbLabel) in knowledgeBases:
-                    html += "<th>" + kbLabel + "</th>"
+                for (ontoId, ontoLabel) in ontologies:
+                    html += "<th>" + ontoLabel + "</th>"
                 html += "</tr>"
                 # total row
                 totalData = measureData[measureData.dimension1Value.isna() & measureData.dimension2Value.isna()]
@@ -303,8 +303,8 @@ class Execution:
                         html += "<td></td>"
                     if dimension2Used:
                         html += "<td></td>"
-                    for (kbId, kbLabel) in knowledgeBases:
-                        row = totalData[totalData.knowledgeBase.eq(kbId)]
+                    for (ontoId, ontoLabel) in ontologies:
+                        row = totalData[totalData.ontology.eq(ontoId)]
                         html += "<td>" + (str(row["value"].iat[-1]) if row.size > 0 else "") + "</td>"
                     html += "</tr>"
                 # dimension 1 rows
@@ -317,8 +317,8 @@ class Execution:
                         html += "<td>" + dimension1Value + "</td>"
                         if dimension2Used:
                             html += "<td></td>"
-                        for (kbId, kbLabel) in knowledgeBases:
-                            row = d1TotalData[d1TotalData.knowledgeBase.eq(kbId)]
+                        for (ontoId, ontoLabel) in ontologies:
+                            row = d1TotalData[d1TotalData.ontology.eq(ontoId)]
                             html += "<td>" + (str(row["value"].iat[-1]) if row.size > 0 else "") + "</td>"
                         html += "</tr>"
                     # dimension 2 rows
@@ -328,8 +328,8 @@ class Execution:
                             html += "<tr>"
                             html += "<td>" + dimension1Value + "</td>"
                             html += "<td>" + dimension2Value + "</td>"
-                            for (kbId, kbLabel) in knowledgeBases:
-                                row = d2Data[d2Data.knowledgeBase.eq(kbId)]
+                            for (ontoId, ontoLabel) in ontologies:
+                                row = d2Data[d2Data.ontology.eq(ontoId)]
                                 html += "<td>" + (str(row["value"].iat[-1]) if row.size > 0 else "") + "</td>"
                             html += "</tr>"
                 html += "</table>"
@@ -340,28 +340,28 @@ class Execution:
         totalData =  self.resultDataFrame("Deviation")
         if not totalData.empty:
             categoryNames = set(totalData["categoryName"])
-            knowledgeBases = self.sortedKnowledgeBases(set(totalData["knowledgeBaseId1"]).union(set(totalData["knowledgeBaseId2"])))
+            ontologies = self.sortedOntologies(set(totalData["ontologyId1"]).union(set(totalData["ontologyId2"])))
             # iterate categories
             for categoryName in categoryNames:
                 display(HTML("<h3>Category: " + categoryName + "</h3>"))
                 categoryData = totalData[totalData.categoryName.eq(categoryName)]
-                kbPairs = categoryData.filter(["knowledgeBaseId1","knowledgeBaseId2"]).drop_duplicates().sort_values(["knowledgeBaseId1","knowledgeBaseId2"])
-                 # iterate knowledge bases
-                for (kb1Id, kb1Label) in knowledgeBases:
-                    for (kb2Id, kb2Label) in knowledgeBases:
-                        if kb1Id != kb2Id and kb1Label < kb2Label:
-                            kbsData = categoryData[categoryData.knowledgeBaseId1.eq(kb1Id) & categoryData.knowledgeBaseId2.eq(kb2Id)]
-                            if not kbsData.empty:
-                                kbsData = kbsData.sort_values(["knowledgeBaseId1","knowledgeBaseId2"])
+                ontoPairs = categoryData.filter(["ontologyId1","ontologyId2"]).drop_duplicates().sort_values(["ontologyId1","ontologyId2"])
+                 # iterate ontologies
+                for (onto1Id, onto1Label) in ontologies:
+                    for (onto2Id, onto2Label) in ontologies:
+                        if onto1Id != onto2Id and onto1Label < onto2Label:
+                            ontosData = categoryData[categoryData.ontologyId1.eq(onto1Id) & categoryData.ontologyId2.eq(onto2Id)]
+                            if not ontosData.empty:
+                                ontosData = ontosData.sort_values(["ontologyId1","ontologyId2"])
                                 table = "<table>"
                                 table += "<tr>"
-                                table += "<th style=\"text-align:center;\" colspan=\"3\">" + kb1Label + "</th>"
-                                table += "<th style=\"text-align:center;\" colspan=\"3\">" + kb2Label + "</th>"
+                                table += "<th style=\"text-align:center;\" colspan=\"3\">" + onto1Label + "</th>"
+                                table += "<th style=\"text-align:center;\" colspan=\"3\">" + onto2Label + "</th>"
                                 table += "</tr>"
-                                resourcePairs = kbsData.filter(["resource1","resource2"]).drop_duplicates().sort_values(["resource1","resource2"])
+                                resourcePairs = ontosData.filter(["resource1","resource2"]).drop_duplicates().sort_values(["resource1","resource2"])
                                 # iterate resources
                                 for index, resourcePair in resourcePairs.iterrows():
-                                    resourceData = kbsData[kbsData.resource1.eq(resourcePair["resource1"]) & kbsData.resource2.eq(resourcePair["resource2"])]
+                                    resourceData = ontosData[ontosData.resource1.eq(resourcePair["resource1"]) & ontosData.resource2.eq(resourcePair["resource2"])]
                                     resourceData = resourceData.sort_values(["resource1","resource2"])
                                     variablesCount = len(resourceData)
                                     firstRow = True
@@ -384,18 +384,18 @@ class Execution:
         display(HTML("<h2>Issue Report</h2>"))
         totalData =  self.resultDataFrame("Issue")
         if not totalData.empty:
-            totalData = totalData.sort_values(["knowledgeBase","entity"])
-            knowledgeBases = self.sortedKnowledgeBases(set(totalData["knowledgeBase"]))
-            for (kbId, kbLabel) in knowledgeBases:
-                display(HTML("<h3>Knowledge Base: " + kbLabel + "</h3>"))
-                kbData = totalData[totalData.knowledgeBase.eq(kbId)]
+            totalData = totalData.sort_values(["ontology","entity"])
+            ontologies = self.sortedOntologies(set(totalData["ontology"]))
+            for (ontoId, ontoLabel) in ontologies:
+                display(HTML("<h3>Ontology: " + ontoLabel + "</h3>"))
+                ontoData = totalData[totalData.ontology.eq(ontoId)]
                 table = "<table>"
                 table += "<tr>"
                 table += "<th>" + "Issue Type" + "</th>"
                 table += "<th>" + "Affected Entity" + "</th>"
                 table += "<th>" + "Message" + "</th>"
                 table += "</tr>"
-                for index, issue in kbData.iterrows():
+                for index, issue in ontoData.iterrows():
                     table += "<tr>"
                     table += "<td>" + issue["type"] + "</td>"
                     table += "<td>" + issue["entity"] + "</td>"
@@ -429,79 +429,79 @@ class Execution:
                 return mappings
 
         resourceDataWidgets = {}
-        def getResourceDataWidget(categoryName, kbId, resource, resourceData):
+        def getResourceDataWidget(categoryName, ontoId, resource, resourceData):
             with output:
                 if categoryName not in resourceDataWidgets:
                     resourceDataWidgets[categoryName] = {}
-                if kbId not in resourceDataWidgets[categoryName]:
-                    resourceDataWidgets[categoryName][kbId] = {}
-                if resource not in resourceDataWidgets[categoryName][kbId]:
+                if ontoId not in resourceDataWidgets[categoryName]:
+                    resourceDataWidgets[categoryName][ontoId] = {}
+                if resource not in resourceDataWidgets[categoryName][ontoId]:
                     html = "<dl>"
                     if any(list(resourceData)):
                         for key in sorted(resourceData):
                             html += "<dt>" + key + "</dt>"
                             html += "<dd>" + ", ".join(resourceData[key]) + "</dd>"
                     html += "</dl>"
-                    resourceDataWidgets[categoryName][kbId][resource] = widgets.HTML(value=html)
-                return resourceDataWidgets[categoryName][kbId][resource]
+                    resourceDataWidgets[categoryName][ontoId][resource] = widgets.HTML(value=html)
+                return resourceDataWidgets[categoryName][ontoId][resource]
 
         newMappingResourceFormWidgets = {}
-        def getNewMappingResourceFormWidget(categoryName, kbId):
+        def getNewMappingResourceFormWidget(categoryName, ontoId):
             with output:
                 if categoryName not in newMappingResourceFormWidgets:
                     newMappingResourceFormWidgets[categoryName] = {}
-                if kbId not in newMappingResourceFormWidgets[categoryName]:
-                    newMappingResourceFormWidgets[categoryName][kbId] = widgets.Text(value='', placeholder='Resource to map')
-                return newMappingResourceFormWidgets[categoryName][kbId]
+                if ontoId not in newMappingResourceFormWidgets[categoryName]:
+                    newMappingResourceFormWidgets[categoryName][ontoId] = widgets.Text(value='', placeholder='Resource to map')
+                return newMappingResourceFormWidgets[categoryName][ontoId]
 
         resourceButtonWidgets = {}
-        def getResourceButtonWidget(categoryName, kbId, resource):
+        def getResourceButtonWidget(categoryName, ontoId, resource):
             with output:
                 if categoryName not in resourceButtonWidgets:
                     resourceButtonWidgets[categoryName] = {}
-                if kbId not in resourceButtonWidgets[categoryName]:
-                    resourceButtonWidgets[categoryName][kbId] = {}
-                if resource not in resourceButtonWidgets[categoryName][kbId]:
-                    newMappingResourceFormWidget = getNewMappingResourceFormWidget(categoryName, kbId)
+                if ontoId not in resourceButtonWidgets[categoryName]:
+                    resourceButtonWidgets[categoryName][ontoId] = {}
+                if resource not in resourceButtonWidgets[categoryName][ontoId]:
+                    newMappingResourceFormWidget = getNewMappingResourceFormWidget(categoryName, ontoId)
                     button = widgets.Button(description=resource, tooltip='Use', layout={'width': 'max-content'})
                     def use(b):
                         newMappingResourceFormWidget.value = resource
                     button.on_click(use)
-                    resourceButtonWidgets[categoryName][kbId][resource] = button
-                return resourceButtonWidgets[categoryName][kbId][resource]
+                    resourceButtonWidgets[categoryName][ontoId][resource] = button
+                return resourceButtonWidgets[categoryName][ontoId][resource]
         
         resourceWidgets = {}
-        def getResourceWidget(categoryName, kbId, resource, resourceData):
+        def getResourceWidget(categoryName, ontoId, resource, resourceData):
             with output:
                 if categoryName not in resourceWidgets:
                     resourceWidgets[categoryName] = {}
-                if kbId not in resourceWidgets[categoryName]:
-                    resourceWidgets[categoryName][kbId] = {}
-                if resource not in resourceWidgets[categoryName][kbId]:
-                    resourceButtonWidget = getResourceButtonWidget(categoryName, kbId, resource)
-                    resourceDataWidget = getResourceDataWidget(categoryName, kbId, resource, resourceData)
-                    resourceWidgets[categoryName][kbId][resource] = widgets.VBox([resourceButtonWidget, resourceDataWidget], layout={'border': 'solid 1px lightgrey', 'height': 'max-content'})
-                return resourceWidgets[categoryName][kbId][resource]
+                if ontoId not in resourceWidgets[categoryName]:
+                    resourceWidgets[categoryName][ontoId] = {}
+                if resource not in resourceWidgets[categoryName][ontoId]:
+                    resourceButtonWidget = getResourceButtonWidget(categoryName, ontoId, resource)
+                    resourceDataWidget = getResourceDataWidget(categoryName, ontoId, resource, resourceData)
+                    resourceWidgets[categoryName][ontoId][resource] = widgets.VBox([resourceButtonWidget, resourceDataWidget], layout={'border': 'solid 1px lightgrey', 'height': 'max-content'})
+                return resourceWidgets[categoryName][ontoId][resource]
         
         unmappedResourcesWidgets = {}
-        def getUnmappedResourcesWidget(categoryName, kbId):
+        def getUnmappedResourcesWidget(categoryName, ontoId):
             with output:
                 if categoryName not in unmappedResourcesWidgets:
                     unmappedResourcesWidgets[categoryName] = {}
-                if kbId not in unmappedResourcesWidgets[categoryName]:
-                    resourcesData = self.data(categoryName, kbId)
+                if ontoId not in unmappedResourcesWidgets[categoryName]:
+                    resourcesData = self.data(categoryName, ontoId)
                     
                     unmapped = []
                     for unmappedResource in set(resourcesData)-set(getMappings())-set(manualPositiveMappings):
-                        unmapped.append(getResourceWidget(categoryName, kbId, unmappedResource, resourcesData[unmappedResource]))
-                    unmappedResourcesWidgets[categoryName][kbId] = widgets.VBox(unmapped,layout={'width': '50%'})#','max_height':'20em'})
-                return unmappedResourcesWidgets[categoryName][kbId]
+                        unmapped.append(getResourceWidget(categoryName, ontoId, unmappedResource, resourcesData[unmappedResource]))
+                    unmappedResourcesWidgets[categoryName][ontoId] = widgets.VBox(unmapped,layout={'width': '50%'})#','max_height':'20em'})
+                return unmappedResourcesWidgets[categoryName][ontoId]
 
         resourcePairWidgets = {}
-        def resourcePairWidget(categoryName, kb1Id, kb2Id, resource1, resource2, resource1Data, resource1Data2, value):
+        def resourcePairWidget(categoryName, onto1Id, onto2Id, resource1, resource2, resource1Data, resource1Data2, value):
             with output:
-                resourceWidget1 = getResourceWidget(categoryName, kb1Id, resource1, resource1Data)
-                resourceWidget2 = getResourceWidget(categoryName, kb2Id, resource2, resource2Data)                    
+                resourceWidget1 = getResourceWidget(categoryName, onto1Id, resource1, resource1Data)
+                resourceWidget2 = getResourceWidget(categoryName, onto2Id, resource2, resource2Data)                    
                 buttons = widgets.ToggleButtons(options=[accepted,retained,rejected],value=value,tooltips=["Accept", "Retain", "Reject"], style={'button_width': 'auto'})
                 resourcePairWidget = widgets.HBox([buttons, resourceWidget1, resourceWidget2], layout={'border': 'solid 1px lightgrey'})
                 resourcePairWidgets[resourcePairWidget] = [resource1,resource2]
@@ -530,7 +530,7 @@ class Execution:
         # collect execution data
         categoryData = self.resultDataFrame("Category")
         categories =  set(categoryData["name"])
-        knowledgeBases = self.sortedKnowledgeBases(set(categoryData["knowledgeBase"]))
+        ontologies = self.sortedOntologies(set(categoryData["ontology"]))
         # get manual mapping parameters
         manualMappingParameters = manualMappingStep.parameters()["parameters"]
         # collect positive manual mappings from parameters
@@ -566,14 +566,14 @@ class Execution:
         categoryTabChildren = []
         categoryTabTitles = []
         for categoryName in categories:
-            kbTabChildrens = []
-            kbTabTitles = []
-            for (kb1Id, kb1Label) in knowledgeBases:
-                for (kb2Id, kb2Label) in knowledgeBases:
-                    if (kb1Label < kb2Label):
+            ontoTabChildrens = []
+            ontoTabTitles = []
+            for (onto1Id, onto1Label) in ontologies:
+                for (onto2Id, onto2Label) in ontologies:
+                    if (onto1Label < onto2Label):
                         pairs = []
-                        resources1Data = self.data(categoryName, kb1Id)
-                        resources2Data = self.data(categoryName, kb2Id)
+                        resources1Data = self.data(categoryName, onto1Id)
+                        resources2Data = self.data(categoryName, onto2Id)
                         for resource1 in resources1Data:
                             resource1Data = resources1Data[resource1]
                             # add positive manual mappings
@@ -581,14 +581,14 @@ class Execution:
                                 for resource2 in manualPositiveMappings[resource1]:
                                     if resource2 in resources2Data:
                                         resource2Data = resources2Data[resource2]
-                                        pair = resourcePairWidget(categoryName, kb1Id, kb2Id, resource1, resource2, resource1Data, resource2Data, accepted)
+                                        pair = resourcePairWidget(categoryName, onto1Id, onto2Id, resource1, resource2, resource1Data, resource2Data, accepted)
                                         pairs.append(pair)
                             # add negative manual mappings
                             if resource1 in manualNegativeMappings:
                                 for resource2 in manualNegativeMappings[resource1]:
                                     if resource2 in resources2Data:
                                         resource2Data = resources2Data[resource2]
-                                        pair = resourcePairWidget(categoryName, kb1Id, kb2Id, resource1, resource2, resource1Data, resource2Data, rejected)
+                                        pair = resourcePairWidget(categoryName, onto1Id, onto2Id, resource1, resource2, resource1Data, resource2Data, rejected)
                                         pairs.append(pair)
                             # add none manual mappings
                             if resource1 in getMappings():
@@ -597,26 +597,26 @@ class Execution:
                                         resource1 in manualPositiveMappings and resource2 in manualPositiveMappings[resource1] or
                                         resource1 in manualNegativeMappings and resource2 in manualNegativeMappings[resource1] ):
                                         resource2Data = resources2Data[resource2]
-                                        pair = resourcePairWidget(categoryName, kb1Id, kb2Id, resource1, resource2, resource1Data, resource2Data, retained)
+                                        pair = resourcePairWidget(categoryName, onto1Id, onto2Id, resource1, resource2, resource1Data, resource2Data, retained)
                                         pairs.append(pair)
                         # widgets management
                         newMappingSink = widgets.VBox([],layout={})#'max_height':'30em'})
                         pairTab = widgets.VBox([
                             widgets.VBox(pairs,layout={}),#'max_height':'30em'}),
                             widgets.HBox([
-                                getUnmappedResourcesWidget(categoryName, kb1Id),
-                                getUnmappedResourcesWidget(categoryName, kb2Id)
+                                getUnmappedResourcesWidget(categoryName, onto1Id),
+                                getUnmappedResourcesWidget(categoryName, onto2Id)
                             ]),
-                            unmappedPairingWidget(getNewMappingResourceFormWidget(categoryName, kb1Id), getNewMappingResourceFormWidget(categoryName, kb2Id), newMappingSink)
+                            unmappedPairingWidget(getNewMappingResourceFormWidget(categoryName, onto1Id), getNewMappingResourceFormWidget(categoryName, onto2Id), newMappingSink)
                         ])
-                        kbTabChildrens.append(pairTab)
+                        ontoTabChildrens.append(pairTab)
                         newMappingSinks.append(newMappingSink)
-                        kbTabTitles.append(kb1Label + " <-> " + kb2Label)
+                        ontoTabTitles.append(onto1Label + " <-> " + onto2Label)
             # widgets management
-            kbTabs = widgets.Tab(children=kbTabChildrens)
-            for i, title in enumerate(kbTabTitles):
-                kbTabs.set_title(i, title)    
-            categoryTabChildren.append(kbTabs)
+            ontoTabs = widgets.Tab(children=ontoTabChildrens)
+            for i, title in enumerate(ontoTabTitles):
+                ontoTabs.set_title(i, title)    
+            categoryTabChildren.append(ontoTabs)
             categoryTabTitles.append(categoryName)
         # widgets management
         categoryTabs = widgets.Tab(children=categoryTabChildren)

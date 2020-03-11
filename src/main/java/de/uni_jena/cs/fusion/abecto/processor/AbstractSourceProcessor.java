@@ -9,13 +9,14 @@ import org.apache.jena.rdf.model.Model;
 
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 
-public abstract class AbstractSourceProcessor<P extends ParameterModel> extends AbstractProcessor<P> implements SourceProcessor<P> {
+public abstract class AbstractSourceProcessor<P extends ParameterModel> extends AbstractProcessor<P>
+		implements SourceProcessor<P> {
 
-	protected UUID knowledgBase;
+	protected UUID ontology;
 
 	@Override
-	public void setKnowledgBase(UUID uuid) {
-		this.knowledgBase = uuid;
+	public void setOntology(UUID uuid) {
+		this.ontology = uuid;
 	}
 
 	@Override
@@ -23,10 +24,10 @@ public abstract class AbstractSourceProcessor<P extends ParameterModel> extends 
 		if (!this.isSucceeded()) {
 			throw new IllegalStateException("Result model is not avaliable.");
 		}
-		if (this.knowledgBase == null) {
-			throw new IllegalStateException("UUID of knowledg base not set.");
+		if (this.ontology == null) {
+			throw new IllegalStateException("UUID of ontology not set.");
 		}
-		return Collections.singletonMap(this.knowledgBase, Collections.singleton(this.getResultModel()));
+		return Collections.singletonMap(this.ontology, Collections.singleton(this.getResultModel()));
 	}
 
 	@Override
@@ -35,8 +36,8 @@ public abstract class AbstractSourceProcessor<P extends ParameterModel> extends 
 	}
 
 	@Override
-	public UUID getKnowledgeBase() {
-		return knowledgBase;
+	public UUID getOntology() {
+		return ontology;
 	}
 
 	@Override

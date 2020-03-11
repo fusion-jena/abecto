@@ -19,7 +19,7 @@ import de.uni_jena.cs.fusion.abecto.processor.model.Mapping;
 public class ManualMappingProcessor extends AbstractMappingProcessor<ManualMappingProcessor.Parameter> {
 
 	@Override
-	public Collection<Mapping> computeMapping(Model model1, Model model2, UUID knowledgeBaseId1, UUID knowledgeBaseId2)
+	public Collection<Mapping> computeMapping(Model model1, Model model2, UUID ontologyId1, UUID ontologyId2)
 			throws IllegalStateException, NullPointerException, IllegalArgumentException, ReflectiveOperationException {
 		Collection<Mapping> mappings = new HashSet<>();
 		for (Collection<String> allEquivalent : this.getParameters().mappings.orElse(Collections.emptyList())) {

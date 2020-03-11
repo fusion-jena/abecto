@@ -67,7 +67,7 @@ public class ProcessorTest {
 		}
 
 		@Override
-		public UUID getKnowledgeBase() {
+		public UUID getOntology() {
 			throw new NoSuchElementException();
 		}
 

@@ -114,7 +114,7 @@ class RelationalMappingProcessorTest {
 
 		Issue issue = SparqlEntityManager.selectOne(new Issue(), processor.getResultModel()).orElseThrow();
 		assertEquals(ResourceFactory.createResource("http://example.org/1/entity3a"), issue.entity);
-		assertEquals(id1, issue.knowledgeBase);
+		assertEquals(id1, issue.ontology);
 		assertEquals("UnexpectedValueType", issue.type);
 		assertEquals("Value of property \"ref3b\" is not a resource.", issue.message);
 	}

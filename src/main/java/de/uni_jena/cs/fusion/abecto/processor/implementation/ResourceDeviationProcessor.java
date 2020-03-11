@@ -22,8 +22,8 @@ import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 public class ResourceDeviationProcessor extends AbstractDeviationProcessor<AbstractDeviationProcessor.Parameter> {
 
 	@Override
-	public Collection<Deviation> computeDeviations(Model model1, Model model2, UUID knowledgeBaseId1,
-			UUID knowledgeBaseId2, String categoryName, Collection<String> variableNames, Category category1,
+	public Collection<Deviation> computeDeviations(Model model1, Model model2, UUID ontologyId1,
+			UUID ontologyId2, String categoryName, Collection<String> variableNames, Category category1,
 			Category category2, Map<Resource, Set<Resource>> mappings) throws Exception {
 
 		Collection<Deviation> deviations = new ArrayList<>();
@@ -43,7 +43,7 @@ public class ResourceDeviationProcessor extends AbstractDeviationProcessor<Abstr
 					try {
 						valuesByVariable2.put(variableName, result2.getResource(variableName));
 					} catch (ClassCastException e) {
-						Issue issue = Issue.unexpectedValueType(knowledgeBaseId2, resource2, variableName, "resource");
+						Issue issue = Issue.unexpectedValueType(ontologyId2, resource2, variableName, "resource");
 						SparqlEntityManager.insert(issue, this.getResultModel());
 					}
 				}
@@ -65,13 +65,13 @@ public class ResourceDeviationProcessor extends AbstractDeviationProcessor<Abstr
 								if (value2 != null
 										&& (!mappings.containsKey(value1) || !mappings.get(value1).contains(value2))) {
 									deviations.add(new Deviation(null, categoryName, variableName, resource1, resource2,
-											knowledgeBaseId1, knowledgeBaseId2, "<" + value1.getURI() + ">",
+											ontologyId1, ontologyId2, "<" + value1.getURI() + ">",
 											"<" + value2.getURI() + ">"));
 								}
 							}
 						}
 					} catch (ClassCastException e) {
-						Issue issue = Issue.unexpectedValueType(knowledgeBaseId1, resource1, variableName, "resource");
+						Issue issue = Issue.unexpectedValueType(ontologyId1, resource1, variableName, "resource");
 						SparqlEntityManager.insert(issue, this.getResultModel());
 					}
 				}
