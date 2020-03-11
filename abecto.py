@@ -581,14 +581,14 @@ class Execution:
                                 for resource2 in manualPositiveMappings[resource1]:
                                     if resource2 in resources2Data:
                                         resource2Data = resources2Data[resource2]
-                                        pair = resourcePairWidget(resource1, resource2, resource1Data, resource2Data, accepted)
+                                        pair = resourcePairWidget(categoryName, kb1Id, kb2Id, resource1, resource2, resource1Data, resource2Data, accepted)
                                         pairs.append(pair)
                             # add negative manual mappings
                             if resource1 in manualNegativeMappings:
                                 for resource2 in manualNegativeMappings[resource1]:
                                     if resource2 in resources2Data:
                                         resource2Data = resources2Data[resource2]
-                                        pair = resourcePairWidget(resource1, resource2, resource1Data, resource2Data, rejected)
+                                        pair = resourcePairWidget(categoryName, kb1Id, kb2Id, resource1, resource2, resource1Data, resource2Data, rejected)
                                         pairs.append(pair)
                             # add none manual mappings
                             if resource1 in getMappings():
