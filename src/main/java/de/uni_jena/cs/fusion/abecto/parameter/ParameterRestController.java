@@ -19,9 +19,9 @@ import org.springframework.web.server.ResponseStatusException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.uni_jena.cs.fusion.abecto.Abecto;
+import de.uni_jena.cs.fusion.abecto.node.Node;
+import de.uni_jena.cs.fusion.abecto.node.NodeRepository;
 import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
-import de.uni_jena.cs.fusion.abecto.step.Step;
-import de.uni_jena.cs.fusion.abecto.step.StepRepository;
 
 @RestController
 @Transactional
@@ -31,21 +31,21 @@ public class ParameterRestController {
 	@Autowired
 	ObjectMapper JSON;
 	@Autowired
-	StepRepository stepRepository;
+	NodeRepository nodeRepository;
 	@Autowired
 	ParameterRepository parameterRepository;
 	@Autowired
 	ProjectRepository projectRepository;
 
-	@PostMapping("/step/{step}/parameters")
-	public void set(@PathVariable("step") UUID stepId, @RequestParam(name = "key") String parameterPath,
+	@PostMapping("/node/{node}/parameters")
+	public void set(@PathVariable("node") UUID nodeId, @RequestParam(name = "key") String parameterPath,
 			@RequestParam(name = "value", required = false) String parameterValue) {
 
-		Step step = getStep(stepId);
+		Node node = getNode(nodeId);
 
 		try {
 			// copy parameters
-			Parameter newParameter = step.getParameter().copy();
+			Parameter newParameter = node.getParameter().copy();
 			// get type of changed parameter
 			Class<?> type = newParameter.getType(parameterPath);
 			try {
@@ -58,19 +58,19 @@ public class ParameterRestController {
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
 						String.format("Failed to pares value of type \"%s\".", type));
 			}
-			// update step and persist
-			step.setParameter(parameterRepository.save(newParameter));
-			stepRepository.save(step);
+			// update node and persist
+			node.setParameter(parameterRepository.save(newParameter));
+			nodeRepository.save(node);
 		} catch (ReflectiveOperationException | SecurityException | IllegalArgumentException e) {
 			log.error("Failed to set parameter value.", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to set parameter value.");
 		}
 	}
 
-	@GetMapping("/step/{step}/parameters")
-	public Object get(@PathVariable("step") UUID stepId,
+	@GetMapping("/node/{node}/parameters")
+	public Object get(@PathVariable("node") UUID nodeId,
 			@RequestParam(name = "key", required = false) String parameterPath) {
-		Parameter parameter = getStep(stepId).getParameter();
+		Parameter parameter = getNode(nodeId).getParameter();
 
 		if (parameterPath == null) {
 			return parameter;
@@ -84,11 +84,11 @@ public class ParameterRestController {
 		}
 	}
 
-	private Step getStep(UUID stepId) {
-		return stepRepository.findById(stepId).orElseThrow(new Supplier<ResponseStatusException>() {
+	private Node getNode(UUID nodeId) {
+		return nodeRepository.findById(nodeId).orElseThrow(new Supplier<ResponseStatusException>() {
 			@Override
 			public ResponseStatusException get() {
-				return new ResponseStatusException(HttpStatus.BAD_REQUEST, "Step not found.");
+				return new ResponseStatusException(HttpStatus.BAD_REQUEST, "Node not found.");
 			}
 		});
 	}

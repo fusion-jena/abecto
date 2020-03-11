@@ -4,12 +4,12 @@ import java.util.UUID;
 
 import org.springframework.data.repository.CrudRepository;
 
-import de.uni_jena.cs.fusion.abecto.step.Step;
+import de.uni_jena.cs.fusion.abecto.node.Node;
 
 public interface ProcessingRepository extends CrudRepository<Processing, UUID> {
-	Processing findTopByStepOrderByStartDateTimeDesc(Step step);
+	Processing findTopByNodeOrderByStartDateTimeDesc(Node node);
 
-	Iterable<Processing> findByStepOrderByStartDateTime(Step step);
+	Iterable<Processing> findByNodeOrderByStartDateTime(Node node);
 
-	Iterable<Processing> findAllByStep(Step step);
+	Iterable<Processing> findAllByNode(Node node);
 }

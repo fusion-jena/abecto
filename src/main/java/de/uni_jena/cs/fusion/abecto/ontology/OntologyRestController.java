@@ -14,11 +14,11 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import de.uni_jena.cs.fusion.abecto.node.Node;
+import de.uni_jena.cs.fusion.abecto.node.NodeRepository;
+import de.uni_jena.cs.fusion.abecto.node.NodeRestController;
 import de.uni_jena.cs.fusion.abecto.project.Project;
 import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
-import de.uni_jena.cs.fusion.abecto.step.Step;
-import de.uni_jena.cs.fusion.abecto.step.StepRepository;
-import de.uni_jena.cs.fusion.abecto.step.StepRestController;
 
 @RestController
 public class OntologyRestController {
@@ -28,9 +28,9 @@ public class OntologyRestController {
 	@Autowired
 	ProjectRepository projectRepository;
 	@Autowired
-	StepRepository stepRepository;
+	NodeRepository nodeRepository;
 	@Autowired
-	StepRestController stepRestController;
+	NodeRestController nodeRestController;
 
 	@PostMapping("/ontology")
 	public Ontology create(@RequestParam("project") UUID projectId,
@@ -47,8 +47,8 @@ public class OntologyRestController {
 	@ResponseStatus(code = HttpStatus.NO_CONTENT)
 	public void delete(@PathVariable("uuid") UUID uuid) {
 		Ontology ontology = this.get(uuid);
-		for (Step step : stepRepository.findAllByOntology(ontology)) {
-			stepRestController.delete(step.getId());
+		for (Node node : nodeRepository.findAllByOntology(ontology)) {
+			nodeRestController.delete(node.getId());
 		}
 		ontologyRepository.delete(ontology);
 	}

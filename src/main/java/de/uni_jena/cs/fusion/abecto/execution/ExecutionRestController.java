@@ -72,7 +72,7 @@ public class ExecutionRestController {
 
 	private Model dataModel(Execution execution, Ontology knowlegeBase) {
 		Collection<Model> models = execution.getProcessings().stream().filter((processing) -> {
-			return !processing.getStep().isMeta() && processing.getStep().getOntology().equals(knowlegeBase);
+			return !processing.getNode().isMeta() && processing.getNode().getOntology().equals(knowlegeBase);
 		}).map(Processing::getModelHash).map(modelRepository::get).collect(Collectors.toList());
 		return Models.union(models);
 	}
@@ -90,7 +90,7 @@ public class ExecutionRestController {
 
 	private Model metaModel(Execution execution) {
 		Collection<Model> models = execution.getProcessings().stream().filter((processing) -> {
-			return processing.getStep().isMeta();
+			return processing.getNode().isMeta();
 		}).map(Processing::getModelHash).map(modelRepository::get).collect(Collectors.toList());
 		return Models.union(models);
 	}

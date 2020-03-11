@@ -48,10 +48,10 @@ class Abecto:
         r.raise_for_status()
         return Project(self, r.json())
     
-    def getStep(self, id):
-        r = requests.get(self.base + "step/" + id)
+    def getNode(self, id):
+        r = requests.get(self.base + "node/" + id)
         r.raise_for_status()
-        return Step(self, r.json())
+        return Node(self, r.json())
 
     def project(self, label = ""):
         r = requests.post(self.base + "project", data = {"label": label})
@@ -109,10 +109,10 @@ class Project:
         r.raise_for_status()
         return list(map(lambda ontologyData: Ontology(self.server, ontologyData), r.json()))
 
-    def steps(self):
-        r = requests.get(self.server.base + "step", params = {"project": self.id})
+    def nodes(self):
+        r = requests.get(self.server.base + "node", params = {"project": self.id})
         r.raise_for_status()
-        return list(map(lambda stepData: Step(self.server, stepData), r.json()))
+        return list(map(lambda nodeData: Node(self.server, nodeData), r.json()))
 
     def run(self):
         r = requests.get(self.server.base + "project/" + self.id + "/run", params = {"await": False})
@@ -144,11 +144,11 @@ class Ontology:
         return r.json()
 
     def source(self, processorName, parameters={}):
-        r = requests.post(self.server.base + "step", data = {"class": processorName, "ontology" : self.id, "parameters": json.dumps(parameters)})
+        r = requests.post(self.server.base + "node", data = {"class": processorName, "ontology" : self.id, "parameters": json.dumps(parameters)})
         r.raise_for_status()
-        return Step(self.server, r.json())
+        return Node(self.server, r.json())
     
-class Step:
+class Node:
     def __init__(self, server, data):
         self.server = server
         self.id = data["id"]
@@ -157,65 +157,65 @@ class Step:
         return str(self.info())
     
     def info(self):
-        r = requests.get(self.server.base + "step/" + self.id)
+        r = requests.get(self.server.base + "node/" + self.id)
         r.raise_for_status()
         return r.json()
     
     def into(self, processorName, parameters = {}):
-        r = requests.post(self.server.base + "step", data = {"class": processorName, "input" : [self.id], "parameters": json.dumps(parameters)})
+        r = requests.post(self.server.base + "node", data = {"class": processorName, "input" : [self.id], "parameters": json.dumps(parameters)})
         r.raise_for_status()
-        return Step(self.server, r.json())
+        return Node(self.server, r.json())
     
     def lastProcessing(self):
-        r = requests.get(self.server.base + "step/" + self.id + "/processing/last")
+        r = requests.get(self.server.base + "node/" + self.id + "/processing/last")
         r.raise_for_status()
         return Processing(self.server, r.json())
 
     def parameters(self):
-        r = requests.get(self.server.base + "step/" + self.id + "/parameters")
+        r = requests.get(self.server.base + "node/" + self.id + "/parameters")
         r.raise_for_status()
         return r.json()
 
     def setParameter(self, key, value):
-        r = requests.post(self.server.base + "step/" + self.id + "/parameters", data = {"key": key, "value": json.dumps(value)})
+        r = requests.post(self.server.base + "node/" + self.id + "/parameters", data = {"key": key, "value": json.dumps(value)})
         r.raise_for_status()
 
     def processings(self):
-        r = requests.get(self.server.base + "step/" + self.id + "/processing")
+        r = requests.get(self.server.base + "node/" + self.id + "/processing")
         r.raise_for_status()
         return list(map(lambda processingData: Processing(self.server, processingData), r.json()))
     
     def load(self, file):
-        r = requests.post(self.server.base + "step/" + self.id + "/load", files = {"file": file})
+        r = requests.post(self.server.base + "node/" + self.id + "/load", files = {"file": file})
         r.raise_for_status()
         Processing(self.server, r.json()).raiseForStatus()
         return self
 
     def __add__(self, other):
         if self.server != other.server:
-            raise ValueError("steps must belonge to the same server")
-        return Steps(self.server, [self.id, other.id])
+            raise ValueError("nodes must belonge to the same server")
+        return Nodes(self.server, [self.id, other.id])
 
-class Steps:
-    def __init__(self, server, stepList):
+class Nodes:
+    def __init__(self, server, nodeList):
         self.server = server
-        self.stepList = stepList
+        self.nodeList = nodeList
 
     def into(self, processorName, parameters = {}):
-        r = requests.post(self.server.base + "step", data = {"class": processorName, "input" : self.stepList, "parameters": json.dumps(parameters)})
+        r = requests.post(self.server.base + "node", data = {"class": processorName, "input" : self.nodeList, "parameters": json.dumps(parameters)})
         r.raise_for_status()
-        return Step(self.server, r.json())
+        return Node(self.server, r.json())
     
     def __add__(self, other):
         if self.server != other.server:
-            raise ValueError("steps must belonge to the same server")
-        return Steps(self.server, self.stepList + [other.id])
+            raise ValueError("nodes must belonge to the same server")
+        return Nodes(self.server, self.nodeList + [other.id])
 
 class Processing:
     def __init__(self, server, data):
         self.server = server
         self.id = data["id"]
-        self.stepId = data["step"]
+        self.nodeId = data["node"]
         self.status = data["status"]
         self.stackTrace = data["stackTrace"]
         
@@ -243,7 +243,7 @@ class Processing:
 
     def raiseForStatus(self):
         if self.status != "SUCCEEDED" and not self.stackTrace.startswith("java.util.concurrent.ExecutionException"):
-            raise Exception("Step " + str(self.server.getStep(self.stepId)) + " has status " + self.status + ":\n" + self.stackTrace.replace("\\n","\n"))
+            raise Exception("Node " + str(self.server.getNode(self.nodeId)) + " has status " + self.status + ":\n" + self.stackTrace.replace("\\n","\n"))
 
 class Execution:
     def __init__(self, server, data):
@@ -404,7 +404,7 @@ class Execution:
                 table += "</table>"
                 display(HTML(table))
                 
-    def mappings(self, manualMappingStep):
+    def mappings(self, manualMappingNode):
         # symboles
         accepted = "✓"
         retained = "?"
@@ -532,7 +532,7 @@ class Execution:
         categories =  set(categoryData["name"])
         ontologies = self.sortedOntologies(set(categoryData["ontology"]))
         # get manual mapping parameters
-        manualMappingParameters = manualMappingStep.parameters()["parameters"]
+        manualMappingParameters = manualMappingNode.parameters()["parameters"]
         # collect positive manual mappings from parameters
         manualPositiveMappings = {}
         for mappingList in (manualMappingParameters["mappings"] if manualMappingParameters["mappings"] else []):
@@ -634,7 +634,7 @@ class Execution:
         def updateMappings(b):
             with output:
                 # get remote manual mapping data
-                manualMappingParameters = manualMappingStep.parameters()["parameters"]
+                manualMappingParameters = manualMappingNode.parameters()["parameters"]
                 manualPositiveMappings = manualMappingParameters["mappings"] if manualMappingParameters["mappings"] else []
                 manualNegativeMappings = manualMappingParameters["suppressed_mappings"] if manualMappingParameters["suppressed_mappings"] else []
                 # update local manual mapping data
@@ -652,8 +652,8 @@ class Execution:
                     for newMapping in newMappingSink.children:
                         manualPositiveMappings.append([newMapping.children[0].value, newMapping.children[2].value])
                 # update remote manual mapping data
-                manualMappingStep.setParameter("mappings", manualPositiveMappings)
-                manualMappingStep.setParameter("suppressed_mappings", manualNegativeMappings)
+                manualMappingNode.setParameter("mappings", manualPositiveMappings)
+                manualMappingNode.setParameter("suppressed_mappings", manualNegativeMappings)
                 display(HTML("Manual Mappings updated."))
         updateButton.on_click(updateMappings)
         def hide(b):

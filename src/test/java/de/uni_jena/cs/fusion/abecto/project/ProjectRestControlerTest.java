@@ -103,13 +103,13 @@ class ProjectRestControlerTest extends AbstractRepositoryConsumingTest {
 		String knowledgBase2Id = buffer.getId();
 
 		// add source 1
-		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", RdfFileSourceProcessor.class.getTypeName())
+		mvc.perform(MockMvcRequestBuilders.post("/node").param("class", RdfFileSourceProcessor.class.getTypeName())
 				.param("ontology", knowledgBase1Id).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 		String source1Id = buffer.getId();
 
 		// add source 2
-		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", RdfFileSourceProcessor.class.getTypeName())
+		mvc.perform(MockMvcRequestBuilders.post("/node").param("class", RdfFileSourceProcessor.class.getTypeName())
 				.param("ontology", knowledgBase2Id).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 		String source2Id = buffer.getId();
@@ -120,42 +120,42 @@ class ProjectRestControlerTest extends AbstractRepositoryConsumingTest {
 		// upload source 1
 		MockMultipartFile multipartFileSource1 = new MockMultipartFile("file",
 				testOntologyBuilder.setErrorRate(10).setGapRate(3).stream(1));
-		this.mvc.perform(multipart(String.format("/step/%s/load", source1Id)).file(multipartFileSource1))
+		this.mvc.perform(multipart(String.format("/node/%s/load", source1Id)).file(multipartFileSource1))
 				.andExpect(status().isOk());
 
 		// upload source 2
 		MockMultipartFile multipartFileSource2 = new MockMultipartFile("file",
 				testOntologyBuilder.setErrorRate(8).setGapRate(5).stream(2));
-		this.mvc.perform(multipart(String.format("/step/%s/load", source2Id)).file(multipartFileSource2))
+		this.mvc.perform(multipart(String.format("/node/%s/load", source2Id)).file(multipartFileSource2))
 				.andExpect(status().isOk());
 
 		String transformationParameter = "{\"query\":\"CONSTRUCT {?s <http://example.org/p> <http://example.org/o>} WHERE {?s ?p ?o. Filter(!isBLANK(?s))}\"}";
 
 		// add transformation 1
-		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", SparqlConstructProcessor.class.getTypeName())
+		mvc.perform(MockMvcRequestBuilders.post("/node").param("class", SparqlConstructProcessor.class.getTypeName())
 				.param("input", source1Id).param("parameters", transformationParameter)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		String transformation1Id = buffer.getId();
 
 		// add transformation 2
-		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", SparqlConstructProcessor.class.getTypeName())
+		mvc.perform(MockMvcRequestBuilders.post("/node").param("class", SparqlConstructProcessor.class.getTypeName())
 				.param("input", source2Id).param("parameters", transformationParameter)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		String transformation2Id = buffer.getId();
 
 		// add categories
 		String categoryParameter = "{\"patterns\":{\"entity\":\"{?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .}\"}}";
-		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", ManualCategoryProcessor.class.getTypeName())
+		mvc.perform(MockMvcRequestBuilders.post("/node").param("class", ManualCategoryProcessor.class.getTypeName())
 				.param("input", transformation1Id).param("parameters", categoryParameter)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		String category1Id = buffer.getId();
-		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", ManualCategoryProcessor.class.getTypeName())
+		mvc.perform(MockMvcRequestBuilders.post("/node").param("class", ManualCategoryProcessor.class.getTypeName())
 				.param("input", transformation2Id).param("parameters", categoryParameter)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		String category2Id = buffer.getId();
 
 		// add mapping
-		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", JaroWinklerMappingProcessor.class.getTypeName())
+		mvc.perform(MockMvcRequestBuilders.post("/node").param("class", JaroWinklerMappingProcessor.class.getTypeName())
 				.param("input", category1Id, category2Id)
 				.param("parameters",
 						"{\"threshold\":0.9,\"case_sensitive\":false,\"category\":\"entity\",\"variables\":[\"label\"]}")

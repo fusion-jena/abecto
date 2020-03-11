@@ -20,11 +20,11 @@ import org.springframework.stereotype.Component;
 
 import de.uni_jena.cs.fusion.abecto.execution.Execution;
 import de.uni_jena.cs.fusion.abecto.execution.ExecutionRepository;
+import de.uni_jena.cs.fusion.abecto.node.Node;
+import de.uni_jena.cs.fusion.abecto.node.NodeRepository;
 import de.uni_jena.cs.fusion.abecto.processing.Processing;
 import de.uni_jena.cs.fusion.abecto.processing.ProcessingRepository;
 import de.uni_jena.cs.fusion.abecto.processing.ProcessingRunner;
-import de.uni_jena.cs.fusion.abecto.step.Step;
-import de.uni_jena.cs.fusion.abecto.step.StepRepository;
 
 @Component
 public class ProjectRunner {
@@ -34,7 +34,7 @@ public class ProjectRunner {
 	@Autowired
 	ProcessingRepository processingRepository;
 	@Autowired
-	StepRepository stepRepository;
+	NodeRepository nodeRepository;
 	@Autowired
 	ExecutionRepository executionRepository;
 	@Autowired
@@ -54,11 +54,11 @@ public class ProjectRunner {
 			throws InterruptedException {
 		// get project
 		Project project = projectRepository.findById(projectId).orElseThrow();
-		// get steps
-		Iterable<Step> steps = stepRepository.findAllByProject(project);
+		// get nodes
+		Iterable<Node> nodes = nodeRepository.findAllByProject(project);
 
 		// initialize processing map
-		Map<Step, Processing> processingsByStep = new HashMap<>();
+		Map<Node, Processing> processingsByNode = new HashMap<>();
 
 		// get input processings
 		List<Processing> inputProcessings = new LinkedList<>();
@@ -70,14 +70,14 @@ public class ProjectRunner {
 			// get transitive input processings
 			inputProcessing.getInputProcessings().forEach(inputProcessingsIterator::add);
 			// add input processing to map
-			processingsByStep.put(inputProcessing.getStep(), inputProcessing);
+			processingsByNode.put(inputProcessing.getNode(), inputProcessing);
 		}
 
-		// TODO avoid re-execution of steps with same parameters and input
+		// TODO avoid re-execution of nodes with same parameters and input
 
-		// create processing for left steps
-		for (Step step : steps) {
-			processingsByStep.computeIfAbsent(step, (c) -> new Processing(c));
+		// create processing for left nodes
+		for (Node node : nodes) {
+			processingsByNode.computeIfAbsent(node, (c) -> new Processing(c));
 		}
 
 		// initialize result processing collection
@@ -85,11 +85,11 @@ public class ProjectRunner {
 
 
 		// interlink processings
-		for (Step step : steps) {
-			Processing processing = processingsByStep.get(step);
+		for (Node node : nodes) {
+			Processing processing = processingsByNode.get(node);
 			if (processing.isNotStarted()) {
-				for (Step inputStep : step.getInputSteps()) {
-					processing.addInputProcessing(processingsByStep.get(inputStep));
+				for (Node inputNode : node.getInputNodes()) {
+					processing.addInputProcessing(processingsByNode.get(inputNode));
 				}
 			} else {
 				// add processing to result
@@ -98,7 +98,7 @@ public class ProjectRunner {
 		}
 
 		// save processings and execution
-		Iterable<Processing> processingsToExecute = processingRepository.saveAll(processingsByStep.values());
+		Iterable<Processing> processingsToExecute = processingRepository.saveAll(processingsByNode.values());
 		Execution execution = executionRepository.save(new Execution(project, processingsToExecute));
 
 		Map<Processing, Future<Processing>> futureProcessings = new HashMap<>();

@@ -37,7 +37,7 @@ public class ExecutionRestControllerTest extends AbstractRepositoryConsumingTest
 		String knowledgBaseId = buffer.getId();
 
 		// add source
-		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", RdfFileSourceProcessor.class.getTypeName())
+		mvc.perform(MockMvcRequestBuilders.post("/node").param("class", RdfFileSourceProcessor.class.getTypeName())
 				.param("ontology", knowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 		String sourceId = buffer.getId();
@@ -45,12 +45,12 @@ public class ExecutionRestControllerTest extends AbstractRepositoryConsumingTest
 		// upload source
 		MockMultipartFile multipartFileSource = new MockMultipartFile("file",
 				new TestDataGenerator().setClassFactor(1).setIndividualFactor(1).setDensity(4).stream(1));
-		this.mvc.perform(multipart(String.format("/step/%s/load", sourceId)).file(multipartFileSource))
+		this.mvc.perform(multipart(String.format("/node/%s/load", sourceId)).file(multipartFileSource))
 				.andExpect(status().isOk());
 
 		// add category
 		String categoryParameter = "{\"patterns\":{\"entity\":\"{?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .}\"}}";
-		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", ManualCategoryProcessor.class.getTypeName())
+		mvc.perform(MockMvcRequestBuilders.post("/node").param("class", ManualCategoryProcessor.class.getTypeName())
 				.param("input", sourceId).param("parameters", categoryParameter).accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(buffer);
 
@@ -83,7 +83,7 @@ public class ExecutionRestControllerTest extends AbstractRepositoryConsumingTest
 		String knowledgBaseId = buffer.getId();
 
 		// add source
-		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", RdfFileSourceProcessor.class.getTypeName())
+		mvc.perform(MockMvcRequestBuilders.post("/node").param("class", RdfFileSourceProcessor.class.getTypeName())
 				.param("ontology", knowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 		String sourceId = buffer.getId();
@@ -94,12 +94,12 @@ public class ExecutionRestControllerTest extends AbstractRepositoryConsumingTest
 		// upload source
 		MockMultipartFile multipartFileSource = new MockMultipartFile("file",
 				testOntologyBuilder.setErrorRate(10).setGapRate(3).stream(1));
-		this.mvc.perform(multipart(String.format("/step/%s/load", sourceId)).file(multipartFileSource))
+		this.mvc.perform(multipart(String.format("/node/%s/load", sourceId)).file(multipartFileSource))
 				.andExpect(status().isOk());
 
 		// add category
 		String categoryParameter = "{\"patterns\":{\"entity\":\"{?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .}\"}}";
-		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", ManualCategoryProcessor.class.getTypeName())
+		mvc.perform(MockMvcRequestBuilders.post("/node").param("class", ManualCategoryProcessor.class.getTypeName())
 				.param("input", sourceId).param("parameters", categoryParameter).accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(buffer);
 

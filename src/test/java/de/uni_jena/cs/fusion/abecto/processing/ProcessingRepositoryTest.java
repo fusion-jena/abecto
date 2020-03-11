@@ -50,7 +50,7 @@ public class ProcessingRepositoryTest extends AbstractRepositoryConsumingTest {
 		mvc.perform(MockMvcRequestBuilders.post("/ontology").param("project", projectId)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		String knowledgBaseId = buffer.getId();// add source
-		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", "RdfFileSourceProcessor")
+		mvc.perform(MockMvcRequestBuilders.post("/node").param("class", "RdfFileSourceProcessor")
 				.param("ontology", knowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 		String sourceId = buffer.getId();
@@ -58,11 +58,11 @@ public class ProcessingRepositoryTest extends AbstractRepositoryConsumingTest {
 		// upload source
 		MockMultipartFile multipartFileSource1 = new MockMultipartFile("file",
 				Models.getByteSerialization(model, ModelSerializationLanguage.NTRIPLES.getApacheJenaKey()));
-		mvc.perform(multipart(String.format("/step/%s/load", sourceId)).file(multipartFileSource1))
+		mvc.perform(multipart(String.format("/node/%s/load", sourceId)).file(multipartFileSource1))
 				.andExpect(status().isOk());
 
 		// get last processing
-		mvc.perform(MockMvcRequestBuilders.get(String.format("/step/%s/processing/last", sourceId))
+		mvc.perform(MockMvcRequestBuilders.get(String.format("/node/%s/processing/last", sourceId))
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		processingId = buffer.getId();
 	}

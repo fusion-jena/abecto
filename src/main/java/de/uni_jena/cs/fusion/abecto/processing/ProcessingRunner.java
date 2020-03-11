@@ -167,7 +167,7 @@ public class ProcessingRunner {
 			processor.setParameters(processing.getParameter().getParameters());
 			processor.setStatus(processing.getStatus(), modelRepository.get(processing.getModelHash()));
 			if (processor instanceof SourceProcessor) {
-				((SourceProcessor<?>) processor).setOntology(processing.getStep().getOntology().getId());
+				((SourceProcessor<?>) processor).setOntology(processing.getNode().getOntology().getId());
 			} else if (processor instanceof RefinementProcessor) {
 				for (Processing inputProcessing : processing.getInputProcessings()) {
 					// recursive retrieval of input models

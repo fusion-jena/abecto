@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.step;
+package de.uni_jena.cs.fusion.abecto.node;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -35,7 +35,7 @@ import de.uni_jena.cs.fusion.abecto.project.Project;
 import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
 
 @RestController
-public class StepRestController {
+public class NodeRestController {
 
 	@Autowired
 	ProcessingRunner processorRunner;
@@ -47,7 +47,7 @@ public class StepRestController {
 	@Autowired
 	OntologyRepository ontologyRepository;
 	@Autowired
-	StepRepository stepRepository;
+	NodeRepository nodeRepository;
 	@Autowired
 	ProcessingRepository processingRepository;
 	@Autowired
@@ -59,20 +59,20 @@ public class StepRestController {
 	 * Creates a new Refinement Processor Node in the processing pipeline.
 	 * 
 	 * @param processorClassName
-	 * @param inputStepIds
+	 * @param inputNodeIds
 	 * @return
 	 */
-	@PostMapping("/step")
-	public Step create(@RequestParam("class") String processorClassName,
+	@PostMapping("/node")
+	public Node create(@RequestParam("class") String processorClassName,
 			@RequestParam(name = "ontology", required = false) UUID ontologyId,
-			@RequestParam(name = "input", required = false) Collection<UUID> inputStepIds,
+			@RequestParam(name = "input", required = false) Collection<UUID> inputNodeIds,
 			@RequestParam(name = "parameters", required = false) String parameterJson) {
 
 		Class<Processor<?>> processorClass = getProcessorClass(processorClassName);
 
 		if (SourceProcessor.class.isAssignableFrom(processorClass)) {
 			// check input parameter
-			if (inputStepIds != null) {
+			if (inputNodeIds != null) {
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
 						"Parameter \"input\" not permited for SourceProcessors.");
 			}
@@ -85,9 +85,9 @@ public class StepRestController {
 							return new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ontology not found.");
 						}
 					});
-			// create step
+			// create node
 			Parameter parameter = parameterRepository.save(new Parameter(getParameter(processorClass, parameterJson)));
-			return stepRepository.save(new Step(processorClass, parameter, ontology));
+			return nodeRepository.save(new Node(processorClass, parameter, ontology));
 
 		} else {
 			// check ontology parameter
@@ -96,34 +96,34 @@ public class StepRestController {
 						"Parameter \"ontology\" only permited for SourceProcessors.");
 			}
 			// check input parameter
-			for (UUID inputStepId : inputStepIds) {
-				if (!stepRepository.existsById(inputStepId)) {
+			for (UUID inputNodeId : inputNodeIds) {
+				if (!nodeRepository.existsById(inputNodeId)) {
 					throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-							String.format("Input step %s not found.", inputStepId));
+							String.format("Input node %s not found.", inputNodeId));
 				}
 			}
-			Iterable<Step> inputSteps = stepRepository.findAllById(inputStepIds);
-			// create step
+			Iterable<Node> inputNodes = nodeRepository.findAllById(inputNodeIds);
+			// create node
 			Parameter parameter = parameterRepository.save(new Parameter(getParameter(processorClass, parameterJson)));
-			return stepRepository.save(new Step(processorClass, parameter, inputSteps));
+			return nodeRepository.save(new Node(processorClass, parameter, inputNodes));
 		}
 	}
 
-	@GetMapping({ "/step/{uuid}" })
-	public Step get(@PathVariable("uuid") UUID uuid) {
-		Optional<Step> step = stepRepository.findById(uuid);
-		if (step.isPresent()) {
-			return step.get();
+	@GetMapping({ "/node/{uuid}" })
+	public Node get(@PathVariable("uuid") UUID uuid) {
+		Optional<Node> node = nodeRepository.findById(uuid);
+		if (node.isPresent()) {
+			return node.get();
 		} else {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Step %s not found.", uuid));
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Node %s not found.", uuid));
 		}
 	}
 
-	@PostMapping("/step/{uuid}/load")
-	public Processing load(@PathVariable("uuid") UUID stepId,
+	@PostMapping("/node/{uuid}/load")
+	public Processing load(@PathVariable("uuid") UUID nodeId,
 			@RequestParam(name = "file", required = false) MultipartFile file) {
-		Step step = get(stepId);
-		Processing processing = processingRepository.save(new Processing(step));
+		Node node = get(nodeId);
+		Processing processing = processingRepository.save(new Processing(node));
 		try {
 			if (file == null) {
 				processorRunner.syncExecute(processing);
@@ -132,35 +132,35 @@ public class StepRestController {
 			}
 		} catch (IllegalArgumentException | IllegalStateException | IOException e) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-					String.format("Failed to execute Processor for Processing %s.", stepId), e);
+					String.format("Failed to execute Processor for Processing %s.", nodeId), e);
 		}
 		return processing;
 	}
 
-	@GetMapping("/step/{uuid}/processing")
-	public Iterable<Processing> processings(@PathVariable("uuid") UUID stepId) {
-		return processingRepository.findByStepOrderByStartDateTime(get(stepId));
+	@GetMapping("/node/{uuid}/processing")
+	public Iterable<Processing> processings(@PathVariable("uuid") UUID nodeId) {
+		return processingRepository.findByNodeOrderByStartDateTime(get(nodeId));
 	}
 
-	@DeleteMapping("/step/{uuid}")
+	@DeleteMapping("/node/{uuid}")
 	public void delete(@PathVariable("uuid") UUID uuid) {
-		Step step = this.get(uuid);
-		for (Processing processing : processingRepository.findAllByStep(step)) {
+		Node node = this.get(uuid);
+		for (Processing processing : processingRepository.findAllByNode(node)) {
 			processingRestController.delete(processing.getId());
 		}
-		stepRepository.delete(step);
+		nodeRepository.delete(node);
 	}
 
-	@GetMapping("/step/{uuid}/processing/last")
-	public Processing lastProcessing(@PathVariable("uuid") UUID stepId) {
-		return processingRepository.findTopByStepOrderByStartDateTimeDesc(get(stepId));
+	@GetMapping("/node/{uuid}/processing/last")
+	public Processing lastProcessing(@PathVariable("uuid") UUID nodeId) {
+		return processingRepository.findTopByNodeOrderByStartDateTimeDesc(get(nodeId));
 	}
 
-	@GetMapping("/step")
-	public Iterable<Step> list(@RequestParam(name = "project") UUID projectId) {
+	@GetMapping("/node")
+	public Iterable<Node> list(@RequestParam(name = "project") UUID projectId) {
 		Optional<Project> project = projectRepository.findById(projectId);
 		if (project.isPresent()) {
-			return stepRepository.findAllByProject(project.get());
+			return nodeRepository.findAllByProject(project.get());
 		} else {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Project not found.");
 		}

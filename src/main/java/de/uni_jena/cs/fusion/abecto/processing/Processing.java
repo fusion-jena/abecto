@@ -17,10 +17,10 @@ import javax.persistence.ManyToOne;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
+import de.uni_jena.cs.fusion.abecto.node.Node;
 import de.uni_jena.cs.fusion.abecto.parameter.Parameter;
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
 import de.uni_jena.cs.fusion.abecto.processor.Processor.Status;
-import de.uni_jena.cs.fusion.abecto.step.Step;
 import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
 import de.uni_jena.cs.fusion.abecto.util.EntityToIdConverter;
 
@@ -32,14 +32,14 @@ import de.uni_jena.cs.fusion.abecto.util.EntityToIdConverter;
 public class Processing extends AbstractEntityWithUUID {
 
 	/**
-	 * {@link Step} of this processing. <b>Note:</b> The {@link Step} might have
-	 * been changed after processing. To get the actual {@link Step} of this
+	 * {@link Node} of this processing. <b>Note:</b> The {@link Node} might have
+	 * been changed after processing. To get the actual {@link Node} of this
 	 * processing refer to {@link #processor}, {@link #parameter}, and
 	 * {@link #inputProcessings}.
 	 */
 	@ManyToOne
 	@JsonSerialize(converter = EntityToIdConverter.class)
-	private Step step;
+	private Node node;
 	/**
 	 * {@link Processor} used to produce the result model.
 	 */
@@ -70,16 +70,16 @@ public class Processing extends AbstractEntityWithUUID {
 	protected Processing() {
 	}
 
-	public Processing(Step step) {
-		this.step = step;
-		this.parameter = step.getParameter();
-		this.processor = step.getProcessorClass();
+	public Processing(Node node) {
+		this.node = node;
+		this.parameter = node.getParameter();
+		this.processor = node.getProcessorClass();
 	}
 
-	protected Processing(Step step, Collection<Processing> inputProcessings) {
-		this.step = step;
-		this.parameter = step.getParameter();
-		this.processor = step.getProcessorClass();
+	protected Processing(Node node, Collection<Processing> inputProcessings) {
+		this.node = node;
+		this.parameter = node.getParameter();
+		this.processor = node.getProcessorClass();
 		this.inputProcessings.addAll(inputProcessings);
 	}
 
@@ -87,8 +87,8 @@ public class Processing extends AbstractEntityWithUUID {
 		this.inputProcessings.add(processing);
 	}
 
-	public Step getStep() {
-		return this.step;
+	public Node getNode() {
+		return this.node;
 	}
 
 	public OffsetDateTime getEndDateTime() {

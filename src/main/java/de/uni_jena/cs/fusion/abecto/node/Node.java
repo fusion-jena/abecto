@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.step;
+package de.uni_jena.cs.fusion.abecto.node;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -24,16 +24,16 @@ import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
 import de.uni_jena.cs.fusion.abecto.util.EntityToIdConverter;
 
 @Entity
-public class Step extends AbstractEntityWithUUID {
+public class Node extends AbstractEntityWithUUID {
 
 	/**
-	 * The {@link Project} this {@link Step} belongs to.
+	 * The {@link Project} this {@link Node} belongs to.
 	 */
 	@ManyToOne(optional = false)
 	@JsonSerialize(converter = EntityToIdConverter.class)
 	protected Project project;
 	/**
-	 * The {@link Ontology} this {@link Step} of a {@link SourceProcessor} belongs
+	 * The {@link Ontology} this {@link Node} of a {@link SourceProcessor} belongs
 	 * to or {@code null}, if this does not belong to a {@link SourceProcessor}.
 	 */
 	@ManyToOne
@@ -45,70 +45,70 @@ public class Step extends AbstractEntityWithUUID {
 	@ManyToOne
 	protected Parameter parameter;
 	@ManyToMany
-	protected Collection<Step> inputStep = new HashSet<>();
-	@ManyToMany(mappedBy = "inputStep")
-	protected Collection<Step> outputSteps = new HashSet<>();
+	protected Collection<Node> inputNode = new HashSet<>();
+	@ManyToMany(mappedBy = "inputNode")
+	protected Collection<Node> outputNodes = new HashSet<>();
 
-	protected Step() {
+	protected Node() {
 	}
 
 	/**
-	 * Creates a {@link Step} for a {@link RefinementProcessor}.
+	 * Creates a {@link Node} for a {@link RefinementProcessor}.
 	 * 
 	 * @param parameter      The {@link Parameter} to use.
 	 * @param processorClass The {@link Processor} to use. {@link SourceProcessor}
 	 *                       are not allowed.
-	 * @param inputSteps     The {@link Step}s whose result to use as input.
+	 * @param inputNodes     The {@link Node}s whose result to use as input.
 	 */
-	public Step(Class<Processor<?>> processorClass, Parameter parameter, Iterable<Step> inputSteps)
+	public Node(Class<Processor<?>> processorClass, Parameter parameter, Iterable<Node> inputNodes)
 			throws NoSuchElementException, IllegalArgumentException, IllegalStateException {
 		this(processorClass, parameter);
 
-		// add associations between steps
-		for (Step inputStep : inputSteps) {
-			this.addInputStep(inputStep);
+		// add associations between nodes
+		for (Node inputNode : inputNodes) {
+			this.addInputNode(inputNode);
 		}
 
 		// set project
-		if (this.inputStep.stream().map((step) -> step.project).distinct().count() == 1L) {
-			this.project = this.inputStep.iterator().next().project;
+		if (this.inputNode.stream().map((node) -> node.project).distinct().count() == 1L) {
+			this.project = this.inputNode.iterator().next().project;
 		} else {
-			throw new IllegalStateException("InputSteps belong to multiple projects.");
+			throw new IllegalStateException("InputNodes belong to multiple projects.");
 		}
 	}
 
 	/**
-	 * Creates a {@link Step} for a {@link SourceProcessor}.
+	 * Creates a {@link Node} for a {@link SourceProcessor}.
 	 * 
 	 * @param parameter The {@link Parameter} to use.
 	 * @param processor The {@link SourceProcessor} to use.
-	 * @param ontology  The {@link Ontology} to assign the {@link Step} to.
+	 * @param ontology  The {@link Ontology} to assign the {@link Node} to.
 	 */
-	public Step(Class<Processor<?>> processor, Parameter parameter, Ontology ontology) {
+	public Node(Class<Processor<?>> processor, Parameter parameter, Ontology ontology) {
 		this(processor, parameter);
 		this.ontology = ontology;
 		this.project = ontology.getProject();
 	}
 
 	/**
-	 * Internal {@link Step} constructor for reuse in other constructors only.
+	 * Internal {@link Node} constructor for reuse in other constructors only.
 	 * 
 	 * @param parameter
 	 * @param processor
 	 */
-	protected Step(Class<Processor<?>> processor, Parameter parameter) {
+	protected Node(Class<Processor<?>> processor, Parameter parameter) {
 		this.parameter = parameter;
 		this.processor = processor;
 	}
 
 	@JsonIgnore
-	public void addInputStep(Step inputStep) {
-		this.inputStep.add(inputStep);
+	public void addInputNode(Node inputNode) {
+		this.inputNode.add(inputNode);
 	}
 
 	@JsonIgnore
-	public Collection<Step> getInputSteps() {
-		return this.inputStep;
+	public Collection<Node> getInputNodes() {
+		return this.inputNode;
 	}
 
 	public Ontology getOntology() {

@@ -8,11 +8,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import de.uni_jena.cs.fusion.abecto.execution.ExecutionRepository;
+import de.uni_jena.cs.fusion.abecto.node.NodeRepository;
 import de.uni_jena.cs.fusion.abecto.ontology.OntologyRepository;
 import de.uni_jena.cs.fusion.abecto.parameter.ParameterRepository;
 import de.uni_jena.cs.fusion.abecto.processing.ProcessingRepository;
 import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
-import de.uni_jena.cs.fusion.abecto.step.StepRepository;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -25,7 +25,7 @@ public abstract class AbstractRepositoryConsumingTest {
 	@Autowired
 	OntologyRepository ontologyRepository;
 	@Autowired
-	StepRepository stepRepository;
+	NodeRepository nodeRepository;
 	@Autowired
 	ProcessingRepository processingRepository;
 	@Autowired
@@ -35,7 +35,7 @@ public abstract class AbstractRepositoryConsumingTest {
 	public void cleanup() throws Exception {
 		executionRepository.deleteAll();
 		processingRepository.deleteAll();
-		stepRepository.deleteAll();
+		nodeRepository.deleteAll();
 		parameterRepository.deleteAll();
 		ontologyRepository.deleteAll();
 		projectRepository.deleteAll();

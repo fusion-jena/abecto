@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.step;
+package de.uni_jena.cs.fusion.abecto.node;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
@@ -36,7 +36,7 @@ import de.uni_jena.cs.fusion.abecto.processor.UploadSourceProcessor;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @AutoConfigureMockMvc
-public class StepRestControllerTest extends AbstractRepositoryConsumingTest {
+public class NodeRestControllerTest extends AbstractRepositoryConsumingTest {
 
 	@Autowired
 	MockMvc mvc;
@@ -60,55 +60,55 @@ public class StepRestControllerTest extends AbstractRepositoryConsumingTest {
 	}
 
 	@Test
-	public void processingStep() throws Exception {
+	public void processingNode() throws Exception {
 		// use unknown processor class name
-		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", "UnknownProcessor")
+		mvc.perform(MockMvcRequestBuilders.post("/node").param("class", "UnknownProcessor")
 				.param("input", new String[] { "550e8400-e29b-11d4-a716-446655440000" })
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
 
-		// create new step without parameter
-		mvc.perform(MockMvcRequestBuilders.post("/step")
-				.param("class", "de.uni_jena.cs.fusion.abecto.step.StepRestControllerTest$ParameterProcessor")
+		// create new node without parameter
+		mvc.perform(MockMvcRequestBuilders.post("/node")
+				.param("class", "de.uni_jena.cs.fusion.abecto.node.NodeRestControllerTest$ParameterProcessor")
 				.param("ontology", ontologyId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 
-		// create new step with parameter
+		// create new node with parameter
 		String parametersJson = "{\"parameterName\":\"parameterValue\"}";
-		mvc.perform(MockMvcRequestBuilders.post("/step")
-				.param("class", "de.uni_jena.cs.fusion.abecto.step.StepRestControllerTest$ParameterProcessor")
+		mvc.perform(MockMvcRequestBuilders.post("/node")
+				.param("class", "de.uni_jena.cs.fusion.abecto.node.NodeRestControllerTest$ParameterProcessor")
 				.param("parameters", parametersJson).param("ontology", ontologyId)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 
-		// get step
-		mvc.perform(MockMvcRequestBuilders.get(String.format("/step/%s", buffer.getId()))
+		// get node
+		mvc.perform(MockMvcRequestBuilders.get(String.format("/node/%s", buffer.getId()))
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		JSONAssert.assertEquals(parametersJson, buffer.getJson().path("parameter").path("parameters").toString(),
 				false);
 
 		// use unknown ontology id
-		mvc.perform(MockMvcRequestBuilders.post("/step")
-				.param("class", "de.uni_jena.cs.fusion.abecto.step.StepRestControllerTest$ParameterProcessor")
+		mvc.perform(MockMvcRequestBuilders.post("/node")
+				.param("class", "de.uni_jena.cs.fusion.abecto.node.NodeRestControllerTest$ParameterProcessor")
 				.param("ontology", unknownUuid).accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isBadRequest());
 
-		// use unknown step id
-		mvc.perform(MockMvcRequestBuilders.post(String.format("/step/%s/parameters", unknownUuid))
+		// use unknown node id
+		mvc.perform(MockMvcRequestBuilders.post(String.format("/node/%s/parameters", unknownUuid))
 				.param("key", "parameterName").param("value", "some value").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isBadRequest());
 		mvc.perform(
-				MockMvcRequestBuilders.get(String.format("/step/%s", unknownUuid)).accept(MediaType.APPLICATION_JSON))
+				MockMvcRequestBuilders.get(String.format("/node/%s", unknownUuid)).accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isNotFound());
 	}
 
 	@Test
 	public void loadSource() throws Exception {
 		// create new source without parameter
-		mvc.perform(MockMvcRequestBuilders.post("/step")
-				.param("class", "de.uni_jena.cs.fusion.abecto.step.StepRestControllerTest$NoUploadProcessor")
+		mvc.perform(MockMvcRequestBuilders.post("/node")
+				.param("class", "de.uni_jena.cs.fusion.abecto.node.NodeRestControllerTest$NoUploadProcessor")
 				.param("ontology", ontologyId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 
-		mvc.perform(MockMvcRequestBuilders.post(String.format("/step/%s/load", buffer.getId()))
+		mvc.perform(MockMvcRequestBuilders.post(String.format("/node/%s/load", buffer.getId()))
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
 
 		Assertions.assertTrue(NoUploadProcessor.loaded);
@@ -117,14 +117,14 @@ public class StepRestControllerTest extends AbstractRepositoryConsumingTest {
 	@Test
 	public void uploadSourceStream() throws Exception {
 		// create new source without parameter
-		mvc.perform(MockMvcRequestBuilders.post("/step")
-				.param("class", "de.uni_jena.cs.fusion.abecto.step.StepRestControllerTest$UploadProcessor")
+		mvc.perform(MockMvcRequestBuilders.post("/node")
+				.param("class", "de.uni_jena.cs.fusion.abecto.node.NodeRestControllerTest$UploadProcessor")
 				.param("ontology", ontologyId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 
 		String content = "File Content";
 		MockMultipartFile multipartFile = new MockMultipartFile("file", "test.txt", "text/plain", content.getBytes());
-		this.mvc.perform(multipart(String.format("/step/%s/load", buffer.getId())).file(multipartFile))
+		this.mvc.perform(multipart(String.format("/node/%s/load", buffer.getId())).file(multipartFile))
 				.andExpect(status().isOk());
 
 		Assertions.assertEquals(content, new String(UploadProcessor.streamData));
@@ -137,24 +137,24 @@ public class StepRestControllerTest extends AbstractRepositoryConsumingTest {
 		String rdf2 = "<http://example.org/A> <http://example.org/B> <http://example.org/D> .";
 
 		// add source
-		mvc.perform(MockMvcRequestBuilders.post("/step").param("class", "RdfFileSourceProcessor")
+		mvc.perform(MockMvcRequestBuilders.post("/node").param("class", "RdfFileSourceProcessor")
 				.param("ontology", ontologyId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 		String sourceId = buffer.getId();
 
 		// upload source
 		MockMultipartFile multipartFileSource = new MockMultipartFile("file", rdf1.getBytes());
-		mvc.perform(multipart(String.format("/step/%s/load", sourceId)).file(multipartFileSource))
+		mvc.perform(multipart(String.format("/node/%s/load", sourceId)).file(multipartFileSource))
 				.andExpect(status().isOk());
 
 		// upload changed source
 		multipartFileSource = new MockMultipartFile("file", rdf2.getBytes());
-		mvc.perform(multipart(String.format("/step/%s/load", sourceId)).file(multipartFileSource))
+		mvc.perform(multipart(String.format("/node/%s/load", sourceId)).file(multipartFileSource))
 				.andExpect(status().isOk()).andDo(buffer);
 		String secondUploadId = buffer.getId();
 
 		// get last processing
-		mvc.perform(MockMvcRequestBuilders.get(String.format("/step/%s/processing/last", sourceId))
+		mvc.perform(MockMvcRequestBuilders.get(String.format("/node/%s/processing/last", sourceId))
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andExpect(jsonPath("id", is(secondUploadId)));
 	}
@@ -164,14 +164,14 @@ public class StepRestControllerTest extends AbstractRepositoryConsumingTest {
 		HashSet<String> expected = new HashSet<>();
 
 		for (int i = 0; i < 1; i++) {
-			mvc.perform(MockMvcRequestBuilders.post("/step")
-					.param("class", "de.uni_jena.cs.fusion.abecto.step.StepRestControllerTest$ParameterProcessor")
+			mvc.perform(MockMvcRequestBuilders.post("/node")
+					.param("class", "de.uni_jena.cs.fusion.abecto.node.NodeRestControllerTest$ParameterProcessor")
 					.param("ontology", ontologyId).accept(MediaType.APPLICATION_JSON))
 					.andExpect(status().isOk()).andDo(buffer);
 			expected.add(buffer.getId());
 		}
 
-		mvc.perform(MockMvcRequestBuilders.get("/step").param("project", projectId).accept(MediaType.APPLICATION_JSON))
+		mvc.perform(MockMvcRequestBuilders.get("/node").param("project", projectId).accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(buffer);
 
 		Assertions.assertEquals(expected, new HashSet<>(buffer.getIds()));

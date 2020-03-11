@@ -17,14 +17,14 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.uni_jena.cs.fusion.abecto.execution.Execution;
+import de.uni_jena.cs.fusion.abecto.node.Node;
+import de.uni_jena.cs.fusion.abecto.node.NodeRepository;
+import de.uni_jena.cs.fusion.abecto.node.NodeRestController;
 import de.uni_jena.cs.fusion.abecto.ontology.Ontology;
 import de.uni_jena.cs.fusion.abecto.ontology.OntologyRepository;
 import de.uni_jena.cs.fusion.abecto.ontology.OntologyRestController;
 import de.uni_jena.cs.fusion.abecto.processing.Processing;
 import de.uni_jena.cs.fusion.abecto.processing.ProcessingRepository;
-import de.uni_jena.cs.fusion.abecto.step.Step;
-import de.uni_jena.cs.fusion.abecto.step.StepRepository;
-import de.uni_jena.cs.fusion.abecto.step.StepRestController;
 
 @RestController
 public class ProjectRestControler {
@@ -37,9 +37,9 @@ public class ProjectRestControler {
 	@Autowired
 	OntologyRestController ontologyRestController;
 	@Autowired
-	StepRepository stepRepository;
+	NodeRepository nodeRepository;
 	@Autowired
-	StepRestController stepRestController;
+	NodeRestController nodeRestController;
 	@Autowired
 	ProjectRunner projectRunner;
 
@@ -52,8 +52,8 @@ public class ProjectRestControler {
 	@ResponseStatus(code = HttpStatus.NO_CONTENT)
 	public void delete(@PathVariable("uuid") UUID uuid) {
 		Project project = this.get(uuid);
-		for (Step step : stepRepository.findAllByProject(project)) {
-			stepRestController.delete(step.getId());
+		for (Node node : nodeRepository.findAllByProject(project)) {
+			nodeRestController.delete(node.getId());
 		}
 		for (Ontology ontology : ontologyRepository.findAllByProject(project)) {
 			ontologyRestController.delete(ontology.getId());
@@ -68,7 +68,7 @@ public class ProjectRestControler {
 	}
 
 	/**
-	 * Runs all subsequent {@link Step}s of the last source {@link Step}
+	 * Runs all subsequent {@link Node}s of the last source {@link Node}
 	 * {@link Processing}s.
 	 * 
 	 * @param projectUuid id of the {@link Project}
@@ -81,13 +81,13 @@ public class ProjectRestControler {
 			Project project = projectRepository.findById(projectUuid).orElseThrow();
 			Collection<UUID> sourceOntologyProcessingIds = new ArrayList<>();
 			for (Ontology ontology : ontologyRepository.findAllByProject(project)) {
-				for (Step sourceStep : ontology.getSources()) {
+				for (Node sourceNode : ontology.getSources()) {
 					try {
 						sourceOntologyProcessingIds
-								.add(processingRepository.findTopByStepOrderByStartDateTimeDesc(sourceStep).getId());
+								.add(processingRepository.findTopByNodeOrderByStartDateTimeDesc(sourceNode).getId());
 					} catch (NoSuchElementException e) {
 						throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-								String.format("No processing of %s not found.", sourceStep));
+								String.format("No processing of %s not found.", sourceNode));
 					}
 				}
 			}
