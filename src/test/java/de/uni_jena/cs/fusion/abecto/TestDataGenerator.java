@@ -1,7 +1,7 @@
 package de.uni_jena.cs.fusion.abecto;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
@@ -17,14 +17,14 @@ import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.riot.Lang;
 import org.apache.jena.vocabulary.RDF;
 
-import de.uni_jena.cs.fusion.abecto.model.ModelSerializationLanguage;
 import de.uni_jena.cs.fusion.abecto.model.Models;
 
 public class TestDataGenerator {
 
-	private ModelSerializationLanguage lang = ModelSerializationLanguage.NTRIPLES;
+	private Lang lang = Lang.NTRIPLES;
 
 	private OntModel model;
 
@@ -218,11 +218,9 @@ public class TestDataGenerator {
 		return individuals.get(save(number, individualFactor));
 	}
 
-	private InputStream getModelInputStream(Model model) {
+	private InputStream getModelInputStream(Model model) throws IOException {
 		// work around PipedInputStream / PipedOutputStream problems
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		model.write(out, lang.getApacheJenaKey());
-		return new ByteArrayInputStream(out.toByteArray());
+		return new ByteArrayInputStream(Models.writeBytes(model, lang));
 	}
 
 	private ObjectProperty getObjectProperty(int number) {
@@ -280,7 +278,7 @@ public class TestDataGenerator {
 		return this;
 	}
 
-	public TestDataGenerator setLang(ModelSerializationLanguage lang) {
+	public TestDataGenerator setLang(Lang lang) {
 		this.lang = lang;
 		return this;
 	}
@@ -290,12 +288,12 @@ public class TestDataGenerator {
 		return this;
 	}
 
-	public InputStream stream(int ontologyNumber) {
+	public InputStream stream(int ontologyNumber) throws IOException {
 		// write model
 		return getModelInputStream(generateOntology(ontologyNumber));
 	}
 
-	public void write(int ontologyNumber, OutputStream out) {
-		generateOntology(ontologyNumber).write(out, lang.getApacheJenaKey());
+	public void write(int ontologyNumber, OutputStream out) throws IOException {
+		Models.write(out, generateOntology(ontologyNumber), this.lang);
 	}
 }

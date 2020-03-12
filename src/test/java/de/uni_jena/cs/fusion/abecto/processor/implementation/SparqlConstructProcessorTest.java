@@ -15,7 +15,7 @@ public class SparqlConstructProcessorTest {
 	@Test
 	public void testComputeResultModel() throws Exception {
 		String inputRdf = "<http://example.org/s> <http://example.org/p> <http://example.org/o> .";
-		Model inputModel = Models.load(new ByteArrayInputStream(inputRdf.getBytes()));
+		Model inputModel = Models.read(new ByteArrayInputStream(inputRdf.getBytes()));
 		SparqlConstructProcessor processor = new SparqlConstructProcessor();
 		processor.addInputModelGroup(UUID.randomUUID(), Collections.singleton(inputModel));
 		SparqlConstructProcessor.Parameter parameter = new SparqlConstructProcessor.Parameter();

@@ -27,7 +27,7 @@ public class JaroWinklerMappingProcessorTest {
 
 	@BeforeAll
 	public static void setUpBeforeClass() throws Exception {
-		FIRST_GRAPH = Models.load(new ByteArrayInputStream(("" + //
+		FIRST_GRAPH = Models.read(new ByteArrayInputStream(("" + //
 				"@base <http://example.org/> .\r\n" + //
 				"@prefix : <http://example.org/> .\r\n" + //
 				"@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\r\n" + //
@@ -35,7 +35,7 @@ public class JaroWinklerMappingProcessorTest {
 				":entity1 rdfs:label \"abcdabcdabcdabcdabcd\" .\r\n" + //
 				":entity2 rdfs:label \"efghefghefghefghefgh\" .\r\n" + //
 				":entity3 rdfs:label \"ijklijklijklijklijkl\" .").getBytes()));
-		SECOND_GRAPH = Models.load(new ByteArrayInputStream(("" + //
+		SECOND_GRAPH = Models.read(new ByteArrayInputStream(("" + //
 				"@base <http://example.com/> .\r\n" + //
 				"@prefix : <http://example.com/> .\r\n" + //
 				"@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\r\n" + //
@@ -93,13 +93,13 @@ public class JaroWinklerMappingProcessorTest {
 
 	@Test
 	public void handelOptionalValue() throws Exception {
-		Model model1 = Models.load(new ByteArrayInputStream((""//
+		Model model1 = Models.read(new ByteArrayInputStream((""//
 				+ "@base <http://example.org/> .\n"//
 				+ "@prefix : <http://example.org/> .\n"//
 				+ ":entity1 :type  :Thing  .\n"//
 				+ ":entity2 :type  :Thing  ;\n"//
 				+ "         :label \"def\" .").getBytes()));
-		Model model2 = Models.load(new ByteArrayInputStream((""//
+		Model model2 = Models.read(new ByteArrayInputStream((""//
 				+ "@base <http://example.org/> .\n"//
 				+ "@prefix : <http://example.org/> .\n"//
 				+ ":entity3 :type  :Thing  ;\n"//
@@ -131,7 +131,7 @@ public class JaroWinklerMappingProcessorTest {
 
 	@Test
 	public void handelEmptyModels() throws Exception {
-		Model model = Models.load(new ByteArrayInputStream((""//
+		Model model = Models.read(new ByteArrayInputStream((""//
 				+ "@base <http://example.org/> .\n"//
 				+ "@prefix : <http://example.org/> .\n"//
 				+ ":entity1 :label \"abc\"  .\n"//
@@ -166,10 +166,10 @@ public class JaroWinklerMappingProcessorTest {
 
 	@Test
 	public void handleZeroMappings() throws Exception {
-		Model model1 = Models.load(new ByteArrayInputStream((""//
+		Model model1 = Models.read(new ByteArrayInputStream((""//
 				+ "@prefix : <http://example.org/> .\n"//
 				+ ":entity1 :label \"abc\" .").getBytes()));
-		Model model2 = Models.load(new ByteArrayInputStream((""//
+		Model model2 = Models.read(new ByteArrayInputStream((""//
 				+ "@prefix : <http://example.org/> .\n"//
 				+ ":entity2 :label \"def\" .").getBytes()));
 		Model metaModel = Models.getEmptyOntModel();
@@ -190,11 +190,11 @@ public class JaroWinklerMappingProcessorTest {
 
 	@Test
 	public void commutativ() throws Exception {
-		Model model1 = Models.load(new ByteArrayInputStream((""//
+		Model model1 = Models.read(new ByteArrayInputStream((""//
 				+ "@prefix : <http://example.org/> .\n"//
 				+ ":entity1 :label \"aaaaaaaaaaa\"  .\n"//
 				+ ":entity2 :label \"aaaaaaaaaab\" .").getBytes()));
-		Model model2 = Models.load(new ByteArrayInputStream((""//
+		Model model2 = Models.read(new ByteArrayInputStream((""//
 				+ "@prefix : <http://example.org/> .\n"//
 				+ ":entity3 :label \"aaaaaaaaaaa\" .\n"//
 				+ ":entity4 :label \"ccccccccccc\" .").getBytes()));

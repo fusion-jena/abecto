@@ -19,14 +19,15 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFLanguages;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ModelRepository {
 	private final static Logger log = LoggerFactory.getLogger(ModelRepository.class);
 
-	public final static ModelSerializationLanguage RDF_SERIALIZATION_LANG = ModelSerializationLanguage.NTRIPLES;
+	public final static Lang SERIALIZATION_LANG = RDFLanguages.NTRIPLES;
 
 	private final File basePath;
 	private final Map<String, Model> models = Collections.synchronizedMap(new WeakHashMap<String, Model>());
@@ -106,23 +107,25 @@ public class ModelRepository {
 	private File tempFile() {
 		File folder = new File(basePath, "temp");
 		folder.mkdir();
-		return new File(folder, UUID.randomUUID().toString() + "." + RDF_SERIALIZATION_LANG.getFileExtension() + ".gz");
+		return new File(folder, UUID.randomUUID().toString() + "." + fileExtension(SERIALIZATION_LANG) + ".gz");
 	}
 
 	private File file(String hash) {
 		File folder = new File(basePath, hash.substring(0, 2));
 		folder.mkdir();
-		return new File(folder, hash.substring(2) + "." + RDF_SERIALIZATION_LANG.getFileExtension() + ".gz");
+		return new File(folder, hash.substring(2) + "." + fileExtension(SERIALIZATION_LANG) + ".gz");
+	}
+	
+	private String fileExtension(Lang lang) {
+		return lang.getFileExtensions().get(0);
 	}
 
 	private void serialize(Model model, OutputStream out) throws IOException {
-		model.write(out, RDF_SERIALIZATION_LANG.getApacheJenaKey());
+		Models.write(out, model, SERIALIZATION_LANG);
 	}
 
 	private Model deserialize(InputStream fileIn) throws IOException {
-		Model model = ModelFactory.createDefaultModel();
 		InputStream gzipIn = new GZIPInputStream(fileIn);
-		model.read(gzipIn, null, RDF_SERIALIZATION_LANG.getApacheJenaKey());
-		return model;
+		return Models.read(gzipIn, SERIALIZATION_LANG);
 	}
 }

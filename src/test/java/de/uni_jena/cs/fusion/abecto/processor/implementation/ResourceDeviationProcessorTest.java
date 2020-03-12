@@ -27,7 +27,7 @@ class ResourceDeviationProcessorTest {
 	@Test
 	void computeResultModel() throws Exception {
 		// preparation
-		Model model1 = Models.load(new ByteArrayInputStream((""//
+		Model model1 = Models.read(new ByteArrayInputStream((""//
 				+ "@prefix  : <http://example.org/1/>                .\n"//
 				+ "@prefix  xsd: <http://www.w3.org/2001/XMLSchema#> .\n"
 
@@ -42,7 +42,7 @@ class ResourceDeviationProcessorTest {
 
 				+ ":missing :other   :right                          .\n"//
 		).getBytes()));
-		Model model2 = Models.load(new ByteArrayInputStream((""//
+		Model model2 = Models.read(new ByteArrayInputStream((""//
 				+ "@prefix  : <http://example.org/2/>                .\n"//
 				+ "@prefix  xsd: <http://www.w3.org/2001/XMLSchema#> .\n"
 

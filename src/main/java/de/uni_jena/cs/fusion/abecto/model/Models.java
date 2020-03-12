@@ -4,6 +4,7 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Collection;
 
 import org.apache.jena.graph.Graph;
@@ -11,67 +12,69 @@ import org.apache.jena.ontology.OntModel;
 import org.apache.jena.ontology.OntModelSpec;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
-import org.apache.jena.riot.RDFWriter;
+import org.apache.jena.riot.RDFLanguages;
+
+import de.uni_jena.cs.fusion.abecto.util.UncloseableInputStream;
 
 /**
  * Provides a couple of handy methods to easy work with {@link Model}s.
  */
 public class Models {
 
-	private final static int MAX_LOOK_FORWARD_RANGE = 1024 * 32;
+	/**
+	 * The maximum size of array to allocate.
+	 * 
+	 * @see {@link BufferedInputStream#MAX_BUFFER_SIZE}
+	 */
+	private static int MAX_BUFFER_SIZE = Integer.MAX_VALUE - 8;
 
-	public static Model load(InputStream in) throws IOException {
-		return load(in, null, null);
-	}
-
-	public static Model load(InputStream in, ModelSerializationLanguage lang) throws IOException {
-		return load(in, null, lang);
-	}
-
-	public static Model load(InputStream in, String base) throws IOException {
-		return load(in, base, null);
-	}
-
-	public static Model load(InputStream in, String base, ModelSerializationLanguage lang) throws IOException {
-		int lookForwardRange = 1024;
-		// determine serialization language
-		while (lang == null) {
-			if (!in.markSupported()) {
-				in = new BufferedInputStream(in);
-			}
-			in.mark(lookForwardRange);
-			byte[] bytes = in.readNBytes(lookForwardRange);
+	public static Model read(InputStream in) throws IOException, IllegalArgumentException {
+		if (!in.markSupported()) {
+			in = new BufferedInputStream(in);
+		}
+		in.mark(MAX_BUFFER_SIZE);
+		// try each known language
+		InputStream unclosableIn = new UncloseableInputStream(in);
+		for (Lang lang : RDFLanguages.getRegisteredLanguages()) {
 			try {
-				lang = ModelSerializationLanguage.determine(new String(bytes));
-			} catch (IllegalArgumentException e) {
-				if (bytes.length == lookForwardRange && lookForwardRange >= MAX_LOOK_FORWARD_RANGE) {
-					lookForwardRange *= 2;
-				} else {
-					throw e;
-				}
-			}
-			in.reset();
-		}
-		// determine base
-		while (base == null && lookForwardRange < MAX_LOOK_FORWARD_RANGE) {
-			if (!in.markSupported()) {
-				in = new BufferedInputStream(in);
-			}
-			in.mark(lookForwardRange);
-			byte[] bytes = in.readNBytes(lookForwardRange);
-			base = lang.determineBase(new String(bytes));
-			in.reset();
-			if (base == null && bytes.length == lookForwardRange) {
-				lookForwardRange *= 2;
-			} else {
-				break;
+				Model model = read(unclosableIn, lang);
+				in.close();
+				return model;
+			} catch (Throwable t) {
+				in.reset();
+				continue;
 			}
 		}
-		// read Model
+		throw new IllegalArgumentException("Unknown RDF language.");
+	}
+
+	public static Model read(InputStream in, Lang lang) throws IOException {
 		Model model = ModelFactory.createDefaultModel();
-		model.read(in, base, lang.getApacheJenaKey());
+		RDFDataMgr.read(model, in, lang);
 		return model;
+	}
+
+	public static void write(OutputStream out, Model model, Lang lang) throws IOException {
+		if (lang.equals(Lang.JSONLD)) {
+			RDFDataMgr.write(out, model, RDFFormat.JSONLD_FLATTEN_PRETTY);
+		} else {
+			RDFDataMgr.write(out, model, lang);
+		}
+	}
+
+	public static byte[] writeBytes(Model model, Lang lang) throws IOException {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		Models.write(out, model, lang);
+		return out.toByteArray();
+	}
+
+	public static String writeString(Model model, Lang lang) throws IOException {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		Models.write(out, model, lang);
+		return out.toString();
 	}
 
 	public static OntModel getEmptyOntModel() {
@@ -80,24 +83,6 @@ public class Models {
 
 	public static Model getEmptyModel() {
 		return ModelFactory.createModelForGraph(Graph.emptyGraph);
-	}
-
-	public static String getStringSerialization(Model model, ModelSerializationLanguage lang) {
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		if (lang.equals(ModelSerializationLanguage.JSONLD)) {
-			RDFWriter.create().format(RDFFormat.JSONLD_FLATTEN_PRETTY).source(model).build().output(out);
-		} else if (model instanceof OntModel) {
-			((OntModel) model).writeAll(out, lang.getApacheJenaKey());
-		} else {
-			model.write(out, lang.getApacheJenaKey());
-		}
-		return out.toString();
-	}
-
-	public static byte[] getByteSerialization(Model model, String lang) {
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		model.write(out, lang);
-		return out.toByteArray();
 	}
 
 	public static OntModel union(Collection<Model> modelCollection, Model... modelArray) {

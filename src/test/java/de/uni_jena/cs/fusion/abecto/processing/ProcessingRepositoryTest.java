@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.riot.Lang;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,7 +22,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import de.uni_jena.cs.fusion.abecto.AbstractRepositoryConsumingTest;
 import de.uni_jena.cs.fusion.abecto.ResponseBuffer;
 import de.uni_jena.cs.fusion.abecto.TestDataGenerator;
-import de.uni_jena.cs.fusion.abecto.model.ModelSerializationLanguage;
 import de.uni_jena.cs.fusion.abecto.model.Models;
 
 @ExtendWith(SpringExtension.class)
@@ -47,17 +47,19 @@ public class ProcessingRepositoryTest extends AbstractRepositoryConsumingTest {
 		String projectId = buffer.getId();
 
 		// create a KowledgBase
-		mvc.perform(MockMvcRequestBuilders.post("/ontology").param("project", projectId)
-				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
-		String knowledgBaseId = buffer.getId();// add source
+		mvc.perform(
+				MockMvcRequestBuilders.post("/ontology").param("project", projectId).accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andDo(buffer);
+		String knowledgBaseId = buffer.getId();
+
+		// add source
 		mvc.perform(MockMvcRequestBuilders.post("/node").param("class", "RdfFileSourceProcessor")
 				.param("ontology", knowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 		String sourceId = buffer.getId();
 
 		// upload source
-		MockMultipartFile multipartFileSource1 = new MockMultipartFile("file",
-				Models.getByteSerialization(model, ModelSerializationLanguage.NTRIPLES.getApacheJenaKey()));
+		MockMultipartFile multipartFileSource1 = new MockMultipartFile("file", Models.writeBytes(model, Lang.NTRIPLES));
 		mvc.perform(multipart(String.format("/node/%s/load", sourceId)).file(multipartFileSource1))
 				.andExpect(status().isOk());
 

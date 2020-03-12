@@ -15,7 +15,7 @@ public class ModelsTest {
 
 	@Test
 	public void loadVeryShortOntologies() throws Exception {
-		Models.load(new ByteArrayInputStream(("@prefix : <http://example.org/>.\n:s :p :o.").getBytes()));
+		Models.read(new ByteArrayInputStream(("@prefix : <http://example.org/>.\n:s :p :o.").getBytes()));
 	}
 
 }

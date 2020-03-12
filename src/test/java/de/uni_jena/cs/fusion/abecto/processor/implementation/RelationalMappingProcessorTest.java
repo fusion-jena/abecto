@@ -25,7 +25,7 @@ class RelationalMappingProcessorTest {
 	@Test
 	public void testComputeMapping() throws Exception {
 		// preparation
-		Model model1 = Models.load(new ByteArrayInputStream((""//
+		Model model1 = Models.read(new ByteArrayInputStream((""//
 				+ "@prefix : <http://example.org/1/> .\n"//
 				+ ":entity1a :label \"entity1a\"     .\n"//
 				+ ":entity1a :ref2a :entity2a        .\n"//
@@ -34,7 +34,7 @@ class RelationalMappingProcessorTest {
 				+ ":entity3a :ref3a :entity1a        .\n"//
 				+ ":entity3a :ref3b \"someLiteral\"  .\n"//
 		).getBytes()));
-		Model model2 = Models.load(new ByteArrayInputStream((""//
+		Model model2 = Models.read(new ByteArrayInputStream((""//
 				+ "@prefix : <http://example.org/2/> .\n"//
 				+ ":entity1a :label \"entity1a\"     .\n"//
 				+ ":entity1b :label \"entity1b\"     .\n"//

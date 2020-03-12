@@ -14,7 +14,7 @@ public class RdfFileSourceProcessor extends AbstractSourceProcessor<EmptyParamet
 
 	@Override
 	public void computeResultModel() throws Exception {
-		this.setModel(Models.load(this.stream));
+		this.setModel(Models.read(this.stream));
 	}
 
 	@Override
