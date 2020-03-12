@@ -463,7 +463,7 @@ class Execution:
                     resourceButtonWidgets[categoryName][ontoId] = {}
                 if resource not in resourceButtonWidgets[categoryName][ontoId]:
                     newMappingResourceFormWidget = getNewMappingResourceFormWidget(categoryName, ontoId)
-                    button = widgets.Button(description=resource, tooltip='Use', layout={'width': 'max-content'})
+                    button = widgets.Button(description=resource, tooltip='Use for new Mapping', layout={'width': 'max-content'})
                     def use(b):
                         newMappingResourceFormWidget.value = resource
                     button.on_click(use)
@@ -494,7 +494,7 @@ class Execution:
                     unmapped = []
                     for unmappedResource in set(resourcesData)-set(getMappings())-set(manualPositiveMappings):
                         unmapped.append(getResourceWidget(categoryName, ontoId, unmappedResource, resourcesData[unmappedResource]))
-                    unmappedResourcesWidgets[categoryName][ontoId] = widgets.VBox(unmapped,layout={'width': '50%'})#','max_height':'20em'})
+                    unmappedResourcesWidgets[categoryName][ontoId] = widgets.VBox(unmapped,layout={'width': '50%', 'max_height':'20em', 'overflow_y':'auto'})
                 return unmappedResourcesWidgets[categoryName][ontoId]
 
         resourcePairWidgets = {}
@@ -600,13 +600,16 @@ class Execution:
                                         pair = resourcePairWidget(categoryName, onto1Id, onto2Id, resource1, resource2, resource1Data, resource2Data, retained)
                                         pairs.append(pair)
                         # widgets management
-                        newMappingSink = widgets.VBox([],layout={})#'max_height':'30em'})
+                        newMappingSink = widgets.VBox([],layout={'max_height':'30em', 'overflow_y':'auto'})
                         pairTab = widgets.VBox([
-                            widgets.VBox(pairs,layout={}),#'max_height':'30em'}),
+                            widgets.HTML(value="Mappings present:"),
+                            widgets.VBox(pairs,layout={'max_height':'30em', 'overflow_y':'auto'}),
+                            widgets.HTML(value="Unmapped resources:"),
                             widgets.HBox([
                                 getUnmappedResourcesWidget(categoryName, onto1Id),
                                 getUnmappedResourcesWidget(categoryName, onto2Id)
                             ]),
+                            widgets.HTML(value="Add further mappings:"),
                             unmappedPairingWidget(getNewMappingResourceFormWidget(categoryName, onto1Id), getNewMappingResourceFormWidget(categoryName, onto2Id), newMappingSink)
                         ])
                         ontoTabChildrens.append(pairTab)
