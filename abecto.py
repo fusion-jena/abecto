@@ -451,7 +451,7 @@ class Execution:
                 if categoryName not in newMappingResourceFormWidgets:
                     newMappingResourceFormWidgets[categoryName] = {}
                 if ontoId not in newMappingResourceFormWidgets[categoryName]:
-                    newMappingResourceFormWidgets[categoryName][ontoId] = widgets.Text(value='', placeholder='Resource to map')
+                    newMappingResourceFormWidgets[categoryName][ontoId] = widgets.Text(value='', placeholder='Resource to map', layout={'width':'available'})
                 return newMappingResourceFormWidgets[categoryName][ontoId]
 
         resourceButtonWidgets = {}
@@ -463,7 +463,7 @@ class Execution:
                     resourceButtonWidgets[categoryName][ontoId] = {}
                 if resource not in resourceButtonWidgets[categoryName][ontoId]:
                     newMappingResourceFormWidget = getNewMappingResourceFormWidget(categoryName, ontoId)
-                    button = widgets.Button(description=resource, tooltip='Use for new Mapping', layout={'width': 'max-content'})
+                    button = widgets.Button(description=resource, tooltip='Use for new Mapping', layout={'min_width': 'max-content'})
                     def use(b):
                         newMappingResourceFormWidget.value = resource
                     button.on_click(use)
@@ -480,7 +480,7 @@ class Execution:
                 if resource not in resourceWidgets[categoryName][ontoId]:
                     resourceButtonWidget = getResourceButtonWidget(categoryName, ontoId, resource)
                     resourceDataWidget = getResourceDataWidget(categoryName, ontoId, resource, resourceData)
-                    resourceWidgets[categoryName][ontoId][resource] = widgets.VBox([resourceButtonWidget, resourceDataWidget], layout={'border': 'solid 1px lightgrey', 'height': 'max-content'})
+                    resourceWidgets[categoryName][ontoId][resource] = widgets.VBox([resourceButtonWidget, resourceDataWidget], layout={'border':'solid 1px lightgrey', 'min_height':'max-content', 'width':'available', 'min_width':'min-content'})
                 return resourceWidgets[categoryName][ontoId][resource]
         
         unmappedResourcesWidgets = {}
@@ -494,7 +494,7 @@ class Execution:
                     unmapped = []
                     for unmappedResource in set(resourcesData)-set(getMappings())-set(manualPositiveMappings):
                         unmapped.append(getResourceWidget(categoryName, ontoId, unmappedResource, resourcesData[unmappedResource]))
-                    unmappedResourcesWidgets[categoryName][ontoId] = widgets.VBox(unmapped,layout={'width': '50%', 'max_height':'20em', 'overflow_y':'auto'})
+                    unmappedResourcesWidgets[categoryName][ontoId] = widgets.VBox(unmapped,layout={'width':'50%', 'max_height':'25em', 'overflow_y':'scroll', 'display':'block'})
                 return unmappedResourcesWidgets[categoryName][ontoId]
 
         resourcePairWidgets = {}
@@ -502,8 +502,8 @@ class Execution:
             with output:
                 resourceWidget1 = getResourceWidget(categoryName, onto1Id, resource1, resource1Data)
                 resourceWidget2 = getResourceWidget(categoryName, onto2Id, resource2, resource2Data)                    
-                buttons = widgets.ToggleButtons(options=[accepted,retained,rejected],value=value,tooltips=["Accept", "Retain", "Reject"], style={'button_width': 'auto'})
-                resourcePairWidget = widgets.HBox([buttons, resourceWidget1, resourceWidget2], layout={'border': 'solid 1px lightgrey'})
+                buttons = widgets.ToggleButtons(options=[accepted,retained,rejected],value=value,tooltips=["Accepted", "Undecided", "Rejecte"], style={'button_width':'auto'}, layout={'min_width':'max-content', 'height':'available'})
+                resourcePairWidget = widgets.HBox([buttons, resourceWidget1, resourceWidget2], layout={'border':'solid 1px lightgrey', 'min_height':'max-content', 'min_width':'available'})
                 resourcePairWidgets[resourcePairWidget] = [resource1,resource2]
                 return resourcePairWidget
 
@@ -600,16 +600,16 @@ class Execution:
                                         pair = resourcePairWidget(categoryName, onto1Id, onto2Id, resource1, resource2, resource1Data, resource2Data, retained)
                                         pairs.append(pair)
                         # widgets management
-                        newMappingSink = widgets.VBox([],layout={'max_height':'30em', 'overflow_y':'auto'})
+                        newMappingSink = widgets.VBox([],layout={'max_height':'25em', 'overflow_y':'scroll', 'display':'block'})
                         pairTab = widgets.VBox([
-                            widgets.HTML(value="Mappings present:"),
-                            widgets.VBox(pairs,layout={'max_height':'30em', 'overflow_y':'auto'}),
-                            widgets.HTML(value="Unmapped resources:"),
+                            widgets.HTML(value="<h6>Present mappings</h6><p>Click the button to accept or reject the mapping. Mappings can be filtered to display only undesided pairs using the button below.</p>"),
+                            widgets.VBox(pairs, layout={'max_height':'25em', 'overflow_y':'scroll', 'display':'block'}),
+                            widgets.HTML(value="<h6>Unmapped resources</h6>"),
                             widgets.HBox([
                                 getUnmappedResourcesWidget(categoryName, onto1Id),
                                 getUnmappedResourcesWidget(categoryName, onto2Id)
                             ]),
-                            widgets.HTML(value="Add further mappings:"),
+                            widgets.HTML(value="<h6>Add further mappings</h6><p>To select a resurce, click on the IRIs.</p>"),
                             unmappedPairingWidget(getNewMappingResourceFormWidget(categoryName, onto1Id), getNewMappingResourceFormWidget(categoryName, onto2Id), newMappingSink)
                         ])
                         ontoTabChildrens.append(pairTab)
