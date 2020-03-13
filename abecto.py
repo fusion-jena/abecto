@@ -13,6 +13,7 @@ import json
 import os
 import pandas as pd
 import random
+import re
 import requests
 import subprocess
 import tempfile
@@ -270,13 +271,16 @@ class Execution:
             r.raise_for_status()
             self.resourcesData[categoryName][ontologyId] = r.json()
         return self.resourcesData[categoryName][ontologyId]
-    
+
     def dataDataFrame(self, categoryName, ontologyId):
         return pd.DataFrame.from_records(self.data(categoryName, ontologyId))
-    
+
     def sortedOntologies(self, ontologyIds):
         return sorted({ ontologyId : self.server.getOntology(ontologyId).info()["label"] for ontologyId in ontologyIds }.items(), key = lambda x:x[1])
-    
+
+    def __formatValue(self,value):
+        return re.compile('(.*)(\^\^[^"]*)').sub(r'\1<span style="opacity:0.6;">\2</span>', value)
+
     def measurements(self):
         data = self.resultDataFrame("Measurement")
         if not data.empty:
@@ -370,8 +374,8 @@ class Execution:
                                         if firstRow:
                                             table += "<td>" + resourcePair["resource1"] + "</td>"
                                         table += "<td>" + row.variableName + "</td>"
-                                        table += "<td>" + html.escape(row.value1 if not row.isna().value1 else "") + "</td>"
-                                        table += "<td>" + html.escape(row.value2 if not row.isna().value2 else "") + "</td>"
+                                        table += "<td>" + self.__formatValue(html.escape(row.value1 if not row.isna().value1 else "")) + "</td>"
+                                        table += "<td>" + self.__formatValue(html.escape(row.value2 if not row.isna().value2 else "")) + "</td>"
                                         table += "<td>" + row.variableName + "</td>"
                                         if firstRow:
                                             table += "<td>" + resourcePair["resource2"] + "</td>"
@@ -440,7 +444,7 @@ class Execution:
                     if any(list(resourceData)):
                         for key in sorted(resourceData):
                             html += "<dt>" + key + "</dt>"
-                            html += "<dd>" + ", ".join(resourceData[key]) + "</dd>"
+                            html += "<dd>" + ", ".join(map(self.__formatValue, resourceData[key])) + "</dd>"
                     html += "</dl>"
                     resourceDataWidgets[categoryName][ontoId][resource] = widgets.HTML(value=html)
                 return resourceDataWidgets[categoryName][ontoId][resource]
