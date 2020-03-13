@@ -602,14 +602,14 @@ class Execution:
                         # widgets management
                         newMappingSink = widgets.VBox([],layout={'max_height':'25em', 'overflow_y':'scroll', 'display':'block'})
                         pairTab = widgets.VBox([
-                            widgets.HTML(value="<h6>Present mappings</h6><p>Click the button to accept or reject the mapping. Mappings can be filtered to display only undesided pairs using the button below.</p>"),
+                            widgets.HTML(value="<h4>Present mappings</h4><p>Click the button to accept or reject the mapping. Mappings can be filtered to display only undesided pairs using the button below.</p>"),
                             widgets.VBox(pairs, layout={'max_height':'25em', 'overflow_y':'scroll', 'display':'block'}),
-                            widgets.HTML(value="<h6>Unmapped resources</h6>"),
+                            widgets.HTML(value="<h4>Unmapped resources</h4>"),
                             widgets.HBox([
                                 getUnmappedResourcesWidget(categoryName, onto1Id),
                                 getUnmappedResourcesWidget(categoryName, onto2Id)
                             ]),
-                            widgets.HTML(value="<h6>Add further mappings</h6><p>To select a resurce, click on the IRIs.</p>"),
+                            widgets.HTML(value="<h4>Add further mappings</h4><p>To select a resurce, click on the IRIs.</p>"),
                             unmappedPairingWidget(getNewMappingResourceFormWidget(categoryName, onto1Id), getNewMappingResourceFormWidget(categoryName, onto2Id), newMappingSink)
                         ])
                         ontoTabChildrens.append(pairTab)
