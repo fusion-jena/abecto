@@ -27,10 +27,10 @@ import java.util.UUID;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 
+import de.uni_jena.cs.fusion.abecto.metaentity.Category;
+import de.uni_jena.cs.fusion.abecto.metaentity.Deviation;
+import de.uni_jena.cs.fusion.abecto.metaentity.Mapping;
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
-import de.uni_jena.cs.fusion.abecto.processor.model.Category;
-import de.uni_jena.cs.fusion.abecto.processor.model.Deviation;
-import de.uni_jena.cs.fusion.abecto.processor.model.Mapping;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 
 public abstract class AbstractDeviationProcessor<Parameter>

@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.uni_jena.cs.fusion.abecto.processor.model;
+package de.uni_jena.cs.fusion.abecto.metaentity;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.apache.jena.rdf.model.ResourceFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,19 +30,21 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.uni_jena.cs.fusion.abecto.metaentity.Issue;
+
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @AutoConfigureMockMvc
-public class CategoryTest {
+public class IssueTest {
 	@Autowired
 	ObjectMapper mapper;
 
 	@Test
 	public void deSerializeation() throws JsonProcessingException {
-		Category category = new Category("entity", "{?entity a ?entity}", UUID.randomUUID());
-		String serialized = mapper.writeValueAsString(category);
-		Category deserialized = mapper.readValue(serialized, category.getClass());
-		assertEquals(category, deserialized);
+		Issue issue = new Issue(ResourceFactory.createResource(), UUID.randomUUID(),
+				ResourceFactory.createResource("http://example.org/a"), "the type", "the message");
+		String serialized = mapper.writeValueAsString(issue);
+		Issue deserialized = mapper.readValue(serialized, issue.getClass());
+		assertEquals(issue, deserialized);
 	}
-
 }

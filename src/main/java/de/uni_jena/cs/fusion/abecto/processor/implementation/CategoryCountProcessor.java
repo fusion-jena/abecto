@@ -32,10 +32,10 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.apache.jena.sparql.syntax.ElementGroup;
 
+import de.uni_jena.cs.fusion.abecto.metaentity.Category;
+import de.uni_jena.cs.fusion.abecto.metaentity.Measurement;
 import de.uni_jena.cs.fusion.abecto.parameter_model.EmptyParameters;
 import de.uni_jena.cs.fusion.abecto.processor.AbstractMetaProcessor;
-import de.uni_jena.cs.fusion.abecto.processor.model.Category;
-import de.uni_jena.cs.fusion.abecto.processor.model.Measurement;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 
 public class CategoryCountProcessor extends AbstractMetaProcessor<EmptyParameters> {

@@ -32,12 +32,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import de.uni_jena.cs.fusion.abecto.metaentity.Category;
 import de.uni_jena.cs.fusion.abecto.model.ModelRepository;
 import de.uni_jena.cs.fusion.abecto.model.Models;
 import de.uni_jena.cs.fusion.abecto.ontology.Ontology;
 import de.uni_jena.cs.fusion.abecto.ontology.OntologyRepository;
 import de.uni_jena.cs.fusion.abecto.processing.Processing;
-import de.uni_jena.cs.fusion.abecto.processor.model.Category;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 
 @RestController
@@ -95,7 +95,7 @@ public class ExecutionRestController {
 	private Class<?> getModelClass(String modelClassName) throws ResponseStatusException {
 		try {
 			if (!modelClassName.contains(".")) {
-				modelClassName = "de.uni_jena.cs.fusion.abecto.processor.model." + modelClassName;
+				modelClassName = "de.uni_jena.cs.fusion.abecto.metaentity." + modelClassName;
 			}
 			return (Class<?>) Class.forName(modelClassName);
 		} catch (ClassNotFoundException e) {

@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.uni_jena.cs.fusion.abecto.processor.model;
+package de.uni_jena.cs.fusion.abecto.metaentity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import java.util.UUID;
 
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.junit.jupiter.api.Test;
@@ -30,20 +28,22 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.uni_jena.cs.fusion.abecto.metaentity.Mapping;
+
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @AutoConfigureMockMvc
-public class DeviationTest {
+public class MappingTest {
 	@Autowired
 	ObjectMapper mapper;
 
 	@Test
 	public void deSerializeation() throws JsonProcessingException {
-		Deviation deviation = new Deviation(ResourceFactory.createResource(), "entity", "entity",
+		Mapping mapping = new Mapping(ResourceFactory.createResource(), true,
 				ResourceFactory.createResource("http://example.org/a"),
-				ResourceFactory.createResource("http://example.org/a"), UUID.randomUUID(), UUID.randomUUID(), "a", "b");
-		String serialized = mapper.writeValueAsString(deviation);
-		Deviation deserialized = mapper.readValue(serialized, deviation.getClass());
-		assertEquals(deviation, deserialized);
+				ResourceFactory.createResource("http://example.org/b"));
+		String serialized = mapper.writeValueAsString(mapping);
+		Mapping deserialized = mapper.readValue(serialized, mapping.getClass());
+		assertEquals(mapping, deserialized);
 	}
 }

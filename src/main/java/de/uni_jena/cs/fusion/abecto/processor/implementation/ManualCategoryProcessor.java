@@ -24,9 +24,9 @@ import java.util.UUID;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
+import de.uni_jena.cs.fusion.abecto.metaentity.Category;
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.processor.AbstractMetaProcessor;
-import de.uni_jena.cs.fusion.abecto.processor.model.Category;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 
 public class ManualCategoryProcessor extends AbstractMetaProcessor<ManualCategoryProcessor.Parameter> {

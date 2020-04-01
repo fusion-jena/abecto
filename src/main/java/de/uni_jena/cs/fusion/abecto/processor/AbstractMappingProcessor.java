@@ -22,8 +22,8 @@ import java.util.UUID;
 
 import org.apache.jena.rdf.model.Model;
 
+import de.uni_jena.cs.fusion.abecto.metaentity.Mapping;
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
-import de.uni_jena.cs.fusion.abecto.processor.model.Mapping;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 
 public abstract class AbstractMappingProcessor<P extends ParameterModel> extends AbstractMetaProcessor<P>
