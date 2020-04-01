@@ -42,7 +42,7 @@ public class ModelJsonSerializerTest {
 	ObjectMapper objectMapper;
 
 	/**
-	 * Ensure {@link ModelJsonSerializer} is registered and returns unchanged
+	 * Ensure {@link ModelSerializer} is registered and returns unchanged
 	 * JSON-LD of {@link org.apache.jena.rdf.model.Model}.
 	 */
 	@Test

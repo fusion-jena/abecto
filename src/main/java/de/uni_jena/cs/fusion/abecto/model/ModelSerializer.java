@@ -15,21 +15,31 @@
  */
 package de.uni_jena.cs.fusion.abecto.model;
 
+import static org.apache.jena.riot.Lang.JSONLD;
+
 import java.io.IOException;
 
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.riot.Lang;
 import org.springframework.boot.jackson.JsonComponent;
 
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
 @JsonComponent
-public class ModelJsonSerializer extends JsonSerializer<Model> {
+public class ModelSerializer extends StdSerializer<Model> {
+	private static final long serialVersionUID = -6596758435243552074L;
+
+	public ModelSerializer() {
+		this(null);
+	}
+
+	public ModelSerializer(Class<Model> t) {
+		super(t);
+	}
 
 	@Override
 	public void serialize(Model value, JsonGenerator gen, SerializerProvider provider) throws IOException {
-		gen.writeRaw(Models.writeString(value, Lang.JSONLD));
+		gen.writeRaw(Models.writeString(value, JSONLD));
 	}
 }

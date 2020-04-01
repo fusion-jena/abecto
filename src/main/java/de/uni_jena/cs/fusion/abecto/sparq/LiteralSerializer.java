@@ -26,7 +26,7 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
 @JsonComponent
 public class LiteralSerializer extends StdSerializer<Literal> {
-	private static final long serialVersionUID = 8832538693499963774L;
+	private static final long serialVersionUID = 6737801574871581884L;
 
 	public LiteralSerializer() {
 		this(null);
