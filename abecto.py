@@ -259,8 +259,8 @@ class Processing:
         return r.json()
 
     def raiseForStatus(self):
-        if self.status != "SUCCEEDED" and not self.stackTrace.startswith("java.util.concurrent.ExecutionException"):
-            raise Exception("Node " + str(self.server.getNode(self.nodeId)) + " has status " + self.status + ":\n" + self.stackTrace.replace("\\n","\n"))
+        if self.status != "SUCCEEDED" and (not self.stackTrace or not self.stackTrace.startswith("java.util.concurrent.ExecutionException")):
+            raise Exception("Node " + str(self.server.getNode(self.nodeId)) + " has status " + self.status + ":\n" + (self.stackTrace.replace("\\n","\n") if self.stackTrace else ""))
 
 class Execution:
     def __init__(self, server, data):
