@@ -15,9 +15,10 @@
  */
 package de.uni_jena.cs.fusion.abecto.metaentity;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,8 +28,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import de.uni_jena.cs.fusion.abecto.metaentity.Category;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -43,6 +42,17 @@ public class CategoryTest {
 		String serialized = mapper.writeValueAsString(category);
 		Category deserialized = mapper.readValue(serialized, category.getClass());
 		assertEquals(category, deserialized);
+	}
+
+	@Test
+	public void defaultPrefixes() throws JsonProcessingException {
+		new Category("entity", "{?entity owl: ?entity}", UUID.randomUUID());
+		new Category("entity", "{?entity prov: ?entity}", UUID.randomUUID());
+		new Category("entity", "{?entity rdf:type ?entity}", UUID.randomUUID());
+		new Category("entity", "{?entity rdfs:subclassOf ?entity}", UUID.randomUUID());
+		new Category("entity", "{?entity schema:isPartOf ?entity}", UUID.randomUUID());
+		new Category("entity", "{?entity skos:broader ?entity}", UUID.randomUUID());
+		new Category("entity", "{?entity rdfs:label \"String\"^^xsd:string}", UUID.randomUUID());
 	}
 
 }
