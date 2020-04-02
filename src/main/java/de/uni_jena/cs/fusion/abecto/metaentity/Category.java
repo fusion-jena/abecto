@@ -32,12 +32,18 @@ import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.apache.jena.sparql.lang.sparql_11.SPARQLParser11;
 import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.PatternVars;
+import org.apache.jena.vocabulary.OWL2;
+import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.vocabulary.RDFS;
+import org.apache.jena.vocabulary.SKOS;
+import org.apache.jena.vocabulary.XSD;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -66,6 +72,18 @@ public class Category {
 	@SparqlPattern(subject = "id", predicate = "abecto:ontology")
 	public UUID ontology;
 
+	private final static Prologue DEFAULT_PROLOGUE = new Prologue();
+
+	static {
+		DEFAULT_PROLOGUE.setPrefix("owl", OWL2.getURI());
+		DEFAULT_PROLOGUE.setPrefix("prov", "http://www.w3.org/ns/prov#");
+		DEFAULT_PROLOGUE.setPrefix("rdf", RDF.getURI());
+		DEFAULT_PROLOGUE.setPrefix("rdfs", RDFS.getURI());
+		DEFAULT_PROLOGUE.setPrefix("schema", "http://schema.org/");
+		DEFAULT_PROLOGUE.setPrefix("skos", SKOS.getURI());
+		DEFAULT_PROLOGUE.setPrefix("xsd", XSD.getURI());
+	}
+
 	public Category() {
 	}
 
@@ -83,6 +101,7 @@ public class Category {
 		// TODO cache element group (and copy in #contains())
 		try {
 			SPARQLParser11 parser = new SPARQLParser11(new ByteArrayInputStream(this.pattern.getBytes()));
+			parser.setPrologue(DEFAULT_PROLOGUE);
 			return (ElementGroup) parser.GroupGraphPattern();
 		} catch (ParseException e) {
 			throw new IllegalStateException("Failed to parse category pattern.", e);
