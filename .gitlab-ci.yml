@@ -1,6 +1,11 @@
 image: maven:latest
 
-test:
+java:
   stage: test
   script:
-    - mvn --batch-mode test
+    - mvn verify
+  artifacts:
+    reports:
+      junit:
+        - target/surefire-reports/TEST-*.xml
+        - target/failsafe-reports/TEST-*.xml
