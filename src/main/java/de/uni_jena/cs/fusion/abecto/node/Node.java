@@ -18,6 +18,7 @@ package de.uni_jena.cs.fusion.abecto.node;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 import javax.persistence.Entity;
 import javax.persistence.ManyToMany;
@@ -89,6 +90,11 @@ public class Node extends AbstractEntityWithUUID {
 			this.project = this.inputNode.iterator().next().project;
 		} else {
 			throw new IllegalStateException("InputNodes belong to multiple projects.");
+		}
+
+		// set ontology if unambiguous
+		if (this.inputNode.stream().map((node) -> Optional.ofNullable(node.ontology)).distinct().count() == 1L) {
+			this.ontology = this.inputNode.iterator().next().ontology;
 		}
 	}
 

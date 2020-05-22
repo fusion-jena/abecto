@@ -96,13 +96,15 @@ public class ProjectRestControler {
 			Project project = projectRepository.findById(projectUuid).orElseThrow();
 			Collection<UUID> sourceOntologyProcessingIds = new ArrayList<>();
 			for (Ontology ontology : ontologyRepository.findAllByProject(project)) {
-				for (Node sourceNode : ontology.getSources()) {
-					try {
-						sourceOntologyProcessingIds
-								.add(processingRepository.findTopByNodeOrderByStartDateTimeDesc(sourceNode).getId());
-					} catch (NoSuchElementException e) {
-						throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-								String.format("No processing of %s not found.", sourceNode));
+				for (Node node : ontology.getNodes()) {
+					if (node.isSource()) {
+						try {
+							sourceOntologyProcessingIds
+									.add(processingRepository.findTopByNodeOrderByStartDateTimeDesc(node).getId());
+						} catch (NoSuchElementException e) {
+							throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+									String.format("Processing of %s not found.", node));
+						}
 					}
 				}
 			}

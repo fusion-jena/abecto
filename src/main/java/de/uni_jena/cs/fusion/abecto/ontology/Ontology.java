@@ -44,7 +44,7 @@ public class Ontology extends AbstractEntityWithUUID {
 	protected Project project;
 
 	@OneToMany(mappedBy = "ontology")
-	protected Collection<Node> sources;
+	protected Collection<Node> nodes;
 
 	protected Ontology() {
 	}
@@ -63,7 +63,7 @@ public class Ontology extends AbstractEntityWithUUID {
 	}
 
 	@JsonIgnore
-	public Collection<Node> getSources() {
-		return this.sources;
+	public Collection<Node> getNodes() {
+		return this.nodes;
 	}
 }

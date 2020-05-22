@@ -27,13 +27,6 @@ import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 public abstract class AbstractSourceProcessor<P extends ParameterModel> extends AbstractProcessor<P>
 		implements SourceProcessor<P> {
 
-	protected UUID ontology;
-
-	@Override
-	public void setOntology(UUID uuid) {
-		this.ontology = uuid;
-	}
-
 	@Override
 	public Map<UUID, Collection<Model>> getDataModels() {
 		if (!this.isSucceeded()) {
@@ -48,11 +41,6 @@ public abstract class AbstractSourceProcessor<P extends ParameterModel> extends 
 	@Override
 	public Collection<Model> getMetaModels() {
 		return Collections.emptySet();
-	}
-
-	@Override
-	public UUID getOntology() {
-		return ontology;
 	}
 
 	@Override

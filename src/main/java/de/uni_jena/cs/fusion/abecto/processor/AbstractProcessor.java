@@ -16,6 +16,7 @@
 package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.jena.rdf.model.Model;
@@ -29,6 +30,8 @@ public abstract class AbstractProcessor<P extends ParameterModel> implements Pro
 
 	private Status status = Status.NOT_STARTED;
 	private Throwable failureCause;
+
+	protected UUID ontology;
 
 	/**
 	 * The current parameters of this processor.
@@ -82,6 +85,11 @@ public abstract class AbstractProcessor<P extends ParameterModel> implements Pro
 	}
 
 	@Override
+	public UUID getOntology() {
+		return this.ontology;
+	}
+
+	@Override
 	public P getParameters() {
 		return this.parameters;
 	}
@@ -126,6 +134,11 @@ public abstract class AbstractProcessor<P extends ParameterModel> implements Pro
 
 	protected void setModel(Model model) {
 		this.resultModel = Objects.requireNonNull(model);
+	}
+
+	@Override
+	public void setOntology(UUID uuid) {
+		this.ontology = uuid;
 	}
 
 	@Override

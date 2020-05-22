@@ -146,8 +146,8 @@ public interface Processor<P extends ParameterModel> extends Callable<Model> {
 	public Status getStatus();
 
 	/**
-	 * Provides the identifier of the ontology, this {@link Processor} belongs
-	 * to. <strong>Using this method restricts the Processor to work on exact one
+	 * Provides the identifier of the ontology, this {@link Processor} belongs to.
+	 * <strong>Using this method restricts the Processor to work on exact one
 	 * ontology.</strong>
 	 * 
 	 * @return the ontology identifier
@@ -181,6 +181,11 @@ public interface Processor<P extends ParameterModel> extends Callable<Model> {
 	 *         else {@code false}
 	 */
 	public boolean isSucceeded();
+
+	/**
+	 * @param uuid {@link UUID} of the knowledge base
+	 */
+	public void setOntology(UUID uuid);
 
 	/**
 	 * Sets the parameters for this processor. Earlier parameters will be

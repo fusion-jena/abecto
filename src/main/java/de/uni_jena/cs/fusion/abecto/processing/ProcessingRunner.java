@@ -34,10 +34,10 @@ import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.stereotype.Component;
 
 import de.uni_jena.cs.fusion.abecto.model.ModelRepository;
+import de.uni_jena.cs.fusion.abecto.ontology.Ontology;
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
 import de.uni_jena.cs.fusion.abecto.processor.Processor.Status;
 import de.uni_jena.cs.fusion.abecto.processor.RefinementProcessor;
-import de.uni_jena.cs.fusion.abecto.processor.SourceProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.UploadSourceProcessor;
 
 @Component
@@ -181,9 +181,11 @@ public class ProcessingRunner {
 			Processor<?> processor = processing.getProcessorClass().getDeclaredConstructor().newInstance();
 			processor.setParameters(processing.getParameter().getParameters());
 			processor.setStatus(processing.getStatus(), modelRepository.get(processing.getModelHash()));
-			if (processor instanceof SourceProcessor) {
-				((SourceProcessor<?>) processor).setOntology(processing.getNode().getOntology().getId());
-			} else if (processor instanceof RefinementProcessor) {
+			Ontology ontology = processing.getNode().getOntology();
+			if (ontology != null) {
+				processor.setOntology(ontology.getId());
+			}
+			if (processor instanceof RefinementProcessor) {
 				for (Processing inputProcessing : processing.getInputProcessings()) {
 					// recursive retrieval of input models
 					Processor<?> inputProcessor = this.getProcessor(inputProcessing);
