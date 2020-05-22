@@ -50,22 +50,22 @@ public class RelationalMappingProcessor extends AbstractMappingProcessor<Relatio
 		String categoryName = this.getParameters().category;
 		Category category1;
 		try {
-			category1 = SparqlEntityManager
-					.selectOne(new Category(categoryName, null, ontologyId1), this.metaModel).orElseThrow();
+			category1 = SparqlEntityManager.selectOne(new Category(categoryName, null, ontologyId1), this.metaModel)
+					.orElseThrow();
 		} catch (IllegalStateException | NullPointerException | ReflectiveOperationException
 				| NoSuchElementException e) {
 			throw new Exception("Failed to load category definition for ontology 1.", e);
 		}
 		Category category2;
 		try {
-			category2 = SparqlEntityManager
-					.selectOne(new Category(categoryName, null, ontologyId2), this.metaModel).orElseThrow();
+			category2 = SparqlEntityManager.selectOne(new Category(categoryName, null, ontologyId2), this.metaModel)
+					.orElseThrow();
 		} catch (IllegalStateException | NullPointerException | ReflectiveOperationException
 				| NoSuchElementException e) {
 			throw new Exception("Failed to load category definition for ontology 2.", e);
 		}
 
-		// check variablesF
+		// check variables
 		Collection<String> variables = this.getParameters().variables;
 		Collection<Var> category1Variables = category1.getPatternVariables();
 		Collection<Var> category2Variables = category2.getPatternVariables();
@@ -139,10 +139,13 @@ public class RelationalMappingProcessor extends AbstractMappingProcessor<Relatio
 						SparqlEntityManager.insert(issue, this.getResultModel());
 						continue resultLoop;
 					}
+				} else {
+					// skip resources with missing value
+					continue resultLoop;
 				}
 			}
-			// copy first candidate set
 			if (!candidateSets.isEmpty()) {
+				// copy first candidate set
 				Collection<Resource> mappedEntities = new HashSet<>(candidateSets.get(0));
 				// remove candidates not present in other candidate sets
 				for (int i = 1; i < candidateSets.size() && !mappedEntities.isEmpty(); i++) {
