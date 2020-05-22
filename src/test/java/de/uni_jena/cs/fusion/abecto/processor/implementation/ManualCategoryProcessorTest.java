@@ -90,8 +90,13 @@ public class ManualCategoryProcessorTest {
 		processor.addInputProcessor(source);
 		ManualCategoryProcessor.Parameter parameter = new ManualCategoryProcessor.Parameter();
 		processor.setParameters(parameter);
-		Assertions.assertThrows(IllegalArgumentException.class, () -> {
-			processor.computeResultModel();
-		});
+		Model model = processor.getResultModel();
+		Assertions
+				.assertEquals(
+						0, model
+								.listResourcesWithProperty(RDF.type,
+										ResourceFactory.createResource(
+												"http://fusion.cs.uni-jena.de/ontology/abecto#Category"))
+								.toSet().size());
 	}
 }

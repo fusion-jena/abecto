@@ -44,10 +44,6 @@ public class ManualCategoryProcessor extends AbstractMetaProcessor<ManualCategor
 	protected void computeResultModel() throws Exception {
 		Collection<Category> categories = new ArrayList<>();
 
-		if (this.getParameters().patterns.isEmpty()) {
-			throw new IllegalArgumentException("Empty pattern list.");
-		}
-
 		UUID ontology = this.getOntology();
 
 		for (Entry<String, String> patternOfCategory : this.getParameters().patterns.entrySet()) {
