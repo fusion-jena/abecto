@@ -23,6 +23,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import org.apache.jena.query.QuerySolution;
@@ -77,14 +79,14 @@ public class RelationalMappingProcessor extends AbstractMappingProcessor<Relatio
 			}
 		}
 
-		// load mappings form ontology 1 to ontology 2
-		Map<Resource, Collection<Resource>> mappingIndex = new HashMap<>();
+		// load mappings form ontology 1 to other ontologies
+		Map<Resource, Collection<Resource>> mappedResourceOfOtherOntsByResourceOfOnt1 = new HashMap<>();
 		try {
 			for (Mapping mapping : SparqlEntityManager.select(Mapping.of(), this.metaModel)) {
-				mappingIndex.computeIfAbsent(mapping.resource1, (v) -> {
+				mappedResourceOfOtherOntsByResourceOfOnt1.computeIfAbsent(mapping.resource1, (v) -> {
 					return new ArrayList<Resource>();
 				}).add(mapping.resource2);
-				mappingIndex.computeIfAbsent(mapping.resource2, (v) -> {
+				mappedResourceOfOtherOntsByResourceOfOnt1.computeIfAbsent(mapping.resource2, (v) -> {
 					return new ArrayList<Resource>();
 				}).add(mapping.resource1);
 			}
@@ -93,9 +95,9 @@ public class RelationalMappingProcessor extends AbstractMappingProcessor<Relatio
 		}
 
 		// prepare entity index of ontology 2
-		Map<String, Map<Resource, Collection<Resource>>> index = new HashMap<>();
+		Map<String, Map<Resource, Collection<Resource>>> relationByResourceByVariable = new HashMap<>();
 		for (String variable : variables) {
-			index.put(variable, new HashMap<>());
+			relationByResourceByVariable.put(variable, new HashMap<>());
 		}
 		ResultSet categoryResults = category2.selectCategory(model2);
 		resultLoop: while (categoryResults.hasNext()) {
@@ -105,7 +107,7 @@ public class RelationalMappingProcessor extends AbstractMappingProcessor<Relatio
 				if (solution.contains(variable)) {
 					try {
 						Resource value = solution.getResource(variable);
-						index.get(variable).computeIfAbsent(value, (v) -> {
+						relationByResourceByVariable.get(variable).computeIfAbsent(value, (v) -> {
 							return new ArrayList<Resource>();
 						}).add(entity);
 					} catch (ClassCastException e) {
@@ -120,19 +122,22 @@ public class RelationalMappingProcessor extends AbstractMappingProcessor<Relatio
 
 		// generate mappings
 		Collection<Mapping> mappings = new ArrayList<>();
-		List<Collection<Resource>> candidateSets = new ArrayList<>();
 		categoryResults = category1.selectCategory(model1);
 		resultLoop: while (categoryResults.hasNext()) {
 			QuerySolution solution = categoryResults.next();
-			candidateSets.clear();
+			List<Set<Resource>> candidateSets = new ArrayList<>();
 			Resource entity = solution.getResource(categoryName);
 			for (String variable : variables) {
 				if (solution.contains(variable)) {
 					try {
-						Resource value = solution.getResource(variable);
-						for (Resource mappedValue : mappingIndex.getOrDefault(value, Collections.emptySet())) {
-							candidateSets.add(index.get(variable).getOrDefault(mappedValue, Collections.emptySet()));
+						Set<Resource> candidateSet = new HashSet<>();
+						Resource variableResource = solution.getResource(variable);
+						for (Resource mappedResource : mappedResourceOfOtherOntsByResourceOfOnt1
+								.getOrDefault(variableResource, Collections.emptySet())) {
+							candidateSet.addAll(relationByResourceByVariable.get(variable).getOrDefault(mappedResource,
+									Collections.emptySet()));
 						}
+						candidateSets.add(candidateSet);
 					} catch (ClassCastException e) {
 						// value is not a resource
 						Issue issue = Issue.unexpectedValueType(ontologyId1, entity, variable, "resource");
@@ -144,17 +149,15 @@ public class RelationalMappingProcessor extends AbstractMappingProcessor<Relatio
 					continue resultLoop;
 				}
 			}
-			if (!candidateSets.isEmpty()) {
-				// copy first candidate set
-				Collection<Resource> mappedEntities = new HashSet<>(candidateSets.get(0));
-				// remove candidates not present in other candidate sets
-				for (int i = 1; i < candidateSets.size() && !mappedEntities.isEmpty(); i++) {
-					mappedEntities.retainAll(candidateSets.get(i));
-				}
-				// add left candidates to mappings
-				for (Resource mappedEntity : mappedEntities) {
-					mappings.add(Mapping.of(entity, mappedEntity));
-				}
+
+			// get intersection of candidateSets
+			Optional<Set<Resource>> mappedEntities = candidateSets.stream().reduce((a, b) -> {
+				a.retainAll(b);
+				return a;
+			});
+			// add left candidates to mappings
+			for (Resource mappedEntity : mappedEntities.orElseGet(Collections::emptySet)) {
+				mappings.add(Mapping.of(entity, mappedEntity));
 			}
 		}
 
