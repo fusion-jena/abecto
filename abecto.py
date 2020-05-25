@@ -386,15 +386,15 @@ class Execution:
                                     variablesCount = len(resourceData)
                                     firstRow = True
                                     for index, row in resourceData.iterrows():
-                                        table += "<tr rowspan=\"variablesCount\">"
+                                        table += "<tr>"
                                         if firstRow:
-                                            table += "<td>" + resourcePair["resource1"] + "</td>"
+                                            table += "<td rowspan=\"" + str(variablesCount) + "\">" + resourcePair["resource1"] + "</td>"
                                         table += "<td>" + row.variableName + "</td>"
                                         table += "<td>" + self.__formatValue(html.escape(row.value1 if not row.isna().value1 else "")) + "</td>"
                                         table += "<td>" + self.__formatValue(html.escape(row.value2 if not row.isna().value2 else "")) + "</td>"
                                         table += "<td>" + row.variableName + "</td>"
                                         if firstRow:
-                                            table += "<td>" + resourcePair["resource2"] + "</td>"
+                                            table += "<td rowspan=\"" + str(variablesCount) + "\">" + resourcePair["resource2"] + "</td>"
                                             firstRow = False
                                         table += "</tr>"
                                 table += "</table>"
