@@ -28,6 +28,7 @@ import java.util.UUID;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.sys.JenaSystem;
 import org.junit.jupiter.api.Test;
 
 import de.uni_jena.cs.fusion.abecto.metaentity.Category;
@@ -41,6 +42,8 @@ class LiteralDeviationProcessorTest {
 
 	@Test
 	void computeResultModel() throws Exception {
+		JenaSystem.init();
+
 		// preparation
 		Model model1 = Models.read(new ByteArrayInputStream((""//
 				+ "@prefix  : <http://example.org/1/>                .\n"//
