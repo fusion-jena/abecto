@@ -23,6 +23,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import org.apache.jena.datatypes.RDFDatatype;
+import org.apache.jena.datatypes.xsd.impl.XSDBaseNumericType;
+import org.apache.jena.datatypes.xsd.impl.XSDDouble;
+import org.apache.jena.datatypes.xsd.impl.XSDFloat;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Literal;
@@ -75,10 +79,24 @@ public class LiteralDeviationProcessor extends AbstractDeviationProcessor<Abstra
 				if (result1.contains(variableName)) {
 					try {
 						Literal value1 = result1.getLiteral(variableName);
+						RDFDatatype type1 = value1.getDatatype();
 						for (Resource resource2 : mappings.getOrDefault(resource1, Collections.emptySet())) {
 							if (valuesByVariableByResource2.containsKey(resource2)) {
 								Literal value2 = valuesByVariableByResource2.get(resource2).get(variableName);
-								if (value2 != null && !value1.sameValueAs(value2)) {
+								if (value2 != null) {
+									// same type/subtype check
+									if (value1.sameValueAs(value2))
+										continue;
+									// different number types check
+									if (type1 instanceof XSDBaseNumericType || type1 instanceof XSDDouble
+											|| type1 instanceof XSDFloat) {
+										RDFDatatype type2 = value2.getDatatype();
+										if ((type2 instanceof XSDBaseNumericType || type2 instanceof XSDDouble
+												|| type2 instanceof XSDFloat)
+												&& (Double.compare(value1.getDouble(), value2.getDouble()) == 0)) {
+											continue;
+										}
+									}
 									deviations.add(new Deviation(null, categoryName, variableName, resource1, resource2,
 											knowledgeBaseId1, knowledgeBaseId2, value1.toString(), value2.toString()));
 								}
