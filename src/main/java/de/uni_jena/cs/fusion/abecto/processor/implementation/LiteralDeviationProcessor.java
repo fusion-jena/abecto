@@ -96,10 +96,14 @@ public class LiteralDeviationProcessor extends AbstractDeviationProcessor<Abstra
 												|| type2 instanceof XSDFloat)) {
 											// compare as BigDecimal (comparing Floats as Double results in precision
 											// problems for e.g. 0.001)
-											BigDecimal bigDecimalValue1 = new BigDecimal(value1.getLexicalForm());
-											BigDecimal bigDecimalValue2 = new BigDecimal(value2.getLexicalForm());
-											if (bigDecimalValue1.compareTo(bigDecimalValue2) == 0) {
-												continue;
+											try {
+												BigDecimal bigDecimalValue1 = new BigDecimal(value1.getLexicalForm());
+												BigDecimal bigDecimalValue2 = new BigDecimal(value2.getLexicalForm());
+												if (bigDecimalValue1.compareTo(bigDecimalValue2) == 0) {
+													continue;
+												}
+											} catch (NumberFormatException e) {
+												// do not avoid deviation registration
 											}
 										}
 									}
