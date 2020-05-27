@@ -15,6 +15,7 @@
  */
 package de.uni_jena.cs.fusion.abecto.processor.implementation;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -92,9 +93,14 @@ public class LiteralDeviationProcessor extends AbstractDeviationProcessor<Abstra
 											|| type1 instanceof XSDFloat) {
 										RDFDatatype type2 = value2.getDatatype();
 										if ((type2 instanceof XSDBaseNumericType || type2 instanceof XSDDouble
-												|| type2 instanceof XSDFloat)
-												&& (Double.compare(value1.getDouble(), value2.getDouble()) == 0)) {
-											continue;
+												|| type2 instanceof XSDFloat)) {
+											// compare as BigDecimal (comparing Floats as Double results in precision
+											// problems for e.g. 0.001)
+											BigDecimal bigDecimalValue1 = new BigDecimal(value1.getLexicalForm());
+											BigDecimal bigDecimalValue2 = new BigDecimal(value2.getLexicalForm());
+											if (bigDecimalValue1.compareTo(bigDecimalValue2) == 0) {
+												continue;
+											}
 										}
 									}
 									deviations.add(new Deviation(null, categoryName, variableName, resource1, resource2,

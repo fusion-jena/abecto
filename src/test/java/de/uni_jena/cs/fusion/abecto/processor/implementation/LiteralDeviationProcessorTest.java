@@ -335,6 +335,7 @@ class LiteralDeviationProcessorTest {
 				LiteralLabelFactory.create("0.0032", XSDDatatype.XSDfloat),
 				LiteralLabelFactory.create("4.2e-3", XSDDatatype.XSDfloat));
 
+		// float and double
 		assertDeviation(//
 				LiteralLabelFactory.create("3.2E9", XSDDatatype.XSDfloat),
 				LiteralLabelFactory.create("4.2E9", XSDDatatype.XSDdouble));
@@ -372,6 +373,7 @@ class LiteralDeviationProcessorTest {
 				LiteralLabelFactory.create("0.0032", XSDDatatype.XSDfloat),
 				LiteralLabelFactory.create("4.2e-3", XSDDatatype.XSDdouble));
 
+		// double and float
 		assertDeviation(//
 				LiteralLabelFactory.create("3.2E9", XSDDatatype.XSDdouble),
 				LiteralLabelFactory.create("4.2E9", XSDDatatype.XSDfloat));
@@ -452,6 +454,13 @@ class LiteralDeviationProcessorTest {
 		assertUnexpectedValueType(LiteralLabelFactory.create("-4.0", XSDDatatype.XSDdecimal));
 		assertUnexpectedValueType(LiteralLabelFactory.create("3.2E9", XSDDatatype.XSDfloat));
 		assertUnexpectedValueType(LiteralLabelFactory.create("3.2E9", XSDDatatype.XSDdouble));
+
+		assertSame(//
+				LiteralLabelFactory.create("0.001", XSDDatatype.XSDfloat),
+				LiteralLabelFactory.create("0.001e0", XSDDatatype.XSDdouble));
+		assertSame(//
+				LiteralLabelFactory.create("0.001", XSDDatatype.XSDdouble),
+				LiteralLabelFactory.create("0.001e0", XSDDatatype.XSDfloat));
 	}
 
 }
