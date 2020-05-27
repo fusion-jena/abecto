@@ -87,10 +87,6 @@ class LiteralDeviationProcessorTest {
 				+ ":type    :floatInteger :something                 .\n"//
 				+ ":type    :integerFloat :something                 .\n"//
 				+ ":type    :boolean      :something                 .\n"//
-
-				+ ":missing :integer      \"-5\"^^xsd:integer        .\n"//
-				+ ":missing :double       \"4.2E9\"^^xsd:double      .\n"//
-				+ ":missing :boolean      true                       .\n"//
 		).getBytes()));
 		Model model2 = Models.read(new ByteArrayInputStream((""//
 				+ "@prefix  : <http://example.org/2/>                .\n"//
@@ -134,10 +130,6 @@ class LiteralDeviationProcessorTest {
 				+ ":type    :floatInteger \"-5\"^^xsd:integer        .\n"//
 				+ ":type    :integerFloat \"-5\"^^xsd:float          .\n"//
 				+ ":type    :boolean      true                       .\n"//
-
-				+ ":missing :string       \"value1\"                 .\n"//
-				+ ":missing :decimal      \"-5.0\"^^xsd:decimal      .\n"//
-				+ ":missing :float        \"4.2E9\"^^xsd:float       .\n"//
 		).getBytes()));
 		Model metaModel = Models.getEmptyOntModel();
 		UUID id1 = UUID.randomUUID();
