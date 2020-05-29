@@ -123,8 +123,30 @@ public class Category {
 		return query;
 	}
 
+	@JsonIgnore
+	public Query getResourceQuery() {
+		Query query = new Query();
+		query.setQuerySelectType();
+		query.addResultVar(name);
+		query.setQueryPattern(this.getPatternElementGroup());
+		return query;
+	}
+
 	public ResultSet selectCategory(Model model) {
 		return QueryExecutionFactory.create(this.getQuery(), model).execSelect();
+	}
+
+	public Collection<Resource> selectCategoryResources(Model model) {
+		Collection<Resource> resources = new HashSet<>();
+
+		ResultSet resultSet = QueryExecutionFactory.create(this.getResourceQuery(), model).execSelect();
+
+		while (resultSet.hasNext()) {
+			QuerySolution solution = resultSet.next();
+			resources.add(solution.getResource(name));
+		}
+
+		return resources;
 	}
 
 	@JsonIgnore
