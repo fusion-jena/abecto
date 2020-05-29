@@ -22,7 +22,7 @@
 
 	<groupId>de.uni_jena.cs.fusion</groupId>
 	<artifactId>abecto</artifactId>
-	<version>0.1.1</version>
+	<version>0.1.2-SNAPSHOT</version>
 
 	<name>ABECTO</name>
 	<description>An ABox Evaluation and Comparison Tool for Ontologies</description>
