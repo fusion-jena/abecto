@@ -23,7 +23,7 @@ jupyter notebook abecto/abecto-tutorial.ipynb
 
 ## License
 
-[ABECTO](https://github.com/fusion-jena/abecto) is licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
+ABECTO is licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
 
 ## Publications
 
