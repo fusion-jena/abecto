@@ -29,9 +29,9 @@ jupyter notebook abecto/abecto-tutorial.ipynb
 
 In case you use this implementation for your scientific work, please consider to cite the related paper:
 
-Keil, Jan Martin (2020). **[ABECTO: An ABox Evaluation and Comparison Tool for Ontologies](https://fusion.cs.uni-jena.de/fusion/publications/abecto-an-abox-evaluation-and-comparison-tool-for-ontologies/)**. In: ESWC 2020 Satellite Events: Posters and Demos.
+* Keil, Jan Martin (2020). **[ABECTO: An ABox Evaluation and Comparison Tool for Ontologies](https://fusion.cs.uni-jena.de/fusion/publications/abecto-an-abox-evaluation-and-comparison-tool-for-ontologies/)**. In: ESWC 2020 Satellite Events: Posters and Demos.
 
 Further related publications:
 
-Keil, Jan Martin (2018). **[Ontology ABox Comparison](https://fusion.cs.uni-jena.de/fusion/publications/ontology-abox-comparison/)**. In: ESWC 2018 Satellite Events: PhD Symposium. [DOI:10.1007/978-3-319-98192-5_43](https://doi.org/10.1007/978-3-319-98192-5_43).
+* Keil, Jan Martin (2018). **[Ontology ABox Comparison](https://fusion.cs.uni-jena.de/fusion/publications/ontology-abox-comparison/)**. In: ESWC 2018 Satellite Events: PhD Symposium. [DOI:10.1007/978-3-319-98192-5_43](https://doi.org/10.1007/978-3-319-98192-5_43).
 
