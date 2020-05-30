@@ -209,6 +209,7 @@
 						<email>${project.organization.url}</email>
 					</properties>
 					<excludes>
+						<exclude>LICENSE</exclude>
 						<exclude>**/*.txt</exclude>
 						<exclude>**/*.ipynb</exclude>
 						<exclude>binder/**</exclude>
