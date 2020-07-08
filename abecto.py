@@ -202,8 +202,11 @@ class Node:
         r.raise_for_status()
         return list(map(lambda processingData: Processing(self.server, processingData), r.json()))
     
-    def load(self, file):
-        r = requests.post(self.server.base + "node/" + self.id + "/load", files = {"file": file})
+    def load(self, file=None):
+        if file:
+            r = requests.post(self.server.base + "node/" + self.id + "/load", files = {"file": file})
+        else:
+            r = requests.post(self.server.base + "node/" + self.id + "/load")
         r.raise_for_status()
         Processing(self.server, r.json()).raiseForStatus()
         return self
