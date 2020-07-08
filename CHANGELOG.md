@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * add **RdfFileSourceProcessor**: Loads an RDF document from the local file system.
-* add **JaroWinklerMappingProcessor**: Provides mappings based on the Jaro-Winkler Similarit of string property values using our implementation from [Efficient Bounded Jaro-Winkler Similarity Based Search](https://doi.org/10.18420/btw2019-13).
+* add **JaroWinklerMappingProcessor**: Provides mappings based on the Jaro-Winkler Similarity of string property values using our implementation from [Efficient Bounded Jaro-Winkler Similarity Based Search](https://doi.org/10.18420/btw2019-13).
 * add **ManualMappingProcessor**: Enables users to manually adjust the mappings by providing or suppressing mappings.
 * add **RelationalMappingProcessor**: Provides mappings based on the mappings of referenced resources.
 * add **OpenlletReasoningProcessor**: Infers the logical consequences of the input RDF models utilizing the [Openllet Reasoner](https://github.com/Galigator/openllet) to generate additional triples.
