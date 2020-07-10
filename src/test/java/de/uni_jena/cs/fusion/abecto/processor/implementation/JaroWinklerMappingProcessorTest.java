@@ -26,6 +26,7 @@ import java.util.UUID;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.sys.JenaSystem;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -35,14 +36,15 @@ import de.uni_jena.cs.fusion.abecto.model.Models;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 
 public class JaroWinklerMappingProcessorTest {
-
-	private static Model FIRST_GRAPH;
-	private static Model SECOND_GRAPH;
-	private static Model META_GRAPH;
-
 	@BeforeAll
-	public static void setUpBeforeClass() throws Exception {
-		FIRST_GRAPH = Models.read(new ByteArrayInputStream(("" + //
+	public static void initJena() {
+		// ensure Jena initialization
+		JenaSystem.init();
+	}
+
+	@Test
+	public void testComputeMapping() throws Exception {
+		Model model1 = Models.read(new ByteArrayInputStream(("" + //
 				"@base <http://example.org/> .\r\n" + //
 				"@prefix : <http://example.org/> .\r\n" + //
 				"@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\r\n" + //
@@ -50,7 +52,7 @@ public class JaroWinklerMappingProcessorTest {
 				":entity1 rdfs:label \"abcdabcdabcdabcdabcd\" .\r\n" + //
 				":entity2 rdfs:label \"efghefghefghefghefgh\" .\r\n" + //
 				":entity3 rdfs:label \"ijklijklijklijklijkl\" .").getBytes()));
-		SECOND_GRAPH = Models.read(new ByteArrayInputStream(("" + //
+		Model model2 = Models.read(new ByteArrayInputStream(("" + //
 				"@base <http://example.com/> .\r\n" + //
 				"@prefix : <http://example.com/> .\r\n" + //
 				"@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\r\n" + //
@@ -58,13 +60,9 @@ public class JaroWinklerMappingProcessorTest {
 				":entity1 rdfs:label \"abcdabcdabcdabcdabcd\" .\r\n" + //
 				":entity2 rdfs:label \"efghefghefghefghabcd\" .\r\n" + //
 				":entity3 rdfs:label \"mnopmnopmnopmnopmnop\" .").getBytes()));
-		META_GRAPH = Models.getEmptyOntModel();
+		Model metaModel = Models.getEmptyOntModel();
 		SparqlEntityManager.insert(new Category("entity",
-				"{?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .}", UUID.randomUUID()), META_GRAPH);
-	}
-
-	@Test
-	public void testComputeMapping() throws Exception {
+				"{?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .}", UUID.randomUUID()), metaModel);
 		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor();
 		JaroWinklerMappingProcessor.Parameter parameter = new JaroWinklerMappingProcessor.Parameter();
 		parameter.case_sensitive = false;
@@ -72,9 +70,8 @@ public class JaroWinklerMappingProcessorTest {
 		parameter.category = "entity";
 		parameter.variables = Collections.singleton("label");
 		processor.setParameters(parameter);
-		processor.addMetaModels(Collections.singleton(META_GRAPH));
-		Collection<Mapping> mappings = processor.computeMapping(FIRST_GRAPH, SECOND_GRAPH, UUID.randomUUID(),
-				UUID.randomUUID());
+		processor.addMetaModels(Collections.singleton(metaModel));
+		Collection<Mapping> mappings = processor.computeMapping(model1, model2, UUID.randomUUID(), UUID.randomUUID());
 		assertEquals(2, mappings.size());
 		assertTrue(mappings.contains(Mapping.of(ResourceFactory.createResource("http://example.org/entity1"),
 				ResourceFactory.createResource("http://example.com/entity1"))));
@@ -84,6 +81,25 @@ public class JaroWinklerMappingProcessorTest {
 
 	@Test
 	public void testComputeResultModel() throws Exception {
+		Model model1 = Models.read(new ByteArrayInputStream(("" + //
+				"@base <http://example.org/> .\r\n" + //
+				"@prefix : <http://example.org/> .\r\n" + //
+				"@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\r\n" + //
+				"\r\n" + //
+				":entity1 rdfs:label \"abcdabcdabcdabcdabcd\" .\r\n" + //
+				":entity2 rdfs:label \"efghefghefghefghefgh\" .\r\n" + //
+				":entity3 rdfs:label \"ijklijklijklijklijkl\" .").getBytes()));
+		Model model2 = Models.read(new ByteArrayInputStream(("" + //
+				"@base <http://example.com/> .\r\n" + //
+				"@prefix : <http://example.com/> .\r\n" + //
+				"@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\r\n" + //
+				"\r\n" + //
+				":entity1 rdfs:label \"abcdabcdabcdabcdabcd\" .\r\n" + //
+				":entity2 rdfs:label \"efghefghefghefghabcd\" .\r\n" + //
+				":entity3 rdfs:label \"mnopmnopmnopmnopmnop\" .").getBytes()));
+		Model metaModel = Models.getEmptyOntModel();
+		SparqlEntityManager.insert(new Category("entity",
+				"{?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .}", UUID.randomUUID()), metaModel);
 		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor();
 		JaroWinklerMappingProcessor.Parameter parameter = new JaroWinklerMappingProcessor.Parameter();
 		parameter.case_sensitive = false;
@@ -91,9 +107,9 @@ public class JaroWinklerMappingProcessorTest {
 		parameter.category = "entity";
 		parameter.variables = Collections.singleton("label");
 		processor.setParameters(parameter);
-		processor.addInputModelGroups(Map.of(UUID.randomUUID(), Collections.singleton(FIRST_GRAPH), UUID.randomUUID(),
-				Collections.singleton(SECOND_GRAPH)));
-		processor.addMetaModels(Collections.singleton(META_GRAPH));
+		processor.addInputModelGroups(Map.of(UUID.randomUUID(), Collections.singleton(model1), UUID.randomUUID(),
+				Collections.singleton(model2)));
+		processor.addMetaModels(Collections.singleton(metaModel));
 		processor.computeResultModel();
 		Model result = processor.getResultModel();
 		Collection<Mapping> positiveMappings = SparqlEntityManager.select(Mapping.of(), result);
