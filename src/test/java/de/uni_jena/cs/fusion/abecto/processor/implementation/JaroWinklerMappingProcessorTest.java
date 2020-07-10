@@ -44,6 +44,8 @@ public class JaroWinklerMappingProcessorTest {
 
 	@Test
 	public void testComputeMapping() throws Exception {
+		UUID ontologyId1 = UUID.randomUUID();
+		UUID ontologyId2 = UUID.randomUUID();
 		Model model1 = Models.read(new ByteArrayInputStream(("" + //
 				"@base <http://example.org/> .\r\n" + //
 				"@prefix : <http://example.org/> .\r\n" + //
@@ -61,8 +63,18 @@ public class JaroWinklerMappingProcessorTest {
 				":entity2 rdfs:label \"efghefghefghefghabcd\" .\r\n" + //
 				":entity3 rdfs:label \"mnopmnopmnopmnopmnop\" .").getBytes()));
 		Model metaModel = Models.getEmptyOntModel();
-		SparqlEntityManager.insert(new Category("entity",
-				"{?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .}", UUID.randomUUID()), metaModel);
+		SparqlEntityManager.insert(
+				new Category("entity", "{?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .}", ontologyId1),
+				metaModel);
+		SparqlEntityManager.insert(
+				new Category("entity", "{?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .}", ontologyId2),
+				metaModel);
+		SparqlEntityManager.insert(
+				new Category("other", "{?other <http://www.w3.org/2000/01/rdf-schema#label> ?label .}", ontologyId1),
+				metaModel);
+		SparqlEntityManager.insert(
+				new Category("other", "{?other <http://www.w3.org/2000/01/rdf-schema#label> ?label .}", ontologyId2),
+				metaModel);
 		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor();
 		JaroWinklerMappingProcessor.Parameter parameter = new JaroWinklerMappingProcessor.Parameter();
 		parameter.case_sensitive = false;
@@ -71,7 +83,7 @@ public class JaroWinklerMappingProcessorTest {
 		parameter.variables = Collections.singleton("label");
 		processor.setParameters(parameter);
 		processor.addMetaModels(Collections.singleton(metaModel));
-		Collection<Mapping> mappings = processor.computeMapping(model1, model2, UUID.randomUUID(), UUID.randomUUID());
+		Collection<Mapping> mappings = processor.computeMapping(model1, model2, ontologyId1, ontologyId2);
 		assertEquals(2, mappings.size());
 		assertTrue(mappings.contains(Mapping.of(ResourceFactory.createResource("http://example.org/entity1"),
 				ResourceFactory.createResource("http://example.com/entity1"))));
@@ -81,6 +93,8 @@ public class JaroWinklerMappingProcessorTest {
 
 	@Test
 	public void testComputeResultModel() throws Exception {
+		UUID ontologyId1 = UUID.randomUUID();
+		UUID ontologyId2 = UUID.randomUUID();
 		Model model1 = Models.read(new ByteArrayInputStream(("" + //
 				"@base <http://example.org/> .\r\n" + //
 				"@prefix : <http://example.org/> .\r\n" + //
@@ -98,8 +112,12 @@ public class JaroWinklerMappingProcessorTest {
 				":entity2 rdfs:label \"efghefghefghefghabcd\" .\r\n" + //
 				":entity3 rdfs:label \"mnopmnopmnopmnopmnop\" .").getBytes()));
 		Model metaModel = Models.getEmptyOntModel();
-		SparqlEntityManager.insert(new Category("entity",
-				"{?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .}", UUID.randomUUID()), metaModel);
+		SparqlEntityManager.insert(
+				new Category("entity", "{?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .}", ontologyId1),
+				metaModel);
+		SparqlEntityManager.insert(
+				new Category("entity", "{?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .}", ontologyId2),
+				metaModel);
 		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor();
 		JaroWinklerMappingProcessor.Parameter parameter = new JaroWinklerMappingProcessor.Parameter();
 		parameter.case_sensitive = false;
@@ -107,8 +125,8 @@ public class JaroWinklerMappingProcessorTest {
 		parameter.category = "entity";
 		parameter.variables = Collections.singleton("label");
 		processor.setParameters(parameter);
-		processor.addInputModelGroups(Map.of(UUID.randomUUID(), Collections.singleton(model1), UUID.randomUUID(),
-				Collections.singleton(model2)));
+		processor.addInputModelGroups(
+				Map.of(ontologyId1, Collections.singleton(model1), ontologyId2, Collections.singleton(model2)));
 		processor.addMetaModels(Collections.singleton(metaModel));
 		processor.computeResultModel();
 		Model result = processor.getResultModel();
@@ -124,6 +142,8 @@ public class JaroWinklerMappingProcessorTest {
 
 	@Test
 	public void handelOptionalValue() throws Exception {
+		UUID ontologyId1 = UUID.randomUUID();
+		UUID ontologyId2 = UUID.randomUUID();
 		Model model1 = Models.read(new ByteArrayInputStream((""//
 				+ "@base <http://example.org/> .\n"//
 				+ "@prefix : <http://example.org/> .\n"//
@@ -141,7 +161,12 @@ public class JaroWinklerMappingProcessorTest {
 				+ "?entity <http://example.org/type> <http://example.org/Thing> ."//
 				+ "OPTIONAL {?entity <http://example.org/label> ?label}"//
 				+ "}"//
-				, UUID.randomUUID()), metaModel);
+				, ontologyId1), metaModel);
+		SparqlEntityManager.insert(new Category("entity", "{"//
+				+ "?entity <http://example.org/type> <http://example.org/Thing> ."//
+				+ "OPTIONAL {?entity <http://example.org/label> ?label}"//
+				+ "}"//
+				, ontologyId2), metaModel);
 		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor();
 		JaroWinklerMappingProcessor.Parameter parameter = new JaroWinklerMappingProcessor.Parameter();
 		parameter.case_sensitive = false;
@@ -149,8 +174,8 @@ public class JaroWinklerMappingProcessorTest {
 		parameter.category = "entity";
 		parameter.variables = Collections.singleton("label");
 		processor.setParameters(parameter);
-		processor.addInputModelGroups(Map.of(UUID.randomUUID(), Collections.singleton(model1), UUID.randomUUID(),
-				Collections.singleton(model2)));
+		processor.addInputModelGroups(
+				Map.of(ontologyId1, Collections.singleton(model1), ontologyId2, Collections.singleton(model2)));
 		processor.addMetaModels(Collections.singleton(metaModel));
 		processor.computeResultModel();
 		Model result = processor.getResultModel();
@@ -162,6 +187,8 @@ public class JaroWinklerMappingProcessorTest {
 
 	@Test
 	public void handelEmptyModels() throws Exception {
+		UUID ontologyId1 = UUID.randomUUID();
+		UUID ontologyId2 = UUID.randomUUID();
 		Model model = Models.read(new ByteArrayInputStream((""//
 				+ "@base <http://example.org/> .\n"//
 				+ "@prefix : <http://example.org/> .\n"//
@@ -169,8 +196,10 @@ public class JaroWinklerMappingProcessorTest {
 				+ ":entity2 :label \"def\" .").getBytes()));
 		Model modelEmpty = Models.getEmptyOntModel();
 		Model metaModel = Models.getEmptyOntModel();
-		SparqlEntityManager.insert(
-				new Category("entity", "{?entity <http://example.org/label> ?label .}", UUID.randomUUID()), metaModel);
+		SparqlEntityManager.insert(new Category("entity", "{?entity <http://example.org/label> ?label .}", ontologyId1),
+				metaModel);
+		SparqlEntityManager.insert(new Category("entity", "{?entity <http://example.org/label> ?label .}", ontologyId2),
+				metaModel);
 		JaroWinklerMappingProcessor processor;
 		JaroWinklerMappingProcessor.Parameter parameter = new JaroWinklerMappingProcessor.Parameter();
 		parameter.case_sensitive = false;
@@ -181,22 +210,24 @@ public class JaroWinklerMappingProcessorTest {
 		// direction 1
 		processor = new JaroWinklerMappingProcessor();
 		processor.setParameters(parameter);
-		processor.addInputModelGroups(Map.of(UUID.randomUUID(), Collections.singleton(modelEmpty), UUID.randomUUID(),
-				Collections.singleton(model)));
+		processor.addInputModelGroups(
+				Map.of(ontologyId1, Collections.singleton(modelEmpty), ontologyId2, Collections.singleton(model)));
 		processor.addMetaModels(Collections.singleton(metaModel));
 		processor.computeResultModel();
 
 		// direction 2
 		processor = new JaroWinklerMappingProcessor();
 		processor.setParameters(parameter);
-		processor.addInputModelGroups(Map.of(UUID.randomUUID(), Collections.singleton(model), UUID.randomUUID(),
-				Collections.singleton(modelEmpty)));
+		processor.addInputModelGroups(
+				Map.of(ontologyId2, Collections.singleton(model), ontologyId1, Collections.singleton(modelEmpty)));
 		processor.addMetaModels(Collections.singleton(metaModel));
 		processor.computeResultModel();
 	}
 
 	@Test
 	public void handleZeroMappings() throws Exception {
+		UUID ontologyId1 = UUID.randomUUID();
+		UUID ontologyId2 = UUID.randomUUID();
 		Model model1 = Models.read(new ByteArrayInputStream((""//
 				+ "@prefix : <http://example.org/> .\n"//
 				+ ":entity1 :label \"abc\" .").getBytes()));
@@ -204,8 +235,10 @@ public class JaroWinklerMappingProcessorTest {
 				+ "@prefix : <http://example.org/> .\n"//
 				+ ":entity2 :label \"def\" .").getBytes()));
 		Model metaModel = Models.getEmptyOntModel();
-		SparqlEntityManager.insert(
-				new Category("entity", "{?entity <http://example.org/label> ?label .}", UUID.randomUUID()), metaModel);
+		SparqlEntityManager.insert(new Category("entity", "{?entity <http://example.org/label> ?label .}", ontologyId1),
+				metaModel);
+		SparqlEntityManager.insert(new Category("entity", "{?entity <http://example.org/label> ?label .}", ontologyId2),
+				metaModel);
 		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor();
 		JaroWinklerMappingProcessor.Parameter parameter = new JaroWinklerMappingProcessor.Parameter();
 		parameter.case_sensitive = false;
@@ -213,14 +246,16 @@ public class JaroWinklerMappingProcessorTest {
 		parameter.category = "entity";
 		parameter.variables = Collections.singleton("label");
 		processor.setParameters(parameter);
-		processor.addInputModelGroups(Map.of(UUID.randomUUID(), Collections.singleton(model1), UUID.randomUUID(),
-				Collections.singleton(model2)));
+		processor.addInputModelGroups(
+				Map.of(ontologyId1, Collections.singleton(model1), ontologyId2, Collections.singleton(model2)));
 		processor.addMetaModels(Collections.singleton(metaModel));
 		processor.computeResultModel();
 	}
 
 	@Test
 	public void commutativ() throws Exception {
+		UUID ontologyId1 = UUID.randomUUID();
+		UUID ontologyId2 = UUID.randomUUID();
 		Model model1 = Models.read(new ByteArrayInputStream((""//
 				+ "@prefix : <http://example.org/> .\n"//
 				+ ":entity1 :label \"aaaaaaaaaaa\"  .\n"//
@@ -233,7 +268,11 @@ public class JaroWinklerMappingProcessorTest {
 		SparqlEntityManager.insert(new Category("entity", "{"//
 				+ "?entity <http://example.org/label> ?label"//
 				+ "}"//
-				, UUID.randomUUID()), metaModel);
+				, ontologyId1), metaModel);
+		SparqlEntityManager.insert(new Category("entity", "{"//
+				+ "?entity <http://example.org/label> ?label"//
+				+ "}"//
+				, ontologyId2), metaModel);
 
 		JaroWinklerMappingProcessor.Parameter parameter = new JaroWinklerMappingProcessor.Parameter();
 		parameter.case_sensitive = false;
@@ -241,15 +280,12 @@ public class JaroWinklerMappingProcessorTest {
 		parameter.category = "entity";
 		parameter.variables = Collections.singleton("label");
 
-		UUID uuid1 = UUID.fromString("00000000-0000-0000-0000-000000000001");
-		UUID uuid2 = UUID.fromString("00000000-0000-0000-0000-000000000002");
-
 		// direction 1
 		{
 			JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor();
 			processor.setParameters(parameter);
 			processor.addInputModelGroups(
-					Map.of(uuid1, Collections.singleton(model1), uuid2, Collections.singleton(model2)));
+					Map.of(ontologyId1, Collections.singleton(model1), ontologyId2, Collections.singleton(model2)));
 			processor.addMetaModels(Collections.singleton(metaModel));
 			processor.computeResultModel();
 			Model result = processor.getResultModel();
@@ -266,7 +302,7 @@ public class JaroWinklerMappingProcessorTest {
 			JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor();
 			processor.setParameters(parameter);
 			processor.addInputModelGroups(
-					Map.of(uuid1, Collections.singleton(model2), uuid2, Collections.singleton(model1)));
+					Map.of(ontologyId1, Collections.singleton(model2), ontologyId2, Collections.singleton(model1)));
 			processor.addMetaModels(Collections.singleton(metaModel));
 			processor.computeResultModel();
 			Model result = processor.getResultModel();

@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 * add **UrlSourceProcessor**: Loads an RDF document from a URL.
 
+### Fixed
+* fix **JaroWinklerMappingProcessor**: ignore other categories
+
 ## [v0.1.1] - 2020-05-29
 
 ### Fixed

@@ -53,49 +53,47 @@ public class JaroWinklerMappingProcessor extends AbstractMappingProcessor<JaroWi
 		public Collection<String> variables;
 	}
 
-	/** the patterns relevant for the category mapped with contained variables */
-	private Map<Category, Collection<Var>> patterns = new HashMap<>();
+	/**
+	 * the variablesByCategoryByOntology relevant for the category mapped with
+	 * contained variables
+	 */
+	private Map<UUID, Map<Category, Collection<Var>>> variablesByCategoryByOntology = new HashMap<>();
 	/** the variable values mapped with the entities of the category by model */
-	private Map<Model, Map<Var, Map<String, Collection<Resource>>>> values = new HashMap<>();
+	private Map<Model, Map<Var, Map<String, Collection<Resource>>>> valuesByVariableByModel = new HashMap<>();
 
-	private Map<Var, Map<String, Collection<Resource>>> getValues(Model model, boolean caseSensitive) {
-		if (!this.values.containsKey(model)) {
+	private Map<Var, Map<String, Collection<Resource>>> getValuesByVariable(Model model,
+			Map<Category, Collection<Var>> variablesByCategory, boolean caseSensitive) {
+		if (!this.valuesByVariableByModel.containsKey(model)) {
 			// do it only once for this processor instance
 
-			// get values map for the model
-			Map<Var, Map<String, Collection<Resource>>> modelValues = this.values.computeIfAbsent(model,
-					m -> new HashMap<>());
+			// get valuesByVariableByModel map for the model
+			Map<Var, Map<String, Collection<Resource>>> modelValues = this.valuesByVariableByModel
+					.computeIfAbsent(model, m -> new HashMap<>());
 
-			// get the processed category
-			String category = this.getParameters().category;
-
-			// iterate the patterns
-			for (Entry<Category, Collection<Var>> entry : patterns.entrySet()) {
-				Category pattern = entry.getKey();
-
-				// get pattern variables except of category
+			// iterate the variablesByCategoryByOntology
+			for (Entry<Category, Collection<Var>> entry : variablesByCategory.entrySet()) {
+				Category category = entry.getKey();
 				Collection<Var> variables = entry.getValue();
-				variables.removeIf(variable -> variable.toString().equals(category));
 
 				// add value maps for each variable
 				variables.forEach((variable -> modelValues.computeIfAbsent(variable, v -> new HashMap<>())));
 
 				// execute query of the pattern
-				ResultSet results = pattern.selectCategory(model);
+				ResultSet results = category.selectCategory(model);
 
 				// iterate results
 				while (results.hasNext()) {
 					QuerySolution result = results.next();
 
 					// get resource of the result
-					Resource entity = result.get(category).asResource();
+					Resource entity = result.get(category.name).asResource();
 
 					// iterate result variables
 					for (Var variable : variables) {
 						if (result.contains(variable.getVarName())) {
 							String value = result.get(variable.getVarName()).toString();
 
-							// add result variable value to values
+							// add result variable value to valuesByVariableByModel
 							modelValues.get(variable).computeIfAbsent(value, v -> new HashSet<>()).add(entity);
 						}
 					}
@@ -103,29 +101,46 @@ public class JaroWinklerMappingProcessor extends AbstractMappingProcessor<JaroWi
 
 			}
 		}
-		return values.get(model);
+		return valuesByVariableByModel.get(model);
+	}
+
+	public Map<Category, Collection<Var>> variablesByCategory(String categoryName, Collection<String> variables,
+			UUID ontology)
+			throws IllegalStateException, NullPointerException, IllegalArgumentException, ReflectiveOperationException {
+		if (!this.variablesByCategoryByOntology.containsKey(ontology)) { // only once for this processor instance
+			// add ontology to variablesByCategoryByOntology
+			Map<Category, Collection<Var>> variablesByCategory = this.variablesByCategoryByOntology
+					.computeIfAbsent(ontology, (o) -> new HashMap<>());
+			// get categories by name and ontology
+			for (Category category : SparqlEntityManager.select(new Category(categoryName, null, ontology),
+					this.metaModel)) {
+				// get mapping of current category variables
+				Collection<Var> mappingVariables = category.getPatternVariables().stream()
+						.filter((var) -> variables.contains(var.getName())) // only variables used for mapping
+						.collect(Collectors.toList());
+				if (!mappingVariables.isEmpty()) {
+					// add category if relevant
+					variablesByCategory.put(category, mappingVariables);
+				}
+			}
+		}
+		return this.variablesByCategoryByOntology.get(ontology);
 	}
 
 	@Override
-	public Collection<Mapping> computeMapping(Model model1, Model model2, UUID knowledgeBaseId1, UUID knowledgeBaseId2)
+	public Collection<Mapping> computeMapping(Model model1, Model model2, UUID ontologyId1, UUID ontologyId2)
 			throws ParseException, IllegalStateException, NullPointerException, ReflectiveOperationException {
 		// get parameters
 		boolean caseSensitive = this.getParameters().case_sensitive;
 		double threshold = this.getParameters().threshold;
 		Collection<String> variables = this.getParameters().variables;
+		String categoryName = this.getParameters().category;
 
-		// get patterns
-		for (Category category : SparqlEntityManager.select(new Category(), this.metaModel)) {
-			Collection<Var> relevantVariables = category.getPatternVariables().stream()
-					.filter((var) -> variables.contains(var.getName())).collect(Collectors.toList());
-			if (!relevantVariables.isEmpty()) {
-				this.patterns.put(category, relevantVariables);
-			}
-		}
-
-		// get values
-		Map<Var, Map<String, Collection<Resource>>> valuesByVariable1 = getValues(model1, caseSensitive);
-		Map<Var, Map<String, Collection<Resource>>> valuesByVariable2 = getValues(model2, caseSensitive);
+		// get valuesByVariableByModel
+		Map<Var, Map<String, Collection<Resource>>> valuesByVariable1 = getValuesByVariable(model1,
+				variablesByCategory(categoryName, variables, ontologyId1), caseSensitive);
+		Map<Var, Map<String, Collection<Resource>>> valuesByVariable2 = getValuesByVariable(model2,
+				variablesByCategory(categoryName, variables, ontologyId2), caseSensitive);
 
 		// prepare mappings collection
 		Collection<Mapping> mappings = new ArrayList<>();
@@ -152,7 +167,7 @@ public class JaroWinklerMappingProcessor extends AbstractMappingProcessor<JaroWi
 						if (matches1.get(value1).contains(value2)) { // is bidirectional match
 							/*
 							 * NOTE: bidirectional matches are required to make the processor commutative
-							 * regarding knowledge base order
+							 * regarding ontology order
 							 */
 
 							// convert match into mappings
