@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.apache.jena.arq.querybuilder.ExprFactory;
 import org.apache.jena.query.Query;
@@ -110,7 +111,10 @@ public class Category {
 
 	@JsonIgnore
 	public Collection<Var> getPatternVariables() {
-		return PatternVars.vars(this.getPatternElementGroup());
+		return PatternVars.vars(this.getPatternElementGroup()).stream()
+				// remove helper vars for BlankNodePropertyLists/BlankNodePropertyListPaths
+				.filter((var) -> !var.getVarName().startsWith("?"))//
+				.collect(Collectors.toList());
 	}
 
 	@JsonIgnore

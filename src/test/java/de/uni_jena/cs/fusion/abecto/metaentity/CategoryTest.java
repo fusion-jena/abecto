@@ -17,8 +17,11 @@ package de.uni_jena.cs.fusion.abecto.metaentity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.Collection;
 import java.util.UUID;
 
+import org.apache.jena.sparql.core.Var;
+import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +56,21 @@ public class CategoryTest {
 		new Category("entity", "{?entity schema:isPartOf ?entity}", UUID.randomUUID());
 		new Category("entity", "{?entity skos:broader ?entity}", UUID.randomUUID());
 		new Category("entity", "{?entity rdfs:label \"String\"^^xsd:string}", UUID.randomUUID());
+	}
+
+	@Test
+	public void getPatternVariables() {
+		Category category = new Category("entity", "{"//
+				+ "?entity rdfs:label ?label ;"//
+				+ "  rdfs:subClassOf [rdfs:label ?superClassLabel] ."//
+				+ "}", UUID.randomUUID());
+		Collection<Var> variables = category.getPatternVariables();
+		assertTrue(variables.contains(Var.alloc("label")));
+		assertTrue(variables.contains(Var.alloc("superClassLabel")));
+		assertTrue(variables.contains(Var.alloc("entity")));
+		assertFalse(variables.stream().anyMatch((var) -> var.getVarName().startsWith("?")),
+				"BlankNodePropertyLists/BlankNodePropertyListPaths helper vars contained");
+		assertEquals(3, variables.size());
 	}
 
 }

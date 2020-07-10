@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * fix **JaroWinklerMappingProcessor**: ignore other categories
+* fix **Category**: `getPatternVariables()` does not anymore return helper `Var` for BlankNodePropertyLists and BlankNodePropertyListPaths introduced by Apache Jena, which cause Exceptions in **CategoryCountProcessor**
 
 ## [v0.1.1] - 2020-05-29
 
