@@ -20,17 +20,29 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Optional;
 
 import org.apache.jena.graph.Graph;
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.ontology.OntModelSpec;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.NodeIterator;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.ResIterator;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.RDFLanguages;
+import org.apache.jena.vocabulary.DCTerms;
+import org.apache.jena.vocabulary.OWL2;
+import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.vocabulary.SKOS;
 
 import de.uni_jena.cs.fusion.abecto.util.UncloseableInputStream;
 
@@ -115,6 +127,87 @@ public class Models {
 			union.addSubModel(model);
 		}
 		return union;
+	}
+
+	public static Optional<Resource> readOntologyIri(Model model) {
+		Collection<Resource> types = Arrays.asList(OWL2.Ontology, SKOS.ConceptScheme);
+
+		for (Resource type : types) {
+			ResIterator iterator = model.listSubjectsWithProperty(RDF.type, type);
+			while (iterator.hasNext()) {
+				try {
+					return Optional.of(iterator.next());
+				} catch (Throwable e) {
+					// ignore exceptions
+				}
+			}
+		}
+		return Optional.empty();
+	}
+
+	public static Optional<String> readVersion(Model model) {
+		Optional<Resource> ontologyIri = readOntologyIri(model);
+		if (ontologyIri.isPresent()) {
+			return readVersion(ontologyIri.get(), model);
+		}
+		return Optional.empty();
+	}
+
+	public static Optional<String> readVersion(Resource ontologyIri, Model model) {
+		NodeIterator iterator = model.listObjectsOfProperty(ontologyIri, OWL2.versionInfo);
+		while (iterator.hasNext()) {
+			try {
+				RDFNode value = iterator.next();
+				if (value.isLiteral()) {
+					return Optional.of(value.asLiteral().getLexicalForm());
+				}
+			} catch (Throwable e) {
+				// ignore all exceptions
+			}
+		}
+		return Optional.empty();
+	}
+
+	public static Optional<String> readVersionDateTime(Model model) {
+		Optional<Resource> ontologyIri = readOntologyIri(model);
+		if (ontologyIri.isPresent()) {
+			return readVersionDateTime(ontologyIri.get(), model);
+		}
+		return Optional.empty();
+	}
+
+	public static Optional<String> readVersionDateTime(Resource ontologyIri, Model model) {
+		Collection<Property> properties = Arrays.asList(DCTerms.modified, DCTerms.available, DCTerms.created,
+				DCTerms.date, ResourceFactory.createProperty("http://purl.org/dc/elements/1.1/date"));
+		for (Property property : properties) {
+			NodeIterator iterator = model.listObjectsOfProperty(ontologyIri, property);
+			while (iterator.hasNext()) {
+				try {
+					RDFNode value = iterator.next();
+					if (value.isLiteral()) {
+						return Optional.of(value.asLiteral().getLexicalForm());
+					}
+				} catch (Throwable e) {
+					// ignore exceptions
+				}
+			}
+		}
+		return Optional.empty();
+	}
+
+	public static Optional<Resource> readVersionIri(Model model) {
+		NodeIterator iterator = model.listObjectsOfProperty(OWL2.versionIRI);
+		while (iterator.hasNext()) {
+			try {
+				RDFNode value = iterator.next();
+				if (value.isResource()) {
+					return Optional.of(value.asResource());
+				}
+			} catch (Throwable e) {
+				// ignore all exceptions
+			}
+		}
+		return Optional.empty();
 	}
 
 }

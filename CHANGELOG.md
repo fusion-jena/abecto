@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * add **UrlSourceProcessor**: Loads an RDF document from a URL.
+* extend **Models**: add methods `readOntologyIri(Model)`, `readVersion(Model)`, `readVersion(Resource, Model)`, `readVersionDateTime(Model)`, `readVersionDateTime(Resource, Model)` and `readVersionIri(Model)` for metadata extraction
 
 ### Fixed
 * fix **JaroWinklerMappingProcessor**: ignore other categories
