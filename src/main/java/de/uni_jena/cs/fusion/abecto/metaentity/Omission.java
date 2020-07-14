@@ -33,13 +33,13 @@ public class Omission {
 	@SparqlPattern(subject = "id", predicate = "abecto:categoryName")
 	public final String categoryName;
 	/** The ontology which is missing the resource. */
-	@SparqlPattern(subject = "id", predicate = "abecto:knowledgeBase")
+	@SparqlPattern(subject = "id", predicate = "abecto:ontology")
 	public final UUID ontology;
 	/** The resource which is missing. */
 	@SparqlPattern(subject = "id", predicate = "abecto:resource1")
 	public final Resource resource;
 	/** The ontology which contains the missing resource. */
-	@SparqlPattern(subject = "id", predicate = "abecto:knowledgeBase")
+	@SparqlPattern(subject = "id", predicate = "abecto:ontology")
 	public final UUID source;
 
 	public Omission(@Member("id") Resource id, @Member("categoryName") String categoryName,

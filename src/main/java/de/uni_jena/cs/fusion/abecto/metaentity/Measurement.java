@@ -36,9 +36,9 @@ public class Measurement {
 	@SparqlPattern(subject = "id", predicate = "abecto:value")
 	public final Long value;
 	/**
-	 * The knowledge base on which the value was measured.
+	 * The ontology on which the value was measured.
 	 */
-	@SparqlPattern(subject = "id", predicate = "abecto:knowledgeBase")
+	@SparqlPattern(subject = "id", predicate = "abecto:ontology")
 	public final UUID ontology;
 	/**
 	 * The measurement type.
