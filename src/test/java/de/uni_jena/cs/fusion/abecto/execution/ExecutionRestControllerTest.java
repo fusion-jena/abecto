@@ -19,6 +19,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.io.ByteArrayInputStream;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+
 import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.JSONCompareMode;
@@ -47,8 +52,9 @@ public class ExecutionRestControllerTest extends AbstractRepositoryConsumingTest
 		String projectId = buffer.getId();
 
 		// create a KowledgBase
-		mvc.perform(MockMvcRequestBuilders.post("/ontology").param("project", projectId)
-				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
+		mvc.perform(
+				MockMvcRequestBuilders.post("/ontology").param("project", projectId).accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andDo(buffer);
 		String knowledgBaseId = buffer.getId();
 
 		// add source
@@ -93,8 +99,9 @@ public class ExecutionRestControllerTest extends AbstractRepositoryConsumingTest
 		String projectId = buffer.getId();
 
 		// create a KowledgBase
-		mvc.perform(MockMvcRequestBuilders.post("/ontology").param("project", projectId)
-				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
+		mvc.perform(
+				MockMvcRequestBuilders.post("/ontology").param("project", projectId).accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andDo(buffer);
 		String knowledgBaseId = buffer.getId();
 
 		// add source
@@ -132,6 +139,57 @@ public class ExecutionRestControllerTest extends AbstractRepositoryConsumingTest
 				+ "\"pattern\":\"{?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .}\","//
 				+ "\"ontology\":\"" + knowledgBaseId + "\""//
 				+ "}]", buffer.getString(), JSONCompareMode.LENIENT);
+	}
+
+	@Test
+	public void getMetadata() throws Exception {
+		// create project
+		mvc.perform(MockMvcRequestBuilders.post("/project").accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andDo(buffer);
+		String projectId = buffer.getId();
+
+		// create a Ontology
+		mvc.perform(
+				MockMvcRequestBuilders.post("/ontology").param("project", projectId).accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andDo(buffer);
+		String ontologyId = buffer.getId();
+
+		// add source
+		mvc.perform(MockMvcRequestBuilders.post("/node").param("class", RdfFileSourceProcessor.class.getTypeName())
+				.param("ontology", ontologyId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
+				.andDo(buffer);
+		String sourceId = buffer.getId();
+
+		// upload source
+		MockMultipartFile multipartFileSource = new MockMultipartFile("file", new ByteArrayInputStream((//
+		"<http://example.org/> a <http://www.w3.org/2002/07/owl#Ontology> ;"//
+				+ "<http://www.w3.org/2002/07/owl#versionIRI> <http://example.org/2.7.3/> ."//
+				+ "<http://purl.org/dc/terms/modified> \"2020-07-14\" ;"//
+				+ "<http://www.w3.org/2002/07/owl#versionInfo> \"2.7.3\" .").getBytes()));
+		this.mvc.perform(multipart(String.format("/node/%s/load", sourceId)).file(multipartFileSource))
+				.andExpect(status().isOk());
+
+		// run project
+		mvc.perform(MockMvcRequestBuilders.get(String.format("/project/%s/run", projectId)).param("await", "true")
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
+		String executionId = buffer.getId();
+
+		// get source loading datetime
+		mvc.perform(MockMvcRequestBuilders.get(String.format("/node/%s/processing/last", sourceId))
+				.param("await", "true").accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
+		String loadingDatetime = OffsetDateTime.parse(buffer.getJson().get("startDateTime").asText())
+				.truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+
+		// get metadata
+		mvc.perform(MockMvcRequestBuilders.get(String.format("/execution/%s/metadata", executionId))
+				.param("category", "entity").param("ontology", ontologyId).accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andDo(buffer);
+
+		JSONAssert.assertEquals(//
+				"{\"" + ontologyId + "\":{\"" + sourceId + "\":{\"loading datetime\":\"" + loadingDatetime
+						+ "\",\"parameter\":\"{}\",\"processor\":\"" + RdfFileSourceProcessor.class.getCanonicalName()
+						+ "\"}}}",
+				buffer.getString(), JSONCompareMode.LENIENT);
 	}
 
 }

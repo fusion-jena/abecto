@@ -291,6 +291,58 @@ class Execution:
             self.resourcesData[categoryName][ontologyId] = r.json()
         return self.resourcesData[categoryName][ontologyId]
 
+    def metadata(self):
+        r = requests.get(self.server.base + "execution/" + self.id + "/metadata")
+        r.raise_for_status()
+        ontologies = r.json()
+        usedMetadata = set()
+        for ontology in ontologies:
+            sources = ontologies[ontology]
+            for source in sources:
+                usedMetadata.update(sources[source].keys())
+        table = "<table>"
+        table += "<tr>"
+        table += "<th>Ontology</th>"
+        #table += "<th>Source</th>"
+        table += "<th>Processor</th>"
+        table += "<th>Parameter</th>"
+        table += "<th>Loading DateTime</th>"
+        if "iri" in usedMetadata:
+            table += "<th>Ontology IRI</th>"
+        if "version" in usedMetadata:
+            table += "<th>Ontology Version</th>"
+        if "versionDateTime" in usedMetadata:
+            table += "<th>Ontology Date</th>"
+        if "versionIri" in usedMetadata:
+            table += "<th>Ontology Version IRI</th>"
+        table += "</tr>"
+        for ontology in self.sortedOntologies(ontologies.keys()):
+            ontologyNameDisplayed = False
+            sources = ontologies[ontology[0]]
+            for source in sources:
+                table += "<tr>"
+                if not ontologyNameDisplayed:
+                    table += "<td rowspan=\"" + str(len(sources)) + "\">" + ontology[1] + "</td>"
+                    ontologyNameDisplayed = True
+                #table += "<td>" + source + "</td>"
+                table += "<td>" + sources[source]["processor"].rsplit(".",1)[1] + "</td>"
+                if sources[source]["parameter"]:
+                    table += "<td>" + sources[source]["parameter"][1:-1] + "</td>"
+                else:
+                    table += "<td></td>"
+                table += "<td>" + sources[source]["loading datetime"] + "</td>"
+                if "iri" in usedMetadata:
+                    table += "<td>" + sources[source].get("iri","") + "</td>"
+                if "version" in usedMetadata:
+                    table += "<td>" + sources[source].get("version","") + "</td>"
+                if "versionDateTime" in usedMetadata:
+                    table += "<td>" + sources[source].get("versionDateTime","") + "</td>"
+                if "versionIri" in usedMetadata:
+                    table += "<td>" + sources[source].get("versionIri","") + "</td>"
+                table += "</tr>"
+        table += "</table>"
+        display(HTML(table))
+
     def dataDataFrame(self, categoryName, ontologyId):
         return pd.DataFrame.from_records(self.data(categoryName, ontologyId))
 
