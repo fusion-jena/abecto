@@ -58,6 +58,14 @@ public class Models {
 	 */
 	private static int MAX_BUFFER_SIZE = Integer.MAX_VALUE - 8;
 
+	public static Model getEmptyModel() {
+		return ModelFactory.createModelForGraph(Graph.emptyGraph);
+	}
+
+	public static OntModel getEmptyOntModel() {
+		return ModelFactory.createOntologyModel(OntModelSpec.OWL_MEM);
+	}
+
 	public static Model read(InputStream in) throws IOException, IllegalArgumentException {
 		if (!in.markSupported()) {
 			in = new BufferedInputStream(in);
@@ -82,51 +90,6 @@ public class Models {
 		Model model = ModelFactory.createDefaultModel();
 		RDFDataMgr.read(model, in, lang);
 		return model;
-	}
-
-	public static void write(OutputStream out, Model model, Lang lang) throws IOException {
-		if (lang.equals(Lang.JSONLD)) {
-			RDFDataMgr.write(out, model, RDFFormat.JSONLD_FLATTEN_PRETTY);
-		} else {
-			RDFDataMgr.write(out, model, lang);
-		}
-	}
-
-	public static byte[] writeBytes(Model model, Lang lang) throws IOException {
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		Models.write(out, model, lang);
-		return out.toByteArray();
-	}
-
-	public static String writeString(Model model, Lang lang) throws IOException {
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		Models.write(out, model, lang);
-		return out.toString();
-	}
-
-	public static OntModel getEmptyOntModel() {
-		return ModelFactory.createOntologyModel(OntModelSpec.OWL_MEM);
-	}
-
-	public static Model getEmptyModel() {
-		return ModelFactory.createModelForGraph(Graph.emptyGraph);
-	}
-
-	public static OntModel union(Collection<Model> modelCollection, Model... modelArray) {
-		OntModel union = getEmptyOntModel();
-		modelCollection.forEach(union::addSubModel);
-		for (Model model : modelArray) {
-			union.addSubModel(model);
-		}
-		return union;
-	}
-
-	public static OntModel union(Model... models) {
-		OntModel union = getEmptyOntModel();
-		for (Model model : models) {
-			union.addSubModel(model);
-		}
-		return union;
 	}
 
 	public static Optional<Resource> readOntologyIri(Model model) {
@@ -208,6 +171,43 @@ public class Models {
 			}
 		}
 		return Optional.empty();
+	}
+
+	public static OntModel union(Collection<Model> modelCollection, Model... modelArray) {
+		OntModel union = getEmptyOntModel();
+		modelCollection.forEach(union::addSubModel);
+		for (Model model : modelArray) {
+			union.addSubModel(model);
+		}
+		return union;
+	}
+
+	public static OntModel union(Model... models) {
+		OntModel union = getEmptyOntModel();
+		for (Model model : models) {
+			union.addSubModel(model);
+		}
+		return union;
+	}
+
+	public static void write(OutputStream out, Model model, Lang lang) throws IOException {
+		if (lang.equals(Lang.JSONLD)) {
+			RDFDataMgr.write(out, model, RDFFormat.JSONLD_FLATTEN_PRETTY);
+		} else {
+			RDFDataMgr.write(out, model, lang);
+		}
+	}
+
+	public static byte[] writeBytes(Model model, Lang lang) throws IOException {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		Models.write(out, model, lang);
+		return out.toByteArray();
+	}
+
+	public static String writeString(Model model, Lang lang) throws IOException {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		Models.write(out, model, lang);
+		return out.toString();
 	}
 
 }
