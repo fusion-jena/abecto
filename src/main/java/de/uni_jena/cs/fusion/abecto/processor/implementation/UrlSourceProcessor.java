@@ -27,7 +27,7 @@ public class UrlSourceProcessor extends AbstractSourceProcessor<UrlSourceProcess
 
 	@Override
 	public void computeResultModel() throws Exception {
-		this.setModel(Models.read(new URL(this.getParameters().url).openStream()));
+		this.setModel(Models.read(new URL(this.getParameters().url)));
 	}
 
 	@JsonSerialize

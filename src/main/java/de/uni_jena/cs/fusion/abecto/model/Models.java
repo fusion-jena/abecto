@@ -20,6 +20,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
@@ -39,6 +40,7 @@ import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.RDFLanguages;
+import org.apache.jena.riot.RiotException;
 import org.apache.jena.vocabulary.DCTerms;
 import org.apache.jena.vocabulary.OWL2;
 import org.apache.jena.vocabulary.RDF;
@@ -90,6 +92,18 @@ public class Models {
 		Model model = ModelFactory.createDefaultModel();
 		RDFDataMgr.read(model, in, lang);
 		return model;
+	}
+
+	public static Model read(URL url) throws IllegalArgumentException, IOException {
+		try {
+			Model model = ModelFactory.createDefaultModel();
+			// using the content type or file extension for language detection
+			RDFDataMgr.read(model, url.toString());
+			return model;
+		} catch (RiotException e) {
+			// using brute force language detection
+			return read(url.openStream());
+		}
 	}
 
 	public static Optional<Resource> readOntologyIri(Model model) {

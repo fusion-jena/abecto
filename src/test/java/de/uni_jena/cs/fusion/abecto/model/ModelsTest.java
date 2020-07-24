@@ -15,11 +15,17 @@
  */
 package de.uni_jena.cs.fusion.abecto.model;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.okForContentType;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -28,6 +34,8 @@ import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.junit.jupiter.api.Test;
+
+import com.github.tomakehurst.wiremock.WireMockServer;
 
 public class ModelsTest {
 
@@ -40,6 +48,30 @@ public class ModelsTest {
 	@Test
 	public void loadVeryShortOntologies() throws Exception {
 		Models.read(new ByteArrayInputStream(("@prefix : <http://example.org/>.\n:s :p :o.").getBytes()));
+	}
+
+	@Test
+	public void readUrl() throws IllegalArgumentException, MalformedURLException, IOException {
+		WireMockServer mock = new WireMockServer(options().dynamicPort());
+		mock.start();
+		int port = mock.port();
+		String content = "<http://example.org/a> <http://example.org/b> <http://example.org/c> .";
+		mock.stubFor(get("/text/turtle").willReturn(okForContentType("text/turtle", content)));
+		mock.stubFor(get("/text/plain").willReturn(okForContentType("text/plain", content)));
+
+		// server provides proper content type
+		assertTrue(Models.read(new URL("http://localhost:" + port + "/text/turtle")).contains(
+				ResourceFactory.createResource("http://example.org/a"),
+				ResourceFactory.createProperty("http://example.org/b"),
+				ResourceFactory.createResource("http://example.org/c")));
+
+		// server not provides proper content type
+		assertTrue(Models.read(new URL("http://localhost:" + port + "/text/plain")).contains(
+				ResourceFactory.createResource("http://example.org/a"),
+				ResourceFactory.createProperty("http://example.org/b"),
+				ResourceFactory.createResource("http://example.org/c")));
+
+		mock.stop();
 	}
 
 	@Test
