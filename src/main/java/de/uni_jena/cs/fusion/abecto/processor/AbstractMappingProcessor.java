@@ -29,33 +29,27 @@ import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 public abstract class AbstractMappingProcessor<P extends ParameterModel> extends AbstractMetaProcessor<P>
 		implements MappingProcessor<P> {
 
-	@Override
-	public final void computeResultModel() throws Exception {
-		// collect known mappings
-		Collection<Mapping> knownMappings = SparqlEntityManager.select(Mapping.any(), this.metaModel);
+	public static Collection<Mapping> filterMappings(Collection<Mapping> newMappings,
+			Collection<Mapping> knownMappings) {
+		Collection<Mapping> acceptedMappings = new HashSet<>();
 
-		for (Entry<UUID, Model> i : this.inputGroupModels.entrySet()) {
-			UUID ontologyId1 = i.getKey();
-			for (Entry<UUID, Model> j : this.inputGroupModels.entrySet()) {
-				UUID ontologyId2 = j.getKey();
-				if (ontologyId1.compareTo(ontologyId2) > 0) {
-					// compute mapping
-					Collection<Mapping> mappings = computeMapping(i.getValue(), j.getValue(), ontologyId1,
-							ontologyId2);
-
-					Collection<Mapping> acceptedMappings = new HashSet<>();
-
-					for (Mapping mapping : mappings) {
-						// check if mapping is already known or contradicts to previous known mappings
-						if (!knownMappings.contains(mapping) && !knownMappings.contains(mapping.inverse())) {
-							acceptedMappings.add(mapping);
-						}
-					}
-					// add mappings to results
-					SparqlEntityManager.insert(acceptedMappings, this.getResultModel());
-				}
+		for (Mapping mapping : newMappings) {
+			// check if mapping is already known or contradicts to previous known mappings
+			if (!knownMappings.contains(mapping) && !knownMappings.contains(mapping.inverse())) {
+				acceptedMappings.add(mapping);
 			}
 		}
+
+		return acceptedMappings;
+	}
+
+	public static Collection<Mapping> getKnownMappings(Model metaModel)
+			throws IllegalStateException, NullPointerException, ReflectiveOperationException {
+		return SparqlEntityManager.select(Mapping.any(), metaModel);
+	}
+
+	public static void saveMappings(Collection<Mapping> acceptedMappings, Model resultModel) {
+		SparqlEntityManager.insert(acceptedMappings, resultModel);
 	}
 
 	/**
@@ -68,7 +62,26 @@ public abstract class AbstractMappingProcessor<P extends ParameterModel> extends
 	 * @param ontologyId2 the ontology id of the second model
 	 * @return the computed mappings
 	 */
-	public abstract Collection<Mapping> computeMapping(Model model1, Model model2, UUID ontologyId1,
-			UUID ontologyId2) throws Exception;
+	public abstract Collection<Mapping> computeMapping(Model model1, Model model2, UUID ontologyId1, UUID ontologyId2)
+			throws Exception;
+
+	@Override
+	public final void computeResultModel() throws Exception {
+		// collect known mappings
+		Collection<Mapping> knownMappings = getKnownMappings(this.metaModel);
+
+		for (Entry<UUID, Model> i : this.inputGroupModels.entrySet()) {
+			UUID ontologyId1 = i.getKey();
+			for (Entry<UUID, Model> j : this.inputGroupModels.entrySet()) {
+				UUID ontologyId2 = j.getKey();
+				if (ontologyId1.compareTo(ontologyId2) > 0) {
+					Collection<Mapping> newMappings = computeMapping(i.getValue(), j.getValue(), ontologyId1,
+							ontologyId2);
+					Collection<Mapping> acceptedMappings = filterMappings(newMappings, knownMappings);
+					saveMappings(acceptedMappings, this.getResultModel());
+				}
+			}
+		}
+	}
 
 }
