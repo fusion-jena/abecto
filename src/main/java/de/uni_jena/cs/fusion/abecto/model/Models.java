@@ -100,8 +100,8 @@ public class Models {
 			// using the content type or file extension for language detection
 			RDFDataMgr.read(model, url.toString());
 			return model;
-		} catch (RiotException e) {
-			// using brute force language detection
+		} catch (Exception e) {
+			// try again using brute force language detection
 			return read(url.openStream());
 		}
 	}
