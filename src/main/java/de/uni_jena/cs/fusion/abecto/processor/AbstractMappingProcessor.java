@@ -18,6 +18,7 @@ package de.uni_jena.cs.fusion.abecto.processor;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.UUID;
 
 import org.apache.jena.rdf.model.Model;
@@ -29,9 +30,9 @@ import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 public abstract class AbstractMappingProcessor<P extends ParameterModel> extends AbstractMetaProcessor<P>
 		implements MappingProcessor<P> {
 
-	public static Collection<Mapping> filterMappings(Collection<Mapping> newMappings,
+	public static Set<Mapping> filterMappings(Collection<Mapping> newMappings,
 			Collection<Mapping> knownMappings) {
-		Collection<Mapping> acceptedMappings = new HashSet<>();
+		Set<Mapping> acceptedMappings = new HashSet<>();
 
 		for (Mapping mapping : newMappings) {
 			// check if mapping is already known or contradicts to previous known mappings
@@ -43,7 +44,7 @@ public abstract class AbstractMappingProcessor<P extends ParameterModel> extends
 		return acceptedMappings;
 	}
 
-	public static Collection<Mapping> getKnownMappings(Model metaModel)
+	public static Set<Mapping> getKnownMappings(Model metaModel)
 			throws IllegalStateException, NullPointerException, ReflectiveOperationException {
 		return SparqlEntityManager.select(Mapping.any(), metaModel);
 	}
