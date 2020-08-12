@@ -36,7 +36,7 @@ import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 public class UsePresentMappingProcessorTest {
 
 	@Test
-	public void computeMapping() throws Exception {
+	public void computeResultModel() throws Exception {
 		UsePresentMappingProcessor.Parameter parameter = new UsePresentMappingProcessor.Parameter();
 		parameter.assignmentPaths.add("<http://example.org/sameAs>");
 		parameter.assignmentPaths.add("<http://example.org/same>/<http://example.org/as>");
