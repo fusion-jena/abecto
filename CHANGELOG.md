@@ -7,7 +7,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 * add **UrlSourceProcessor**: Loads an RDF document from a URL.
-* extend **Models**: add methods `read(URL)`, `readOntologyIri(Model)`, `readVersion(Model)`, `readVersion(Resource, Model)`, `readVersionDateTime(Model)`, `readVersionDateTime(Resource, Model)` and `readVersionIri(Model)` for metadata extraction
 * add **ExecutionRestController#getMetadata**: return metadata of loaded sources used in this execustion
 * add **UsePresentMappingProcessor**: Provides mappings for resources connected in the ontologies with given property paths.
 * add **TransitiveMappingProcessor**: Provides transitive closure of existing mappings.
