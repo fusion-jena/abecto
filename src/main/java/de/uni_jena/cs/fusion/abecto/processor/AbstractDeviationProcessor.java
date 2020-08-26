@@ -32,6 +32,7 @@ import de.uni_jena.cs.fusion.abecto.metaentity.Deviation;
 import de.uni_jena.cs.fusion.abecto.metaentity.Mapping;
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
+import de.uni_jena.cs.fusion.abecto.util.Mappings;
 
 public abstract class AbstractDeviationProcessor<Parameter>
 		extends AbstractMetaProcessor<AbstractDeviationProcessor.Parameter> {
@@ -51,7 +52,7 @@ public abstract class AbstractDeviationProcessor<Parameter>
 
 		// load mapping
 		Map<Resource, Set<Resource>> mappings = new HashMap<>();
-		for (Mapping mapping : SparqlEntityManager.select(Mapping.of(), this.metaModel)) {
+		for (Mapping mapping : Mappings.getPositiveMappings(this.metaModel)) {
 			mappings.computeIfAbsent(mapping.resource1, (x) -> {
 				return new HashSet<>();
 			}).add(mapping.resource2);
@@ -79,8 +80,8 @@ public abstract class AbstractDeviationProcessor<Parameter>
 
 							Collection<String> variableNames = this.getParameters().variables.get(categoryName);
 
-							deviations.addAll(computeDeviations(model1, model2, ontologyId1, ontologyId2,
-									categoryName, variableNames, category1, category2, mappings));
+							deviations.addAll(computeDeviations(model1, model2, ontologyId1, ontologyId2, categoryName,
+									variableNames, category1, category2, mappings));
 						}
 					}
 				}

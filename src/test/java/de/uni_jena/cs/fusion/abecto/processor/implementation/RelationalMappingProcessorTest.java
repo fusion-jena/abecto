@@ -34,6 +34,7 @@ import de.uni_jena.cs.fusion.abecto.metaentity.Issue;
 import de.uni_jena.cs.fusion.abecto.metaentity.Mapping;
 import de.uni_jena.cs.fusion.abecto.model.Models;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
+import de.uni_jena.cs.fusion.abecto.util.Mappings;
 
 class RelationalMappingProcessorTest {
 
@@ -108,7 +109,7 @@ class RelationalMappingProcessorTest {
 		processor.addMetaModels(Collections.singleton(metaModel));
 		processor.call();
 
-		Set<Mapping> mappings = SparqlEntityManager.select(Mapping.of(), processor.getResultModel());
+		Set<Mapping> mappings = Mappings.getPositiveMappings(processor.getResultModel());
 		assertEquals(1, mappings.size());
 		assertTrue(mappings.contains(Mapping.of(ResourceFactory.createResource("http://example.org/1/entity2a"),
 				ResourceFactory.createResource("http://example.org/2/entity2a"))));
@@ -125,7 +126,7 @@ class RelationalMappingProcessorTest {
 		processor.addMetaModels(Collections.singleton(metaModel));
 		processor.call();
 
-		assertTrue(SparqlEntityManager.select(Mapping.of(), processor.getResultModel()).isEmpty());
+		assertTrue(Mappings.getPositiveMappings(processor.getResultModel()).isEmpty());
 
 		Issue issue = SparqlEntityManager.selectOne(new Issue(), processor.getResultModel()).orElseThrow();
 		assertEquals(ResourceFactory.createResource("http://example.org/1/entity3a"), issue.entity);

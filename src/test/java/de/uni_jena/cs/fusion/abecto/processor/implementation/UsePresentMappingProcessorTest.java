@@ -32,6 +32,7 @@ import de.uni_jena.cs.fusion.abecto.metaentity.Issue;
 import de.uni_jena.cs.fusion.abecto.metaentity.Mapping;
 import de.uni_jena.cs.fusion.abecto.model.Models;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
+import de.uni_jena.cs.fusion.abecto.util.Mappings;
 
 public class UsePresentMappingProcessorTest {
 
@@ -64,7 +65,7 @@ public class UsePresentMappingProcessorTest {
 		processor.setParameters(parameter);
 		Model outputModel = processor.call();
 
-		Collection<Mapping> mappings = SparqlEntityManager.select(Mapping.any(), outputModel);
+		Collection<Mapping> mappings = Mappings.getMappings(outputModel);
 		assertTrue(mappings.contains(Mapping.of(ResourceFactory.createResource("http://example.org/a1"),
 				ResourceFactory.createResource("http://example.org/a2"))));
 		assertTrue(mappings.contains(Mapping.of(ResourceFactory.createResource("http://example.org/b1"),

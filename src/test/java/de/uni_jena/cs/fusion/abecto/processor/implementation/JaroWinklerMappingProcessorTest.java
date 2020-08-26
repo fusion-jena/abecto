@@ -34,6 +34,7 @@ import de.uni_jena.cs.fusion.abecto.metaentity.Category;
 import de.uni_jena.cs.fusion.abecto.metaentity.Mapping;
 import de.uni_jena.cs.fusion.abecto.model.Models;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
+import de.uni_jena.cs.fusion.abecto.util.Mappings;
 
 public class JaroWinklerMappingProcessorTest {
 	@BeforeAll
@@ -130,8 +131,8 @@ public class JaroWinklerMappingProcessorTest {
 		processor.addMetaModels(Collections.singleton(metaModel));
 		processor.computeResultModel();
 		Model result = processor.getResultModel();
-		Collection<Mapping> positiveMappings = SparqlEntityManager.select(Mapping.of(), result);
-		Collection<Mapping> negativeMappings = SparqlEntityManager.select(Mapping.not(), result);
+		Collection<Mapping> positiveMappings = Mappings.getPositiveMappings(result);
+		Collection<Mapping> negativeMappings = Mappings.getNegativeMappings(result);
 		assertEquals(2, positiveMappings.size());
 		assertTrue(positiveMappings.contains(Mapping.of(ResourceFactory.createResource("http://example.org/entity1"),
 				ResourceFactory.createResource("http://example.com/entity1"))));
@@ -179,8 +180,8 @@ public class JaroWinklerMappingProcessorTest {
 		processor.addMetaModels(Collections.singleton(metaModel));
 		processor.computeResultModel();
 		Model result = processor.getResultModel();
-		Collection<Mapping> positiveMappings = SparqlEntityManager.select(Mapping.of(), result);
-		Collection<Mapping> negativeMappings = SparqlEntityManager.select(Mapping.not(), result);
+		Collection<Mapping> positiveMappings = Mappings.getPositiveMappings(result);
+		Collection<Mapping> negativeMappings = Mappings.getNegativeMappings(result);
 		assertTrue(positiveMappings.isEmpty());
 		assertTrue(negativeMappings.isEmpty());
 	}
@@ -290,12 +291,12 @@ public class JaroWinklerMappingProcessorTest {
 			processor.computeResultModel();
 			Model result = processor.getResultModel();
 
-			Collection<Mapping> positiveMappings = SparqlEntityManager.select(Mapping.of(), result);
+			Collection<Mapping> positiveMappings = Mappings.getPositiveMappings(result);
 			assertEquals(1, positiveMappings.size());
 			assertTrue(
 					positiveMappings.contains(Mapping.of(ResourceFactory.createResource("http://example.org/entity1"),
 							ResourceFactory.createResource("http://example.org/entity3"))));
-			assertTrue(SparqlEntityManager.select(Mapping.not(), result).isEmpty());
+			assertTrue(Mappings.getNegativeMappings(result).isEmpty());
 		}
 		// direction 2
 		{
@@ -307,12 +308,12 @@ public class JaroWinklerMappingProcessorTest {
 			processor.computeResultModel();
 			Model result = processor.getResultModel();
 
-			Collection<Mapping> positiveMappings = SparqlEntityManager.select(Mapping.of(), result);
+			Collection<Mapping> positiveMappings = Mappings.getPositiveMappings(result);
 			assertEquals(1, positiveMappings.size());
 			assertTrue(
 					positiveMappings.contains(Mapping.of(ResourceFactory.createResource("http://example.org/entity1"),
 							ResourceFactory.createResource("http://example.org/entity3"))));
-			assertTrue(SparqlEntityManager.select(Mapping.not(), result).isEmpty());
+			assertTrue(Mappings.getNegativeMappings(result).isEmpty());
 		}
 
 	}

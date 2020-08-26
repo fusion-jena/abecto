@@ -32,6 +32,7 @@ import de.uni_jena.cs.fusion.abecto.metaentity.Omission;
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.processor.AbstractMetaProcessor;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
+import de.uni_jena.cs.fusion.abecto.util.Mappings;
 
 public class ResourceOmissionProcessor extends AbstractMetaProcessor<ResourceOmissionProcessor.Parameter> {
 
@@ -59,7 +60,7 @@ public class ResourceOmissionProcessor extends AbstractMetaProcessor<ResourceOmi
 
 			// load mapping
 			Map<Resource, Set<Resource>> mappings = new HashMap<>();
-			for (Mapping mapping : SparqlEntityManager.select(Mapping.of(), this.metaModel)) {
+			for (Mapping mapping : Mappings.getPositiveMappings(this.metaModel)) {
 				mappings.computeIfAbsent(mapping.resource1, (x) -> {
 					return new HashSet<>();
 				}).add(mapping.resource2);

@@ -16,42 +16,17 @@
 package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.UUID;
 
 import org.apache.jena.rdf.model.Model;
 
 import de.uni_jena.cs.fusion.abecto.metaentity.Mapping;
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
-import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
+import de.uni_jena.cs.fusion.abecto.util.Mappings;
 
 public abstract class AbstractMappingProcessor<P extends ParameterModel> extends AbstractMetaProcessor<P>
 		implements MappingProcessor<P> {
-
-	public static Set<Mapping> filterMappings(Collection<Mapping> newMappings,
-			Collection<Mapping> knownMappings) {
-		Set<Mapping> acceptedMappings = new HashSet<>();
-
-		for (Mapping mapping : newMappings) {
-			// check if mapping is already known or contradicts to previous known mappings
-			if (!knownMappings.contains(mapping) && !knownMappings.contains(mapping.inverse())) {
-				acceptedMappings.add(mapping);
-			}
-		}
-
-		return acceptedMappings;
-	}
-
-	public static Set<Mapping> getKnownMappings(Model metaModel)
-			throws IllegalStateException, NullPointerException, ReflectiveOperationException {
-		return SparqlEntityManager.select(Mapping.any(), metaModel);
-	}
-
-	public static void saveMappings(Collection<Mapping> acceptedMappings, Model resultModel) {
-		SparqlEntityManager.insert(acceptedMappings, resultModel);
-	}
 
 	/**
 	 * Computes the mappings of two models. The mappings may contain category meta
@@ -69,7 +44,7 @@ public abstract class AbstractMappingProcessor<P extends ParameterModel> extends
 	@Override
 	public final void computeResultModel() throws Exception {
 		// collect known mappings
-		Collection<Mapping> knownMappings = getKnownMappings(this.metaModel);
+		Collection<Mapping> knownMappings = Mappings.getMappings(this.metaModel);
 
 		for (Entry<UUID, Model> i : this.inputGroupModels.entrySet()) {
 			UUID ontologyId1 = i.getKey();
@@ -78,8 +53,8 @@ public abstract class AbstractMappingProcessor<P extends ParameterModel> extends
 				if (ontologyId1.compareTo(ontologyId2) > 0) {
 					Collection<Mapping> newMappings = computeMapping(i.getValue(), j.getValue(), ontologyId1,
 							ontologyId2);
-					Collection<Mapping> acceptedMappings = filterMappings(newMappings, knownMappings);
-					saveMappings(acceptedMappings, this.getResultModel());
+					Collection<Mapping> acceptedMappings = Mappings.filterMappings(newMappings, knownMappings);
+					Mappings.saveMappings(acceptedMappings, this.getResultModel());
 				}
 			}
 		}

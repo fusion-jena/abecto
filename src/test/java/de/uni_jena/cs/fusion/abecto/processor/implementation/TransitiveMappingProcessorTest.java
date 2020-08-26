@@ -29,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import de.uni_jena.cs.fusion.abecto.metaentity.Mapping;
 import de.uni_jena.cs.fusion.abecto.model.Models;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
+import de.uni_jena.cs.fusion.abecto.util.Mappings;
 
 public class TransitiveMappingProcessorTest {
 	@Test
@@ -40,7 +41,7 @@ public class TransitiveMappingProcessorTest {
 		processor.addMetaModels(Collections.singleton(inputMetaModel));
 		Model outputModel = processor.call();
 
-		Collection<Mapping> mappings = SparqlEntityManager.select(Mapping.any(), outputModel);
+		Collection<Mapping> mappings = Mappings.getMappings(outputModel);
 		assertTrue(mappings.containsAll(Arrays.asList(of(1, 3), not(1, 4), not(2, 4))));
 		assertEquals(3, mappings.size());
 	}

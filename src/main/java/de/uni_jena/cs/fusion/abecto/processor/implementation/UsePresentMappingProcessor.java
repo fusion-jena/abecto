@@ -15,10 +15,6 @@
  */
 package de.uni_jena.cs.fusion.abecto.processor.implementation;
 
-import static de.uni_jena.cs.fusion.abecto.processor.AbstractMappingProcessor.filterMappings;
-import static de.uni_jena.cs.fusion.abecto.processor.AbstractMappingProcessor.getKnownMappings;
-import static de.uni_jena.cs.fusion.abecto.processor.AbstractMappingProcessor.saveMappings;
-
 import java.io.ByteArrayInputStream;
 import java.util.Collection;
 import java.util.HashSet;
@@ -47,6 +43,7 @@ import de.uni_jena.cs.fusion.abecto.processor.AbstractMetaProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.MappingProcessor;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 import de.uni_jena.cs.fusion.abecto.util.Default;
+import de.uni_jena.cs.fusion.abecto.util.Mappings;
 
 public class UsePresentMappingProcessor extends AbstractMetaProcessor<UsePresentMappingProcessor.Parameter>
 		implements MappingProcessor<UsePresentMappingProcessor.Parameter> {
@@ -101,8 +98,8 @@ public class UsePresentMappingProcessor extends AbstractMetaProcessor<UsePresent
 			}
 		}
 
-		Collection<Mapping> knownMappings = getKnownMappings(this.metaModel);
-		Collection<Mapping> acceptedMappings = filterMappings(newMappings, knownMappings);
-		saveMappings(acceptedMappings, this.getResultModel());
+		Collection<Mapping> knownMappings = Mappings.getMappings(this.metaModel);
+		Collection<Mapping> acceptedMappings = Mappings.filterMappings(newMappings, knownMappings);
+		Mappings.saveMappings(acceptedMappings, this.getResultModel());
 	}
 }

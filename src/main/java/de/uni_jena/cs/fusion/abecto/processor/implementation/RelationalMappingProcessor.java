@@ -41,6 +41,7 @@ import de.uni_jena.cs.fusion.abecto.metaentity.Mapping;
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.processor.AbstractMappingProcessor;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
+import de.uni_jena.cs.fusion.abecto.util.Mappings;
 
 public class RelationalMappingProcessor extends AbstractMappingProcessor<RelationalMappingProcessor.Parameter> {
 
@@ -82,7 +83,7 @@ public class RelationalMappingProcessor extends AbstractMappingProcessor<Relatio
 		// load mappings form ontology 1 to other ontologies
 		Map<Resource, Collection<Resource>> mappedResourceOfOtherOntsByResourceOfOnt1 = new HashMap<>();
 		try {
-			for (Mapping mapping : SparqlEntityManager.select(Mapping.of(), this.metaModel)) {
+			for (Mapping mapping : Mappings.getPositiveMappings(this.metaModel)) {
 				mappedResourceOfOtherOntsByResourceOfOnt1.computeIfAbsent(mapping.resource1, (v) -> {
 					return new ArrayList<Resource>();
 				}).add(mapping.resource2);

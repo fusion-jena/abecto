@@ -15,9 +15,6 @@
  */
 package de.uni_jena.cs.fusion.abecto.processor.implementation;
 
-import static de.uni_jena.cs.fusion.abecto.processor.AbstractMappingProcessor.getKnownMappings;
-import static de.uni_jena.cs.fusion.abecto.processor.AbstractMappingProcessor.saveMappings;
-
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.ListIterator;
@@ -29,6 +26,7 @@ import de.uni_jena.cs.fusion.abecto.metaentity.Mapping;
 import de.uni_jena.cs.fusion.abecto.parameter_model.EmptyParameters;
 import de.uni_jena.cs.fusion.abecto.processor.AbstractMetaProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.MappingProcessor;
+import de.uni_jena.cs.fusion.abecto.util.Mappings;
 
 public class TransitiveMappingProcessor extends AbstractMetaProcessor<EmptyParameters>
 		implements MappingProcessor<EmptyParameters> {
@@ -36,7 +34,7 @@ public class TransitiveMappingProcessor extends AbstractMetaProcessor<EmptyParam
 	@Override
 	public final void computeResultModel() throws Exception {
 
-		Set<Mapping> knownMappings = getKnownMappings(this.metaModel);
+		Set<Mapping> knownMappings = Mappings.getMappings(this.metaModel);
 		LinkedList<Mapping> unprocessedMappings = new LinkedList<>(knownMappings);
 		Set<Mapping> newMappings = new HashSet<>();
 
@@ -108,6 +106,6 @@ public class TransitiveMappingProcessor extends AbstractMetaProcessor<EmptyParam
 				}
 			}
 		}
-		saveMappings(newMappings, this.getResultModel());
+		Mappings.saveMappings(newMappings, this.getResultModel());
 	}
 }
