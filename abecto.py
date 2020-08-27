@@ -356,17 +356,21 @@ class Execution:
         data = self.resultDataFrame("Measurement")
         if not data.empty:
             ontologies = self.sortedOntologies(set(data["ontology"]))
-            for measure in set(data["measure"]):
-                html = "<h1>" + measure + " Report</h1>"
+            # replace ontology ids in dimension values by ontology name
+            data["dimension1Value"] = data["dimension1Value"].replace(dict(ontologies))
+            data["dimension2Value"] = data["dimension2Value"].replace(dict(ontologies))
+            # iterate measures
+            for measure in sorted(set(data["measure"])):
+                html = "<h1>" + measure + "</h1>"
                 measureData = data[data.measure.eq(measure)]
-                dimension1Used = any(set(data["dimension1Value"]))
-                dimension2Used = any(set(data["dimension2Value"]))
+                dimension1Used = any(set(measureData["dimension1Value"]))
+                dimension2Used = any(set(measureData["dimension2Value"]))
                 html += "<table>"
                 html += "<tr>"
                 if dimension1Used:
-                    html += "<th>" + "/".join(set(data["dimension1Key"])) + "</th>"
+                    html += "<th>" + "/".join(set(measureData["dimension1Key"])) + "</th>"
                 if dimension2Used:
-                    html += "<th>" + "/".join(set(data["dimension2Key"])) + "</th>"
+                    html += "<th>" + "/".join(set(measureData["dimension2Key"])) + "</th>"
                 for (ontoId, ontoLabel) in ontologies:
                     html += "<th>" + ontoLabel + "</th>"
                 html += "</tr>"
@@ -383,8 +387,9 @@ class Execution:
                         html += "<td>" + (str(row["value"].iat[-1]) if row.size > 0 else "") + "</td>"
                     html += "</tr>"
                 # dimension 1 rows
-                for dimension1Value in set(measureData["dimension1Value"]):
-                    d1Data = measureData[measureData.dimension1Value.notna() & measureData.dimension1Value.eq(dimension1Value)]
+                nototalData = measureData[measureData.dimension1Value.notna()]
+                for dimension1Value in sorted(set(nototalData["dimension1Value"])):
+                    d1Data = nototalData[nototalData.dimension1Value.eq(dimension1Value)]
                     # dimension 1 total row
                     d1TotalData = d1Data[d1Data.dimension2Value.isna()]
                     if not d1TotalData.empty:
@@ -397,8 +402,9 @@ class Execution:
                             html += "<td>" + (str(row["value"].iat[-1]) if row.size > 0 else "") + "</td>"
                         html += "</tr>"
                     # dimension 2 rows
-                    for dimension2Value in set(d1Data["dimension2Value"]):
-                        d2Data = d1Data[d1Data.dimension2Value.notna() & d1Data.dimension2Value.eq(dimension2Value)]
+                    d1NontotalData = d1Data[d1Data.dimension2Value.notna()]
+                    for dimension2Value in sorted(set(d1NontotalData["dimension2Value"])):
+                        d2Data = d1NontotalData[d1NontotalData.dimension2Value.eq(dimension2Value)]
                         if not d2Data.empty:
                             html += "<tr>"
                             html += "<td>" + dimension1Value + "</td>"

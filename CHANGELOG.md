@@ -11,11 +11,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * add **UsePresentMappingProcessor**: Provides mappings for resources connected in the ontologies with given property paths.
 * add **TransitiveMappingProcessor**: Provides transitive closure of existing mappings.
 * extend **SparqlConstructProcessor**: enable recursiv generation of new triples with SPARQL Construct Query and add parameter `maxIterations` with default value `1`
+* extend **Measurement Report** in Jupyter Notebooks: alphabetical order of measurements, alphabetical order of dimensions, replace ontology UUIDs with ontology names in dimension columns
 
 ### Fixed
 * fix **JaroWinklerMappingProcessor**: ignore other categories
 * fix **Category**: `getPatternVariables()` does not anymore return helper `Var` for BlankNodePropertyLists and BlankNodePropertyListPaths introduced by Apache Jena, which cause Exceptions in **CategoryCountProcessor**
 * fix **Measurement** and **Omission**: use `abecto:ontology` instead of `abecto:knowledgeBase`
+* fix **Measurement Report** in Jupyter Notebooks: no dimensions column header concatenation of multiple measurement types
 
 ## [v0.1.1] - 2020-05-29
 
