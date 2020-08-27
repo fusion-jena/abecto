@@ -10,8 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * add **ExecutionRestController#getMetadata**: return metadata of loaded sources used in this execustion
 * add **UsePresentMappingProcessor**: Provides mappings for resources connected in the ontologies with given property paths.
 * add **TransitiveMappingProcessor**: Provides transitive closure of existing mappings.
+* add **CompletenessProcessor**: Provides absolute and relative coverage statistics, omission detection, and duplicate detection of resources by category and ontologies.
 * extend **SparqlConstructProcessor**: enable recursiv generation of new triples with SPARQL Construct Query and add parameter `maxIterations` with default value `1`
-* extend **Measurement Report** in Jupyter Notebooks: alphabetical order of measurements, alphabetical order of dimensions, replace ontology UUIDs with ontology names in dimension columns
+* extend **Measurement Report** for Jupyter Notebooks: alphabetical order of measurements, alphabetical order of dimensions, replace ontology UUIDs with ontology names in dimension columns
+* add **Omission Report** for Jupyter Notebooks
 
 ### Fixed
 * fix **JaroWinklerMappingProcessor**: ignore other categories
