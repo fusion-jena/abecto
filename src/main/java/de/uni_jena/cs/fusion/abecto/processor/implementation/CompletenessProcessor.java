@@ -58,9 +58,9 @@ public class CompletenessProcessor extends AbstractMetaProcessor<CompletenessPro
 		// get resources by ontology and category
 		Map<String, Map<UUID, Collection<Resource>>> resourcesByOntologyByCategory = new HashMap<>();
 		for (Category category : SparqlEntityManager.select(new Category(), this.metaModel)) {
-			resourcesByOntologyByCategory.computeIfAbsent(category.name, (o) -> {
-				return new HashMap<UUID, Collection<Resource>>();
-			}).put(category.ontology, category.selectCategoryResources(this.inputGroupModels.get(category.ontology)));
+			resourcesByOntologyByCategory
+					.computeIfAbsent(category.name, (o) -> new HashMap<UUID, Collection<Resource>>())
+					.put(category.ontology, category.selectCategoryResources(inputGroupModels.get(category.ontology)));
 		}
 
 		// get mapped resources by resources
@@ -118,7 +118,8 @@ public class CompletenessProcessor extends AbstractMetaProcessor<CompletenessPro
 										Optional.of("in ontology"), Optional.of(ontologyId1.toString())));
 							}
 							// relative coverage
-							if (isEnabled(this.getParameters().coverage_relative, categoryName)) {
+							if (isEnabled(this.getParameters().coverage_relative, categoryName)
+									&& resources1.size() > 0) {
 								measurements.add(new Measurement(null, ontologyId2, "Coverage (relative in %)",
 										coverage * 100 / resources1.size(), Optional.of("of category"),
 										Optional.of(categoryName), Optional.of("in ontology"),
