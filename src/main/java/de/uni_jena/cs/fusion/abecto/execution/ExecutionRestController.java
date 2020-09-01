@@ -83,7 +83,7 @@ public class ExecutionRestController {
 	}
 
 	@GetMapping("/execution/{uuid}/data")
-	public Map<String, Map<String, Set<String>>> getData(@PathVariable("uuid") UUID executionId,
+	public Map<Resource, Map<String, Set<String>>> getData(@PathVariable("uuid") UUID executionId,
 			@RequestParam(name = "category", required = true) String categoryName,
 			@RequestParam(name = "ontology", required = true) UUID ontologyId) throws NoSuchElementException,
 			IllegalStateException, NullPointerException, IllegalArgumentException, ReflectiveOperationException {

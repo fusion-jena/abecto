@@ -137,15 +137,15 @@ public class Category {
 	}
 
 	@JsonIgnore
-	public Map<String, Map<String, Set<String>>> getCategoryData(Model model) {
+	public Map<Resource, Map<String, Set<String>>> getCategoryData(Model model) {
 		ResultSet solutions = this.selectCategory(model);
 		List<String> variables = solutions.getResultVars();
 		variables.remove(name);
-		Map<String, Map<String, Set<String>>> results = new HashMap<>();
+		Map<Resource, Map<String, Set<String>>> results = new HashMap<>();
 		while (solutions.hasNext()) {
 			QuerySolution solution = solutions.next();
-			String uri = solution.getResource(name).getURI();
-			Map<String, Set<String>> result = results.computeIfAbsent(uri, (x) -> new HashMap<>());
+			Resource resource = solution.getResource(name);
+			Map<String, Set<String>> result = results.computeIfAbsent(resource, (x) -> new HashMap<>());
 			for (String variable : variables) {
 				if (solution.contains(variable)) {
 					result.computeIfAbsent(variable, (x) -> new HashSet<String>())
