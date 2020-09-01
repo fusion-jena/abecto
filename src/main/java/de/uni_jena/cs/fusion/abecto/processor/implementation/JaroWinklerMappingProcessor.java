@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
@@ -27,6 +28,7 @@ import java.util.stream.Collectors;
 
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
+import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.core.Var;
@@ -35,6 +37,7 @@ import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import de.uni_jena.cs.fusion.abecto.metaentity.Category;
+import de.uni_jena.cs.fusion.abecto.metaentity.Issue;
 import de.uni_jena.cs.fusion.abecto.metaentity.Mapping;
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.processor.AbstractMappingProcessor;
@@ -51,6 +54,7 @@ public class JaroWinklerMappingProcessor extends AbstractMappingProcessor<JaroWi
 		public boolean case_sensitive;
 		public String category;
 		public Collection<String> variables;
+		public String defaultLangTag = "en";
 	}
 
 	/**
@@ -61,14 +65,16 @@ public class JaroWinklerMappingProcessor extends AbstractMappingProcessor<JaroWi
 	/** the variable values mapped with the entities of the category by model */
 	private Map<Model, Map<Var, Map<String, Collection<Resource>>>> valuesByVariableByModel = new HashMap<>();
 
-	private Map<Var, Map<String, Collection<Resource>>> getValuesByVariable(Model model,
-			Map<Category, Collection<Var>> variablesByCategory, boolean caseSensitive) {
+	private Map<Var, Map<String, Collection<Resource>>> getValuesByVariable(Model model, UUID ontologyId,
+			Map<Category, Collection<Var>> variablesByCategory, boolean caseSensitive, Locale defaultLocale) {
 		if (!this.valuesByVariableByModel.containsKey(model)) {
 			// do it only once for this processor instance
 
 			// get valuesByVariableByModel map for the model
 			Map<Var, Map<String, Collection<Resource>>> modelValues = this.valuesByVariableByModel
 					.computeIfAbsent(model, m -> new HashMap<>());
+
+			Collection<Issue> issues = new HashSet<>();
 
 			// iterate the variablesByCategoryByOntology
 			for (Entry<Category, Collection<Var>> entry : variablesByCategory.entrySet()) {
@@ -90,16 +96,31 @@ public class JaroWinklerMappingProcessor extends AbstractMappingProcessor<JaroWi
 
 					// iterate result variables
 					for (Var variable : variables) {
-						if (result.contains(variable.getVarName())) {
-							String value = result.get(variable.getVarName()).toString();
+						String varName = variable.getVarName();
+						if (result.contains(varName)) {
+							try {
+								Literal literal = result.getLiteral(varName);
+								String value = literal.getString();
 
-							// add result variable value to valuesByVariableByModel
-							modelValues.get(variable).computeIfAbsent(value, v -> new HashSet<>()).add(entity);
+								if (!caseSensitive) {
+									String langTag = literal.getLanguage();
+									Locale locale = langTag.isEmpty() ? defaultLocale : Locale.forLanguageTag(langTag);
+									value = value.toLowerCase(locale);
+								}
+
+								// add result variable value to valuesByVariableByModel
+								modelValues.get(variable).computeIfAbsent(value, v -> new HashSet<>()).add(entity);
+
+							} catch (ClassCastException e) { // not a literal
+								// create issue
+								issues.add(Issue.unexpectedValueType(ontologyId, entity, varName,
+										"literal with datatype string"));
+							}
 						}
 					}
 				}
-
 			}
+			SparqlEntityManager.insert(issues, this.getResultModel());
 		}
 		return valuesByVariableByModel.get(model);
 	}
@@ -135,12 +156,13 @@ public class JaroWinklerMappingProcessor extends AbstractMappingProcessor<JaroWi
 		double threshold = this.getParameters().threshold;
 		Collection<String> variables = this.getParameters().variables;
 		String categoryName = this.getParameters().category;
+		Locale defaultLocale = Locale.forLanguageTag(this.getParameters().defaultLangTag);
 
 		// get valuesByVariableByModel
-		Map<Var, Map<String, Collection<Resource>>> valuesByVariable1 = getValuesByVariable(model1,
-				variablesByCategory(categoryName, variables, ontologyId1), caseSensitive);
-		Map<Var, Map<String, Collection<Resource>>> valuesByVariable2 = getValuesByVariable(model2,
-				variablesByCategory(categoryName, variables, ontologyId2), caseSensitive);
+		Map<Var, Map<String, Collection<Resource>>> valuesByVariable1 = getValuesByVariable(model1, ontologyId1,
+				variablesByCategory(categoryName, variables, ontologyId1), caseSensitive, defaultLocale);
+		Map<Var, Map<String, Collection<Resource>>> valuesByVariable2 = getValuesByVariable(model2, ontologyId2,
+				variablesByCategory(categoryName, variables, ontologyId2), caseSensitive, defaultLocale);
 
 		// prepare mappings collection
 		Collection<Mapping> mappings = new ArrayList<>();

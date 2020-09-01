@@ -14,9 +14,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * extend **SparqlConstructProcessor**: enable recursiv generation of new triples with SPARQL Construct Query and add parameter `maxIterations` with default value `1`
 * extend **Measurement Report** for Jupyter Notebooks: alphabetical order of measurements, alphabetical order of dimensions, replace ontology UUIDs with ontology names in dimension columns
 * add **Omission Report** for Jupyter Notebooks
+* extend **JaroWinklerMappingProcessor**: add parameter `defaultLangTag` used as fallback locale for LowerCase conversion during case-insensitive mapping
 
 ### Fixed
-* fix **JaroWinklerMappingProcessor**: ignore other categories
+* fix **JaroWinklerMappingProcessor**: ignore other categories, enable case-insensitive mapping
 * fix **Category**: `getPatternVariables()` does not anymore return helper `Var` for BlankNodePropertyLists and BlankNodePropertyListPaths introduced by Apache Jena, which cause Exceptions in **CategoryCountProcessor**
 * fix **Measurement** and **Omission**: use `abecto:ontology` instead of `abecto:knowledgeBase`
 * fix **Measurement Report** in Jupyter Notebooks: no dimensions column header concatenation of multiple measurement types

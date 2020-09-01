@@ -315,7 +315,54 @@ public class JaroWinklerMappingProcessorTest {
 							ResourceFactory.createResource("http://example.org/entity3"))));
 			assertTrue(Mappings.getNegativeMappings(result).isEmpty());
 		}
-
 	}
 
+	@Test
+	public void caseSensitivity() throws Exception {
+		UUID ontologyId1 = UUID.randomUUID();
+		UUID ontologyId2 = UUID.randomUUID();
+		Model model1 = Models.read(new ByteArrayInputStream((""//
+				+ "@prefix : <http://example.org/> .\n"//
+				+ ":entity1 :label \"abc\" .").getBytes()));
+		Model model2 = Models.read(new ByteArrayInputStream((""//
+				+ "@prefix : <http://example.org/> .\n"//
+				+ ":entity2 :label \"ABC\" .").getBytes()));
+		Model metaModel = Models.getEmptyOntModel();
+		SparqlEntityManager.insert(new Category("entity", "{?entity <http://example.org/label> ?label .}", ontologyId1),
+				metaModel);
+		SparqlEntityManager.insert(new Category("entity", "{?entity <http://example.org/label> ?label .}", ontologyId2),
+				metaModel);
+		JaroWinklerMappingProcessor.Parameter parameter = new JaroWinklerMappingProcessor.Parameter();
+		parameter.threshold = 0.90D;
+		parameter.category = "entity";
+		parameter.variables = Collections.singleton("label");
+
+		// case-insensitive
+		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor();
+		processor.setParameters(parameter);
+		parameter.case_sensitive = false;
+		processor.addInputModelGroups(
+				Map.of(ontologyId1, Collections.singleton(model1), ontologyId2, Collections.singleton(model2)));
+		processor.addMetaModels(Collections.singleton(metaModel));
+		processor.computeResultModel();
+		Model result = processor.getResultModel();
+
+		Collection<Mapping> positiveMappings = Mappings.getPositiveMappings(result);
+		assertEquals(1, positiveMappings.size());
+		assertTrue(positiveMappings.contains(Mapping.of(ResourceFactory.createResource("http://example.org/entity1"),
+				ResourceFactory.createResource("http://example.org/entity2"))));
+
+		// case-sensitive
+		processor = new JaroWinklerMappingProcessor();
+		processor.setParameters(parameter);
+		parameter.case_sensitive = true;
+		processor.addInputModelGroups(
+				Map.of(ontologyId1, Collections.singleton(model1), ontologyId2, Collections.singleton(model2)));
+		processor.addMetaModels(Collections.singleton(metaModel));
+		processor.computeResultModel();
+		result = processor.getResultModel();
+
+		positiveMappings = Mappings.getPositiveMappings(result);
+		assertTrue(positiveMappings.isEmpty());
+	}
 }
