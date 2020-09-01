@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * fix **Category**: `getPatternVariables()` does not anymore return helper `Var` for BlankNodePropertyLists and BlankNodePropertyListPaths introduced by Apache Jena, which cause Exceptions in **CategoryCountProcessor**
 * fix **Measurement** and **Omission**: use `abecto:ontology` instead of `abecto:knowledgeBase`
 * fix **Measurement Report** in Jupyter Notebooks: no dimensions column header concatenation of multiple measurement types
+* fix **AbstractRefinementProcessor**: disable RDFS reasoning on input ontologies
 
 ## [v0.1.1] - 2020-05-29
 

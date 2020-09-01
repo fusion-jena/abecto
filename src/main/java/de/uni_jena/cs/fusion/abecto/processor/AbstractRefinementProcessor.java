@@ -26,7 +26,6 @@ import java.util.concurrent.ExecutionException;
 
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
 
 import de.uni_jena.cs.fusion.abecto.model.Models;
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
@@ -69,7 +68,7 @@ public abstract class AbstractRefinementProcessor<P extends ParameterModel> exte
 	/**
 	 * Unions of all input group models.
 	 * 
-	 * @see {@link #inputGroupModels} provides a union of he input group models by
+	 * @see {@link #inputGroupModels} provides a union of the input group models by
 	 *      ontology.
 	 * @see {@link #inputGroupSubModels} provides the single input group models by
 	 *      ontology.
@@ -82,7 +81,7 @@ public abstract class AbstractRefinementProcessor<P extends ParameterModel> exte
 		modelCollection.addAll(inputModelGroup);
 
 		OntModel modelUnion = (OntModel) this.inputGroupModels.computeIfAbsent(uuid,
-				(a) -> ModelFactory.createOntologyModel());
+				(a) -> Models.getEmptyOntModel());
 		inputModelGroup.forEach(modelUnion::addSubModel);
 
 		inputModelGroup.forEach(this.inputModelUnion::addSubModel);
