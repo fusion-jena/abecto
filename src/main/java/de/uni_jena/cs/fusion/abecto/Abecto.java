@@ -17,6 +17,7 @@ package de.uni_jena.cs.fusion.abecto;
 
 import java.io.File;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -44,6 +45,9 @@ public class Abecto {
 		SpringApplication.run(Abecto.class, args);
 	}
 
+	@Value("${abecto.version}")
+	private String version;
+
 	@Bean
 	public TaskExecutor threadPoolTaskExecutor() {
 		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
@@ -64,5 +68,10 @@ public class Abecto {
 	@GetMapping("")
 	public String create() {
 		return "ABECTO is running.";
+	}
+
+	@GetMapping("version")
+	public String version() {
+		return version;
 	}
 }

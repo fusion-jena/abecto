@@ -232,6 +232,15 @@
 				</executions>
 			</plugin>
 		</plugins>
+		<resources>
+			<resource>
+				<filtering>true</filtering>
+				<directory>src/main/resources</directory>
+				<includes>
+					<include>abecto.properties</include>
+				</includes>
+			</resource>
+		</resources>
 	</build>
 
 </project>

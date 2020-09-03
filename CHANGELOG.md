@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * extend **Measurement Report** for Jupyter Notebooks: alphabetical order of measurements, alphabetical order of dimensions, replace ontology UUIDs with ontology names in dimension columns
 * add **Omission Report** for Jupyter Notebooks
 * extend **JaroWinklerMappingProcessor**: add parameter `defaultLangTag` used as fallback locale for LowerCase conversion during case-insensitive mapping
+* add `/version` API call returning the version of ABECTO
 
 ### Fixed
 * fix **JaroWinklerMappingProcessor**: ignore other categories, enable case-insensitive mapping
