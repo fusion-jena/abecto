@@ -496,39 +496,28 @@ class Execution:
             data["ontology"] = data["ontology"].replace(dict(ontologies))
             data["source"] = data["source"].replace(dict(ontologies))
             # iterate categories
-            categoryTabs = []
-            categoryTabTitles = []
             for categoryName in sorted(set(data["categoryName"])):
+                display(HTML("<h3>Category: " + categoryName + "</h3>"))
                 categoryData = data[data.categoryName.eq(categoryName)]
-                ontoPairTabs = []
-                ontoPairTabTitles = []
                 # iterate ontology pairs
                 for ontology1 in sorted(set(categoryData["ontology"])):
                     for ontology2 in sorted(set(categoryData["source"])):
                         if (ontology1 < ontology2):
-                            resourceLists = []
+                            html = "<div>"
                             ontology1Data = categoryData[categoryData.ontology.eq(ontology1) & categoryData.source.eq(ontology2)]
                             ontology2Data = categoryData[categoryData.ontology.eq(ontology2) & categoryData.source.eq(ontology1)]
                             # iterate ontologies of ontology pair
                             for (ontology, ontologyData) in [(ontology1,ontology1Data),(ontology2,ontology2Data)]:
-                                html = "<h4>Missing in " + ontology + "</h4>"
-                                html += "<ul>"
+                                html += "<div style=\"float:left;width:50%\">"
+                                html += "<h4>Resources from " + (ontology1 if ontology2 == ontology else ontology2) + " missing in " + ontology + "</h4>"
+                                html += "<ul style=\"max-height:30em;overflow-x:scroll\">"
                                 # iterate omitted resources
                                 for omittedResource in sorted(set(ontologyData["omittedResource"])):
                                     html += "<li><a href=\"" + omittedResource + "\">" + omittedResource + "</a>"
                                 html += "</ul>"
-                                resourceLists.append(widgets.HTML(value=html))
-                            ontoPairTabs.append(widgets.HBox(resourceLists))
-                            ontoPairTabTitles.append(ontology1 + " <-> " + ontology2)
-                categoryTab = widgets.Tab(children=ontoPairTabs)
-                for i, title in enumerate(ontoPairTabTitles):
-                    categoryTab.set_title(i, title)
-                categoryTabs.append(categoryTab)
-                categoryTabTitles.append(categoryName)
-            omissions = widgets.Tab(children=categoryTabs)
-            for i, title in enumerate(categoryTabTitles):
-                omissions.set_title(i, title)
-            display(omissions)
+                                html += "</div>"
+                            html += "</div>"
+                            display(HTML(html))
 
     def mappings(self, manualMappingNode):
         # symboles
