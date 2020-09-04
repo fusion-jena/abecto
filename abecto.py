@@ -423,7 +423,7 @@ class Execution:
             categoryNames = set(totalData["categoryName"])
             ontologies = self.sortedOntologies(set(totalData["ontologyId1"]).union(set(totalData["ontologyId2"])))
             # iterate categories
-            for categoryName in categoryNames:
+            for categoryName in sorted(set(categoryNames)):
                 display(HTML("<h3>Category: " + categoryName + "</h3>"))
                 categoryData = totalData[totalData.categoryName.eq(categoryName)]
                 ontoPairs = categoryData.filter(["ontologyId1","ontologyId2"]).drop_duplicates().sort_values(["ontologyId1","ontologyId2"])
@@ -434,11 +434,11 @@ class Execution:
                             ontosData = categoryData[categoryData.ontologyId1.eq(onto1Id) & categoryData.ontologyId2.eq(onto2Id)]
                             if not ontosData.empty:
                                 ontosData = ontosData.sort_values(["ontologyId1","ontologyId2"])
-                                table = "<table>"
+                                table = "<div style=\"max-height:30em\"><table>"
                                 table += "<tr>"
                                 table += "<th style=\"text-align:center;\" colspan=\"3\">" + onto1Label + "</th>"
                                 table += "<th style=\"text-align:center;\" colspan=\"3\">" + onto2Label + "</th>"
-                                table += "</tr>"
+                                table += "</tr></div>"
                                 resourcePairs = ontosData.filter(["resource1","resource2"]).drop_duplicates().sort_values(["resource1","resource2"])
                                 # iterate resources
                                 for index, resourcePair in resourcePairs.iterrows():
