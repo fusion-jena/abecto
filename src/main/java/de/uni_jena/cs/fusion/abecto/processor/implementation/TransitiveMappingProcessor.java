@@ -15,9 +15,10 @@
  */
 package de.uni_jena.cs.fusion.abecto.processor.implementation;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.ListIterator;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.jena.rdf.model.Resource;
@@ -34,78 +35,65 @@ public class TransitiveMappingProcessor extends AbstractMetaProcessor<EmptyParam
 	@Override
 	public final void computeResultModel() throws Exception {
 
-		Set<Mapping> knownMappings = Mappings.getMappings(this.metaModel);
-		LinkedList<Mapping> unprocessedMappings = new LinkedList<>(knownMappings);
 		Set<Mapping> newMappings = new HashSet<>();
 
-		while (!unprocessedMappings.isEmpty()) {
-			Mapping mapping1 = unprocessedMappings.poll();
+		Map<Resource, Set<Resource>> negativeMappingSets = new HashMap<>();
+		Map<Resource, Set<Resource>> positiveMappingSets = new HashMap<>();
 
-			// check if mapping1 was overruled by a suppressed mapping
-			if (!knownMappings.contains(mapping1) && !newMappings.contains(mapping1)) {
-				// do not process mapping1 as it was overruled by a suppressed mapping
-				break;
+		// process negative mappings
+		Set<Mapping> knownNegativeMappings = Mappings.getNegativeMappings(this.metaModel);
+		for (Mapping mapping : knownNegativeMappings) {
+			Resource resource1 = mapping.resource1;
+			Resource resource2 = mapping.resource2;
+
+			negativeMappingSets.computeIfAbsent(resource1, (r) -> new HashSet<>()).add(resource2);
+			negativeMappingSets.computeIfAbsent(resource2, (r) -> new HashSet<>()).add(resource1);
+		}
+
+		// process positive mappings
+		Set<Mapping> knownPositiveMappings = Mappings.getPositiveMappings(this.metaModel);
+		for (Mapping mapping : knownPositiveMappings) {
+			if (!negativeMappingSets.getOrDefault(mapping.resource1, Collections.emptySet())
+					.contains(mapping.resource2)) {
+				// merge negative mappings
+				Set<Resource> negativeMappingSet = negativeMappingSets.computeIfAbsent(mapping.resource1,
+						(r) -> new HashSet<>());
+				negativeMappingSet
+						.addAll(negativeMappingSets.computeIfAbsent(mapping.resource2, (r) -> Collections.emptySet()));
+				negativeMappingSets.put(mapping.resource2, negativeMappingSet);
+				// add to and merge mappings
+				Set<Resource> positiveMappingSet = positiveMappingSets.computeIfAbsent(mapping.resource1,
+						(r) -> new HashSet<>(Collections.singleton(mapping.resource1)));
+				positiveMappingSet.addAll(
+						positiveMappingSets.getOrDefault(mapping.resource2, Collections.singleton(mapping.resource2)));
+				positiveMappingSets.put(mapping.resource2, positiveMappingSet);
 			}
+		}
 
-			ListIterator<Mapping> unprocessedMappingsIterator = unprocessedMappings.listIterator();
-			while (unprocessedMappingsIterator.hasNext()) {
-				Mapping mapping2 = unprocessedMappingsIterator.next();
-
-				// check if mapping2 was overruled by a suppressed mapping
-				if (!knownMappings.contains(mapping2) && !newMappings.contains(mapping2)) {
-					// do not further process mapping2 as it was overruled by a suppressed mapping
-					unprocessedMappingsIterator.remove();
-					break;
+		// iterate negative mapping sets
+		for (Resource resource1 : negativeMappingSets.keySet()) {
+			for (Resource resource2 : negativeMappingSets.get(resource1)) {
+				Mapping newMapping = Mapping.not(resource1, resource2);
+				if (!knownNegativeMappings.contains(newMapping)) {
+					newMappings.add(newMapping);
 				}
+			}
+		}
 
-				// create new mapping, if applicable
-				Resource resource1, resource2;
-				if (mapping1.resource1.equals(mapping2.resource1)) {
-					resource1 = mapping1.resource2;
-					resource2 = mapping2.resource2;
-				} else if (mapping1.resource1.equals(mapping2.resource2)) {
-					resource1 = mapping1.resource2;
-					resource2 = mapping2.resource1;
-				} else if (mapping1.resource2.equals(mapping2.resource1)) {
-					resource1 = mapping1.resource1;
-					resource2 = mapping2.resource2;
-				} else if (mapping1.resource2.equals(mapping2.resource2)) {
-					resource1 = mapping1.resource1;
-					resource2 = mapping2.resource1;
-				} else {
-					break;
-				}
-				Mapping newMapping;
-				if (mapping1.resourcesMap && mapping2.resourcesMap) {
-					newMapping = Mapping.of(resource1, resource2);
-				} else if (mapping1.resourcesMap != mapping2.resourcesMap) {
-					newMapping = Mapping.not(resource1, resource2);
-				} else {
-					break;
-				}
-
-				// cache inverse mapping
-				Mapping inverseNewMapping = newMapping.inverse();
-
-				// add mapping if it is new and does not contradict to known mappings
-				if (!knownMappings.contains(newMapping) && !knownMappings.contains(inverseNewMapping)) {
-					if (newMapping.resourcesMap) {
-						// add mapping if it does not contradict to a new suppressing mapping
-						if (!newMappings.contains(inverseNewMapping) && newMappings.add(newMapping)) {
-							unprocessedMappingsIterator.add(newMapping);
-						}
-					} else {
-						// add new suppressing mapping and remove contradicting new mapping
-						if (newMappings.add(newMapping)) {
-							unprocessedMappingsIterator.add(newMapping);
-							newMappings.remove(inverseNewMapping);
-							// NOTE: inverseNewMapping remains in unprocessedMappings /
-							// unprocessedMappingsIterator but will not be processed
+		// iterate positive mapping sets (only once by creating a set of sets first)
+		for (Set<Resource> positiveMappingSet : new HashSet<>(positiveMappingSets.values())) {
+			for (Resource resource1 : positiveMappingSet) {
+				for (Resource resource2 : positiveMappingSet) {
+					if (!resource1.equals(resource2)) {
+						Mapping newMapping = Mapping.of(resource1, resource2);
+						if (!knownPositiveMappings.contains(newMapping)) {
+							newMappings.add(newMapping);
 						}
 					}
 				}
 			}
 		}
+
 		Mappings.saveMappings(newMappings, this.getResultModel());
 	}
 }
