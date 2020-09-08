@@ -519,274 +519,45 @@ class Execution:
                             html += "</div>"
                             display(HTML(html))
 
-    def mappings(self, manualMappingNode):
-        # symboles
-        accepted = "✓"
-        retained = "?"
-        rejected = "✗"
-
-        output = widgets.Output()
-
-        mappings = {}
-        def getMappings():
-            with output:
-                if not mappings:
-                    for mapping in self.results("Mapping"):
-                        if mapping["resourcesMap"]:
-                            if mapping["resource1"] in mappings:
-                                mappings[mapping["resource1"]].add(mapping["resource2"])
-                            else:
-                                mappings[mapping["resource1"]] = {mapping["resource2"]}
-                            if mapping["resource2"] in mappings:
-                                mappings[mapping["resource2"]].add(mapping["resource1"])
-                            else:
-                                mappings[mapping["resource2"]] = {mapping["resource1"]}
-                return mappings
-
-        resourceDataWidgets = {}
-        def getResourceDataWidget(categoryName, ontoId, resource, resourceData):
-            with output:
-                if categoryName not in resourceDataWidgets:
-                    resourceDataWidgets[categoryName] = {}
-                if ontoId not in resourceDataWidgets[categoryName]:
-                    resourceDataWidgets[categoryName][ontoId] = {}
-                if resource not in resourceDataWidgets[categoryName][ontoId]:
-                    html = "<dl>"
-                    if any(list(resourceData)):
-                        for key in sorted(resourceData):
-                            html += "<dt>" + key + "</dt>"
-                            html += "<dd>" + ", ".join(map(self.__formatValue, resourceData[key])) + "</dd>"
-                    html += "</dl>"
-                    resourceDataWidgets[categoryName][ontoId][resource] = widgets.HTML(value=html)
-                return resourceDataWidgets[categoryName][ontoId][resource]
-
-        newMappingResourceFormWidgets = {}
-        def getNewMappingResourceFormWidget(categoryName, ontoId):
-            with output:
-                if categoryName not in newMappingResourceFormWidgets:
-                    newMappingResourceFormWidgets[categoryName] = {}
-                if ontoId not in newMappingResourceFormWidgets[categoryName]:
-                    newMappingResourceFormWidgets[categoryName][ontoId] = widgets.Text(value='', placeholder='Resource to map', layout={'width':'available'})
-                return newMappingResourceFormWidgets[categoryName][ontoId]
-
-        resourceButtonWidgets = {}
-        def getResourceButtonWidget(categoryName, ontoId, resource):
-            with output:
-                if categoryName not in resourceButtonWidgets:
-                    resourceButtonWidgets[categoryName] = {}
-                if ontoId not in resourceButtonWidgets[categoryName]:
-                    resourceButtonWidgets[categoryName][ontoId] = {}
-                if resource not in resourceButtonWidgets[categoryName][ontoId]:
-                    newMappingResourceFormWidget = getNewMappingResourceFormWidget(categoryName, ontoId)
-                    button = widgets.Button(description=resource, tooltip='Use for new Mapping', layout={'min_width': 'max-content'})
-                    def use(b):
-                        newMappingResourceFormWidget.value = resource
-                    button.on_click(use)
-                    resourceButtonWidgets[categoryName][ontoId][resource] = button
-                return resourceButtonWidgets[categoryName][ontoId][resource]
-        
-        resourceWidgets = {}
-        def getResourceWidget(categoryName, ontoId, resource, resourceData):
-            with output:
-                if categoryName not in resourceWidgets:
-                    resourceWidgets[categoryName] = {}
-                if ontoId not in resourceWidgets[categoryName]:
-                    resourceWidgets[categoryName][ontoId] = {}
-                if resource not in resourceWidgets[categoryName][ontoId]:
-                    resourceButtonWidget = getResourceButtonWidget(categoryName, ontoId, resource)
-                    resourceDataWidget = getResourceDataWidget(categoryName, ontoId, resource, resourceData)
-                    resourceWidgets[categoryName][ontoId][resource] = widgets.VBox([resourceButtonWidget, resourceDataWidget], layout={'border':'solid 1px lightgrey', 'min_height':'max-content', 'width':'available', 'min_width':'min-content'})
-                return resourceWidgets[categoryName][ontoId][resource]
-        
-        unmappedResourcesWidgets = {}
-        def getUnmappedResourcesWidget(categoryName, ontoId):
-            with output:
-                if categoryName not in unmappedResourcesWidgets:
-                    unmappedResourcesWidgets[categoryName] = {}
-                if ontoId not in unmappedResourcesWidgets[categoryName]:
-                    resourcesData = self.data(categoryName, ontoId)
-                    
-                    unmapped = []
-                    for unmappedResource in set(resourcesData)-set(getMappings())-set(manualPositiveMappings):
-                        unmapped.append(getResourceWidget(categoryName, ontoId, unmappedResource, resourcesData[unmappedResource]))
-                    unmappedResourcesWidgets[categoryName][ontoId] = widgets.VBox(unmapped,layout={'width':'50%', 'max_height':'25em', 'overflow_y':'scroll', 'display':'block'})
-                return unmappedResourcesWidgets[categoryName][ontoId]
-
-        resourcePairWidgets = {}
-        def resourcePairWidget(categoryName, onto1Id, onto2Id, resource1, resource2, resource1Data, resource1Data2, value):
-            with output:
-                resourceWidget1 = getResourceWidget(categoryName, onto1Id, resource1, resource1Data)
-                resourceWidget2 = getResourceWidget(categoryName, onto2Id, resource2, resource2Data)                    
-                buttons = widgets.ToggleButtons(options=[accepted,retained,rejected],value=value,tooltips=["Accepted", "Undecided", "Rejecte"], style={'button_width':'auto'}, layout={'min_width':'max-content', 'height':'available'})
-                resourcePairWidget = widgets.HBox([buttons, resourceWidget1, resourceWidget2], layout={'border':'solid 1px lightgrey', 'min_height':'max-content', 'min_width':'available'})
-                resourcePairWidgets[resourcePairWidget] = [resource1,resource2]
-                return resourcePairWidget
-
-        def newMappingWidget(resource1, resource2, newMappingSink):
-            with output:
-                button = widgets.Button(description=rejected, tooltip='Remove')
-                widget = widgets.HBox([widgets.Label(value=resource1), button, widgets.Label(value=resource2)])
-                def remove(b):
-                    newMappingSink.children = tuple(x for x in newMappingSink.children if x != widget)
-                button.on_click(remove)
-                return widget
-
-        def unmappedPairingWidget(resource1Widget, resource2Widget, newMappingSink):
-            with output:
-                button = widgets.Button(description='Add Mapping')
-                def add(b):
-                    if resource1Widget.value != "" and resource2Widget.value != "":
-                        newMappingSink.children += (newMappingWidget(resource1Widget.value, resource2Widget.value, newMappingSink),)
-                        resource1Widget.value = ""
-                        resource2Widget.value = ""
-                button.on_click(add)
-                return widgets.VBox([widgets.HBox([resource1Widget, button, resource2Widget]), newMappingSink])
-
-        # collect execution data
-        categoryData = self.resultDataFrame("Category")
-        categories =  set(categoryData["name"])
-        ontologies = self.sortedOntologies(set(categoryData["ontology"]))
-        # get manual mapping parameters
-        manualMappingParameters = manualMappingNode.parameters()["parameters"]
-        # collect positive manual mappings from parameters
-        manualPositiveMappings = {}
-        for mappingList in (manualMappingParameters["mappings"] if manualMappingParameters["mappings"] else []):
-            for resource1 in mappingList:
-                for resource2 in mappingList:
-                    if resource1 != resource2:
-                        if resource1 in manualPositiveMappings:
-                            manualPositiveMappings[resource1].add(resource2)
-                        else:
-                            manualPositiveMappings[resource1] = {resource2}
-                        if resource2 in manualPositiveMappings:
-                            manualPositiveMappings[resource2].add(resource1)
-                        else:
-                            manualPositiveMappings[resource2] = {resource1}
-        # collect negativ manual mappings from parameters
-        manualNegativeMappings = {}
-        for mappingList in (manualMappingParameters["suppressed_mappings"] if manualMappingParameters["suppressed_mappings"] else []):
-            for resource1 in mappingList:
-                for resource2 in mappingList:
-                    if resource1 != resource2:
-                        if resource1 in manualNegativeMappings:
-                            manualNegativeMappings[resource1].add(resource2)
-                        else:
-                            manualNegativeMappings[resource1] = {resource2}
-                        if resource2 in manualNegativeMappings:
-                            manualNegativeMappings[resource2].add(resource1)
-                        else:
-                            manualNegativeMappings[resource2] = {resource1}
-
-        newMappingSinks = []
-        categoryTabChildren = []
-        categoryTabTitles = []
-        for categoryName in categories:
-            ontoTabChildrens = []
-            ontoTabTitles = []
-            for (onto1Id, onto1Label) in ontologies:
-                for (onto2Id, onto2Label) in ontologies:
-                    if (onto1Label < onto2Label):
-                        pairs = []
-                        resources1Data = self.data(categoryName, onto1Id)
-                        resources2Data = self.data(categoryName, onto2Id)
-                        for resource1 in resources1Data:
-                            resource1Data = resources1Data[resource1]
-                            # add positive manual mappings
-                            if resource1 in manualPositiveMappings:
-                                for resource2 in manualPositiveMappings[resource1]:
-                                    if resource2 in resources2Data:
-                                        resource2Data = resources2Data[resource2]
-                                        pair = resourcePairWidget(categoryName, onto1Id, onto2Id, resource1, resource2, resource1Data, resource2Data, accepted)
-                                        pairs.append(pair)
-                            # add negative manual mappings
-                            if resource1 in manualNegativeMappings:
-                                for resource2 in manualNegativeMappings[resource1]:
-                                    if resource2 in resources2Data:
-                                        resource2Data = resources2Data[resource2]
-                                        pair = resourcePairWidget(categoryName, onto1Id, onto2Id, resource1, resource2, resource1Data, resource2Data, rejected)
-                                        pairs.append(pair)
-                            # add none manual mappings
-                            if resource1 in getMappings():
-                                for resource2 in mappings[resource1]:
-                                    if resource2 in resources2Data and not (
-                                        resource1 in manualPositiveMappings and resource2 in manualPositiveMappings[resource1] or
-                                        resource1 in manualNegativeMappings and resource2 in manualNegativeMappings[resource1] ):
-                                        resource2Data = resources2Data[resource2]
-                                        pair = resourcePairWidget(categoryName, onto1Id, onto2Id, resource1, resource2, resource1Data, resource2Data, retained)
-                                        pairs.append(pair)
-                        # widgets management
-                        newMappingSink = widgets.VBox([],layout={'max_height':'25em', 'overflow_y':'scroll', 'display':'block'})
-                        pairTab = widgets.VBox([
-                            widgets.HTML(value="<h4>Present mappings</h4><p>Click the button to accept or reject the mapping. Mappings can be filtered to display only undesided pairs using the button below.</p>"),
-                            widgets.VBox(pairs, layout={'max_height':'25em', 'overflow_y':'scroll', 'display':'block'}),
-                            widgets.HTML(value="<h4>Unmapped resources</h4>"),
-                            widgets.HBox([
-                                getUnmappedResourcesWidget(categoryName, onto1Id),
-                                getUnmappedResourcesWidget(categoryName, onto2Id)
-                            ]),
-                            widgets.HTML(value="<h4>Add further mappings</h4><p>To select a resurce, click on the IRIs.</p>"),
-                            unmappedPairingWidget(getNewMappingResourceFormWidget(categoryName, onto1Id), getNewMappingResourceFormWidget(categoryName, onto2Id), newMappingSink)
-                        ])
-                        ontoTabChildrens.append(pairTab)
-                        newMappingSinks.append(newMappingSink)
-                        ontoTabTitles.append(onto1Label + " <-> " + onto2Label)
-            # widgets management
-            ontoTabs = widgets.Tab(children=ontoTabChildrens)
-            for i, title in enumerate(ontoTabTitles):
-                ontoTabs.set_title(i, title)    
-            categoryTabChildren.append(ontoTabs)
-            categoryTabTitles.append(categoryName)
-        # widgets management
-        categoryTabs = widgets.Tab(children=categoryTabChildren)
-        for i, title in enumerate(categoryTabTitles):
-            categoryTabs.set_title(i, title)
-
-        display(HTML("<h2>Mapping Review</h2>"))
-        display(categoryTabs)
-
-        updateButton = widgets.Button(description='Update Mappings')
-        hideButton = widgets.Button(description='Show Only Undecided', layout={'width': 'max-content'})
-        showButton = widgets.Button(description='Show All')
-        showButton.layout.display = "none"
-        display(widgets.HBox([updateButton, hideButton, showButton]), output)
-        def updateMappings(b):
-            with output:
-                # get remote manual mapping data
-                manualMappingParameters = manualMappingNode.parameters()["parameters"]
-                manualPositiveMappings = manualMappingParameters["mappings"] if manualMappingParameters["mappings"] else []
-                manualNegativeMappings = manualMappingParameters["suppressed_mappings"] if manualMappingParameters["suppressed_mappings"] else []
-                # update local manual mapping data
-                for resourcePairWidget in resourcePairWidgets:
-                    if resourcePairWidget.children[0].value == accepted:
-                        while resourcePairWidgets[resourcePairWidget] not in manualPositiveMappings: manualPositiveMappings.append(resourcePairWidgets[resourcePairWidget])
-                        while resourcePairWidgets[resourcePairWidget] in manualNegativeMappings: manualNegativeMappings.remove(resourcePairWidgets[resourcePairWidget])
-                    if resourcePairWidget.children[0].value == retained:
-                        while resourcePairWidgets[resourcePairWidget] in manualPositiveMappings: manualPositiveMappings.remove(resourcePairWidgets[resourcePairWidget])
-                        while resourcePairWidgets[resourcePairWidget] in manualNegativeMappings: manualNegativeMappings.remove(resourcePairWidgets[resourcePairWidget])
-                    elif resourcePairWidget.children[0].value == rejected:
-                        while resourcePairWidgets[resourcePairWidget] in manualPositiveMappings: manualPositiveMappings.remove(resourcePairWidgets[resourcePairWidget])
-                        while resourcePairWidgets[resourcePairWidget] not in manualNegativeMappings: manualNegativeMappings.append(resourcePairWidgets[resourcePairWidget])
-                for newMappingSink in newMappingSinks:
-                    for newMapping in newMappingSink.children:
-                        manualPositiveMappings.append([newMapping.children[0].value, newMapping.children[2].value])
-                # update remote manual mapping data
-                manualMappingNode.setParameter("mappings", manualPositiveMappings)
-                manualMappingNode.setParameter("suppressed_mappings", manualNegativeMappings)
-                display(HTML("Manual Mappings updated."))
-        updateButton.on_click(updateMappings)
-        def hide(b):
-            with output:
-                for resourcePairWidget in resourcePairWidgets:
-                    if resourcePairWidget.children[0].value != retained:
-                        resourcePairWidget.layout.display = "none"
-                hideButton.layout.display = "none"
-                showButton.layout.display = "inline-flex"
-        hideButton.on_click(hide)
-        def show(b):
-            with output:
-                for resourcePairWidget in resourcePairWidgets:
-                    if resourcePairWidget.children[0].value != retained:
-                        resourcePairWidget.layout.display = "inline-flex"
-                hideButton.layout.display = "inline-flex"
-                showButton.layout.display = "none"
-        showButton.on_click(show)
+    def mappings(self):
+        display(HTML("<h2>Mapping Report</h2>"))
+        mappings = self.resultDataFrame("Mapping")
+        mappings = mappings[mappings.resourcesMap][["resource1","resource2"]]
+        if not mappings.empty:
+            categories = self.resultDataFrame("Category")
+            for categoryName in sorted(set(categories["name"])):
+                display(HTML("<h3>Category: " + categoryName + "</h3>"))
+                ontologies = set(categories[categories.name.eq(categoryName)]["ontology"])
+                ontologies = self.sortedOntologies(ontologies)
+                resources = {}
+                # get resources of category by ontologies
+                for (ontologyId, ontologyLabel) in ontologies:
+                    resources[ontologyId] = set(self.data(categoryName, ontologyId).keys())
+                for (ontologyId1, ontologyLabel1) in ontologies:
+                    for (ontologyId2, ontologyLabel2) in ontologies:
+                        if (ontologyLabel1 < ontologyLabel2):
+                            # prepare data
+                            mappingsOfPair = mappings[
+                                mappings.resource1.isin(resources[ontologyId1]) &
+                                mappings.resource2.isin(resources[ontologyId2])
+                            ][["resource1","resource2"]]\
+                            .rename(columns={"resource1": ontologyLabel1, "resource2": ontologyLabel2})
+                            mappingsOfPair = mappingsOfPair.append(
+                                mappings[
+                                    mappings.resource2.isin(resources[ontologyId1]) &
+                                    mappings.resource1.isin(resources[ontologyId2])
+                                ][["resource2","resource1"]]\
+                                .rename(columns={"resource2": ontologyLabel1, "resource1": ontologyLabel2}))
+                            mappingsOfPair.sort_values(by=[ontologyLabel1,ontologyLabel2], inplace=True)
+                            # display
+                            html = "<div style=\"max-height:30em;overflow-x:scroll\">"
+                            html += "<table>"
+                            html += "<tr><th>" + ontologyLabel1 + "</th><th>" + ontologyLabel2 + "</th></tr>"
+                            for index, row in mappingsOfPair.iterrows():
+                                html += "<tr>"
+                                html += "<td><a href=\"" + str(row[0]) + "\">" + str(row[0]) + "</a></td>"
+                                html += "<td><a href=\"" + str(row[1]) + "\">" + str(row[1]) + "</a></td>"
+                                html += "</tr>"
+                            html += "</table>"
+                            html += "</div>"
+                            display(HTML(html))

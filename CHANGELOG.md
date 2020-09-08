@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * add **Omission Report** for Jupyter Notebooks
 * extend **JaroWinklerMappingProcessor**: add parameter `defaultLangTag` used as fallback locale for LowerCase conversion during case-insensitive mapping
 * add `/version` API call returning the version of ABECTO
+* add **Mapping Report** in Jupyter Notebooks: replacing heavy-weighted *Mapping Review*
 
 ### Fixed
 * fix **JaroWinklerMappingProcessor**: ignore other categories, enable case-insensitive mapping
@@ -23,6 +24,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * fix **Measurement** and **Omission**: use `abecto:ontology` instead of `abecto:knowledgeBase`
 * fix **Measurement Report** in Jupyter Notebooks: no dimensions column header concatenation of multiple measurement types
 * fix **AbstractRefinementProcessor**: disable RDFS reasoning on input ontologies
+
+### Removed
+* removed **Mapping Review** in Jupyter Notebooks: replaced by simple *Mapping Report*
 
 ## [v0.1.1] - 2020-05-29
 
