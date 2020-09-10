@@ -426,36 +426,39 @@ class Execution:
             for categoryName in sorted(set(categoryNames)):
                 display(HTML("<h3>Category: " + categoryName + "</h3>"))
                 categoryData = totalData[totalData.categoryName.eq(categoryName)]
-                ontoPairs = categoryData.filter(["ontologyId1","ontologyId2"]).drop_duplicates().sort_values(["ontologyId1","ontologyId2"])
                  # iterate ontologies
-                for (onto1Id, onto1Label) in ontologies:
-                    for (onto2Id, onto2Label) in ontologies:
-                        if onto1Id != onto2Id and onto1Label < onto2Label:
-                            ontosData = categoryData[categoryData.ontologyId1.eq(onto1Id) & categoryData.ontologyId2.eq(onto2Id)]
-                            if not ontosData.empty:
-                                ontosData = ontosData.sort_values(["ontologyId1","ontologyId2"])
+                for (ontology1Id, ontology1Label) in ontologies:
+                    for (ontology2Id, ontology2Label) in ontologies:
+                        if ontology1Id != ontology2Id and ontology1Label < ontology2Label:
+                            ontologiesData = categoryData[categoryData.ontologyId1.eq(ontology1Id) & categoryData.ontologyId2.eq(ontology2Id)]
+                            ontologiesData = ontologiesData.append(
+                                        categoryData[categoryData.ontologyId1.eq(ontology2Id) & categoryData.ontologyId2.eq(ontology1Id)]\
+                                        .rename(columns={"resource1": "resource2", "resource2": "resource1", "value1": "value2", "value2": "value1"}),
+                                        sort=True)
+                            if not ontologiesData.empty:
+                                ontologiesData = ontologiesData.sort_values(["ontologyId1","ontologyId2"])
                                 table = "<div style=\"max-height:30em\"><table>"
                                 table += "<tr>"
-                                table += "<th style=\"text-align:center;\" colspan=\"3\">" + onto1Label + "</th>"
-                                table += "<th style=\"text-align:center;\" colspan=\"3\">" + onto2Label + "</th>"
+                                table += "<th style=\"text-align:center;\" colspan=\"3\">" + ontology1Label + "</th>"
+                                table += "<th style=\"text-align:center;\" colspan=\"3\">" + ontology2Label + "</th>"
                                 table += "</tr></div>"
-                                resourcePairs = ontosData.filter(["resource1","resource2"]).drop_duplicates().sort_values(["resource1","resource2"])
+                                resourcePairs = ontologiesData.filter(["resource1","resource2"]).drop_duplicates().sort_values(["resource1","resource2"])
                                 # iterate resources
                                 for index, resourcePair in resourcePairs.iterrows():
-                                    resourceData = ontosData[ontosData.resource1.eq(resourcePair["resource1"]) & ontosData.resource2.eq(resourcePair["resource2"])]
+                                    resourceData = ontologiesData[ontologiesData.resource1.eq(resourcePair["resource1"]) & ontologiesData.resource2.eq(resourcePair["resource2"])]
                                     resourceData = resourceData.sort_values(["resource1","resource2"])
                                     variablesCount = len(resourceData)
                                     firstRow = True
                                     for index, row in resourceData.iterrows():
                                         table += "<tr>"
                                         if firstRow:
-                                            table += "<td rowspan=\"" + str(variablesCount) + "\">" + resourcePair["resource1"] + "</td>"
+                                            table += "<td rowspan=\"" + str(variablesCount) + "\"><a href=\"" + resourcePair["resource1"] + "\">" + resourcePair["resource1"] + "</a></td>"
                                         table += "<td>" + row.variableName + "</td>"
                                         table += "<td>" + self.__formatValue(html.escape(row.value1 if not row.isna().value1 else "")) + "</td>"
                                         table += "<td>" + self.__formatValue(html.escape(row.value2 if not row.isna().value2 else "")) + "</td>"
                                         table += "<td>" + row.variableName + "</td>"
                                         if firstRow:
-                                            table += "<td rowspan=\"" + str(variablesCount) + "\">" + resourcePair["resource2"] + "</td>"
+                                            table += "<td rowspan=\"" + str(variablesCount) + "\"><a href=\"" + resourcePair["resource2"] + "\">" + resourcePair["resource2"] + "</a></td>"
                                             firstRow = False
                                         table += "</tr>"
                                 table += "</table>"
