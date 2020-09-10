@@ -455,10 +455,10 @@ class LiteralDeviationProcessorTest {
 		assertUnexpectedValueType(LiteralLabelFactory.create("3.2E9", XSDDatatype.XSDfloat));
 		assertUnexpectedValueType(LiteralLabelFactory.create("3.2E9", XSDDatatype.XSDdouble));
 
-		assertSame(//
+		assertDeviation(//
 				LiteralLabelFactory.create("0.001", XSDDatatype.XSDfloat),
 				LiteralLabelFactory.create("0.001e0", XSDDatatype.XSDdouble));
-		assertSame(//
+		assertDeviation(//
 				LiteralLabelFactory.create("0.001", XSDDatatype.XSDdouble),
 				LiteralLabelFactory.create("0.001e0", XSDDatatype.XSDfloat));
 	}

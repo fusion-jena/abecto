@@ -24,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * fix **Measurement** and **Omission**: use `abecto:ontology` instead of `abecto:knowledgeBase`
 * fix **Measurement Report** in Jupyter Notebooks: no dimensions column header concatenation of multiple measurement types
 * fix **AbstractRefinementProcessor**: disable RDFS reasoning on input ontologies
+* fix **LiteralDeviationProcessor**: correct handling of float and double, enable multiple values of same property
 
 ### Removed
 * removed **Mapping Review** in Jupyter Notebooks: replaced by simple *Mapping Report*
