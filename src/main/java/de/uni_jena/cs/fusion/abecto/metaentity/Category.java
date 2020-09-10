@@ -31,6 +31,7 @@ import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
+import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.core.Var;
@@ -137,19 +138,38 @@ public class Category {
 	}
 
 	@JsonIgnore
-	public Map<Resource, Map<String, Set<String>>> getCategoryData(Model model) {
+	public Map<Resource, Map<String, Set<Literal>>> getCategoryData(Model model) {
 		ResultSet solutions = this.selectCategory(model);
 		List<String> variables = solutions.getResultVars();
 		variables.remove(name);
-		Map<Resource, Map<String, Set<String>>> results = new HashMap<>();
+		return getResultVars(solutions, name, variables);
+	}
+
+	@JsonIgnore
+	public Map<Resource, Map<String, Set<Literal>>> getCategoryData(Model model, Collection<String> variables) {
+		ResultSet solutions = this.selectCategory(model);
+		List<String> variablesToUse = solutions.getResultVars();
+		variablesToUse.remove(name);
+		variablesToUse.retainAll(variables);
+		return getResultVars(solutions, name, variablesToUse);
+	}
+
+	private static Map<Resource, Map<String, Set<Literal>>> getResultVars(ResultSet solutions, String key,
+			Collection<String> variables) {
+		Map<Resource, Map<String, Set<Literal>>> results = new HashMap<>();
 		while (solutions.hasNext()) {
 			QuerySolution solution = solutions.next();
-			Resource resource = solution.getResource(name);
-			Map<String, Set<String>> result = results.computeIfAbsent(resource, (x) -> new HashMap<>());
+			Resource resource = solution.getResource(key);
+			Map<String, Set<Literal>> result = results.computeIfAbsent(resource, (x) -> new HashMap<>());
 			for (String variable : variables) {
 				if (solution.contains(variable)) {
-					result.computeIfAbsent(variable, (x) -> new HashSet<String>())
-							.add(solution.get(variable).toString());
+					try {
+						result.computeIfAbsent(variable, (x) -> new HashSet<Literal>())
+								.add(solution.getLiteral(variable));
+					} catch (ClassCastException e) {
+						// variable is not a literal
+						// ignore
+					}
 				}
 			}
 		}

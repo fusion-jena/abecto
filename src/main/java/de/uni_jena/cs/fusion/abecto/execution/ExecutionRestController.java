@@ -26,6 +26,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -83,7 +84,7 @@ public class ExecutionRestController {
 	}
 
 	@GetMapping("/execution/{uuid}/data")
-	public Map<Resource, Map<String, Set<String>>> getData(@PathVariable("uuid") UUID executionId,
+	public Map<Resource, Map<String, Set<Literal>>> getData(@PathVariable("uuid") UUID executionId,
 			@RequestParam(name = "category", required = true) String categoryName,
 			@RequestParam(name = "ontology", required = true) UUID ontologyId) throws NoSuchElementException,
 			IllegalStateException, NullPointerException, IllegalArgumentException, ReflectiveOperationException {

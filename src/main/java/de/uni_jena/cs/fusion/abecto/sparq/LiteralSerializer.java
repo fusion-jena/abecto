@@ -38,7 +38,7 @@ public class LiteralSerializer extends StdSerializer<Literal> {
 
 	@Override
 	public void serialize(Literal value, JsonGenerator gen, SerializerProvider provider) throws IOException {
-		gen.writeString(value.getLexicalForm());
+		gen.writeString(value.toString());
 	}
 
 }
