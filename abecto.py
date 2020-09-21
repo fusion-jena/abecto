@@ -300,7 +300,7 @@ class Execution:
             sources = ontologies[ontology]
             for source in sources:
                 usedMetadata.update(sources[source].keys())
-        table = "<table>"
+        table = "<table>\n"
         table += "<tr>"
         table += "<th>Ontology</th>"
         #table += "<th>Source</th>"
@@ -315,7 +315,7 @@ class Execution:
             table += "<th>Ontology Date</th>"
         if "versionIri" in usedMetadata:
             table += "<th>Ontology Version IRI</th>"
-        table += "</tr>"
+        table += "</tr>\n"
         for ontology in self.sortedOntologies(ontologies.keys()):
             ontologyNameDisplayed = False
             sources = ontologies[ontology[0]]
@@ -339,7 +339,7 @@ class Execution:
                     table += "<td>" + sources[source].get("versionDateTime","") + "</td>"
                 if "versionIri" in usedMetadata:
                     table += "<td>" + sources[source].get("versionIri","") + "</td>"
-                table += "</tr>"
+                table += "</tr>\n"
         table += "</table>"
         display(HTML(table))
 
@@ -365,7 +365,7 @@ class Execution:
                 measureData = data[data.measure.eq(measure)]
                 dimension1Used = any(set(measureData["dimension1Value"]))
                 dimension2Used = any(set(measureData["dimension2Value"]))
-                html += "<table>"
+                html += "<table>\n"
                 html += "<tr>"
                 if dimension1Used:
                     html += "<th>" + "/".join(set(measureData["dimension1Key"])) + "</th>"
@@ -373,7 +373,7 @@ class Execution:
                     html += "<th>" + "/".join(set(measureData["dimension2Key"])) + "</th>"
                 for (ontoId, ontoLabel) in ontologies:
                     html += "<th>" + ontoLabel + "</th>"
-                html += "</tr>"
+                html += "</tr>\n"
                 # total row
                 totalData = measureData[measureData.dimension1Value.isna() & measureData.dimension2Value.isna()]
                 if not totalData.empty:
@@ -385,7 +385,7 @@ class Execution:
                     for (ontoId, ontoLabel) in ontologies:
                         row = totalData[totalData.ontology.eq(ontoId)]
                         html += "<td>" + (str(row["value"].iat[-1]) if row.size > 0 else "") + "</td>"
-                    html += "</tr>"
+                    html += "</tr>\n"
                 # dimension 1 rows
                 nototalData = measureData[measureData.dimension1Value.notna()]
                 for dimension1Value in sorted(set(nototalData["dimension1Value"])):
@@ -400,7 +400,7 @@ class Execution:
                         for (ontoId, ontoLabel) in ontologies:
                             row = d1TotalData[d1TotalData.ontology.eq(ontoId)]
                             html += "<td>" + (str(row["value"].iat[-1]) if row.size > 0 else "") + "</td>"
-                        html += "</tr>"
+                        html += "</tr>\n"
                     # dimension 2 rows
                     d1NontotalData = d1Data[d1Data.dimension2Value.notna()]
                     for dimension2Value in sorted(set(d1NontotalData["dimension2Value"])):
@@ -412,7 +412,7 @@ class Execution:
                             for (ontoId, ontoLabel) in ontologies:
                                 row = d2Data[d2Data.ontology.eq(ontoId)]
                                 html += "<td>" + (str(row["value"].iat[-1]) if row.size > 0 else "") + "</td>"
-                            html += "</tr>"
+                            html += "</tr>\n"
                 html += "</table>"
                 display(HTML(html))
     
@@ -437,7 +437,7 @@ class Execution:
                                         sort=True)
                             if not ontologiesData.empty:
                                 ontologiesData = ontologiesData.sort_values(["ontologyId1","ontologyId2"])
-                                table = "<div style=\"max-height:30em\"><table>"
+                                table = "<div style=\"max-height:30em\"><table>\n"
                                 table += "<tr>"
                                 table += "<th style=\"text-align:center;\" colspan=\"3\">" + ontology1Label + "</th>"
                                 table += "<th style=\"text-align:center;\" colspan=\"3\">" + ontology2Label + "</th>"
@@ -460,7 +460,7 @@ class Execution:
                                         if firstRow:
                                             table += "<td rowspan=\"" + str(variablesCount) + "\"><a href=\"" + resourcePair["resource2"] + "\">" + resourcePair["resource2"] + "</a></td>"
                                             firstRow = False
-                                        table += "</tr>"
+                                        table += "</tr>\n"
                                 table += "</table>"
                                 display(HTML(table))
 
@@ -473,18 +473,18 @@ class Execution:
             for (ontoId, ontoLabel) in ontologies:
                 display(HTML("<h3>Ontology: " + ontoLabel + "</h3>"))
                 ontoData = totalData[totalData.ontology.eq(ontoId)]
-                table = "<table>"
+                table = "<table>\n"
                 table += "<tr>"
                 table += "<th>" + "Issue Type" + "</th>"
                 table += "<th>" + "Affected Entity" + "</th>"
                 table += "<th>" + "Message" + "</th>"
-                table += "</tr>"
+                table += "</tr>\n"
                 for index, issue in ontoData.iterrows():
                     table += "<tr>"
                     table += "<td>" + issue["type"] + "</td>"
                     table += "<td>" + issue["entity"] + "</td>"
                     table += "<td>" + issue["message"] + "</td>"
-                    table += "</tr>"
+                    table += "</tr>\n"
                 table += "</table>"
                 display(HTML(table))
                 
@@ -513,10 +513,10 @@ class Execution:
                             for (ontology, ontologyData) in [(ontology1,ontology1Data),(ontology2,ontology2Data)]:
                                 html += "<div style=\"float:left;width:50%\">"
                                 html += "<h4>Resources from " + (ontology1 if ontology2 == ontology else ontology2) + " missing in " + ontology + "</h4>"
-                                html += "<ul style=\"max-height:30em;overflow-x:scroll\">"
+                                html += "<ul style=\"max-height:30em;overflow-x:scroll\">\n"
                                 # iterate omitted resources
                                 for omittedResource in sorted(set(ontologyData["omittedResource"])):
-                                    html += "<li><a href=\"" + omittedResource + "\">" + omittedResource + "</a>"
+                                    html += "<li><a href=\"" + omittedResource + "\">" + omittedResource + "</a>\n"
                                 html += "</ul>"
                                 html += "</div>"
                             html += "</div>"
@@ -554,13 +554,13 @@ class Execution:
                             mappingsOfPair.sort_values(by=[ontologyLabel1,ontologyLabel2], inplace=True)
                             # display
                             html = "<div style=\"max-height:30em;overflow-x:scroll\">"
-                            html += "<table>"
+                            html += "<table>\n"
                             html += "<tr><th>" + ontologyLabel1 + "</th><th>" + ontologyLabel2 + "</th></tr>"
                             for index, row in mappingsOfPair.iterrows():
                                 html += "<tr>"
                                 html += "<td><a href=\"" + str(row[0]) + "\">" + str(row[0]) + "</a></td>"
                                 html += "<td><a href=\"" + str(row[1]) + "\">" + str(row[1]) + "</a></td>"
-                                html += "</tr>"
+                                html += "</tr>\n"
                             html += "</table>"
                             html += "</div>"
                             display(HTML(html))
