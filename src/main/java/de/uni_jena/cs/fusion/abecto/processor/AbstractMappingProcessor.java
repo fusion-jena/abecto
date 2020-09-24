@@ -28,6 +28,9 @@ import de.uni_jena.cs.fusion.abecto.util.Mappings;
 public abstract class AbstractMappingProcessor<P extends ParameterModel> extends AbstractMetaProcessor<P>
 		implements MappingProcessor<P> {
 
+	/** The known positive and negative mappings. */
+	protected Collection<Mapping> knownMappings;
+
 	/**
 	 * Computes the mappings of two models. The mappings may contain category meta
 	 * data.
@@ -44,7 +47,7 @@ public abstract class AbstractMappingProcessor<P extends ParameterModel> extends
 	@Override
 	public final void computeResultModel() throws Exception {
 		// collect known mappings
-		Collection<Mapping> knownMappings = Mappings.getMappings(this.metaModel);
+		this.knownMappings = Mappings.getMappings(this.metaModel);
 
 		for (Entry<UUID, Model> i : this.inputGroupModels.entrySet()) {
 			UUID ontologyId1 = i.getKey();
