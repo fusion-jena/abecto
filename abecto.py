@@ -441,7 +441,7 @@ class Execution:
                                 table += "<tr>"
                                 table += "<th style=\"text-align:center;\" colspan=\"3\">" + ontology1Label + "</th>"
                                 table += "<th style=\"text-align:center;\" colspan=\"3\">" + ontology2Label + "</th>"
-                                table += "</tr></div>"
+                                table += "</tr>\n"
                                 resourcePairs = ontologiesData.filter(["resource1","resource2"]).drop_duplicates().sort_values(["resource1","resource2"])
                                 # iterate resources
                                 for index, resourcePair in resourcePairs.iterrows():
@@ -461,7 +461,7 @@ class Execution:
                                             table += "<td rowspan=\"" + str(variablesCount) + "\"><a href=\"" + resourcePair["resource2"] + "\">" + resourcePair["resource2"] + "</a></td>"
                                             firstRow = False
                                         table += "</tr>\n"
-                                table += "</table>"
+                                table += "</table></div>"
                                 display(HTML(table))
 
     def issues(self):

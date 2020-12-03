@@ -5,6 +5,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v0.2.1] - 2020-12-03
+
+### Fixed
+* fix HTML output in Jupyter Notebooks: resolve misplaced `</div>`
+
 ## [v0.2] - 2020-12-03
 
 ### Added
@@ -28,7 +33,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * fix **AbstractRefinementProcessor**: disable RDFS reasoning on input ontologies
 * fix **LiteralDeviationProcessor**: correct handling of float and double, enable multiple values of same property
 * fix **Deviation Report** in Jupyter Notebooks: solve ommission of deviations
-* fix HTML output  in Jupyter Notebooks: add linebreaks to enable `git diff` for result
+* fix HTML output in Jupyter Notebooks: add linebreaks to enable `git diff` for result
 
 ### Removed
 * removed **Mapping Review** in Jupyter Notebooks: replaced by simple *Mapping Report*
