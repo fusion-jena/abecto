@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [v0.2] - 2020-12-03
+
 ### Added
 * add **UrlSourceProcessor**: Loads an RDF document from a URL.
 * add **ExecutionRestController#getMetadata**: return metadata of loaded sources used in this execustion
