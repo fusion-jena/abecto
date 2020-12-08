@@ -29,7 +29,7 @@ ABECTO is licensed under the [Apache License 2.0](https://www.apache.org/license
 
 In case you use this implementation for your scientific work, please consider to cite the related paper:
 
-* Keil, Jan Martin (2020). **[ABECTO: An ABox Evaluation and Comparison Tool for Ontologies](https://fusion.cs.uni-jena.de/fusion/publications/abecto-an-abox-evaluation-and-comparison-tool-for-ontologies/)**. In: ESWC 2020 Satellite Events: Posters and Demos.
+* Keil, Jan Martin (2020). **[ABECTO: An ABox Evaluation and Comparison Tool for Ontologies](https://fusion.cs.uni-jena.de/fusion/publications/abecto-an-abox-evaluation-and-comparison-tool-for-ontologies/)**. In: ESWC 2020 Satellite Events: Posters and Demos. [DOI:10.1007/978-3-030-62327-2_24](https://doi.org/10.1007/978-3-030-62327-2_24).
 
 Further related publications:
 
