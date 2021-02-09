@@ -16,11 +16,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 * add **UrlSourceProcessor**: Loads an RDF document from a URL.
-* add **ExecutionRestController#getMetadata**: return metadata of loaded sources used in this execustion
+* add **ExecutionRestController#getMetadata**: return metadata of loaded sources used in this execution
 * add **UsePresentMappingProcessor**: Provides mappings for resources connected in the ontologies with given property paths.
 * add **TransitiveMappingProcessor**: Provides transitive closure of existing mappings.
 * add **CompletenessProcessor**: Provides absolute and relative coverage statistics, omission detection, and duplicate detection of resources by category and ontologies.
-* extend **SparqlConstructProcessor**: enable recursiv generation of new triples with SPARQL Construct Query and add parameter `maxIterations` with default value `1`
+* extend **SparqlConstructProcessor**: enable recursive generation of new triples with SPARQL Construct Query and add parameter `maxIterations` with default value `1`
 * extend **Measurement Report** for Jupyter Notebooks: alphabetical order of measurements, alphabetical order of dimensions, replace ontology UUIDs with ontology names in dimension columns
 * add **Omission Report** for Jupyter Notebooks
 * extend **JaroWinklerMappingProcessor**: add parameter `defaultLangTag` used as fallback locale for LowerCase conversion during case-insensitive mapping
@@ -34,8 +34,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * fix **Measurement Report** in Jupyter Notebooks: no dimensions column header concatenation of multiple measurement types
 * fix **AbstractRefinementProcessor**: disable RDFS reasoning on input ontologies
 * fix **LiteralDeviationProcessor**: correct handling of float and double, enable multiple values of same property
-* fix **Deviation Report** in Jupyter Notebooks: solve ommission of deviations
-* fix HTML output in Jupyter Notebooks: add linebreaks to enable `git diff` for result
+* fix **Deviation Report** in Jupyter Notebooks: solve omission of deviations
+* fix HTML output in Jupyter Notebooks: add line-breaks to enable `git diff` for result
 
 ### Removed
 * removed **Mapping Review** in Jupyter Notebooks: replaced by simple *Mapping Report*
