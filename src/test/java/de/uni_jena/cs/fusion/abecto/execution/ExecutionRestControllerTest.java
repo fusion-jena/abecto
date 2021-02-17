@@ -161,11 +161,11 @@ public class ExecutionRestControllerTest extends AbstractRepositoryConsumingTest
 		String sourceId = buffer.getId();
 
 		// upload source
-		MockMultipartFile multipartFileSource = new MockMultipartFile("file", new ByteArrayInputStream((//
-		"<http://example.org/> a <http://www.w3.org/2002/07/owl#Ontology> ;"//
-				+ "<http://www.w3.org/2002/07/owl#versionIRI> <http://example.org/2.7.3/> ."//
-				+ "<http://purl.org/dc/terms/modified> \"2020-07-14\" ;"//
-				+ "<http://www.w3.org/2002/07/owl#versionInfo> \"2.7.3\" .").getBytes()));
+		MockMultipartFile multipartFileSource = new MockMultipartFile("file", new ByteArrayInputStream((""//
+				+ "<http://example.org/> a                                           <http://www.w3.org/2002/07/owl#Ontology> ;"//
+				+ "                      <http://www.w3.org/2002/07/owl#versionIRI>  <http://example.org/2.7.3/> ;"//
+				+ "                      <http://purl.org/dc/terms/modified>         \"2020-07-14\" ;"//
+				+ "                      <http://www.w3.org/2002/07/owl#versionInfo> \"2.7.3\" .").getBytes()));
 		this.mvc.perform(multipart(String.format("/node/%s/load", sourceId)).file(multipartFileSource))
 				.andExpect(status().isOk());
 
