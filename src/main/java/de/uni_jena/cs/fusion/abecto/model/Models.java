@@ -39,7 +39,6 @@ import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
-import org.apache.jena.riot.RDFLanguages;
 import org.apache.jena.vocabulary.DCTerms;
 import org.apache.jena.vocabulary.OWL2;
 import org.apache.jena.vocabulary.RDF;
@@ -67,6 +66,9 @@ public class Models {
 		return ModelFactory.createOntologyModel(OntModelSpec.OWL_MEM);
 	}
 
+	public static final Collection<Lang> supportedLanguages = Arrays.asList(Lang.RDFXML, Lang.NT, Lang.N3, Lang.TTL,
+			Lang.JSONLD, Lang.RDFJSON, Lang.NQ, Lang.TRIG, Lang.RDFTHRIFT, Lang.TRIX, Lang.SHACLC);
+
 	public static Model read(InputStream in) throws IOException, IllegalArgumentException {
 		if (!in.markSupported()) {
 			in = new BufferedInputStream(in);
@@ -74,7 +76,8 @@ public class Models {
 		in.mark(MAX_BUFFER_SIZE);
 		// try each known language
 		InputStream unclosableIn = new UncloseableInputStream(in);
-		for (Lang lang : RDFLanguages.getRegisteredLanguages()) {
+		unclosableIn.transferTo(System.out);
+		for (Lang lang : supportedLanguages) {
 			try {
 				Model model = read(unclosableIn, lang);
 				in.close();
