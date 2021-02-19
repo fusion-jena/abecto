@@ -15,16 +15,31 @@
  */
 package de.uni_jena.cs.fusion.abecto.util;
 
+import java.io.IOException;
+
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.ResourceFactory;
+import org.springframework.boot.jackson.JsonComponent;
 
-import com.fasterxml.jackson.databind.util.StdConverter;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 
-public class StringToPropertyConverter extends StdConverter<String, Property> {
+@JsonComponent
+public class PropertyDeserializer extends StdDeserializer<Property> {
+	private static final long serialVersionUID = 2744312587965104922L;
 
-	@Override
-	public Property convert(String value) {
-		return ResourceFactory.createProperty(value);
+	public PropertyDeserializer() {
+		this(null);
 	}
 
+	public PropertyDeserializer(Class<Property> t) {
+		super(t);
+	}
+
+	@Override
+	public Property deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+		return ResourceFactory.createProperty(p.getValueAsString());
+	}
 }

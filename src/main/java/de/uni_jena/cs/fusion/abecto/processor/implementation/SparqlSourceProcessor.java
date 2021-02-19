@@ -45,15 +45,10 @@ import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.Template;
 import org.apache.jena.vocabulary.RDFS;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.processor.AbstractSourceProcessor;
-import de.uni_jena.cs.fusion.abecto.util.StringToNodeConverter;
-import de.uni_jena.cs.fusion.abecto.util.StringToPropertyConverter;
-import de.uni_jena.cs.fusion.abecto.util.StringToQueryConverter;
-import de.uni_jena.cs.fusion.abecto.util.StringToResourceConverter;
 
 public class SparqlSourceProcessor extends AbstractSourceProcessor<SparqlSourceProcessor.Parameter> {
 
@@ -160,7 +155,7 @@ public class SparqlSourceProcessor extends AbstractSourceProcessor<SparqlSourceP
 			resourcesLoaded.addAll(resourcesToLoad);
 			resourcesToLoad.clear();
 
-			if (associatedLoadIteration < associatedLoadIterations) { // if next iteration
+			if ( /* there is a next iteration */ associatedLoadIteration < associatedLoadIterations) {
 				// get associated resources to load in next iteration
 				resultModel.listSubjects().filterKeep(o -> o.isURIResource()).filterDrop(resourcesLoaded::contains)
 						.forEachRemaining(resourcesToLoad::add);
@@ -229,12 +224,10 @@ public class SparqlSourceProcessor extends AbstractSourceProcessor<SparqlSourceP
 		 * be taken into account. None IRI value will be ignored. ORDER BY, LIMIT and
 		 * OFFSET might become overwritten.
 		 */
-		@JsonDeserialize(contentConverter = StringToQueryConverter.class)
 		public Optional<Query> query;
 		/**
 		 * List of the relevant resources.
 		 */
-		@JsonDeserialize(contentConverter = StringToResourceConverter.class)
 		public Collection<Resource> list = Collections.emptyList();
 		/**
 		 * Number of iterations to load associated resources, which share a statement as
@@ -247,7 +240,7 @@ public class SparqlSourceProcessor extends AbstractSourceProcessor<SparqlSourceP
 		 * retrieval of further resources not connected by a hierarchy property.
 		 * Default: rdfs:subClassOf
 		 */
-		@JsonDeserialize(contentConverter = StringToPropertyConverter.class)
+		// TODO rename to followUnlimited
 		public Collection<Property> hierarchyProperties = Collections.singleton(RDFS.subClassOf);
 		/**
 		 * Properties to track in inverse direction to compile a list of associated
@@ -256,7 +249,9 @@ public class SparqlSourceProcessor extends AbstractSourceProcessor<SparqlSourceP
 		 * That means that the subject of a statement whose property is in this list and
 		 * whose object is a loaded resource will become a associated resource.
 		 */
-		@JsonDeserialize(contentConverter = StringToNodeConverter.class)
+		// TODO rename to followInverse
 		public Collection<Node> inverseAssociationProperties = Collections.emptyList();
+
+		// TODO add to followInverseUnlimited
 	}
 }

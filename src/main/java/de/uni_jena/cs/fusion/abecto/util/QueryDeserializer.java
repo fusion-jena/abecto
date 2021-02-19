@@ -15,16 +15,31 @@
  */
 package de.uni_jena.cs.fusion.abecto.util;
 
+import java.io.IOException;
+
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
+import org.springframework.boot.jackson.JsonComponent;
 
-import com.fasterxml.jackson.databind.util.StdConverter;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 
-public class StringToQueryConverter extends StdConverter<String, Query> {
+@JsonComponent
+public class QueryDeserializer extends StdDeserializer<Query> {
+	private static final long serialVersionUID = -2170263298467222685L;
 
-	@Override
-	public Query convert(String value) {
-		return QueryFactory.create(value);
+	public QueryDeserializer() {
+		this(null);
 	}
 
+	public QueryDeserializer(Class<Query> t) {
+		super(t);
+	}
+
+	@Override
+	public Query deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+		return QueryFactory.create(p.getValueAsString());
+	}
 }

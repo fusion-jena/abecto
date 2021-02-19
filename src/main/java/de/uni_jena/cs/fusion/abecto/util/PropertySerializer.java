@@ -15,16 +15,29 @@
  */
 package de.uni_jena.cs.fusion.abecto.util;
 
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.NodeFactory;
+import java.io.IOException;
 
-import com.fasterxml.jackson.databind.util.StdConverter;
+import org.apache.jena.rdf.model.Property;
+import org.springframework.boot.jackson.JsonComponent;
 
-public class StringToNodeConverter extends StdConverter<String, Node> {
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
-	@Override
-	public Node convert(String value) {
-		return NodeFactory.createURI(value);
+@JsonComponent
+public class PropertySerializer extends StdSerializer<Property> {
+	private static final long serialVersionUID = 3835469910652060069L;
+
+	public PropertySerializer() {
+		this(null);
 	}
 
+	public PropertySerializer(Class<Property> t) {
+		super(t);
+	}
+
+	@Override
+	public void serialize(Property value, JsonGenerator gen, SerializerProvider provider) throws IOException {
+		gen.writeString(value.toString());
+	}
 }

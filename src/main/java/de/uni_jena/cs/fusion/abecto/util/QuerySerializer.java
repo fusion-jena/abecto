@@ -15,16 +15,29 @@
  */
 package de.uni_jena.cs.fusion.abecto.util;
 
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.ResourceFactory;
+import java.io.IOException;
 
-import com.fasterxml.jackson.databind.util.StdConverter;
+import org.apache.jena.query.Query;
+import org.springframework.boot.jackson.JsonComponent;
 
-public class StringToResourceConverter extends StdConverter<String, Resource> {
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
-	@Override
-	public Resource convert(String value) {
-		return ResourceFactory.createResource(value);
+@JsonComponent
+public class QuerySerializer extends StdSerializer<Query> {
+	private static final long serialVersionUID = 6345841121980806022L;
+
+	public QuerySerializer() {
+		this(null);
 	}
 
+	public QuerySerializer(Class<Query> t) {
+		super(t);
+	}
+
+	@Override
+	public void serialize(Query value, JsonGenerator gen, SerializerProvider provider) throws IOException {
+		gen.writeString(value.toString());
+	}
 }
