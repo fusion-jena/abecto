@@ -70,8 +70,10 @@ class Abecto:
         r.raise_for_status()
         return Node(self, r.json())
 
-    def project(self, label = ""):
-        r = requests.post(self.base + "project", data = {"label": label})
+    def project(self, name):
+        r = requests.post(self.base + "project", data = {"name": name})
+        if r.status_code == 409:
+            r = requests.get(self.base + "project", params = {"name": name})
         r.raise_for_status()
         return Project(self, r.json())        
     

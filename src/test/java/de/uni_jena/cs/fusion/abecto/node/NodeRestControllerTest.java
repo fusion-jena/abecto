@@ -41,8 +41,8 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-import de.uni_jena.cs.fusion.abecto.ResponseBuffer;
 import de.uni_jena.cs.fusion.abecto.AbstractRepositoryConsumingTest;
+import de.uni_jena.cs.fusion.abecto.ResponseBuffer;
 import de.uni_jena.cs.fusion.abecto.parameter_model.EmptyParameters;
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.processor.AbstractSourceProcessor;
@@ -66,7 +66,7 @@ public class NodeRestControllerTest extends AbstractRepositoryConsumingTest {
 	@BeforeEach
 	public void init() throws Exception {
 		// create a KowledgBase
-		mvc.perform(MockMvcRequestBuilders.post("/project").accept(MediaType.APPLICATION_JSON))
+		mvc.perform(MockMvcRequestBuilders.post("/project").param("name", "projectName").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(buffer);
 		projectId = buffer.getId();
 		mvc.perform(MockMvcRequestBuilders.post("/ontology").param("project", projectId)

@@ -57,7 +57,7 @@ public class ProcessingRepositoryTest extends AbstractRepositoryConsumingTest {
 		model = new TestDataGenerator().generateOntology(1);
 
 		// create project
-		mvc.perform(MockMvcRequestBuilders.post("/project").accept(MediaType.APPLICATION_JSON))
+		mvc.perform(MockMvcRequestBuilders.post("/project").param("name", "projectName").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(buffer);
 		String projectId = buffer.getId();
 

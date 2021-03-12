@@ -56,8 +56,38 @@ class ProjectRestControlerTest extends AbstractRepositoryConsumingTest {
 	private final String unknownUuid = UUID.randomUUID().toString();
 
 	@Test
+	public void create() throws Exception {
+		String projectName = "projectName";
+
+		// create project
+		mvc.perform(
+				MockMvcRequestBuilders.post("/project").param("name", projectName).accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(jsonPath("name").value(projectName));
+
+		// try to reuse same project name
+		mvc.perform(
+				MockMvcRequestBuilders.post("/project").param("name", projectName).accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isConflict());
+	}
+	
+	@Test
+	public void getByName() throws Exception {
+		String projectName = "projectName";
+
+		// create project
+		String expected = mvc.perform(
+				MockMvcRequestBuilders.post("/project").param("name", projectName).accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(jsonPath("name").value(projectName)).andReturn().getResponse().getContentAsString();
+
+		// try to reuse same project name
+		mvc.perform(
+				MockMvcRequestBuilders.get("/project").param("name", projectName).accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(content().string(expected));
+	}
+
+	@Test
 	public void test() throws Exception {
-		String projectLabel = "project label";
+		String projectName = "projectName";
 
 		// return empty project list
 		mvc.perform(MockMvcRequestBuilders.get("/project").accept(MediaType.APPLICATION_JSON))
@@ -65,22 +95,22 @@ class ProjectRestControlerTest extends AbstractRepositoryConsumingTest {
 
 		// return created project
 		mvc.perform(
-				MockMvcRequestBuilders.post("/project").param("label", projectLabel).accept(MediaType.APPLICATION_JSON))
+				MockMvcRequestBuilders.post("/project").param("name", projectName).accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(buffer);
-		assertEquals(projectLabel, buffer.getJson().path("label").asText());
+		assertEquals(projectName, buffer.getJson().path("name").asText());
 		String projectId = buffer.getId();
 
 		// return selected project
 		mvc.perform(MockMvcRequestBuilders.get("/project/" + projectId).accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(buffer);
-		assertEquals(projectLabel, buffer.getJson().path("label").asText());
+		assertEquals(projectName, buffer.getJson().path("name").asText());
 		assertEquals(projectId, buffer.getId());
 
 		// return not empty project list
 
 		mvc.perform(MockMvcRequestBuilders.get("/project").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(buffer);
-		assertTrue(buffer.getJson().findValuesAsText("label").contains(projectLabel));
+		assertTrue(buffer.getJson().findValuesAsText("name").contains(projectName));
 		assertTrue(buffer.getIds().contains(projectId));
 
 		// delete project
@@ -101,7 +131,8 @@ class ProjectRestControlerTest extends AbstractRepositoryConsumingTest {
 	@Test
 	public void run() throws Exception {
 		// create project
-		mvc.perform(MockMvcRequestBuilders.post("/project").accept(MediaType.APPLICATION_JSON))
+		mvc.perform(
+				MockMvcRequestBuilders.post("/project").param("name", "projectName").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(buffer);
 		String projectId = buffer.getId();
 

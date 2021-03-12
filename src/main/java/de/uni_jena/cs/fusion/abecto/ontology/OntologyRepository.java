@@ -23,4 +23,6 @@ import de.uni_jena.cs.fusion.abecto.project.Project;
 
 public interface OntologyRepository extends CrudRepository<Ontology, UUID> {
 	Iterable<Ontology> findAllByProject(Project project);
+
+	void deleteAllByProject(Project project);
 }

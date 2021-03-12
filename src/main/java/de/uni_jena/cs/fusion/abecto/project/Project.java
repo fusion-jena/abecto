@@ -15,23 +15,25 @@
  */
 package de.uni_jena.cs.fusion.abecto.project;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 
 import de.uni_jena.cs.fusion.abecto.util.AbstractEntityWithUUID;
 
-@Entity
+@Entity()
 public class Project extends AbstractEntityWithUUID {
 
-	protected String label;
+	@Column(unique = true)
+	protected String name;
 
 	protected Project() {
 	}
 
-	public Project(String label) {
-		this.label = label;
+	public Project(String name) {
+		this.name = name;
 	}
 
-	public String getLabel() {
-		return label;
+	public String getName() {
+		return name;
 	}
 }

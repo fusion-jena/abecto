@@ -47,7 +47,7 @@ public class ExecutionRestControllerTest extends AbstractRepositoryConsumingTest
 	@Test
 	public void getData() throws Exception {
 		// create project
-		mvc.perform(MockMvcRequestBuilders.post("/project").accept(MediaType.APPLICATION_JSON))
+		mvc.perform(MockMvcRequestBuilders.post("/project").param("name", "projectName").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(buffer);
 		String projectId = buffer.getId();
 
@@ -94,7 +94,7 @@ public class ExecutionRestControllerTest extends AbstractRepositoryConsumingTest
 	@Test
 	public void getResults() throws Exception {
 		// create project
-		mvc.perform(MockMvcRequestBuilders.post("/project").accept(MediaType.APPLICATION_JSON))
+		mvc.perform(MockMvcRequestBuilders.post("/project").param("name", "projectName").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(buffer);
 		String projectId = buffer.getId();
 
@@ -144,7 +144,7 @@ public class ExecutionRestControllerTest extends AbstractRepositoryConsumingTest
 	@Test
 	public void getMetadata() throws Exception {
 		// create project
-		mvc.perform(MockMvcRequestBuilders.post("/project").accept(MediaType.APPLICATION_JSON))
+		mvc.perform(MockMvcRequestBuilders.post("/project").param("name", "projectName").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(buffer);
 		String projectId = buffer.getId();
 

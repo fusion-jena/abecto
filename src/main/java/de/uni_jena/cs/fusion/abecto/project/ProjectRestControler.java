@@ -21,6 +21,7 @@ import java.util.NoSuchElementException;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -59,26 +60,32 @@ public class ProjectRestControler {
 	ProjectRunner projectRunner;
 
 	@PostMapping("/project")
-	public Project create(@RequestParam(name = "label", defaultValue = "") String label) {
-		return projectRepository.save(new Project(label));
+	public Project create(@RequestParam(name = "name") String projectName) {
+		try {
+			return projectRepository.save(new Project(projectName));
+		} catch (DataIntegrityViolationException e) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "Project name already used.");
+		}
 	}
 
 	@DeleteMapping("/project/{uuid}")
 	@ResponseStatus(code = HttpStatus.NO_CONTENT)
 	public void delete(@PathVariable("uuid") UUID uuid) {
 		Project project = this.get(uuid);
-		for (Node node : nodeRepository.findAllByProject(project)) {
-			nodeRestController.delete(node.getId());
-		}
-		for (Ontology ontology : ontologyRepository.findAllByProject(project)) {
-			ontologyRestController.delete(ontology.getId());
-		}
+		nodeRepository.deleteAllByProject(project);
+		ontologyRepository.deleteAllByProject(project);
 		projectRepository.delete(project);
 	}
 
 	@GetMapping("/project/{uuid}")
 	public Project get(@PathVariable("uuid") UUID projectId) {
 		return projectRepository.findById(projectId)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found."));
+	}
+
+	@GetMapping(value = "/project", params = "name")
+	public Project getByName(@RequestParam(name = "name") String projectName) {
+		return projectRepository.findOneByName(projectName)
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found."));
 	}
 

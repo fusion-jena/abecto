@@ -49,7 +49,7 @@ public class ParameterRestControllerTest extends AbstractRepositoryConsumingTest
 
 	@Test
 	public void test() throws Exception {
-		mvc.perform(MockMvcRequestBuilders.post("/project").accept(MediaType.APPLICATION_JSON))
+		mvc.perform(MockMvcRequestBuilders.post("/project").param("name", "projectName").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(buffer);
 		String projectId = buffer.getId();
 		mvc.perform(MockMvcRequestBuilders.post("/ontology").param("project", projectId)

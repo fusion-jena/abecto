@@ -48,7 +48,7 @@ public class OntologyRestControllerTest extends AbstractRepositoryConsumingTest 
 	@Test
 	public void test() throws Exception {
 		// create project and get project id
-		mvc.perform(MockMvcRequestBuilders.post("/project").accept(MediaType.APPLICATION_JSON))
+		mvc.perform(MockMvcRequestBuilders.post("/project").param("name", "projectName").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(buffer);
 		String projectId = buffer.getId();
 
