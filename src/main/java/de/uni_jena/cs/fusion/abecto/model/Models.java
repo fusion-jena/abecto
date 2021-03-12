@@ -76,7 +76,6 @@ public class Models {
 		in.mark(MAX_BUFFER_SIZE);
 		// try each known language
 		InputStream unclosableIn = new UncloseableInputStream(in);
-		unclosableIn.transferTo(System.out);
 		for (Lang lang : supportedLanguages) {
 			try {
 				Model model = read(unclosableIn, lang);
