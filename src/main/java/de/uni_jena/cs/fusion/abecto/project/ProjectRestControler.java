@@ -35,10 +35,8 @@ import org.springframework.web.server.ResponseStatusException;
 import de.uni_jena.cs.fusion.abecto.execution.Execution;
 import de.uni_jena.cs.fusion.abecto.node.Node;
 import de.uni_jena.cs.fusion.abecto.node.NodeRepository;
-import de.uni_jena.cs.fusion.abecto.node.NodeRestController;
 import de.uni_jena.cs.fusion.abecto.ontology.Ontology;
 import de.uni_jena.cs.fusion.abecto.ontology.OntologyRepository;
-import de.uni_jena.cs.fusion.abecto.ontology.OntologyRestController;
 import de.uni_jena.cs.fusion.abecto.processing.Processing;
 import de.uni_jena.cs.fusion.abecto.processing.ProcessingRepository;
 
@@ -51,11 +49,7 @@ public class ProjectRestControler {
 	@Autowired
 	OntologyRepository ontologyRepository;
 	@Autowired
-	OntologyRestController ontologyRestController;
-	@Autowired
 	NodeRepository nodeRepository;
-	@Autowired
-	NodeRestController nodeRestController;
 	@Autowired
 	ProjectRunner projectRunner;
 

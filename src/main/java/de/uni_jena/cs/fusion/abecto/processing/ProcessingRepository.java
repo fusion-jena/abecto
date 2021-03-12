@@ -27,4 +27,6 @@ public interface ProcessingRepository extends CrudRepository<Processing, UUID> {
 	Iterable<Processing> findByNodeOrderByStartDateTime(Node node);
 
 	Iterable<Processing> findAllByNode(Node node);
+
+	void deleteAllByNode(Node node);
 }

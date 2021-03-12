@@ -29,9 +29,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import de.uni_jena.cs.fusion.abecto.node.Node;
 import de.uni_jena.cs.fusion.abecto.node.NodeRepository;
-import de.uni_jena.cs.fusion.abecto.node.NodeRestController;
 import de.uni_jena.cs.fusion.abecto.project.Project;
 import de.uni_jena.cs.fusion.abecto.project.ProjectRepository;
 
@@ -44,8 +42,6 @@ public class OntologyRestController {
 	ProjectRepository projectRepository;
 	@Autowired
 	NodeRepository nodeRepository;
-	@Autowired
-	NodeRestController nodeRestController;
 
 	@PostMapping("/ontology")
 	public Ontology create(@RequestParam("project") UUID projectId,
@@ -62,9 +58,7 @@ public class OntologyRestController {
 	@ResponseStatus(code = HttpStatus.NO_CONTENT)
 	public void delete(@PathVariable("uuid") UUID uuid) {
 		Ontology ontology = this.get(uuid);
-		for (Node node : nodeRepository.findAllByOntology(ontology)) {
-			nodeRestController.delete(node.getId());
-		}
+		nodeRepository.deleteAllByOntology(ontology);
 		ontologyRepository.delete(ontology);
 	}
 

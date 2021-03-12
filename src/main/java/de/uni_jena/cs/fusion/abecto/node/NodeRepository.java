@@ -28,4 +28,6 @@ public interface NodeRepository extends CrudRepository<Node, UUID> {
 	Iterable<Node> findAllByOntology(Ontology ontology);
 
 	void deleteAllByProject(Project project);
+
+	void deleteAllByOntology(Ontology ontology);
 }

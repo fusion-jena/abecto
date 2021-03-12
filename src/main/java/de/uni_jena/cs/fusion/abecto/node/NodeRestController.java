@@ -42,7 +42,6 @@ import de.uni_jena.cs.fusion.abecto.parameter.ParameterRepository;
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.processing.Processing;
 import de.uni_jena.cs.fusion.abecto.processing.ProcessingRepository;
-import de.uni_jena.cs.fusion.abecto.processing.ProcessingRestController;
 import de.uni_jena.cs.fusion.abecto.processing.ProcessingRunner;
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
 import de.uni_jena.cs.fusion.abecto.processor.SourceProcessor;
@@ -65,8 +64,6 @@ public class NodeRestController {
 	NodeRepository nodeRepository;
 	@Autowired
 	ProcessingRepository processingRepository;
-	@Autowired
-	ProcessingRestController processingRestController;
 	@Autowired
 	ParameterRepository parameterRepository;
 
@@ -160,9 +157,7 @@ public class NodeRestController {
 	@DeleteMapping("/node/{uuid}")
 	public void delete(@PathVariable("uuid") UUID uuid) {
 		Node node = this.get(uuid);
-		for (Processing processing : processingRepository.findAllByNode(node)) {
-			processingRestController.delete(processing.getId());
-		}
+		processingRepository.deleteAllByNode(node);
 		nodeRepository.delete(node);
 	}
 
