@@ -75,18 +75,18 @@ public class ProcessingRepositoryTest extends AbstractRepositoryConsumingTest {
 
 		// upload source
 		MockMultipartFile multipartFileSource1 = new MockMultipartFile("file", Models.writeBytes(model, Lang.NTRIPLES));
-		mvc.perform(multipart(String.format("/node/%s/load", sourceId)).file(multipartFileSource1))
+		mvc.perform(multipart("/node/{sourceId}/load", sourceId).file(multipartFileSource1))
 				.andExpect(status().isOk());
 
 		// get last processing
-		mvc.perform(MockMvcRequestBuilders.get(String.format("/node/%s/processing/last", sourceId))
+		mvc.perform(MockMvcRequestBuilders.get("/node/{sourceId}/processing/last", sourceId)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		processingId = buffer.getId();
 	}
 
 	@Test
 	public void getModel() throws Exception {
-		mvc.perform(MockMvcRequestBuilders.get(String.format("/processing/%s/model", processingId))
+		mvc.perform(MockMvcRequestBuilders.get("/processing/{processingId}/model", processingId)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andExpect(content().string(containsString(
 						"<http://example.org/onto1/individual0> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.org/onto1/Class0>")));
@@ -94,7 +94,7 @@ public class ProcessingRepositoryTest extends AbstractRepositoryConsumingTest {
 
 	@Test
 	public void getResult() throws Exception {
-		mvc.perform(MockMvcRequestBuilders.get(String.format("/processing/%s/result", processingId))
+		mvc.perform(MockMvcRequestBuilders.get("/processing/{processingId}/result", processingId)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andExpect(content().string(containsString("@graph")));
 	}

@@ -69,15 +69,17 @@ class ProjectRestControlerTest extends AbstractRepositoryConsumingTest {
 				MockMvcRequestBuilders.post("/project").param("name", projectName).accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isConflict());
 	}
-	
+
 	@Test
 	public void getByName() throws Exception {
 		String projectName = "projectName";
 
 		// create project
-		String expected = mvc.perform(
-				MockMvcRequestBuilders.post("/project").param("name", projectName).accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk()).andExpect(jsonPath("name").value(projectName)).andReturn().getResponse().getContentAsString();
+		String expected = mvc
+				.perform(MockMvcRequestBuilders.post("/project").param("name", projectName)
+						.accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(jsonPath("name").value(projectName)).andReturn().getResponse()
+				.getContentAsString();
 
 		// try to reuse same project name
 		mvc.perform(
@@ -166,13 +168,13 @@ class ProjectRestControlerTest extends AbstractRepositoryConsumingTest {
 		// upload source 1
 		MockMultipartFile multipartFileSource1 = new MockMultipartFile("file",
 				testOntologyBuilder.setErrorRate(10).setGapRate(3).stream(1));
-		this.mvc.perform(multipart(String.format("/node/%s/load", source1Id)).file(multipartFileSource1))
+		this.mvc.perform(multipart("/node/{source1Id}/load", source1Id).file(multipartFileSource1))
 				.andExpect(status().isOk());
 
 		// upload source 2
 		MockMultipartFile multipartFileSource2 = new MockMultipartFile("file",
 				testOntologyBuilder.setErrorRate(8).setGapRate(5).stream(2));
-		this.mvc.perform(multipart(String.format("/node/%s/load", source2Id)).file(multipartFileSource2))
+		this.mvc.perform(multipart("/node/{source2Id}/load", source2Id).file(multipartFileSource2))
 				.andExpect(status().isOk());
 
 		String transformationParameter = "{\"query\":\"CONSTRUCT {?s <http://example.org/p> <http://example.org/o>} WHERE {?s ?p ?o. Filter(!isBLANK(?s))}\"}";
@@ -208,12 +210,12 @@ class ProjectRestControlerTest extends AbstractRepositoryConsumingTest {
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 
 		// run project
-		mvc.perform(MockMvcRequestBuilders.get(String.format("/project/%s/run", projectId)).param("await", "true")
+		mvc.perform(MockMvcRequestBuilders.get("/project/{projectId}/run", projectId).param("await", "true")
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 
 		// check processings
 		for (JsonNode processingId : buffer.getJson().get("processings")) {
-			mvc.perform(MockMvcRequestBuilders.get(String.format("/processing/%s", processingId.asText()))
+			mvc.perform(MockMvcRequestBuilders.get("/processing/{processingId.asText(}", processingId.asText())
 					.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 					.andExpect(jsonPath("$.status").value("SUCCEEDED")).andDo(buffer);
 		}

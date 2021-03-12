@@ -49,11 +49,13 @@ public class ParameterRestControllerTest extends AbstractRepositoryConsumingTest
 
 	@Test
 	public void test() throws Exception {
-		mvc.perform(MockMvcRequestBuilders.post("/project").param("name", "projectName").accept(MediaType.APPLICATION_JSON))
+		mvc.perform(
+				MockMvcRequestBuilders.post("/project").param("name", "projectName").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(buffer);
 		String projectId = buffer.getId();
-		mvc.perform(MockMvcRequestBuilders.post("/ontology").param("project", projectId)
-				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
+		mvc.perform(
+				MockMvcRequestBuilders.post("/ontology").param("project", projectId).accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andDo(buffer);
 		String kowledgBaseId = buffer.getId();
 		mvc.perform(MockMvcRequestBuilders.post("/node")
 				.param("class", "de.uni_jena.cs.fusion.abecto.parameter.ParameterRestControllerTest$ParameterProcessor")
@@ -63,12 +65,12 @@ public class ParameterRestControllerTest extends AbstractRepositoryConsumingTest
 
 		// set parameter value
 		String parameterValue = "parameterValue";
-		mvc.perform(MockMvcRequestBuilders.post(String.format("/node/%s/parameters", configurationId))
+		mvc.perform(MockMvcRequestBuilders.post("/node/{configurationId}/parameters", configurationId)
 				.param("key", "parameterName").param("value", JSON.writeValueAsString(parameterValue))
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
 
 		// get parameter value
-		mvc.perform(MockMvcRequestBuilders.get(String.format("/node/%s/parameters", configurationId))
+		mvc.perform(MockMvcRequestBuilders.get("/node/{configurationId}/parameters", configurationId)
 				.param("key", "parameterName").accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 		assertEquals(parameterValue, buffer.getString());

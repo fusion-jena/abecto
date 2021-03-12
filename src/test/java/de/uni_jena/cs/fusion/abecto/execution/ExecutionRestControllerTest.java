@@ -66,7 +66,7 @@ public class ExecutionRestControllerTest extends AbstractRepositoryConsumingTest
 		// upload source
 		MockMultipartFile multipartFileSource = new MockMultipartFile("file",
 				new TestDataGenerator().setClassFactor(1).setIndividualFactor(1).setDensity(4).stream(1));
-		this.mvc.perform(multipart(String.format("/node/%s/load", sourceId)).file(multipartFileSource))
+		this.mvc.perform(multipart("/node/{sourceId}/load", sourceId).file(multipartFileSource))
 				.andExpect(status().isOk());
 
 		// add category
@@ -76,12 +76,12 @@ public class ExecutionRestControllerTest extends AbstractRepositoryConsumingTest
 				.andExpect(status().isOk()).andDo(buffer);
 
 		// run project
-		mvc.perform(MockMvcRequestBuilders.get(String.format("/project/%s/run", projectId)).param("await", "true")
+		mvc.perform(MockMvcRequestBuilders.get("/project/{projectId}/run", projectId).param("await", "true")
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		String executionId = buffer.getId();
 
 		// get execution
-		mvc.perform(MockMvcRequestBuilders.get(String.format("/execution/%s/data", executionId))
+		mvc.perform(MockMvcRequestBuilders.get("/execution/{executionId}/data", executionId)
 				.param("category", "entity").param("ontology", knowledgBaseId).accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(print()).andDo(buffer);
 
@@ -116,7 +116,7 @@ public class ExecutionRestControllerTest extends AbstractRepositoryConsumingTest
 		// upload source
 		MockMultipartFile multipartFileSource = new MockMultipartFile("file",
 				testOntologyBuilder.setErrorRate(10).setGapRate(3).stream(1));
-		this.mvc.perform(multipart(String.format("/node/%s/load", sourceId)).file(multipartFileSource))
+		this.mvc.perform(multipart("/node/{sourceId}/load", sourceId).file(multipartFileSource))
 				.andExpect(status().isOk());
 
 		// add category
@@ -126,12 +126,12 @@ public class ExecutionRestControllerTest extends AbstractRepositoryConsumingTest
 				.andExpect(status().isOk()).andDo(buffer);
 
 		// run project
-		mvc.perform(MockMvcRequestBuilders.get(String.format("/project/%s/run", projectId)).param("await", "true")
+		mvc.perform(MockMvcRequestBuilders.get("/project/{projectId}/run", projectId).param("await", "true")
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		String executionId = buffer.getId();
 
 		// get execution
-		mvc.perform(MockMvcRequestBuilders.get(String.format("/execution/%s/results", executionId))
+		mvc.perform(MockMvcRequestBuilders.get("/execution/{executionId}/results", executionId)
 				.param("type", "Category").accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 
 		JSONAssert.assertEquals("[{"//
@@ -166,22 +166,22 @@ public class ExecutionRestControllerTest extends AbstractRepositoryConsumingTest
 				+ "                      <http://www.w3.org/2002/07/owl#versionIRI>  <http://example.org/2.7.3/> ;"//
 				+ "                      <http://purl.org/dc/terms/modified>         \"2020-07-14\" ;"//
 				+ "                      <http://www.w3.org/2002/07/owl#versionInfo> \"2.7.3\" .").getBytes()));
-		this.mvc.perform(multipart(String.format("/node/%s/load", sourceId)).file(multipartFileSource))
+		this.mvc.perform(multipart("/node/{sourceId}/load", sourceId).file(multipartFileSource))
 				.andExpect(status().isOk());
 
 		// run project
-		mvc.perform(MockMvcRequestBuilders.get(String.format("/project/%s/run", projectId)).param("await", "true")
+		mvc.perform(MockMvcRequestBuilders.get("/project/{projectId}/run", projectId).param("await", "true")
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		String executionId = buffer.getId();
 
 		// get source loading datetime
-		mvc.perform(MockMvcRequestBuilders.get(String.format("/node/%s/processing/last", sourceId))
+		mvc.perform(MockMvcRequestBuilders.get("/node/{sourceId}/processing/last", sourceId)
 				.param("await", "true").accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		String loadingDatetime = OffsetDateTime.parse(buffer.getJson().get("startDateTime").asText())
 				.truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 
 		// get metadata
-		mvc.perform(MockMvcRequestBuilders.get(String.format("/execution/%s/metadata", executionId))
+		mvc.perform(MockMvcRequestBuilders.get("/execution/{executionId}/metadata", executionId)
 				.param("category", "entity").param("ontology", ontologyId).accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(buffer);
 

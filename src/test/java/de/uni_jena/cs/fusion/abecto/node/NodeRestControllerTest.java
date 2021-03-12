@@ -95,7 +95,7 @@ public class NodeRestControllerTest extends AbstractRepositoryConsumingTest {
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 
 		// get node
-		mvc.perform(MockMvcRequestBuilders.get(String.format("/node/%s", buffer.getId()))
+		mvc.perform(MockMvcRequestBuilders.get("/node/{buffer.getId(}", buffer.getId())
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		JSONAssert.assertEquals(parametersJson, buffer.getJson().path("parameter").path("parameters").toString(),
 				false);
@@ -107,11 +107,11 @@ public class NodeRestControllerTest extends AbstractRepositoryConsumingTest {
 				.andExpect(status().isBadRequest());
 
 		// use unknown node id
-		mvc.perform(MockMvcRequestBuilders.post(String.format("/node/%s/parameters", unknownUuid))
+		mvc.perform(MockMvcRequestBuilders.post("/node/{unknownUuid}/parameters", unknownUuid)
 				.param("key", "parameterName").param("value", "some value").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isBadRequest());
 		mvc.perform(
-				MockMvcRequestBuilders.get(String.format("/node/%s", unknownUuid)).accept(MediaType.APPLICATION_JSON))
+				MockMvcRequestBuilders.get("/node/{unknownUuid}", unknownUuid).accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isNotFound());
 	}
 
@@ -123,7 +123,7 @@ public class NodeRestControllerTest extends AbstractRepositoryConsumingTest {
 				.param("ontology", ontologyId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andDo(buffer);
 
-		mvc.perform(MockMvcRequestBuilders.post(String.format("/node/%s/load", buffer.getId()))
+		mvc.perform(MockMvcRequestBuilders.post("/node/{buffer.getId(}/load", buffer.getId())
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
 
 		Assertions.assertTrue(NoUploadProcessor.loaded);
@@ -139,7 +139,7 @@ public class NodeRestControllerTest extends AbstractRepositoryConsumingTest {
 
 		String content = "File Content";
 		MockMultipartFile multipartFile = new MockMultipartFile("file", "test.txt", "text/plain", content.getBytes());
-		this.mvc.perform(multipart(String.format("/node/%s/load", buffer.getId())).file(multipartFile))
+		this.mvc.perform(multipart("/node/{buffer.getId(}/load", buffer.getId()).file(multipartFile))
 				.andExpect(status().isOk());
 
 		Assertions.assertEquals(content, new String(UploadProcessor.streamData));
@@ -159,17 +159,17 @@ public class NodeRestControllerTest extends AbstractRepositoryConsumingTest {
 
 		// upload source
 		MockMultipartFile multipartFileSource = new MockMultipartFile("file", rdf1.getBytes());
-		mvc.perform(multipart(String.format("/node/%s/load", sourceId)).file(multipartFileSource))
+		mvc.perform(multipart("/node/{sourceId}/load", sourceId).file(multipartFileSource))
 				.andExpect(status().isOk());
 
 		// upload changed source
 		multipartFileSource = new MockMultipartFile("file", rdf2.getBytes());
-		mvc.perform(multipart(String.format("/node/%s/load", sourceId)).file(multipartFileSource))
+		mvc.perform(multipart("/node/{sourceId}/load", sourceId).file(multipartFileSource))
 				.andExpect(status().isOk()).andDo(buffer);
 		String secondUploadId = buffer.getId();
 
 		// get last processing
-		mvc.perform(MockMvcRequestBuilders.get(String.format("/node/%s/processing/last", sourceId))
+		mvc.perform(MockMvcRequestBuilders.get("/node/{sourceId}/processing/last", sourceId)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
 				.andExpect(jsonPath("id", is(secondUploadId)));
 	}
