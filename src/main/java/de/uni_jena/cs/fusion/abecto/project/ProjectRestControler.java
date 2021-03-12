@@ -18,10 +18,10 @@ package de.uni_jena.cs.fusion.abecto.project;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -54,11 +54,17 @@ public class ProjectRestControler {
 	ProjectRunner projectRunner;
 
 	@PostMapping("/project")
-	public Project create(@RequestParam(name = "name") String projectName) {
-		try {
+	public Project create(@RequestParam(name = "name") String projectName,
+			@RequestParam(name = "useIfExists", defaultValue = "false") boolean useIfExists) {
+		Optional<Project> existingProject = projectRepository.findOneByName(projectName);
+		if (existingProject.isPresent()) {
+			if (useIfExists) {
+				return existingProject.get();
+			} else {
+				throw new ResponseStatusException(HttpStatus.CONFLICT, "Project name already used.");
+			}
+		} else {
 			return projectRepository.save(new Project(projectName));
-		} catch (DataIntegrityViolationException e) {
-			throw new ResponseStatusException(HttpStatus.CONFLICT, "Project name already used.");
 		}
 	}
 

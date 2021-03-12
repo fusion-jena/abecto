@@ -58,16 +58,27 @@ class ProjectRestControlerTest extends AbstractRepositoryConsumingTest {
 	@Test
 	public void create() throws Exception {
 		String projectName = "projectName";
+		String projectName2 = "projectName2";
 
 		// create project
 		mvc.perform(
 				MockMvcRequestBuilders.post("/project").param("name", projectName).accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andExpect(jsonPath("name").value(projectName));
 
-		// try to reuse same project name
+		// create or reuse project
+		mvc.perform(
+				MockMvcRequestBuilders.post("/project").param("name", projectName2).param("useIfExists", "true").accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(jsonPath("name").value(projectName2));
+
+		// try to us same project name
 		mvc.perform(
 				MockMvcRequestBuilders.post("/project").param("name", projectName).accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isConflict());
+
+		// reuse project
+		mvc.perform(MockMvcRequestBuilders.post("/project").param("name", projectName).param("useIfExists", "true")
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
+				.andExpect(jsonPath("name").value(projectName));
 	}
 
 	@Test

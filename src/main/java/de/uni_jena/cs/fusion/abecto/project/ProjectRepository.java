@@ -22,4 +22,6 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface ProjectRepository extends CrudRepository<Project, UUID> {
 	Optional<Project> findOneByName(String name);
+
+	void deleteAllByName(String projectName);
 }
