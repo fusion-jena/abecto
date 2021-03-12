@@ -39,6 +39,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.apache.jena.arq.querybuilder.AbstractQueryBuilder;
+import org.apache.jena.arq.querybuilder.Converters;
 import org.apache.jena.arq.querybuilder.ExprFactory;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.arq.querybuilder.UpdateBuilder;
@@ -364,7 +365,7 @@ public class SparqlEntityManager {
 							for (Object element : (Collection<?>) value) {
 
 								// use element as object
-								Node subject = AbstractQueryBuilder.makeVar(annotation.subject());
+								Node subject = Converters.makeVar(annotation.subject());
 								Node object = convertToNode(element);
 
 								// add triple
@@ -382,13 +383,13 @@ public class SparqlEntityManager {
 					expressions.add(factory.exists(existsClause));
 				} else if (value instanceof Optional<?>) {
 					if (((Optional<?>) value).isPresent()) {
-						expressions.add(factory.eq(AbstractQueryBuilder.makeVar(field.getName()),
+						expressions.add(factory.eq(Converters.makeVar(field.getName()),
 								convertToNode(((Optional<?>) value).get())));
 					} else {
 						SelectBuilder notExistsClause = new SelectBuilder();
 						for (SparqlPattern annotation : field.getAnnotationsByType(SparqlPattern.class)) {
 
-							Node subject = AbstractQueryBuilder.makeVar(annotation.subject());
+							Node subject = Converters.makeVar(annotation.subject());
 							Path predicate = getAnnotationPropertyPath(field, annotation,
 									select.getPrologHandler().getPrefixes());
 
@@ -397,7 +398,7 @@ public class SparqlEntityManager {
 						expressions.add(factory.notexists(notExistsClause));
 					}
 				} else {
-					expressions.add(factory.eq(AbstractQueryBuilder.makeVar(field.getName()), convertToNode(value)));
+					expressions.add(factory.eq(Converters.makeVar(field.getName()), convertToNode(value)));
 				}
 			}
 		}
@@ -914,13 +915,13 @@ public class SparqlEntityManager {
 								"Illegal annotation for %s: Omission of annotation subject permitted only for Resource fields.",
 								field.getName()));
 					}
-					subject = AbstractQueryBuilder.makeVar(field.getName());
-					object = AbstractQueryBuilder.makeNode(annotation.object(),
+					subject = Converters.makeVar(field.getName());
+					object = Converters.makeNode(annotation.object(),
 							((PrologClause<?>) queryBuilder).getPrologHandler().getPrefixes());
 				} else if (isAnnotationWithSubject(annotation)) {
 					// use field as object
-					subject = AbstractQueryBuilder.makeVar(annotation.subject());
-					object = AbstractQueryBuilder.makeVar(field.getName());
+					subject = Converters.makeVar(annotation.subject());
+					object = Converters.makeVar(field.getName());
 				} else {
 					throw new IllegalArgumentException(String
 							.format("Missing annotation for %s: Either subject or object required.", field.getName()));
