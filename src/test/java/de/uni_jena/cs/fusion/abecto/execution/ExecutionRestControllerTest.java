@@ -47,14 +47,14 @@ public class ExecutionRestControllerTest extends AbstractRepositoryConsumingTest
 	@Test
 	public void getData() throws Exception {
 		// create project
-		mvc.perform(MockMvcRequestBuilders.post("/project").param("name", "projectName").accept(MediaType.APPLICATION_JSON))
+		mvc.perform(
+				MockMvcRequestBuilders.post("/project").param("name", "projectName").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(buffer);
 		String projectId = buffer.getId();
 
 		// create a KowledgBase
-		mvc.perform(
-				MockMvcRequestBuilders.post("/ontology").param("project", projectId).accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk()).andDo(buffer);
+		mvc.perform(MockMvcRequestBuilders.post("/ontology").param("project", projectId).param("name", "ontologyName")
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		String knowledgBaseId = buffer.getId();
 
 		// add source
@@ -81,9 +81,9 @@ public class ExecutionRestControllerTest extends AbstractRepositoryConsumingTest
 		String executionId = buffer.getId();
 
 		// get execution
-		mvc.perform(MockMvcRequestBuilders.get("/execution/{executionId}/data", executionId)
-				.param("category", "entity").param("ontology", knowledgBaseId).accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk()).andDo(print()).andDo(buffer);
+		mvc.perform(MockMvcRequestBuilders.get("/execution/{executionId}/data", executionId).param("category", "entity")
+				.param("ontology", knowledgBaseId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
+				.andDo(print()).andDo(buffer);
 
 		JSONAssert.assertEquals("{"//
 				+ "\"http://example.org/onto1/individual0\":{\"label\":[\"individual0@en\"]},"//
@@ -94,14 +94,14 @@ public class ExecutionRestControllerTest extends AbstractRepositoryConsumingTest
 	@Test
 	public void getResults() throws Exception {
 		// create project
-		mvc.perform(MockMvcRequestBuilders.post("/project").param("name", "projectName").accept(MediaType.APPLICATION_JSON))
+		mvc.perform(
+				MockMvcRequestBuilders.post("/project").param("name", "projectName").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(buffer);
 		String projectId = buffer.getId();
 
 		// create a KowledgBase
-		mvc.perform(
-				MockMvcRequestBuilders.post("/ontology").param("project", projectId).accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk()).andDo(buffer);
+		mvc.perform(MockMvcRequestBuilders.post("/ontology").param("project", projectId).param("name", "ontologyName")
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		String knowledgBaseId = buffer.getId();
 
 		// add source
@@ -144,14 +144,14 @@ public class ExecutionRestControllerTest extends AbstractRepositoryConsumingTest
 	@Test
 	public void getMetadata() throws Exception {
 		// create project
-		mvc.perform(MockMvcRequestBuilders.post("/project").param("name", "projectName").accept(MediaType.APPLICATION_JSON))
+		mvc.perform(
+				MockMvcRequestBuilders.post("/project").param("name", "projectName").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(buffer);
 		String projectId = buffer.getId();
 
 		// create a Ontology
-		mvc.perform(
-				MockMvcRequestBuilders.post("/ontology").param("project", projectId).accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk()).andDo(buffer);
+		mvc.perform(MockMvcRequestBuilders.post("/ontology").param("project", projectId).param("name", "ontologyName")
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		String ontologyId = buffer.getId();
 
 		// add source
@@ -175,8 +175,8 @@ public class ExecutionRestControllerTest extends AbstractRepositoryConsumingTest
 		String executionId = buffer.getId();
 
 		// get source loading datetime
-		mvc.perform(MockMvcRequestBuilders.get("/node/{sourceId}/processing/last", sourceId)
-				.param("await", "true").accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
+		mvc.perform(MockMvcRequestBuilders.get("/node/{sourceId}/processing/last", sourceId).param("await", "true")
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		String loadingDatetime = OffsetDateTime.parse(buffer.getJson().get("startDateTime").asText())
 				.truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 

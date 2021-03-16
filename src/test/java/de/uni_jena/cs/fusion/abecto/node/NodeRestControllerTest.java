@@ -66,10 +66,11 @@ public class NodeRestControllerTest extends AbstractRepositoryConsumingTest {
 	@BeforeEach
 	public void init() throws Exception {
 		// create a KowledgBase
-		mvc.perform(MockMvcRequestBuilders.post("/project").param("name", "projectName").accept(MediaType.APPLICATION_JSON))
+		mvc.perform(
+				MockMvcRequestBuilders.post("/project").param("name", "projectName").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(buffer);
 		projectId = buffer.getId();
-		mvc.perform(MockMvcRequestBuilders.post("/ontology").param("project", projectId)
+		mvc.perform(MockMvcRequestBuilders.post("/ontology").param("project", projectId).param("name", "ontologyName")
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		ontologyId = buffer.getId();
 	}
@@ -91,27 +92,26 @@ public class NodeRestControllerTest extends AbstractRepositoryConsumingTest {
 		String parametersJson = "{\"parameterName\":\"parameterValue\"}";
 		mvc.perform(MockMvcRequestBuilders.post("/node")
 				.param("class", "de.uni_jena.cs.fusion.abecto.node.NodeRestControllerTest$ParameterProcessor")
-				.param("parameters", parametersJson).param("ontology", ontologyId)
-				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
+				.param("parameters", parametersJson).param("ontology", ontologyId).accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andDo(buffer);
 
 		// get node
-		mvc.perform(MockMvcRequestBuilders.get("/node/{buffer.getId(}", buffer.getId())
-				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
+		mvc.perform(
+				MockMvcRequestBuilders.get("/node/{buffer.getId(}", buffer.getId()).accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andDo(buffer);
 		JSONAssert.assertEquals(parametersJson, buffer.getJson().path("parameter").path("parameters").toString(),
 				false);
 
 		// use unknown ontology id
 		mvc.perform(MockMvcRequestBuilders.post("/node")
 				.param("class", "de.uni_jena.cs.fusion.abecto.node.NodeRestControllerTest$ParameterProcessor")
-				.param("ontology", unknownUuid).accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isBadRequest());
+				.param("ontology", unknownUuid).accept(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
 
 		// use unknown node id
 		mvc.perform(MockMvcRequestBuilders.post("/node/{unknownUuid}/parameters", unknownUuid)
 				.param("key", "parameterName").param("value", "some value").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isBadRequest());
-		mvc.perform(
-				MockMvcRequestBuilders.get("/node/{unknownUuid}", unknownUuid).accept(MediaType.APPLICATION_JSON))
+		mvc.perform(MockMvcRequestBuilders.get("/node/{unknownUuid}", unknownUuid).accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isNotFound());
 	}
 
@@ -159,13 +159,12 @@ public class NodeRestControllerTest extends AbstractRepositoryConsumingTest {
 
 		// upload source
 		MockMultipartFile multipartFileSource = new MockMultipartFile("file", rdf1.getBytes());
-		mvc.perform(multipart("/node/{sourceId}/load", sourceId).file(multipartFileSource))
-				.andExpect(status().isOk());
+		mvc.perform(multipart("/node/{sourceId}/load", sourceId).file(multipartFileSource)).andExpect(status().isOk());
 
 		// upload changed source
 		multipartFileSource = new MockMultipartFile("file", rdf2.getBytes());
-		mvc.perform(multipart("/node/{sourceId}/load", sourceId).file(multipartFileSource))
-				.andExpect(status().isOk()).andDo(buffer);
+		mvc.perform(multipart("/node/{sourceId}/load", sourceId).file(multipartFileSource)).andExpect(status().isOk())
+				.andDo(buffer);
 		String secondUploadId = buffer.getId();
 
 		// get last processing
@@ -181,8 +180,8 @@ public class NodeRestControllerTest extends AbstractRepositoryConsumingTest {
 		for (int i = 0; i < 1; i++) {
 			mvc.perform(MockMvcRequestBuilders.post("/node")
 					.param("class", "de.uni_jena.cs.fusion.abecto.node.NodeRestControllerTest$ParameterProcessor")
-					.param("ontology", ontologyId).accept(MediaType.APPLICATION_JSON))
-					.andExpect(status().isOk()).andDo(buffer);
+					.param("ontology", ontologyId).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
+					.andDo(buffer);
 			expected.add(buffer.getId());
 		}
 

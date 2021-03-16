@@ -44,13 +44,20 @@ public class OntologyRestController {
 	NodeRepository nodeRepository;
 
 	@PostMapping("/ontology")
-	public Ontology create(@RequestParam("project") UUID projectId,
-			@RequestParam(name = "label", defaultValue = "") String label) {
-		Optional<Project> project = projectRepository.findById(projectId);
-		if (project.isPresent()) {
-			return ontologyRepository.save(new Ontology(project.get(), label));
+	public Ontology create(@RequestParam("project") UUID projectId, @RequestParam(name = "name") String ontologyName,
+			@RequestParam(name = "useIfExists", defaultValue = "false") boolean useIfExists) {
+		Project project = projectRepository.findById(projectId)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Project not found."));
+		Optional<Ontology> existingOntology = ontologyRepository.findOneByProjectAndName(project, ontologyName);
+		if (existingOntology.isPresent()) {
+			if (useIfExists) {
+				return existingOntology.get();
+			} else {
+				throw new ResponseStatusException(HttpStatus.CONFLICT, String.format(
+						"Ontology name \"%s\" already used in project \"%s\".", ontologyName, project.getName()));
+			}
 		} else {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Project not found.");
+			return ontologyRepository.save(new Ontology(project, ontologyName));
 		}
 	}
 

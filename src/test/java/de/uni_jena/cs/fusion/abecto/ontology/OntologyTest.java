@@ -28,22 +28,22 @@ public class OntologyTest {
 	@Test
 	public void testOntology() {
 		Ontology o = new Ontology();
-		assertNull(o.label);
+		assertNull(o.name);
 		assertNull(o.project);
 	}
 
 	@Test
 	public void testOntologyProjectString() {
 		Project p = new Project("");
-		Ontology o = new Ontology(p, "label");
-		assertEquals(o.label, "label");
+		Ontology o = new Ontology(p, "name");
+		assertEquals(o.name, "name");
 		assertEquals(o.project, p);
 	}
 
 	@Test
 	public void testGetProject() {
 		Project p = new Project("");
-		Ontology o = new Ontology(p, "label");
+		Ontology o = new Ontology(p, "name");
 		assertEquals(o.getProject(), p);
 	}
 

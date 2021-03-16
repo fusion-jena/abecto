@@ -57,14 +57,14 @@ public class ProcessingRepositoryTest extends AbstractRepositoryConsumingTest {
 		model = new TestDataGenerator().generateOntology(1);
 
 		// create project
-		mvc.perform(MockMvcRequestBuilders.post("/project").param("name", "projectName").accept(MediaType.APPLICATION_JSON))
+		mvc.perform(
+				MockMvcRequestBuilders.post("/project").param("name", "projectName").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(buffer);
 		String projectId = buffer.getId();
 
 		// create a KowledgBase
-		mvc.perform(
-				MockMvcRequestBuilders.post("/ontology").param("project", projectId).accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk()).andDo(buffer);
+		mvc.perform(MockMvcRequestBuilders.post("/ontology").param("project", projectId).param("name", "ontologyName")
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		String knowledgBaseId = buffer.getId();
 
 		// add source
@@ -75,8 +75,7 @@ public class ProcessingRepositoryTest extends AbstractRepositoryConsumingTest {
 
 		// upload source
 		MockMultipartFile multipartFileSource1 = new MockMultipartFile("file", Models.writeBytes(model, Lang.NTRIPLES));
-		mvc.perform(multipart("/node/{sourceId}/load", sourceId).file(multipartFileSource1))
-				.andExpect(status().isOk());
+		mvc.perform(multipart("/node/{sourceId}/load", sourceId).file(multipartFileSource1)).andExpect(status().isOk());
 
 		// get last processing
 		mvc.perform(MockMvcRequestBuilders.get("/node/{sourceId}/processing/last", sourceId)

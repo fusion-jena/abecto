@@ -17,9 +17,12 @@ package de.uni_jena.cs.fusion.abecto.ontology;
 
 import java.util.Collection;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -35,9 +38,11 @@ import de.uni_jena.cs.fusion.abecto.util.EntityToIdConverter;
  * Ontologies consist of sources represented by {@link Node}s.
  */
 @Entity
+@Table(uniqueConstraints = { @UniqueConstraint(columnNames = { "project_id", "name" }) })
 public class Ontology extends AbstractEntityWithUUID {
 
-	protected String label;
+	@Column(name = "name")
+	protected String name;
 
 	@ManyToOne(optional = false)
 	@JsonSerialize(converter = EntityToIdConverter.class)
@@ -49,13 +54,13 @@ public class Ontology extends AbstractEntityWithUUID {
 	protected Ontology() {
 	}
 
-	public Ontology(Project project, String label) {
+	public Ontology(Project project, String name) {
 		this.project = project;
-		this.label = label;
+		this.name = name;
 	}
 
-	public String getLabel() {
-		return label;
+	public String getName() {
+		return name;
 	}
 
 	public Project getProject() {

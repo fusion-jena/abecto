@@ -15,6 +15,7 @@
  */
 package de.uni_jena.cs.fusion.abecto.ontology;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.repository.CrudRepository;
@@ -25,4 +26,6 @@ public interface OntologyRepository extends CrudRepository<Ontology, UUID> {
 	Iterable<Ontology> findAllByProject(Project project);
 
 	void deleteAllByProject(Project project);
+
+	Optional<Ontology> findOneByProjectAndName(Project project, String ontologyName);
 }

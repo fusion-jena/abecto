@@ -18,6 +18,7 @@ package de.uni_jena.cs.fusion.abecto.ontology;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.UUID;
@@ -46,52 +47,85 @@ public class OntologyRestControllerTest extends AbstractRepositoryConsumingTest 
 	private final String unknownUuid = UUID.randomUUID().toString();
 
 	@Test
+	public void create() throws Exception {
+		String projectName = "projectName";
+		String ontologyName1 = "ontologyName1";
+		String ontologyName2 = "ontologyName2";
+
+		// create project
+		mvc.perform(
+				MockMvcRequestBuilders.post("/project").param("name", projectName).accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(jsonPath("name").value(projectName)).andDo(buffer);
+		String projectId = buffer.getId();
+
+		// create project
+		mvc.perform(MockMvcRequestBuilders.post("/ontology").param("project", projectId).param("name", ontologyName1)
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
+				.andExpect(jsonPath("name").value(ontologyName1));
+
+		// create or reuse project
+		mvc.perform(MockMvcRequestBuilders.post("/ontology").param("project", projectId).param("name", ontologyName2)
+				.param("useIfExists", "true").accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
+				.andExpect(jsonPath("name").value(ontologyName2));
+
+		// try to us same project name
+		mvc.perform(MockMvcRequestBuilders.post("/ontology").param("project", projectId).param("name", ontologyName1)
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isConflict());
+
+		// reuse project
+		mvc.perform(MockMvcRequestBuilders.post("/ontology").param("project", projectId).param("name", ontologyName1)
+				.param("useIfExists", "true").accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
+				.andExpect(jsonPath("name").value(ontologyName1));
+	}
+
+	@Test
 	public void test() throws Exception {
 		// create project and get project id
-		mvc.perform(MockMvcRequestBuilders.post("/project").param("name", "projectName").accept(MediaType.APPLICATION_JSON))
+		mvc.perform(
+				MockMvcRequestBuilders.post("/project").param("name", "projectName").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(buffer);
 		String projectId = buffer.getId();
 
-		String ontologyLabel = "ontology label";
+		String ontologyName = "ontologyName";
 
 		// return empty ontology list
 		mvc.perform(MockMvcRequestBuilders.get("/ontology").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andExpect(content().json("[]"));
 
 		// return empty ontology list by project
-		mvc.perform(MockMvcRequestBuilders.get("/ontology").param("project", projectId)
-				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andExpect(content().json("[]"));
+		mvc.perform(
+				MockMvcRequestBuilders.get("/ontology").param("project", projectId).accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(content().json("[]"));
 
 		// return created ontology
-		mvc.perform(MockMvcRequestBuilders.post("/ontology").param("project", projectId)
-				.param("label", ontologyLabel).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
-				.andDo(buffer);
-		assertEquals(ontologyLabel, buffer.getJson().path("label").asText());
+		mvc.perform(MockMvcRequestBuilders.post("/ontology").param("project", projectId).param("name", ontologyName)
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
+		assertEquals(ontologyName, buffer.getJson().path("name").asText());
 		String ontologyId = buffer.getId();
 
 		// return selected ontology
 		mvc.perform(MockMvcRequestBuilders.get("/ontology/" + ontologyId).accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(buffer);
-		assertEquals(ontologyLabel, buffer.getJson().path("label").asText());
+		assertEquals(ontologyName, buffer.getJson().path("name").asText());
 		assertEquals(ontologyId, buffer.getId());
 
 		// return not empty ontology list
 		mvc.perform(MockMvcRequestBuilders.get("/ontology").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(buffer);
-		assertTrue(buffer.getJson().findValuesAsText("label").contains(ontologyLabel));
+		assertTrue(buffer.getJson().findValuesAsText("name").contains(ontologyName));
 		assertTrue(buffer.getJson().findValuesAsText("project").contains(projectId));
 		assertTrue(buffer.getIds().contains(ontologyId));
 
 		// return not empty ontology list by project
-		mvc.perform(MockMvcRequestBuilders.get("/ontology").param("project", projectId)
-				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
-		assertTrue(buffer.getJson().findValuesAsText("label").contains(ontologyLabel));
+		mvc.perform(
+				MockMvcRequestBuilders.get("/ontology").param("project", projectId).accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andDo(buffer);
+		assertTrue(buffer.getJson().findValuesAsText("name").contains(ontologyName));
 		assertTrue(buffer.getJson().findValuesAsText("project").contains(projectId));
 		assertTrue(buffer.getIds().contains(ontologyId));
 
 		// delete ontology
-		mvc.perform(
-				MockMvcRequestBuilders.delete("/ontology/" + ontologyId).accept(MediaType.APPLICATION_JSON))
+		mvc.perform(MockMvcRequestBuilders.delete("/ontology/" + ontologyId).accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isNoContent());
 
 		// return empty ontology list
@@ -99,13 +133,14 @@ public class OntologyRestControllerTest extends AbstractRepositoryConsumingTest 
 				.andExpect(status().isOk()).andExpect(content().json("[]"));
 
 		// return empty ontology list by project
-		mvc.perform(MockMvcRequestBuilders.get("/ontology").param("project", projectId)
-				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andExpect(content().json("[]"));
+		mvc.perform(
+				MockMvcRequestBuilders.get("/ontology").param("project", projectId).accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk()).andExpect(content().json("[]"));
 
 		// use unknown project id
 		mvc.perform(MockMvcRequestBuilders.get("/ontology").param("project", unknownUuid)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
-		mvc.perform(MockMvcRequestBuilders.post("/ontology").param("project", unknownUuid).param("label", "")
+		mvc.perform(MockMvcRequestBuilders.post("/ontology").param("project", unknownUuid).param("name", "")
 				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
 
 		// use unknown ontology id

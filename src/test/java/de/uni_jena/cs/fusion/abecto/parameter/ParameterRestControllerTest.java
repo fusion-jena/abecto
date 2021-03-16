@@ -53,9 +53,8 @@ public class ParameterRestControllerTest extends AbstractRepositoryConsumingTest
 				MockMvcRequestBuilders.post("/project").param("name", "projectName").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(buffer);
 		String projectId = buffer.getId();
-		mvc.perform(
-				MockMvcRequestBuilders.post("/ontology").param("project", projectId).accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk()).andDo(buffer);
+		mvc.perform(MockMvcRequestBuilders.post("/ontology").param("project", projectId).param("name", "ontologyName")
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		String kowledgBaseId = buffer.getId();
 		mvc.perform(MockMvcRequestBuilders.post("/node")
 				.param("class", "de.uni_jena.cs.fusion.abecto.parameter.ParameterRestControllerTest$ParameterProcessor")

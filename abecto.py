@@ -116,11 +116,11 @@ class Project:
         r.raise_for_status()
         return r.json()
 
-    def ontology(self, label = ""):
-        r = requests.post(self.server.base + "ontology", data = {"project": self.id, "label": label})
+    def ontology(self, name):
+        r = requests.post(self.server.base + "ontology", data = {"project": self.id, "name": name, "useIfExists": "true"})
         r.raise_for_status()
         return Ontology(self.server, r.json())
-    
+
     def ontologies(self):
         r = requests.get(self.server.base + "ontology", params = {"project": self.id})
         r.raise_for_status()
@@ -347,7 +347,7 @@ class Execution:
         return pd.DataFrame.from_records(self.data(categoryName, ontologyId))
 
     def sortedOntologies(self, ontologyIds):
-        return sorted({ ontologyId : self.server.getOntology(ontologyId).info()["label"] for ontologyId in ontologyIds }.items(), key = lambda x:x[1])
+        return sorted({ ontologyId : self.server.getOntology(ontologyId).info()["name"] for ontologyId in ontologyIds }.items(), key = lambda x:x[1])
 
     def __formatValue(self,value):
         return re.compile('(.*)(\^\^[^"]*)').sub(r'\1<span style="opacity:0.6;">\2</span>', value)
@@ -371,8 +371,8 @@ class Execution:
                     html += "<th>" + "/".join(set(measureData["dimension1Key"])) + "</th>"
                 if dimension2Used:
                     html += "<th>" + "/".join(set(measureData["dimension2Key"])) + "</th>"
-                for (ontoId, ontoLabel) in ontologies:
-                    html += "<th>" + ontoLabel + "</th>"
+                for (ontoId, ontoName) in ontologies:
+                    html += "<th>" + ontoName + "</th>"
                 html += "</tr>\n"
                 # total row
                 totalData = measureData[measureData.dimension1Value.isna() & measureData.dimension2Value.isna()]
@@ -382,7 +382,7 @@ class Execution:
                         html += "<td></td>"
                     if dimension2Used:
                         html += "<td></td>"
-                    for (ontoId, ontoLabel) in ontologies:
+                    for (ontoId, ontoName) in ontologies:
                         row = totalData[totalData.ontology.eq(ontoId)]
                         html += "<td>" + (str(row["value"].iat[-1]) if row.size > 0 else "") + "</td>"
                     html += "</tr>\n"
@@ -397,7 +397,7 @@ class Execution:
                         html += "<td>" + dimension1Value + "</td>"
                         if dimension2Used:
                             html += "<td></td>"
-                        for (ontoId, ontoLabel) in ontologies:
+                        for (ontoId, ontoName) in ontologies:
                             row = d1TotalData[d1TotalData.ontology.eq(ontoId)]
                             html += "<td>" + (str(row["value"].iat[-1]) if row.size > 0 else "") + "</td>"
                         html += "</tr>\n"
@@ -409,7 +409,7 @@ class Execution:
                             html += "<tr>"
                             html += "<td>" + dimension1Value + "</td>"
                             html += "<td>" + dimension2Value + "</td>"
-                            for (ontoId, ontoLabel) in ontologies:
+                            for (ontoId, ontoName) in ontologies:
                                 row = d2Data[d2Data.ontology.eq(ontoId)]
                                 html += "<td>" + (str(row["value"].iat[-1]) if row.size > 0 else "") + "</td>"
                             html += "</tr>\n"
@@ -427,9 +427,9 @@ class Execution:
                 display(HTML("<h3>Category: " + categoryName + "</h3>"))
                 categoryData = totalData[totalData.categoryName.eq(categoryName)]
                  # iterate ontologies
-                for (ontology1Id, ontology1Label) in ontologies:
-                    for (ontology2Id, ontology2Label) in ontologies:
-                        if ontology1Id != ontology2Id and ontology1Label < ontology2Label:
+                for (ontology1Id, ontology1Name) in ontologies:
+                    for (ontology2Id, ontology2Name) in ontologies:
+                        if ontology1Id != ontology2Id and ontology1Name < ontology2Name:
                             ontologiesData = categoryData[categoryData.ontologyId1.eq(ontology1Id) & categoryData.ontologyId2.eq(ontology2Id)]
                             ontologiesData = ontologiesData.append(
                                         categoryData[categoryData.ontologyId1.eq(ontology2Id) & categoryData.ontologyId2.eq(ontology1Id)]\
@@ -439,8 +439,8 @@ class Execution:
                                 ontologiesData = ontologiesData.sort_values(["ontologyId1","ontologyId2"])
                                 table = "<div style=\"max-height:30em\"><table>\n"
                                 table += "<tr>"
-                                table += "<th style=\"text-align:center;\" colspan=\"3\">" + ontology1Label + "</th>"
-                                table += "<th style=\"text-align:center;\" colspan=\"3\">" + ontology2Label + "</th>"
+                                table += "<th style=\"text-align:center;\" colspan=\"3\">" + ontology1Name + "</th>"
+                                table += "<th style=\"text-align:center;\" colspan=\"3\">" + ontology2Name + "</th>"
                                 table += "</tr>\n"
                                 resourcePairs = ontologiesData.filter(["resource1","resource2"]).drop_duplicates().sort_values(["resource1","resource2"])
                                 # iterate resources
@@ -470,8 +470,8 @@ class Execution:
         if not totalData.empty:
             totalData = totalData.sort_values(["ontology","entity"])
             ontologies = self.sortedOntologies(set(totalData["ontology"]))
-            for (ontoId, ontoLabel) in ontologies:
-                display(HTML("<h3>Ontology: " + ontoLabel + "</h3>"))
+            for (ontoId, ontoName) in ontologies:
+                display(HTML("<h3>Ontology: " + ontoName + "</h3>"))
                 ontoData = totalData[totalData.ontology.eq(ontoId)]
                 table = "<table>\n"
                 table += "<tr>"
@@ -534,28 +534,28 @@ class Execution:
                 ontologies = self.sortedOntologies(ontologies)
                 resources = {}
                 # get resources of category by ontologies
-                for (ontologyId, ontologyLabel) in ontologies:
+                for (ontologyId, ontologyName) in ontologies:
                     resources[ontologyId] = set(self.data(categoryName, ontologyId).keys())
-                for (ontologyId1, ontologyLabel1) in ontologies:
-                    for (ontologyId2, ontologyLabel2) in ontologies:
-                        if (ontologyLabel1 < ontologyLabel2):
+                for (ontologyId1, ontologyName1) in ontologies:
+                    for (ontologyId2, ontologyName2) in ontologies:
+                        if (ontologyName1 < ontologyName2):
                             # prepare data
                             mappingsOfPair = mappings[
                                 mappings.resource1.isin(resources[ontologyId1]) &
                                 mappings.resource2.isin(resources[ontologyId2])
                             ][["resource1","resource2"]]\
-                            .rename(columns={"resource1": ontologyLabel1, "resource2": ontologyLabel2})
+                            .rename(columns={"resource1": ontologyName1, "resource2": ontologyName2})
                             mappingsOfPair = mappingsOfPair.append(
                                 mappings[
                                     mappings.resource2.isin(resources[ontologyId1]) &
                                     mappings.resource1.isin(resources[ontologyId2])
                                 ][["resource2","resource1"]]\
-                                .rename(columns={"resource2": ontologyLabel1, "resource1": ontologyLabel2}))
-                            mappingsOfPair.sort_values(by=[ontologyLabel1,ontologyLabel2], inplace=True)
+                                .rename(columns={"resource2": ontologyName1, "resource1": ontologyName2}))
+                            mappingsOfPair.sort_values(by=[ontologyName1,ontologyName2], inplace=True)
                             # display
                             html = "<div style=\"max-height:30em;overflow-x:scroll\">"
                             html += "<table>\n"
-                            html += "<tr><th>" + ontologyLabel1 + "</th><th>" + ontologyLabel2 + "</th></tr>"
+                            html += "<tr><th>" + ontologyName1 + "</th><th>" + ontologyName2 + "</th></tr>"
                             for index, row in mappingsOfPair.iterrows():
                                 html += "<tr>"
                                 html += "<td><a href=\"" + str(row[0]) + "\">" + str(row[0]) + "</a></td>"

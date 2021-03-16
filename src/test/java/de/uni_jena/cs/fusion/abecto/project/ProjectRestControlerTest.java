@@ -66,9 +66,9 @@ class ProjectRestControlerTest extends AbstractRepositoryConsumingTest {
 				.andExpect(status().isOk()).andExpect(jsonPath("name").value(projectName));
 
 		// create or reuse project
-		mvc.perform(
-				MockMvcRequestBuilders.post("/project").param("name", projectName2).param("useIfExists", "true").accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk()).andExpect(jsonPath("name").value(projectName2));
+		mvc.perform(MockMvcRequestBuilders.post("/project").param("name", projectName2).param("useIfExists", "true")
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
+				.andExpect(jsonPath("name").value(projectName2));
 
 		// try to us same project name
 		mvc.perform(
@@ -143,6 +143,9 @@ class ProjectRestControlerTest extends AbstractRepositoryConsumingTest {
 
 	@Test
 	public void run() throws Exception {
+		String ontologyName1 = "ontologyName1";
+		String ontologyName2 = "ontologyName2";
+
 		// create project
 		mvc.perform(
 				MockMvcRequestBuilders.post("/project").param("name", "projectName").accept(MediaType.APPLICATION_JSON))
@@ -150,15 +153,13 @@ class ProjectRestControlerTest extends AbstractRepositoryConsumingTest {
 		String projectId = buffer.getId();
 
 		// create ontology 1
-		mvc.perform(
-				MockMvcRequestBuilders.post("/ontology").param("project", projectId).accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk()).andDo(buffer);
+		mvc.perform(MockMvcRequestBuilders.post("/ontology").param("project", projectId).param("name", ontologyName1)
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		String knowledgBase1Id = buffer.getId();
 
 		// create ontology 2
-		mvc.perform(
-				MockMvcRequestBuilders.post("/ontology").param("project", projectId).accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk()).andDo(buffer);
+		mvc.perform(MockMvcRequestBuilders.post("/ontology").param("project", projectId).param("name", ontologyName2)
+				.accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andDo(buffer);
 		String knowledgBase2Id = buffer.getId();
 
 		// add source 1
