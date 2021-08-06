@@ -39,11 +39,11 @@ import de.uni_jena.cs.fusion.abecto.metaentity.Category;
 import de.uni_jena.cs.fusion.abecto.metaentity.Issue;
 import de.uni_jena.cs.fusion.abecto.metaentity.Mapping;
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
-import de.uni_jena.cs.fusion.abecto.processor.AbstractMappingProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.MappingProcessor;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 import de.uni_jena.cs.fusion.abecto.util.Mappings;
 
-public class RelationalMappingProcessor extends AbstractMappingProcessor<RelationalMappingProcessor.Parameter> {
+public class RelationalMappingProcessor extends MappingProcessor<RelationalMappingProcessor.Parameter> {
 
 	@Override
 	public Collection<Mapping> computeMapping(Model model1, Model model2, UUID ontologyId1, UUID ontologyId2)

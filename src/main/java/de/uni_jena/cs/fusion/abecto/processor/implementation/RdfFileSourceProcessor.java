@@ -17,10 +17,10 @@ package de.uni_jena.cs.fusion.abecto.processor.implementation;
 
 import java.io.InputStream;
 
-import de.uni_jena.cs.fusion.abecto.model.Models;
 import de.uni_jena.cs.fusion.abecto.parameter_model.EmptyParameters;
 import de.uni_jena.cs.fusion.abecto.processor.AbstractSourceProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.UploadSourceProcessor;
+import de.uni_jena.cs.fusion.abecto.util.Models;
 
 public class RdfFileSourceProcessor extends AbstractSourceProcessor<EmptyParameters>
 		implements UploadSourceProcessor<EmptyParameters> {

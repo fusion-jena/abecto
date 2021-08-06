@@ -41,10 +41,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.uni_jena.cs.fusion.abecto.metaentity.Category;
 import de.uni_jena.cs.fusion.abecto.metaentity.Deviation;
 import de.uni_jena.cs.fusion.abecto.metaentity.Issue;
-import de.uni_jena.cs.fusion.abecto.processor.AbstractDeviationProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.DeviationProcessor;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 
-public class LiteralDeviationProcessor extends AbstractDeviationProcessor<AbstractDeviationProcessor.Parameter> {
+public class LiteralDeviationProcessor extends DeviationProcessor<DeviationProcessor.Parameter> {
 
 	@JsonIgnore
 	public static Map<Resource, Map<String, Set<Literal>>> getVariables(Category category, UUID ontologyId, Model model,

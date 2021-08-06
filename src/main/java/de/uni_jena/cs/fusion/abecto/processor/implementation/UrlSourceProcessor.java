@@ -19,9 +19,9 @@ import java.net.URL;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-import de.uni_jena.cs.fusion.abecto.model.Models;
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.processor.AbstractSourceProcessor;
+import de.uni_jena.cs.fusion.abecto.util.Models;
 
 public class UrlSourceProcessor extends AbstractSourceProcessor<UrlSourceProcessor.Parameter> {
 

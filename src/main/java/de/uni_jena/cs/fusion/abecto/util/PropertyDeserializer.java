@@ -19,14 +19,12 @@ import java.io.IOException;
 
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.ResourceFactory;
-import org.springframework.boot.jackson.JsonComponent;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 
-@JsonComponent
 public class PropertyDeserializer extends StdDeserializer<Property> {
 	private static final long serialVersionUID = 2744312587965104922L;
 

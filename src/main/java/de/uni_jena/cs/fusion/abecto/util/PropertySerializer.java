@@ -18,13 +18,11 @@ package de.uni_jena.cs.fusion.abecto.util;
 import java.io.IOException;
 
 import org.apache.jena.rdf.model.Property;
-import org.springframework.boot.jackson.JsonComponent;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
-@JsonComponent
 public class PropertySerializer extends StdSerializer<Property> {
 	private static final long serialVersionUID = 3835469910652060069L;
 

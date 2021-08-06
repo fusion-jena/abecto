@@ -31,10 +31,10 @@ import org.apache.jena.rdf.model.Resource;
 import de.uni_jena.cs.fusion.abecto.metaentity.Category;
 import de.uni_jena.cs.fusion.abecto.metaentity.Deviation;
 import de.uni_jena.cs.fusion.abecto.metaentity.Issue;
-import de.uni_jena.cs.fusion.abecto.processor.AbstractDeviationProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.DeviationProcessor;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 
-public class ResourceDeviationProcessor extends AbstractDeviationProcessor<AbstractDeviationProcessor.Parameter> {
+public class ResourceDeviationProcessor extends DeviationProcessor<DeviationProcessor.Parameter> {
 
 	@Override
 	public Collection<Deviation> computeDeviations(Model model1, Model model2, UUID ontologyId1,

@@ -24,9 +24,9 @@ import org.apache.jena.rdf.model.Model;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-import de.uni_jena.cs.fusion.abecto.model.Models;
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.processor.AbstractTransformationProcessor;
+import de.uni_jena.cs.fusion.abecto.util.Models;
 
 public class SparqlConstructProcessor extends AbstractTransformationProcessor<SparqlConstructProcessor.Parameter> {
 

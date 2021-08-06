@@ -15,192 +15,163 @@
  */
 package de.uni_jena.cs.fusion.abecto.processor;
 
-import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+
+import javax.annotation.Nullable;
 
 import org.apache.jena.rdf.model.Model;
-import org.springframework.core.GenericTypeResolver;
+import org.apache.jena.rdf.model.Resource;
 
-import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
+import de.uni_jena.cs.fusion.abecto.Aspect;
+import de.uni_jena.cs.fusion.abecto.util.Models;
 
 /**
- * Provides an interface for a task that outputs a new {@link Model} based on
- * given input {@link Model}s and parameters provided with by an
- * {@link ParameterModel} object. A {@link Processor} implementation is linked
- * to the appropriate {@link ParameterModel} using the type parameter {@link P}.
- * 
- * @param <P> Parameter Model Type
+ * Provides an abstraction of step processors that generate new primary data or
+ * meta data graphs based on its input primary data and meta data graphs an
+ * processor parameters.
  */
-public interface Processor<P extends ParameterModel> extends Callable<Model> {
+public abstract class Processor implements Runnable {
 
-	/**
-	 * {@link Status} of the {@link Processor}
-	 */
-	public enum Status {
-		NOT_STARTED, RUNNING, SUCCEEDED, FAILED
+	private Map<String, Object> parameter = new HashMap<>();
+	private Map<Resource, Collection<Model>> inputMetaModelsByDataset = new HashMap<>();
+	private Map<Resource, Collection<Model>> inputPrimaryModelsByDataset = new HashMap<>();
+	private Map<Resource, Model> outputMetaModelsByDataset = new HashMap<>();
+	private Optional<Resource> associatedDataset = Optional.empty();
+	private Optional<Model> outputPrimaryModel = Optional.empty();
+	private Map<Resource, Aspect> aspects;
+
+	public final void addInputMetaModel(Resource dataset, Model inputMetaModel) {
+		this.inputMetaModelsByDataset.computeIfAbsent(dataset, d -> new HashSet<>()).add(inputMetaModel);
+	}
+
+	public final void addInputMetaModels(Resource dataset, Collection<Model> inputMetaModels) {
+		this.inputMetaModelsByDataset.computeIfAbsent(dataset, d -> new HashSet<>()).addAll(inputMetaModels);
+	}
+
+	public final void addInputPrimaryModels(Resource dataset, Collection<Model> inputPrimaryModels) {
+		this.inputPrimaryModelsByDataset.computeIfAbsent(dataset, d -> new HashSet<>()).addAll(inputPrimaryModels);
+	}
+
+	public final void addInputProcessor(Processor inputProcessor) {
+		inputProcessor.inputMetaModelsByDataset.forEach((d, m) -> this.addInputMetaModels(d, m));
+		inputProcessor.outputMetaModelsByDataset
+				.forEach((d, m) -> this.addInputMetaModels(d, Collections.singleton(m)));
+		inputProcessor.inputPrimaryModelsByDataset.forEach((d, m) -> this.addInputPrimaryModels(d, m));
+		if (inputProcessor.associatedDataset.isPresent() && inputProcessor.outputPrimaryModel.isPresent()) {
+			this.addInputPrimaryModels(inputProcessor.associatedDataset.get(),
+					Collections.singleton(inputProcessor.outputPrimaryModel.get()));
+		}
+	}
+
+	public Map<Resource, Aspect> getAspects() {
+		return aspects;
+	}
+
+	public final Optional<Resource> getAssociatedDataset() {
+		return this.associatedDataset;
+	}
+
+	public final Set<Resource> getInputDatasets() {
+		Set<Resource> inputDatasets = new HashSet<>();
+		inputDatasets.addAll(this.inputMetaModelsByDataset.keySet());
+		inputDatasets.addAll(this.inputPrimaryModelsByDataset.keySet());
+		return inputDatasets;
+	}
+
+	public final Model getInputMetaModelUnion() {
+		return Models.union(this.inputMetaModelsByDataset.values());
+	}
+
+	public final Model getInputMetaModelUnion(Resource dataset) {
+		return Models.union(this.inputMetaModelsByDataset.get(dataset));
+	}
+
+	public final Model getInputPrimaryModelUnion(Resource dataset) {
+		return Models.union(this.inputPrimaryModelsByDataset.get(dataset));
+	}
+
+	public Model getMetaModelUnion() {
+		return Models.union(this.getInputMetaModelUnion(), this.getOutputMetaModelUnion());
 	}
 
 	/**
-	 * Notify waiting {@link Processor}s.
+	 * Returns a union of the input meta models and the result meta model of a
+	 * dataset, or of the general meta models. if {@code dataset} is {@code null}.
 	 * 
-	 * @see #await()
+	 * @param dataset the assigned dataset the united meta models or {@code null}
+	 *                for the general meta models.
+	 * @return union of the meta models
 	 */
-	public void alert();
+	public Model getMetaModelUnion(@Nullable Resource dataset) {
+		return Models.union(this.getInputMetaModelUnion(), this.getOutputMetaModel(dataset));
+	}
 
-	/**
-	 * Wait for the notification by this {@link Processor}.
-	 * 
-	 * @throws InterruptedException
-	 * 
-	 * @see #alert()
-	 */
-	public void await() throws InterruptedException;
+	public final Model getOutputMetaModel(@Nullable Resource dataset) {
+		return this.outputMetaModelsByDataset.get(dataset);
+	}
 
-	/**
-	 * Sets this {@link Processor} to status failed and throws an
-	 * {@link ExecutionException}.
-	 * 
-	 * @throws ExecutionException if this method is called
-	 */
-	public void fail(Throwable cause) throws ExecutionException;
+	public final Model getOutputMetaModelUnion() {
+		return Models.union(this.outputMetaModelsByDataset.values());
+	}
 
-	/**
-	 * @return Result data {@link Model}s of this {@link Processor} and its input
-	 *         {@link Processor}s
-	 * 
-	 * @see #getMetaModels()
-	 * @see #getResultModel()
-	 */
-	public Map<UUID, Collection<Model>> getDataModels();
-
-	/**
-	 * @return the cause of failure of this {@link Processor}
-	 * @throws IllegalStateException if this {@link Processor} is not failed
-	 */
-	public Throwable getFailureCause();
-
-	/**
-	 * @param processorClass {@link Processor} implementation to determine the
-	 *                       {@link ParameterModel} class for.
-	 * @return {@link ParameterModel} class belonging to the given {@link Processor}
-	 *         implementation.
-	 */
-	@SuppressWarnings("unchecked")
-	public static Class<? extends ParameterModel> getParameterClass(Class<? extends Processor<?>> processorClass) {
-		return (Class<? extends ParameterModel>) GenericTypeResolver.resolveTypeArgument(processorClass,
-				Processor.class);
+	public final Optional<Model> getOutputPrimaryModel() {
+		return this.outputPrimaryModel;
 	}
 
 	/**
+	 * Returns the parameter value for a given key asserting a given type.
 	 * 
-	 * @param processorClass {@link Processor} implementation to instantiate
-	 *                       {@link ParameterModel} for.
-	 * @return {@link ParameterModel} instance with default values for a given
-	 *         {@link Processor} implementation.
-	 * @throws InstantiationException    if the processor is abstract.
-	 * @throws IllegalAccessException    if the processor constructor without
-	 *                                   parameter is not accessible.
-	 * @throws InvocationTargetException if the processor constructor throws an
-	 *                                   exception.
-	 * @throws NoSuchMethodException     if the processor constructor without
-	 *                                   parameter is not available.
-	 * @throws SecurityException
+	 * @param <T>         type of the returned value
+	 * @param key         key of the parameter
+	 * @param resultClass class object of the type of the returned value
+	 * @return value of the parameter
+	 * @throws ClassCastException   if the parameter value does not match the
+	 *                              requested type
+	 * @throws NullPointerException if the parameter has not been set
 	 */
-	public static ParameterModel getDefaultParameters(Class<? extends Processor<?>> processorClass)
-			throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException,
-			SecurityException {
-		return (ParameterModel) getParameterClass(processorClass).getConstructor(new Class[0])
-				.newInstance(new Object[0]);
+	public final <T> T getParameter(String key, Class<T> resultClass) throws ClassCastException, NullPointerException {
+		return resultClass.cast(Objects.requireNonNull(this.parameter.get(key)));
+	}
+
+	public void removeEmptyModels() {
+		if (outputPrimaryModel.isPresent() && outputPrimaryModel.get().isEmpty()) {
+			outputPrimaryModel = Optional.empty();
+		}
+		for (Resource dataset : new ArrayList<>(outputMetaModelsByDataset.keySet())) {
+			if (outputMetaModelsByDataset.get(dataset).isEmpty()) {
+				outputMetaModelsByDataset.remove(dataset);
+			}
+		}
+	}
+
+	public void setAspects(Map<Resource, Aspect> aspects) {
+		this.aspects = aspects;
+	}
+
+	public final void setOutputMetaModel(@Nullable Resource dataset, Model outpuMetaModel) {
+		this.outputMetaModelsByDataset.put(dataset, outpuMetaModel);
+	}
+
+	public final void setOutputPrimaryModel(Resource dataset, Model outputPrimaryModel) {
+		this.associatedDataset = Optional.of(dataset);
+		this.outputPrimaryModel = Optional.of(outputPrimaryModel);
 	}
 
 	/**
-	 * @return Result meta {@link Model}s of this {@link Processor} and its input
-	 *         {@link Processor}s
-	 */
-	public Collection<Model> getMetaModels();
-
-	/**
-	 * Returns the parameters of this processor.
+	 * Sets the parameter value for a given key.
 	 * 
-	 * @return Parameters of this processor.
+	 * @param key   key of the parameter
+	 * @param value value of the parameter
 	 */
-	public P getParameters();
-
-	/**
-	 * Returns the result {@link Model} produced by this {@link Processor}. The
-	 * returned {@link Model} is either a data {@link Model} or a meta {@link Model}
-	 * depending on the type of this {@link Processor}. If called before the
-	 * calculation has succeeded, an empty or intermediate model will be returned.
-	 * 
-	 * @return result the result produced by this {@link Processor}
-	 */
-	public Model getResultModel();
-
-	/**
-	 * @return the status of this {@link Processor}
-	 */
-	public Status getStatus();
-
-	/**
-	 * Provides the identifier of the ontology, this {@link Processor} belongs to.
-	 * <strong>Using this method restricts the Processor to work on exact one
-	 * ontology.</strong>
-	 * 
-	 * @return the ontology identifier
-	 */
-	public UUID getOntology();
-
-	/**
-	 * 
-	 * @return {@code true} if this {@link Processor} has {@link Status#FAILED},
-	 *         else {@code false}
-	 */
-	public boolean isFailed();
-
-	/**
-	 * 
-	 * @return {@code true} if this {@link Processor} has
-	 *         {@link Status#NOT_STARTED}, else {@code false}
-	 */
-	public boolean isNotStarted();
-
-	/**
-	 * 
-	 * @return {@code true} if this {@link Processor} has {@link Status#RUNNING},
-	 *         else {@code false}
-	 */
-	public boolean isRunning();
-
-	/**
-	 * 
-	 * @return {@code true} if this {@link Processor} has {@link Status#SUCCEEDED},
-	 *         else {@code false}
-	 */
-	public boolean isSucceeded();
-
-	/**
-	 * @param uuid {@link UUID} of the knowledge base
-	 */
-	public void setOntology(UUID uuid);
-
-	/**
-	 * Sets the parameters for this processor. Earlier parameters will be
-	 * overwritten.
-	 * 
-	 * @param parameters the parameters to set
-	 */
-	public void setParameters(ParameterModel parameters);
-
-	/**
-	 * Sets the {@link Status} and result {@link Model} for this {@link Processor}.
-	 * 
-	 * @param status the status of this processor
-	 * @param model  the result model of this processor, if this processor is
-	 *               succeeded, otherwise null is permitted
-	 */
-	public void setStatus(Status status, Model model);
+	public final void setParameter(String key, Object value) {
+		this.parameter.put(key, value);
+	}
 }

@@ -18,13 +18,11 @@ package de.uni_jena.cs.fusion.abecto.util;
 import java.io.IOException;
 
 import org.apache.jena.query.Query;
-import org.springframework.boot.jackson.JsonComponent;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
-@JsonComponent
 public class QuerySerializer extends StdSerializer<Query> {
 	private static final long serialVersionUID = 6345841121980806022L;
 

@@ -19,14 +19,12 @@ import java.io.IOException;
 
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
-import org.springframework.boot.jackson.JsonComponent;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 
-@JsonComponent
 public class QueryDeserializer extends StdDeserializer<Query> {
 	private static final long serialVersionUID = -2170263298467222685L;
 

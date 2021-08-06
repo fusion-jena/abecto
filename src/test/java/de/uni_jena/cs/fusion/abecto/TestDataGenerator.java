@@ -35,7 +35,7 @@ import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.vocabulary.RDF;
 
-import de.uni_jena.cs.fusion.abecto.model.Models;
+import de.uni_jena.cs.fusion.abecto.util.Models;
 
 public class TestDataGenerator {
 

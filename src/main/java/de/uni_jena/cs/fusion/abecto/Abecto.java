@@ -16,62 +16,146 @@
 package de.uni_jena.cs.fusion.abecto;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
+import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.PropertySource;
-import org.springframework.core.env.Environment;
-import org.springframework.core.task.TaskExecutor;
-import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.apache.jena.datatypes.TypeMapper;
+import org.apache.jena.query.Dataset;
+import org.apache.jena.query.DatasetFactory;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.sys.JenaSystem;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import de.uni_jena.cs.fusion.abecto.model.ModelRepository;
+import de.uni_jena.cs.fusion.abecto.datatype.Sparql11SelectQuery;
+import de.uni_jena.cs.fusion.abecto.util.Datasets;
+import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
+import picocli.CommandLine;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.IVersionProvider;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
-@SpringBootApplication
-@EnableScheduling
-@EnableAsync
-// not using default applications.properties to allow overriding by test configuration
-@PropertySource(value = "classpath:abecto.properties")
-@PropertySource(value = "classpath:test.properties", ignoreResourceNotFound = true)// optional additional test configurations
-@RestController
-public class Abecto {
+@Command(description = "Compares and evaluates several RDF datasets.", name = "abecto", mixinStandardHelpOptions = true, versionProvider = Abecto.ManifestVersionProvider.class)
+public class Abecto implements Callable<Integer> {
 
-	public static void main(String[] args) {
-		SpringApplication.run(Abecto.class, args);
+	final static Logger log = LoggerFactory.getLogger(Abecto.class);
+
+	public static void main(String... args) throws Exception {
+		int exitCode = new CommandLine(new Abecto()).execute(args);
+		System.exit(exitCode);
 	}
 
-	@Value("${abecto.version}")
-	private String version;
+	@Option(names = { "-p",
+			"--plan" }, paramLabel = "PLAN-IRI", description = "IRI of the plan to process. Required, if the configuration contains multiple plans.")
+	Optional<String> planIri;
 
-	@Bean
-	public TaskExecutor threadPoolTaskExecutor() {
-		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-		executor.setCorePoolSize(1);
-		executor.setThreadNamePrefix("abecto-async-");
-		executor.initialize();
-		return executor;
+	@Parameters(index = "0", paramLabel = "CONFIGURATION-FILE", description = "RDF File containing the execution plan configuration.")
+	File configurationFile;
+
+	@Parameters(index = "1", paramLabel = "RESULT-FILE", description = "RDF File for the execution results.")
+	File outputFile;
+
+	private Dataset dataset;
+	private Model configurationModel;
+
+	@Override
+	public Integer call() {
+		try {
+			initApacheJena();
+
+			// read configuration
+			dataset = DatasetFactory.createGeneral();
+
+			Datasets.read(dataset, new FileInputStream(configurationFile));
+
+			// get configuration model
+			configurationModel = dataset.getDefaultModel();
+
+			// get plan to process
+			Resource plan = Plans.getPlan(configurationModel, planIri);
+
+			// TODO add transitive correspondences into inputMetaModels
+
+			// get aspects
+			Map<Resource, Aspect> aspects = Aspects.getAspects(configurationModel);
+
+			// get steps and predecessors
+			Map<Resource, Set<Resource>> predecessors = Steps.getPredecessors(configurationModel, plan);
+
+			// get execution order
+			List<Resource> stepOrder = new ArrayList<>(predecessors.keySet());
+			// sort by number of (transitive) dependencies to ensure
+			Collections.sort(stepOrder,
+					(x, y) -> Integer.compare(predecessors.get(x).size(), predecessors.get(y).size()));
+
+			// setup and run pipeline
+			Executor executor = Executors.newCachedThreadPool();
+			Map<Resource, Step> steps = new HashMap<>();
+			Map<Resource, CompletableFuture<?>> stepFutures = new HashMap<>();
+			for (Resource stepIri : stepOrder) {
+				// setup step
+				Collection<Step> inputSteps = predecessors.get(stepIri).stream().map(steps::get)
+						.collect(Collectors.toList());
+				Step step = new Step(dataset, configurationModel, stepIri, inputSteps, aspects);
+				steps.put(stepIri, step);
+				// schedule step
+				CompletableFuture<?>[] inputFutures = predecessors.get(stepIri).stream().map(stepFutures::get)
+						.toArray(i -> new CompletableFuture<?>[i]);
+				CompletableFuture<?> stepFuture = CompletableFuture.allOf(inputFutures).thenRunAsync(step, executor);
+				stepFutures.put(stepIri, stepFuture);
+			}
+
+			// expect completion of all steps
+			CompletableFuture.allOf(stepFutures.values().toArray(new CompletableFuture[0])).join();
+
+			// write results
+			outputFile.createNewFile();
+			RDFDataMgr.write(new FileOutputStream(outputFile), dataset, Lang.TRIG);
+		} catch (Throwable e) {
+			log.error(e.getMessage(), e);
+			return 2;
+		}
+
+		return 0;
 	}
 
-	@Bean()
-	ModelRepository modelRepository(Environment env) {
-		String storagePath = env.getRequiredProperty("abecto.storage");
-		// OS independent home
-		storagePath = storagePath.replaceFirst("~", System.getProperty("user.home"));
-		return new ModelRepository(new File(storagePath + "/models"));
+	private void initApacheJena() {
+		JenaSystem.init();
+		// register custom datatypes
+		TypeMapper.getInstance().registerDatatype(new Sparql11SelectQuery(AV.Sparql11SelectQuery.getURI()));
 	}
 
-	@GetMapping("")
-	public String create() {
-		return "ABECTO is running.";
-	}
+	static class ManifestVersionProvider implements IVersionProvider {
+		public String[] getVersion() throws Exception {
+			Enumeration<URL> x = Abecto.class.getClassLoader().getResources("");
+			while (x.hasMoreElements()) {
+				System.out.println(x.nextElement());
+			}
 
-	@GetMapping("version")
-	public String version() {
-		return version;
+			Manifest manifest = new Manifest(Abecto.class.getClassLoader().getResourceAsStream("META-INF/MANIFEST.MF"));
+			return new String[] {
+					(String) manifest.getMainAttributes().get(new Attributes.Name("Implementation-Version")) };
+		}
 	}
 }
