@@ -161,26 +161,23 @@ public class Metadata {
 			addTransitiveInCorrespondence(resource1, resource2, aspect, true, inputModel, outputModel);
 		}
 	}
-	
-	private static SelectBuilder GET_CORRESPONDENCE_QUERY = new SelectBuilder()
-			.addVar(Var.alloc("resource1"))
-			.addVar(Var.alloc("resource2"))
-			.addWhere(Var.alloc("set"), RDF.type, AV.CorrespondenceSet)
+
+	private static SelectBuilder GET_CORRESPONDENCE_QUERY = new SelectBuilder().addVar(Var.alloc("resource1"))
+			.addVar(Var.alloc("resource2")).addWhere(Var.alloc("set"), RDF.type, AV.CorrespondenceSet)
 			.addWhere(Var.alloc("set"), AV.containdResource, Var.alloc("resource1"))
 			.addWhere(Var.alloc("set"), AV.containdResource, Var.alloc("resource2"))
 			.addWhere(Var.alloc("set"), AV.affectedAspect, Var.alloc("aspect"));
-	
+
 	public static Stream<Resource[]> getCorrespondences(Aspect aspect, Model inputModel) {
 		SelectBuilder queryBuilder = GET_CORRESPONDENCE_QUERY.clone();
 		queryBuilder.setVar(Var.alloc("aspect"), aspect.name);
-
 		ResultSet results = QueryExecutionFactory.create(queryBuilder.build(), inputModel).execSelect();
-		return Stream.iterate(null, results::hasNext, () -> {QuerySolution result = results.next();  return new Resource[] {result.get("resource1").asResource(),result.get("resource2").asResource()}});
-		
+		return Stream.iterate(new Resource[] {}, e -> results.hasNext(), e -> {
+			QuerySolution result = results.next();
+			return new Resource[] { result.get("resource1").asResource(), result.get("resource2").asResource() };
+		}).skip(1);// TODO check if skip 1 is correct
 	}
-	
-	
-	
+
 	public static void addDeviation(Resource affectedResource, String affectedVariableName, Literal affectedValue,
 			Resource comparedToDataset, Resource comparedToResource, Literal comparedToValue, Resource resource2,
 			Aspect affectedAspect, Model outputAffectedDatasetMetaModel) {
