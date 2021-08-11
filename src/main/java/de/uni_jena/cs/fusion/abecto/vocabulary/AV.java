@@ -14,51 +14,33 @@ public class AV {
 	 */
 	public static final String namespace = "http://w3id.org/abecto-vocabulary#";
 
-	public static final Property affectedAspect = ResourceFactory
-			.createProperty("http://w3id.org/abecto-vocabulary#affectedAspect");
-	public static final Property affectedValue = ResourceFactory
-			.createProperty("http://w3id.org/abecto-vocabulary#affectedValue");
-	public static final Property affectedVariableName = ResourceFactory
-			.createProperty("http://w3id.org/abecto-vocabulary#affectedVariableName");
-	public static final Resource Aspect = ResourceFactory.createResource("http://w3id.org/abecto-vocabulary#Aspect");
-	public static final Resource AspectPattern = ResourceFactory
-			.createResource("http://w3id.org/abecto-vocabulary#AspectPattern");
-	public static final Property associatedDataset = ResourceFactory
-			.createProperty("http://w3id.org/abecto-vocabulary#associatedDataset");
-	public static final Property comparedToDataset = ResourceFactory
-			.createProperty("http://w3id.org/abecto-vocabulary#comparedToDataset");
-	public static final Property comparedToResource = ResourceFactory
-			.createProperty("http://w3id.org/abecto-vocabulary#comparedToResource");
-	public static final Property comparedToValue = ResourceFactory
-			.createProperty("http://w3id.org/abecto-vocabulary#comparedToValue");
-	public static final Property containedResource = ResourceFactory
-			.createProperty("http://w3id.org/abecto-vocabulary#containedResource");
-	public static final Resource CorrespondenceSet = ResourceFactory
-			.createResource("http://w3id.org/abecto-vocabulary#CorrespondenceSet");
-	public static final Property definingQuery = ResourceFactory
-			.createProperty("http://w3id.org/abecto-vocabulary#definingQuery");
-	public static final Property hasParameter = ResourceFactory
-			.createProperty("http://w3id.org/abecto-vocabulary#hasParameter");
+	public static final Property affectedAspect = ResourceFactory.createProperty(namespace, "affectedAspect");
+	public static final Property affectedValue = ResourceFactory.createProperty(namespace, "affectedValue");
+	public static final Property affectedVariableName = ResourceFactory.createProperty(namespace,
+			"affectedVariableName");
+	public static final Resource Aspect = ResourceFactory.createResource(namespace + "Aspect");
+	public static final Resource AspectPattern = ResourceFactory.createResource(namespace + "AspectPattern");
+	public static final Property associatedDataset = ResourceFactory.createProperty(namespace, "associatedDataset");
+	public static final Property comparedToDataset = ResourceFactory.createProperty(namespace, "comparedToDataset");
+	public static final Property comparedToResource = ResourceFactory.createProperty(namespace, "comparedToResource");
+	public static final Property comparedToValue = ResourceFactory.createProperty(namespace, "comparedToValue");
+	public static final Property containedResource = ResourceFactory.createProperty(namespace, "containedResource");
+	public static final Resource CorrespondenceSet = ResourceFactory.createResource(namespace + "CorrespondenceSet");
+	public static final Property definingQuery = ResourceFactory.createProperty(namespace, "definingQuery");
+	public static final Property hasParameter = ResourceFactory.createProperty(namespace, "hasParameter");
 	public static final Resource IncorrespondenceSet = ResourceFactory
-			.createResource("http://w3id.org/abecto-vocabulary#IncorrespondenceSet");
-	public static final Property inputMetaDataGraph = ResourceFactory
-			.createProperty("http://w3id.org/abecto-vocabulary#inputMetaDataGraph");
-	public static final Property key = ResourceFactory.createProperty("http://w3id.org/abecto-vocabulary#key");
-	public static final Property keyVariableName = ResourceFactory
-			.createProperty("http://w3id.org/abecto-vocabulary#keyVariableName");
-	public static final Resource MetaDataGraph = ResourceFactory
-			.createResource("http://w3id.org/abecto-vocabulary#MetaDataGraph");
-	public static final Property ofAspect = ResourceFactory
-			.createProperty("http://w3id.org/abecto-vocabulary#ofAspect");
-	public static final Resource PrimaryDataGraph = ResourceFactory
-			.createResource("http://w3id.org/abecto-vocabulary#PrimaryDataGraph");
-	public static final Property processorClass = ResourceFactory
-			.createProperty("http://w3id.org/abecto-vocabulary#processorClass");
+			.createResource(namespace + "IncorrespondenceSet");
+	public static final Property inputMetaDataGraph = ResourceFactory.createProperty(namespace, "inputMetaDataGraph");
+	public static final Property key = ResourceFactory.createProperty(namespace, "key");
+	public static final Property keyVariableName = ResourceFactory.createProperty(namespace, "keyVariableName");
+	public static final Resource MetaDataGraph = ResourceFactory.createResource(namespace + "MetaDataGraph");
+	public static final Property ofAspect = ResourceFactory.createProperty(namespace, "ofAspect");
+	public static final Resource PrimaryDataGraph = ResourceFactory.createResource(namespace + "PrimaryDataGraph");
+	public static final Property processorClass = ResourceFactory.createProperty(namespace, "processorClass");
 	public static final Resource QualityAnnotationBody = ResourceFactory
-			.createResource("http://w3id.org/abecto-vocabulary#QualityAnnotationBody");
+			.createResource(namespace + "QualityAnnotationBody");
 	public static final Resource Sparql11SelectQuery = ResourceFactory
-			.createResource("http://w3id.org/abecto-vocabulary#Sparql11SelectQuery");
-	public static final Resource StepExecution = ResourceFactory
-			.createResource("http://w3id.org/abecto-vocabulary#StepExecution");
+			.createResource(namespace + "Sparql11SelectQuery");
+	public static final Resource StepExecution = ResourceFactory.createResource(namespace + "StepExecution");
 
 }

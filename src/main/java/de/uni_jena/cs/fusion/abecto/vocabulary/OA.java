@@ -13,9 +13,8 @@ public class OA {
 	 * The namespace of the vocabulary as a string.
 	 */
 	public static final String namespace = "http:// www.w3.org/ns/oa#";
-	
 
-	public final static Property hasBody = ResourceFactory.createProperty("http:// www.w3.org/ns/oa#hasBody");
-	public final static Property hasTarget = ResourceFactory.createProperty("http:// www.w3.org/ns/oa#hasTarget");
+	public final static Property hasBody = ResourceFactory.createProperty(namespace, "hasBody");
+	public final static Property hasTarget = ResourceFactory.createProperty(namespace, "hasTarget");
 
 }
