@@ -18,14 +18,13 @@ package de.uni_jena.cs.fusion.abecto.processor.implementation;
 import org.apache.jena.rdf.model.InfModel;
 import org.apache.jena.rdf.model.ModelFactory;
 
-import de.uni_jena.cs.fusion.abecto.parameter_model.EmptyParameters;
-import de.uni_jena.cs.fusion.abecto.processor.AbstractTransformationProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.Processor;
 import openllet.jena.PelletReasoner;
 
-public class OpenlletReasoningProcessor extends AbstractTransformationProcessor<EmptyParameters> {
+public class OpenlletReasoningProcessor extends Processor {
 
 	@Override
-	public void computeResultModel() {
+	public void run() {
 		// prepare reasoning
 		InfModel inferenceModel = ModelFactory.createInfModel(new PelletReasoner(), this.inputModelUnion);
 

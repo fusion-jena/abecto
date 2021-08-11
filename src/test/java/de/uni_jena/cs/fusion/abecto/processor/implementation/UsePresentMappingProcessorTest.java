@@ -31,7 +31,7 @@ import org.junit.jupiter.api.Test;
 import de.uni_jena.cs.fusion.abecto.metaentity.Issue;
 import de.uni_jena.cs.fusion.abecto.metaentity.Mapping;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
-import de.uni_jena.cs.fusion.abecto.util.Mappings;
+import de.uni_jena.cs.fusion.abecto.util.Metadata;
 import de.uni_jena.cs.fusion.abecto.util.Models;
 
 public class UsePresentMappingProcessorTest {
@@ -65,7 +65,7 @@ public class UsePresentMappingProcessorTest {
 		processor.setParameters(parameter);
 		Model outputModel = processor.call();
 
-		Collection<Mapping> mappings = Mappings.getMappings(outputModel);
+		Collection<Mapping> mappings = Metadata.getMappings(outputModel);
 		assertTrue(mappings.contains(Mapping.of(ResourceFactory.createResource("http://example.org/a1"),
 				ResourceFactory.createResource("http://example.org/a2"))));
 		assertTrue(mappings.contains(Mapping.of(ResourceFactory.createResource("http://example.org/b1"),

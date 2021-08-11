@@ -3,6 +3,8 @@ package de.uni_jena.cs.fusion.abecto;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.jena.query.Dataset;
@@ -44,14 +46,17 @@ public class Step implements Runnable {
 				.assertOne(configurationModel.listObjectsOfProperty(stepIri, AV.processorClass)).asLiteral().getValue();
 		processor = processorClass.getDeclaredConstructor(new Class[0]).newInstance();
 
-		// set processor parameter
-		NodeIterator parameters = configurationModel.listObjectsOfProperty(stepIri, AV.hasParameter);
-		while (parameters.hasNext()) {
-			Resource parameter = parameters.next().asResource();
-			String key = parameter.getProperty(AV.key).getString();
-			Object value = parameter.getProperty(RDF.value).getObject();
-			processor.setParameter(key, value);
+		// get processor parameter
+		Map<String, List<?>> parameters = new HashMap<>();
+		NodeIterator parameterIterator = configurationModel.listObjectsOfProperty(stepIri, AV.hasParameter);
+		while (parameterIterator.hasNext()) {
+			Resource parameter = parameterIterator.next().asResource();
+			String key = parameter.getRequiredProperty(AV.key).getString();
+			List<Object> values = new ArrayList<>();
+			parameter.listProperties(RDF.value).forEach(values::add);
+			parameters.put(key, values);
 		}
+		Parameters.setParameters(processor, parameters);
 
 		// set aspects
 		processor.setAspects(aspects);

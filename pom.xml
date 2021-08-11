@@ -36,18 +36,11 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<apache.jena.version>3.17.0</apache.jena.version>
+		<apache.jena.version>4.1.0</apache.jena.version>
 		<junit.jupiter.version>5.5.1</junit.jupiter.version>
 	</properties>
 
 	<dependencies>
-		<!-- resolving dependency conflicts -->
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-api</artifactId>
-			<version>[1.7.25,)</version>
-		</dependency>
-		<!-- dependencies -->
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-simple</artifactId>
@@ -111,7 +104,7 @@
 		<dependency>
 			<groupId>de.uni_jena.cs.fusion</groupId>
 			<artifactId>similarity.jarowinkler</artifactId>
-			<version>1.0.0</version>
+			<version>1.0.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>

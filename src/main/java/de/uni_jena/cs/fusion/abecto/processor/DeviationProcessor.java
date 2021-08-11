@@ -15,10 +15,7 @@
  */
 package de.uni_jena.cs.fusion.abecto.processor;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -27,48 +24,32 @@ import java.util.UUID;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 
+import de.uni_jena.cs.fusion.abecto.Aspect;
+import de.uni_jena.cs.fusion.abecto.Parameter;
 import de.uni_jena.cs.fusion.abecto.metaentity.Category;
 import de.uni_jena.cs.fusion.abecto.metaentity.Deviation;
-import de.uni_jena.cs.fusion.abecto.metaentity.Mapping;
-import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
-import de.uni_jena.cs.fusion.abecto.util.Mappings;
 
 public abstract class DeviationProcessor extends Processor {
 
-	public static class Parameter implements ParameterModel {
-		/**
-		 * Variables to process by categories.
-		 */
-		public Map<String, Collection<String>> variables;
-	}
+	/** Aspect to process. */
+	@Parameter
+	public Resource aspect;
+	/** Variables to process. */
+	@Parameter
+	public Collection<String> variables;
 
 	@Override
-	public final void computeResultModel() throws Exception {
-		Set<UUID> ontologyIds = this.inputGroupModels.keySet();
-
-		Collection<Deviation> deviations = new ArrayList<>();
-
-		// load mapping
-		Map<Resource, Set<Resource>> mappings = new HashMap<>();
-		for (Mapping mapping : Mappings.getPositiveMappings(this.metaModel)) {
-			mappings.computeIfAbsent(mapping.resource1, (x) -> {
-				return new HashSet<>();
-			}).add(mapping.resource2);
-			mappings.computeIfAbsent(mapping.resource2, (x) -> {
-				return new HashSet<>();
-			}).add(mapping.resource1);
-		}
-
-		// iterate ontology pairs
-		for (UUID ontologyId1 : ontologyIds) {
-			Model model1 = this.inputGroupModels.get(ontologyId1);
-			for (UUID ontologyId2 : ontologyIds) {
-				if (ontologyId1.compareTo(ontologyId2) > 0) { // do not do work twice
-					Model model2 = this.inputGroupModels.get(ontologyId2);
-
+	public final void run() {
+		// TODO
+		Aspect aspect = this.getAspects().get(this.aspect);
+		// iterate dataset pairs
+		for (Resource dataset1 : this.getInputDatasets()) {
+			for (Resource dataset2 : this.getInputDatasets()) {
+				if (dataset1.getURI().compareTo(dataset2.getURI()) > 0) { // do not do work twice
+					
 					// iterate categories
-					for (String categoryName : this.getParameters().variables.keySet()) {
+					for (String categoryName : this.variables.keySet()) {
 						Optional<Category> category1Optional = SparqlEntityManager
 								.selectOne(new Category(categoryName, null, ontologyId1), this.metaModel);
 						Optional<Category> category2Optional = SparqlEntityManager

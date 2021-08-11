@@ -16,6 +16,7 @@
 package de.uni_jena.cs.fusion.abecto.processor.implementation;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -30,7 +31,6 @@ import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
@@ -45,12 +45,58 @@ import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.Template;
 import org.apache.jena.vocabulary.RDFS;
 
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import de.uni_jena.cs.fusion.abecto.Parameter;
+import de.uni_jena.cs.fusion.abecto.processor.Processor;
 
-import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
-import de.uni_jena.cs.fusion.abecto.processor.AbstractSourceProcessor;
+public class SparqlSourceProcessor extends Processor {
+	/** URL of the SPARQL endpoint to use. */
+	@Parameter
+	public String service;
+	/**
+	 * Maximum number of resources to retrieve in one request. Default: 500
+	 */
+	@Parameter
+	public Integer chunkSize = 500;
+	/**
+	 * SELECT query to retrieve a list of the relevant resources. All variables will
+	 * be taken into account. None IRI value will be ignored. ORDER BY, LIMIT and
+	 * OFFSET might become overwritten.
+	 */
+	@Parameter
+	public Optional<Query> query;
+	/** List of the relevant resources. */
+	@Parameter
+	public Collection<Resource> list;
+	/**
+	 * Number of iterations to load associated resources, which share a statement as
+	 * an object with a retrieved resource as a subject. Default: 0
+	 */
+	@Parameter
+	public Integer associatedLoadIterations = 0;
+	/**
+	 * Properties that represent a hierarchy. Resources associated to a loaded
+	 * resource by a hierarchy property will be loaded unlimited, but will not cause
+	 * retrieval of further resources not connected by a hierarchy property.
+	 * Default: rdfs:subClassOf
+	 */
+	@Parameter
+	public Collection<Property> followUnlimited = new ArrayList<>(Arrays.asList(RDFS.subClassOf));
+	/**
+	 * Properties to track in inverse direction to compile a list of associated
+	 * resources to load. That means that the subject of a statement whose property
+	 * is in this list and whose object is a loaded resource will become a
+	 * associated resource.
+	 */
+	@Parameter
+	public Collection<Node> followInverse;
+	
+	// TODO add parameter to {@code followInverseUnlimited}
 
-public class SparqlSourceProcessor extends AbstractSourceProcessor<SparqlSourceProcessor.Parameter> {
+	@Override
+	public void run() {
+		extract(this.getOutputPrimaryModel().get(), this.service, this.query, this.list, this.followInverse,
+				this.followUnlimited, this.associatedLoadIterations, this.chunkSize);
+	}
 
 	private static ElementData valuesClause(Var var, Iterable<Node> values) {
 		ElementData elementData = new ElementData();
@@ -116,11 +162,9 @@ public class SparqlSourceProcessor extends AbstractSourceProcessor<SparqlSourceP
 
 	}
 
-	private static Model extract(String service, Optional<Query> query, Collection<Resource> list,
+	private static Model extract(Model resultModel, String service, Optional<Query> query, Collection<Resource> list,
 			Collection<Node> inverseAssociationProperties, Collection<Property> hierarchyProperties,
 			int associatedLoadIterations, int chunkSize) {
-
-		Model resultModel = ModelFactory.createDefaultModel();
 
 		// TODO provide single HTTP client for all requests
 
@@ -197,61 +241,5 @@ public class SparqlSourceProcessor extends AbstractSourceProcessor<SparqlSourceP
 		} while (!resourcesToLoad.isEmpty());
 
 		return resultModel;
-	}
-
-	@Override
-	protected void computeResultModel() throws Exception {
-		Model resultModel = extract(this.getParameters().service, this.getParameters().query, this.getParameters().list,
-				this.getParameters().inverseAssociationProperties, this.getParameters().hierarchyProperties,
-				this.getParameters().associatedLoadIterations, this.getParameters().chunkSize);
-
-		// store results
-		this.setModel(resultModel);
-	}
-
-	@JsonSerialize
-	public static class Parameter implements ParameterModel {
-		/**
-		 * URL of the SPARQL endpoint to use.
-		 */
-		public String service;
-		/**
-		 * Maximum number of resources to retrieve in one request. Default: 500
-		 */
-		public Integer chunkSize = 500;
-		/**
-		 * SELECT query to retrieve a list of the relevant resources. All variables will
-		 * be taken into account. None IRI value will be ignored. ORDER BY, LIMIT and
-		 * OFFSET might become overwritten.
-		 */
-		public Optional<Query> query;
-		/**
-		 * List of the relevant resources.
-		 */
-		public Collection<Resource> list = Collections.emptyList();
-		/**
-		 * Number of iterations to load associated resources, which share a statement as
-		 * an object with a retrieved resource as a subject. Default: 0
-		 */
-		public Integer associatedLoadIterations = 0;
-		/**
-		 * Properties that represent a hierarchy. Resources associated to a loaded
-		 * resource by a hierarchy property will be loaded unlimited, but will not cause
-		 * retrieval of further resources not connected by a hierarchy property.
-		 * Default: rdfs:subClassOf
-		 */
-		// TODO rename to followUnlimited
-		public Collection<Property> hierarchyProperties = Collections.singleton(RDFS.subClassOf);
-		/**
-		 * Properties to track in inverse direction to compile a list of associated
-		 * resources to load.
-		 * <p>
-		 * That means that the subject of a statement whose property is in this list and
-		 * whose object is a loaded resource will become a associated resource.
-		 */
-		// TODO rename to followInverse
-		public Collection<Node> inverseAssociationProperties = Collections.emptyList();
-
-		// TODO add to followInverseUnlimited
 	}
 }

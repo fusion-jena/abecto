@@ -1,6 +1,7 @@
 package de.uni_jena.cs.fusion.abecto.vocabulary;
 
 import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 
 /**
@@ -15,6 +16,7 @@ public class DQV {
 	 */
 	public static final String namespace = "http://www.w3.org/ns/dqv#";
 
-	public final static Property computedOn = ResourceFactory
-			.createProperty("http://www.w3.org/ns/dqv#computedOn");
+	public final static Property computedOn = ResourceFactory.createProperty("http://www.w3.org/ns/dqv#computedOn");
+	public static final Resource QualityAnnotation = ResourceFactory
+			.createResource("http://www.w3.org/ns/dqv#QualityAnnotation");
 }

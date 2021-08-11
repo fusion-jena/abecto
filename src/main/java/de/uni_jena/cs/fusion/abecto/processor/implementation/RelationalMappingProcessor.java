@@ -35,22 +35,28 @@ import org.apache.jena.sparql.core.Var;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
+import de.uni_jena.cs.fusion.abecto.Parameter;
 import de.uni_jena.cs.fusion.abecto.metaentity.Category;
 import de.uni_jena.cs.fusion.abecto.metaentity.Issue;
 import de.uni_jena.cs.fusion.abecto.metaentity.Mapping;
 import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.processor.MappingProcessor;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
-import de.uni_jena.cs.fusion.abecto.util.Mappings;
+import de.uni_jena.cs.fusion.abecto.util.Metadata;
 
 public class RelationalMappingProcessor extends MappingProcessor<RelationalMappingProcessor.Parameter> {
+
+	@Parameter
+	public String category;
+	@Parameter
+	public Collection<String> variables;
 
 	@Override
 	public Collection<Mapping> computeMapping(Model model1, Model model2, UUID ontologyId1, UUID ontologyId2)
 			throws Exception {
 
 		// load categories
-		String categoryName = this.getParameters().category;
+		String categoryName = this.category;
 		Category category1;
 		try {
 			category1 = SparqlEntityManager.selectOne(new Category(categoryName, null, ontologyId1), this.metaModel)
@@ -69,7 +75,7 @@ public class RelationalMappingProcessor extends MappingProcessor<RelationalMappi
 		}
 
 		// check variables
-		Collection<String> variables = this.getParameters().variables;
+		Collection<String> variables = this.variables;
 		Collection<Var> category1Variables = category1.getPatternVariables();
 		Collection<Var> category2Variables = category2.getPatternVariables();
 		for (String variableName : variables) {
@@ -83,7 +89,7 @@ public class RelationalMappingProcessor extends MappingProcessor<RelationalMappi
 		// load mappings form ontology 1 to other ontologies
 		Map<Resource, Collection<Resource>> mappedResourceOfOtherOntsByResourceOfOnt1 = new HashMap<>();
 		try {
-			for (Mapping mapping : Mappings.getPositiveMappings(this.metaModel)) {
+			for (Mapping mapping : Metadata.getPositiveMappings(this.metaModel)) {
 				mappedResourceOfOtherOntsByResourceOfOnt1.computeIfAbsent(mapping.resource1, (v) -> {
 					return new ArrayList<Resource>();
 				}).add(mapping.resource2);
@@ -164,11 +170,4 @@ public class RelationalMappingProcessor extends MappingProcessor<RelationalMappi
 
 		return mappings;
 	}
-
-	@JsonSerialize
-	public static class Parameter implements ParameterModel {
-		public String category;
-		public Collection<String> variables;
-	}
-
 }

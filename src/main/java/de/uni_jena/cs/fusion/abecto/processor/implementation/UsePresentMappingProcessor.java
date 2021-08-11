@@ -17,9 +17,6 @@ package de.uni_jena.cs.fusion.abecto.processor.implementation;
 
 import java.io.ByteArrayInputStream;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map.Entry;
-import java.util.UUID;
 
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
@@ -33,31 +30,27 @@ import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.apache.jena.sparql.lang.sparql_11.SPARQLParser11;
 import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.syntax.ElementPathBlock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-
-import de.uni_jena.cs.fusion.abecto.metaentity.Issue;
-import de.uni_jena.cs.fusion.abecto.metaentity.Mapping;
-import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
-import de.uni_jena.cs.fusion.abecto.processor.AbstractMetaProcessor;
-import de.uni_jena.cs.fusion.abecto.processor.MappingProcessor;
-import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
+import de.uni_jena.cs.fusion.abecto.Aspect;
+import de.uni_jena.cs.fusion.abecto.Parameter;
+import de.uni_jena.cs.fusion.abecto.processor.Processor;
+import de.uni_jena.cs.fusion.abecto.util.Metadata;
 import de.uni_jena.cs.fusion.abecto.util.Default;
-import de.uni_jena.cs.fusion.abecto.util.Mappings;
 
-public class UsePresentMappingProcessor extends AbstractMetaProcessor<UsePresentMappingProcessor.Parameter>
-		implements MappingProcessor<UsePresentMappingProcessor.Parameter> {
+public class UsePresentMappingProcessor extends Processor {
+	final static Logger log = LoggerFactory.getLogger(UsePresentMappingProcessor.class);
 
-	@JsonSerialize
-	public static class Parameter implements ParameterModel {
-		public Collection<String> assignmentPaths = new HashSet<>();
-	}
+	@Parameter
+	public Resource aspect;
+	@Parameter
+	public Collection<String> assignmentPaths;
 
 	@Override
-	public final void computeResultModel() throws Exception {
-
-		Collection<Mapping> newMappings = new HashSet<>();
-		for (String unparsedAssignmentPath : this.getParameters().assignmentPaths) {
+	public void run() {
+		Aspect aspect = getAspects().get(this.aspect);
+		for (String unparsedAssignmentPath : this.assignmentPaths) {
 			try {
 				// get path
 				SPARQLParser11 parser = new SPARQLParser11(new ByteArrayInputStream(unparsedAssignmentPath.getBytes()));
@@ -75,21 +68,24 @@ public class UsePresentMappingProcessor extends AbstractMetaProcessor<UsePresent
 				block.addTriple(new TriplePath(subject, assignmentPath, object));
 				query.setQueryPattern(block);
 
-				// execute query for each ontology
-				for (Entry<UUID, Model> modelGroupOfOntology : this.inputGroupModels.entrySet()) {
-					ResultSet resultSet = QueryExecutionFactory.create(query, modelGroupOfOntology.getValue())
-							.execSelect();
+				// execute query for each dataset
+				for (Resource dataset : this.getInputDatasets()) {
+					Model inputPrimaryModel = this.getInputPrimaryModelUnion(dataset);
+					Model metaModel = this.getMetaModelUnion(null);
+					Model outputMetaModel = this.getOutputMetaModel(null);
+
+					ResultSet resultSet = QueryExecutionFactory.create(query, inputPrimaryModel).execSelect();
 					while (resultSet.hasNext()) {
 						QuerySolution solution = resultSet.next();
 						try {
 							Resource resource1 = solution.getResource("s");
 							Resource resource2 = solution.getResource("o");
-							newMappings.add(Mapping.of(resource1, resource2));
+							Metadata.addCorrespondence(resource1, resource2, aspect, metaModel,
+									outputMetaModel);
 						} catch (ClassCastException e) {
-							Issue issue = new Issue(null, modelGroupOfOntology.getKey(), null, "UnexpectedValueType",
-									String.format("Subject or object is not a resource: %s %s %s", solution.get("s"),
-											assignmentPath, solution.get("o")));
-							SparqlEntityManager.insert(issue, this.getResultModel());
+							// TODO add issue to outpurMetaModel
+							log.warn(String.format("UnexpectedValueType: Subject or object is not a resource: %s %s %s",
+									solution.get("s"), assignmentPath, solution.get("o")));
 						}
 					}
 				}
@@ -97,9 +93,5 @@ public class UsePresentMappingProcessor extends AbstractMetaProcessor<UsePresent
 				throw new IllegalStateException("Failed to parse assignment path.", e);
 			}
 		}
-
-		Collection<Mapping> knownMappings = Mappings.getMappings(this.metaModel);
-		Collection<Mapping> acceptedMappings = Mappings.filterMappings(newMappings, knownMappings);
-		Mappings.saveMappings(acceptedMappings, this.getResultModel());
 	}
 }

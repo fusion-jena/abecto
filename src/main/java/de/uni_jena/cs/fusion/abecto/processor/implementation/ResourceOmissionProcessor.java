@@ -26,26 +26,25 @@ import java.util.UUID;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 
+import de.uni_jena.cs.fusion.abecto.Parameter;
 import de.uni_jena.cs.fusion.abecto.metaentity.Category;
 import de.uni_jena.cs.fusion.abecto.metaentity.Mapping;
 import de.uni_jena.cs.fusion.abecto.metaentity.Omission;
-import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
-import de.uni_jena.cs.fusion.abecto.processor.AbstractMetaProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.Processor;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
-import de.uni_jena.cs.fusion.abecto.util.Mappings;
+import de.uni_jena.cs.fusion.abecto.util.Metadata;
 
-public class ResourceOmissionProcessor extends AbstractMetaProcessor<ResourceOmissionProcessor.Parameter> {
+public class ResourceOmissionProcessor extends Processor {
 
-	public static class Parameter implements ParameterModel {
-		/** Categories to process. */
-		public Collection<String> categories;
-	}
+	/** Categories to process. */
+	@Parameter
+	public Collection<String> categories;
 
 	@Override
-	protected void computeResultModel() throws Exception {
+	public void run() {
 		Model resultModel = this.getResultModel();
 
-		Collection<String> categoryNames = this.getParameters().categories;
+		Collection<String> categoryNames = this.categories;
 
 		for (String categoryName : categoryNames) {
 			Set<Category> categories = SparqlEntityManager.select(new Category(categoryName, null, null),
@@ -60,7 +59,7 @@ public class ResourceOmissionProcessor extends AbstractMetaProcessor<ResourceOmi
 
 			// load mapping
 			Map<Resource, Set<Resource>> mappings = new HashMap<>();
-			for (Mapping mapping : Mappings.getPositiveMappings(this.metaModel)) {
+			for (Mapping mapping : Metadata.getPositiveMappings(this.metaModel)) {
 				mappings.computeIfAbsent(mapping.resource1, (x) -> {
 					return new HashSet<>();
 				}).add(mapping.resource2);

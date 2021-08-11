@@ -15,49 +15,40 @@
  */
 package de.uni_jena.cs.fusion.abecto.processor.implementation;
 
-import org.apache.jena.ontology.OntModel;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
-import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Model;
 
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-
-import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
-import de.uni_jena.cs.fusion.abecto.processor.AbstractTransformationProcessor;
+import de.uni_jena.cs.fusion.abecto.Parameter;
+import de.uni_jena.cs.fusion.abecto.processor.Processor;
 import de.uni_jena.cs.fusion.abecto.util.Models;
 
-public class SparqlConstructProcessor extends AbstractTransformationProcessor<SparqlConstructProcessor.Parameter> {
+public class SparqlConstructProcessor extends Processor {
+
+	@Parameter
+	public Query query;
+	@Parameter
+	public Integer maxIterations = 1;
 
 	@Override
-	public void computeResultModel() {
-		// prepare query
-		Query query = QueryFactory.create(this.getParameters().query);
+	public void run() {		
+		Model outputPrimaryModel = this.getOutputPrimaryModel().get();
+		Model primaryModelUnion = this.getPrimaryModelUnion();
 
-		OntModel inputAndResultModelUnion = Models.getEmptyOntModel();
-		inputAndResultModelUnion.addSubModel(this.inputModelUnion);
-		inputAndResultModelUnion.addSubModel(this.getResultModel());
-
-		for (int iteration = 1; iteration <= this.getParameters().maxIterations; iteration++) {
+		for (int iteration = 1; iteration <= maxIterations; iteration++) {
 			// prepare execution
-			QueryExecution queryExecution = QueryExecutionFactory.create(query, inputAndResultModelUnion);
+			QueryExecution queryExecution = QueryExecutionFactory.create(query, primaryModelUnion);
 
 			// execute and write into intermediate result model
 			Model intermediateResultModel = queryExecution.execConstruct(Models.getEmptyOntModel());
 
 			// add new statements (if any) to result model, otherwise break
-			if (!this.getResultModel().containsAll(intermediateResultModel)) {
-				this.getResultModel().add(intermediateResultModel);
+			if (!primaryModelUnion.containsAll(intermediateResultModel)) {
+				outputPrimaryModel.add(intermediateResultModel);
 			} else {
 				break;
 			}
 		}
-	}
-
-	@JsonSerialize
-	public static class Parameter implements ParameterModel {
-		public String query;
-		public int maxIterations = 1;
 	}
 }

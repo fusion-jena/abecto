@@ -15,23 +15,24 @@
  */
 package de.uni_jena.cs.fusion.abecto.processor.implementation;
 
+import java.io.IOException;
 import java.net.URL;
 
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-
-import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
-import de.uni_jena.cs.fusion.abecto.processor.AbstractSourceProcessor;
+import de.uni_jena.cs.fusion.abecto.Parameter;
+import de.uni_jena.cs.fusion.abecto.processor.Processor;
 import de.uni_jena.cs.fusion.abecto.util.Models;
 
-public class UrlSourceProcessor extends AbstractSourceProcessor<UrlSourceProcessor.Parameter> {
+public class UrlSourceProcessor extends Processor {
+
+	@Parameter
+	URL url;
 
 	@Override
-	public void computeResultModel() throws Exception {
-		this.setModel(Models.read(new URL(this.getParameters().url)));
-	}
-
-	@JsonSerialize
-	public static class Parameter implements ParameterModel {
-		public String url;
+	public void run() {
+		try {
+			Models.read(this.url, this.getOutputPrimaryModel().get());
+		} catch (IOException e) {
+			throw new RuntimeException("Failed to read RDF file from URL.", e);
+		}
 	}
 }

@@ -28,32 +28,32 @@ import java.util.UUID;
 
 import org.apache.jena.rdf.model.Resource;
 
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-
+import de.uni_jena.cs.fusion.abecto.Parameter;
 import de.uni_jena.cs.fusion.abecto.metaentity.Category;
 import de.uni_jena.cs.fusion.abecto.metaentity.Issue;
 import de.uni_jena.cs.fusion.abecto.metaentity.Mapping;
 import de.uni_jena.cs.fusion.abecto.metaentity.Measurement;
 import de.uni_jena.cs.fusion.abecto.metaentity.Omission;
-import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
-import de.uni_jena.cs.fusion.abecto.processor.AbstractMetaProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.Processor;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
-import de.uni_jena.cs.fusion.abecto.util.Mappings;
+import de.uni_jena.cs.fusion.abecto.util.Metadata;
 
-public class CompletenessProcessor extends AbstractMetaProcessor<CompletenessProcessor.Parameter> {
+public class CompletenessProcessor extends Processor {
 
-	@JsonSerialize
-	public static class Parameter implements ParameterModel {
-		public Optional<Collection<String>> omission = Optional.empty();
-		public Optional<Collection<String>> coverage_absolute = Optional.empty();
-		public Optional<Collection<String>> coverage_relative = Optional.empty();
-		public Optional<Collection<String>> duplicate = Optional.empty();
-		public Optional<Collection<String>> completeness = Optional.empty();
-	}
+	@Parameter
+	public Collection<String> omission;
+	@Parameter
+	public Collection<String> coverage_absolute;
+	@Parameter
+	public Collection<String> coverage_relative;
+	@Parameter
+	public Collection<String> duplicate;
+	@Parameter
+	public Collection<String> completeness;
 
 	@Override
-	protected void computeResultModel() throws Exception {
-		Set<Mapping> mappings = Mappings.getPositiveMappings(this.metaModel);
+	public void run() {
+		Set<Mapping> mappings = Metadata.getPositiveMappings(this.metaModel);
 
 		// get resources by ontology and category
 		Map<String, Map<UUID, Collection<Resource>>> resourcesByOntologyByCategory = new HashMap<>();
@@ -89,10 +89,9 @@ public class CompletenessProcessor extends AbstractMetaProcessor<CompletenessPro
 				for (UUID ontologyId2 : resourcesByOntology.keySet()) {
 					Collection<Resource> resources1 = resourcesByOntology.get(ontologyId1);
 					if (!ontologyId1.equals(ontologyId2)) {
-						if (isEnabled(this.getParameters().coverage_absolute, categoryName)
-								|| isEnabled(this.getParameters().coverage_relative, categoryName)
-								|| isEnabled(this.getParameters().omission, categoryName)
-								|| isEnabled(this.getParameters().completeness, categoryName)) {
+						if (this.coverage_absolute.contains(categoryName)
+								|| this.coverage_relative.contains(categoryName) || this.omission.contains(categoryName)
+								|| this.completeness.contains(categoryName)) {
 							Long coverage = coverageOfOntology.computeIfAbsent(ontologyId2, (o) -> Long.valueOf(0l));
 							Collection<Resource> resources2 = resourcesByOntology.get(ontologyId2);
 							for (Resource resource1 : resources1) {
@@ -101,7 +100,7 @@ public class CompletenessProcessor extends AbstractMetaProcessor<CompletenessPro
 										mappedResourcesByResource.getOrDefault(resource1, Collections.emptySet()));
 								mappedResources.retainAll(resources2);
 								if (mappedResources.isEmpty()) {
-									if (isEnabled(this.getParameters().omission, categoryName)) {
+									if (this.omission.contains(categoryName)) {
 										// report omission
 										omissions.add(
 												new Omission(null, categoryName, ontologyId2, resource1, ontologyId1));
@@ -112,21 +111,20 @@ public class CompletenessProcessor extends AbstractMetaProcessor<CompletenessPro
 								}
 							}
 							// absolute coverage
-							if (isEnabled(this.getParameters().coverage_absolute, categoryName)) {
+							if (this.coverage_absolute.contains(categoryName)) {
 								measurements.add(new Measurement(null, ontologyId2, "Coverage (absolute)", coverage,
 										Optional.of("of category"), Optional.of(categoryName),
 										Optional.of("in ontology"), Optional.of(ontologyId1.toString())));
 							}
 							// relative coverage
-							if (isEnabled(this.getParameters().coverage_relative, categoryName)
-									&& resources1.size() > 0) {
+							if (this.coverage_relative.contains(categoryName) && resources1.size() > 0) {
 								measurements.add(new Measurement(null, ontologyId2, "Coverage (relative in %)",
 										coverage * 100 / resources1.size(), Optional.of("of category"),
 										Optional.of(categoryName), Optional.of("in ontology"),
 										Optional.of(ontologyId1.toString())));
 							}
 						}
-					} else if (isEnabled(this.getParameters().duplicate, categoryName)) {
+					} else if (this.duplicate.contains(categoryName)) {
 						for (Resource resource1 : resources1) {
 							if (mappedResourcesByResource.containsKey(resource1)) {
 								// get mapped resources of same ontology
@@ -150,7 +148,7 @@ public class CompletenessProcessor extends AbstractMetaProcessor<CompletenessPro
 
 		// completeness
 //		for (String categoryName : coverageOfOntologyByOntologyByCategory.keySet()) {
-//			if (isEnabled(this.getParameters().completeness, categoryName)) {
+//			if (isEnabled(this.completeness, categoryName)) {
 //				Map<UUID, Map<UUID, Long>> coverageOfOntologyByOntology = coverageOfOntologyByOntologyByCategory
 //						.get(categoryName);
 //				// TODO completeness calculation
@@ -161,9 +159,5 @@ public class CompletenessProcessor extends AbstractMetaProcessor<CompletenessPro
 		SparqlEntityManager.insert(omissions, this.getResultModel());
 		SparqlEntityManager.insert(measurements, this.getResultModel());
 		SparqlEntityManager.insert(issues, this.getResultModel());
-	}
-
-	private boolean isEnabled(Optional<Collection<String>> parameter, String categoryName) {
-		return parameter.isEmpty() || parameter.get().contains(categoryName);
 	}
 }

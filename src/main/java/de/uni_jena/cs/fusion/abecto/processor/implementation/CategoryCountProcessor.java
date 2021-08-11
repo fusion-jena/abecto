@@ -34,11 +34,10 @@ import org.apache.jena.sparql.syntax.ElementGroup;
 
 import de.uni_jena.cs.fusion.abecto.metaentity.Category;
 import de.uni_jena.cs.fusion.abecto.metaentity.Measurement;
-import de.uni_jena.cs.fusion.abecto.parameter_model.EmptyParameters;
-import de.uni_jena.cs.fusion.abecto.processor.AbstractMetaProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.Processor;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 
-public class CategoryCountProcessor extends AbstractMetaProcessor<EmptyParameters> {
+public class CategoryCountProcessor extends Processor {
 
 	private static Query countQuery(String category, ElementGroup pattern, String target) {
 		try {
@@ -57,7 +56,7 @@ public class CategoryCountProcessor extends AbstractMetaProcessor<EmptyParameter
 	}
 
 	@Override
-	protected void computeResultModel() throws Exception {
+	public void run() {
 		// get categories
 		Collection<Category> categories = SparqlEntityManager.select(new Category(), this.metaModel);
 
@@ -84,8 +83,8 @@ public class CategoryCountProcessor extends AbstractMetaProcessor<EmptyParameter
 
 			for (String target : targets) {
 				// get counts for current category, ontology and target
-				ResultSet categoryQueryResult = QueryExecutionFactory
-						.create(categoryQueries.get(target), ontologyModel).execSelect();
+				ResultSet categoryQueryResult = QueryExecutionFactory.create(categoryQueries.get(target), ontologyModel)
+						.execSelect();
 				if (categoryQueryResult.hasNext()) {
 					Long count = categoryQueryResult.next().getLiteral("count").getLong();
 					// add count to results

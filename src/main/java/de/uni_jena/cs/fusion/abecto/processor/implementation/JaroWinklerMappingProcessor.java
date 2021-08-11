@@ -32,30 +32,29 @@ import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.lang.sparql_11.ParseException;
 
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-
+import de.uni_jena.cs.fusion.abecto.Parameter;
 import de.uni_jena.cs.fusion.abecto.metaentity.Category;
 import de.uni_jena.cs.fusion.abecto.metaentity.Issue;
 import de.uni_jena.cs.fusion.abecto.metaentity.Mapping;
-import de.uni_jena.cs.fusion.abecto.parameter_model.ParameterModel;
 import de.uni_jena.cs.fusion.abecto.processor.MappingProcessor;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 import de.uni_jena.cs.fusion.similarity.jarowinkler.JaroWinklerSimilarity;
 
-public class JaroWinklerMappingProcessor extends MappingProcessor<JaroWinklerMappingProcessor.Parameter> {
+public class JaroWinklerMappingProcessor extends MappingProcessor {
 
 	// TODO add language handling parameter
 
-	@JsonSerialize
-	public static class Parameter implements ParameterModel {
-		public double threshold;
-		public boolean case_sensitive;
-		public String category;
-		public Collection<String> variables;
-		public String defaultLangTag = "en";
-	}
+	@Parameter
+	public Double threshold;
+	@Parameter
+	public Boolean case_sensitive;
+	@Parameter
+	public String category;
+	@Parameter
+	public Collection<String> variables;
+	@Parameter
+	public String defaultLangTag = "en";
 
 	/**
 	 * the variablesByCategoryByOntology relevant for the category mapped with
@@ -149,14 +148,16 @@ public class JaroWinklerMappingProcessor extends MappingProcessor<JaroWinklerMap
 	}
 
 	@Override
-	public Collection<Mapping> computeMapping(Model model1, Model model2, UUID ontologyId1, UUID ontologyId2)
-			throws ParseException, IllegalStateException, NullPointerException, ReflectiveOperationException {
+	public void mapDatasets(Resource dataset1, Resource dataset2) {
+	//public Collection<Mapping> computeMapping(Model model1, Model model2, UUID ontologyId1, UUID ontologyId2)
+	//		throws ParseException, IllegalStateException, NullPointerException, ReflectiveOperationException {
+	
 		// get parameters
-		boolean caseSensitive = this.getParameters().case_sensitive;
-		double threshold = this.getParameters().threshold;
-		Collection<String> variables = this.getParameters().variables;
-		String categoryName = this.getParameters().category;
-		Locale defaultLocale = Locale.forLanguageTag(this.getParameters().defaultLangTag);
+		boolean caseSensitive = this.case_sensitive;
+		double threshold = this.threshold;
+		Collection<String> variables = this.variables;
+		String categoryName = this.category;
+		Locale defaultLocale = Locale.forLanguageTag(this.defaultLangTag);
 
 		// get valuesByVariableByModel
 		Map<Var, Map<String, Collection<Resource>>> valuesByVariable1 = getValuesByVariable(model1, ontologyId1,
@@ -203,8 +204,6 @@ public class JaroWinklerMappingProcessor extends MappingProcessor<JaroWinklerMap
 				}
 			}
 		}
-
-		return mappings;
 	}
 
 	private Collection<String> maxValue(Map<String, Double> map) {

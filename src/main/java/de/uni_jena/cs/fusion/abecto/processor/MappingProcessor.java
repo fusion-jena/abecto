@@ -15,111 +15,65 @@
  */
 package de.uni_jena.cs.fusion.abecto.processor;
 
-import org.apache.jena.arq.querybuilder.AskBuilder;
-import org.apache.jena.arq.querybuilder.ConstructBuilder;
-import org.apache.jena.arq.querybuilder.WhereBuilder;
-import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.expr.ExprVar;
-import org.apache.jena.vocabulary.RDF;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
-import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
+import de.uni_jena.cs.fusion.abecto.util.Metadata;
 
 public abstract class MappingProcessor extends Processor {
-	private final AskBuilder CONTRADICTION_QUERY_BUILDER = new AskBuilder()
-			.addWhere(Var.alloc("set"), RDF.type, Var.alloc("setType"))
-			.addWhere(Var.alloc("set"), AV.containdResource, Var.alloc("resource1"))
-			.addWhere(Var.alloc("set"), AV.containdResource, Var.alloc("resource2"))
-			.addWhere(Var.alloc("set"), AV.affectedAspect, Var.alloc("aspect"));
 
+	/**
+	 * Check if a correspondence or incorrespondence for two given resources in a
+	 * given aspect already exist.
+	 * <p>
+	 * <strong>Note:<strong> The use of this method is not mandatory, as it will
+	 * also be checked by {@link #addCorrespondence(Resource, Resource, Aspect)} and
+	 * {@link #addIncorrespondence(Resource, Resource, Aspect)}.
+	 * 
+	 * @param resource1 first resource to check
+	 * @param resource2 second resource to check
+	 * @param aspect    aspect affected by the (in)correspondence
+	 * @return
+	 */
 	public final boolean existsOrContradicts(Resource resource1, Resource resource2, Aspect aspect) {
-		AskBuilder queryBuilder = CONTRADICTION_QUERY_BUILDER.clone();
-		queryBuilder.setVar(Var.alloc("resource1"), resource1);
-		queryBuilder.setVar(Var.alloc("resource2"), resource2);
-		queryBuilder.setVar(Var.alloc("aspect"), aspect);
-		return QueryExecutionFactory.create(queryBuilder.build(), this.getMetaModelUnion(null)).execAsk();
-	}
-
-	private final ConstructBuilder ADD_QUERY = new ConstructBuilder()
-			.addConstruct(Var.alloc("set"), RDF.type, Var.alloc("setType"))
-			.addConstruct(Var.alloc("set"), AV.containdResource, Var.alloc("resource1"))
-			.addConstruct(Var.alloc("set"), AV.containdResource, Var.alloc("resource2"))
-			.addConstruct(Var.alloc("set"), AV.affectedAspect, Var.alloc("aspect"));
-
-	private final void add(Resource resource1, Resource resource2, Aspect aspect, boolean incorrespondence) {
-		ConstructBuilder queryBuilder = ADD_QUERY.clone();
-		queryBuilder.setVar(Var.alloc("setType"), incorrespondence ? AV.IncorrespondenceSet : AV.CorrespondenceSet);
-		queryBuilder.setVar(Var.alloc("resource1"), resource1);
-		queryBuilder.setVar(Var.alloc("resource2"), resource2);
-		queryBuilder.setVar(Var.alloc("aspect"), aspect);
-		QueryExecutionFactory.create(queryBuilder.build(), this.getOutputMetaModel(null))
-				.execConstruct(this.getOutputMetaModel(null));
-	}
-
-	private final ConstructBuilder ADD_TRANSITIVE_CORRESPONDENCE_QUERY = new ConstructBuilder()
-			.addConstruct(Var.alloc("set"), AV.containdResource, Var.alloc("resourceTransitive"))
-			.addWhere(Var.alloc("set"), RDF.type, AV.CorrespondenceSet)
-			.addWhere(Var.alloc("set"), AV.containdResource, Var.alloc("resource1"))
-			.addWhere(Var.alloc("set"), AV.containdResource, Var.alloc("resource2"))
-			.addWhere(Var.alloc("set"), AV.affectedAspect, Var.alloc("aspect"))
-			.addWhere(Var.alloc("otherSet"), RDF.type, AV.CorrespondenceSet)
-			.addWhere(Var.alloc("otherSet"), AV.containdResource, Var.alloc("resourceTransitive"))
-			.addWhere(Var.alloc("otherSet"), AV.affectedAspect, Var.alloc("aspect"))//
-			.addWhere(new WhereBuilder()//
-					.addWhere(Var.alloc("otherSet"), AV.containdResource, Var.alloc("resource1"))
-					.addUnion(new WhereBuilder()//
-							.addWhere(Var.alloc("otherSet"), AV.containdResource, Var.alloc("resource2"))));
-
-	private final ConstructBuilder ADD_TRANSITIVE_INCORRESPONDENCE_QUERY = new ConstructBuilder()
-			.addConstruct(Var.alloc("transitiveSet"), RDF.type, AV.IncorrespondenceSet)
-			.addConstruct(Var.alloc("transitiveSet"), AV.containdResource, Var.alloc("resourceTransitive1"))
-			.addConstruct(Var.alloc("transitiveSet"), AV.containdResource, Var.alloc("resourceTransitive2"))
-			.addConstruct(Var.alloc("transitiveSet"), AV.affectedAspect, Var.alloc("aspect"))
-			.addWhere(Var.alloc("otherSet"), RDF.type, AV.CorrespondenceSet)
-			.addWhere(Var.alloc("otherSet"), AV.containdResource, Var.alloc("resourceTransitive2"))
-			.addWhere(Var.alloc("otherSet"), AV.affectedAspect, Var.alloc("aspect"))//
-			.addWhere(new WhereBuilder()//
-					.addWhere(Var.alloc("otherSet"), AV.containdResource, Var.alloc("resource1"))
-					.addBind(new ExprVar(Var.alloc("resource2")), Var.alloc("resourceTransitive1"))
-					.addUnion(new WhereBuilder()//
-							.addWhere(Var.alloc("otherSet"), AV.containdResource, Var.alloc("resource2"))
-							.addBind(new ExprVar(Var.alloc("resource1")), Var.alloc("resourceTransitive1"))));
-
-	private final void addTransitive(Resource resource1, Resource resource2, Aspect aspect, boolean incorrespondence) {
-		ConstructBuilder queryBuilder = (incorrespondence ? ADD_TRANSITIVE_INCORRESPONDENCE_QUERY
-				: ADD_TRANSITIVE_CORRESPONDENCE_QUERY).clone();
-		queryBuilder.setVar(Var.alloc("resource1"), resource1);
-		queryBuilder.setVar(Var.alloc("resource2"), resource2);
-		queryBuilder.setVar(Var.alloc("aspect"), aspect);
-		QueryExecutionFactory.create(queryBuilder.build(), this.getMetaModelUnion(null))
-				.execConstruct(this.getOutputMetaModel(null));
-	}
-
-	public final void addCorrespondence(Resource resource1, Resource resource2, Aspect aspect) {
-		if (!this.existsOrContradicts(resource1, resource2, aspect)) {
-			this.add(resource1, resource2, aspect, false);
-			this.addTransitive(resource1, resource2, aspect, false);
-		}
-	}
-
-	public final void addIncorrespondence(Resource resource1, Resource resource2, Aspect aspect) {
-		if (!this.existsOrContradicts(resource1, resource2, aspect)) {
-			this.add(resource1, resource2, aspect, true);
-			this.addTransitive(resource1, resource2, aspect, true);
-		}
+		return Metadata.existsOrContradicts(resource1, resource2, aspect, this.getMetaModelUnion(null));
 	}
 
 	/**
-	 * TODO DOCU Computes the mappings of two models. The mappings may contain
-	 * category meta data.
+	 * Add a correspondence of two resources affecting a certain aspect and thereby
+	 * transitive implied correspondence. If the correspondence is already known or
+	 * contradicts an existing incorrespondence, the correspondence will be discard
+	 * silently.
 	 * 
-	 * @param model1      the first model to process
-	 * @param model2      the second model to process
-	 * @param ontologyId1 the ontology id of the first model
-	 * @param ontologyId2 the ontology id of the second model
-	 * @return the computed mappings
+	 * @param resource1 first corresponding resource
+	 * @param resource2 second corresponding resource
+	 * @param aspect    aspect affected by the correspondence
+	 */
+	public final void addCorrespondence(Resource resource1, Resource resource2, Aspect aspect) {
+		Metadata.addCorrespondence(resource1, resource2, aspect, this.getMetaModelUnion(null),
+				this.getOutputMetaModel(null));
+	}
+
+	/**
+	 * Add an incorrespondence of two resources affecting a certain aspect and
+	 * thereby transitive implied incorrespondence. If the incorrespondence is
+	 * already known or contradicts an existing correspondence, the correspondence
+	 * will be discard silently.
+	 * 
+	 * @param resource1 first corresponding resource
+	 * @param resource2 second corresponding resource
+	 * @param aspect    aspect affected by the correspondence
+	 */
+	public final void addIncorrespondence(Resource resource1, Resource resource2, Aspect aspect) {
+		Metadata.addIncorrespondence(resource1, resource2, aspect, this.getMetaModelUnion(null),
+				this.getOutputMetaModel(null));
+	}
+
+	/**
+	 * Determine the corresponding resources of two given datasets.
+	 * 
+	 * @param dataset1 first dataset to determine corresponding resources for
+	 * @param dataset2 second dataset to determine corresponding resources for
 	 */
 	public abstract void mapDatasets(Resource dataset1, Resource dataset2);
 
@@ -127,7 +81,7 @@ public abstract class MappingProcessor extends Processor {
 	public final void run() {
 		for (Resource dataset1 : this.getInputDatasets()) {
 			for (Resource dataset2 : this.getInputDatasets()) {
-				if (dataset1.getURI().compareTo(dataset2.getURI()) > 0) {
+				if (dataset1.getURI().compareTo(dataset2.getURI()) > 0) { // do not do work twice
 					this.mapDatasets(dataset1, dataset2);
 				}
 			}

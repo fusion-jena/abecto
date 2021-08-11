@@ -16,11 +16,21 @@ public class AV {
 
 	public static final Property affectedAspect = ResourceFactory
 			.createProperty("http://w3id.org/abecto-vocabulary#affectedAspect");
+	public static final Property affectedValue = ResourceFactory
+			.createProperty("http://w3id.org/abecto-vocabulary#affectedValue");
+	public static final Property affectedVariableName = ResourceFactory
+			.createProperty("http://w3id.org/abecto-vocabulary#affectedVariableName");
 	public static final Resource Aspect = ResourceFactory.createResource("http://w3id.org/abecto-vocabulary#Aspect");
 	public static final Resource AspectPattern = ResourceFactory
 			.createResource("http://w3id.org/abecto-vocabulary#AspectPattern");
 	public static final Property associatedDataset = ResourceFactory
 			.createProperty("http://w3id.org/abecto-vocabulary#associatedDataset");
+	public static final Property comparedToDataset = ResourceFactory
+			.createProperty("http://w3id.org/abecto-vocabulary#comparedToDataset");
+	public static final Property comparedToResource = ResourceFactory
+			.createProperty("http://w3id.org/abecto-vocabulary#comparedToResource");
+	public static final Property comparedToValue = ResourceFactory
+			.createProperty("http://w3id.org/abecto-vocabulary#comparedToValue");
 	public static final Property containdResource = ResourceFactory
 			.createProperty("http://w3id.org/abecto-vocabulary#containdResource");
 	public static final Resource CorrespondenceSet = ResourceFactory
@@ -44,8 +54,11 @@ public class AV {
 			.createResource("http://w3id.org/abecto-vocabulary#PrimaryDataGraph");
 	public static final Property processorClass = ResourceFactory
 			.createProperty("http://w3id.org/abecto-vocabulary#processorClass");
+	public static final Resource QualityAnnotationBody = ResourceFactory
+			.createResource("http://w3id.org/abecto-vocabulary#QualityAnnotationBody");
 	public static final Resource Sparql11SelectQuery = ResourceFactory
 			.createResource("http://w3id.org/abecto-vocabulary#Sparql11SelectQuery");
 	public static final Resource StepExecution = ResourceFactory
 			.createResource("http://w3id.org/abecto-vocabulary#StepExecution");
+
 }

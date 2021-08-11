@@ -69,7 +69,7 @@ public class Models {
 	public static final Collection<Lang> supportedLanguages = Arrays.asList(Lang.RDFXML, Lang.NT, Lang.N3, Lang.TTL,
 			Lang.JSONLD, Lang.RDFJSON, Lang.NQ, Lang.TRIG, Lang.RDFTHRIFT, Lang.TRIX, Lang.SHACLC);
 
-	public static Model read(InputStream in) throws IOException, IllegalArgumentException {
+	public static Model read(InputStream in, Model model) throws IOException, IllegalArgumentException {
 		if (!in.markSupported()) {
 			in = new BufferedInputStream(in);
 		}
@@ -78,7 +78,7 @@ public class Models {
 		InputStream unclosableIn = new UncloseableInputStream(in);
 		for (Lang lang : supportedLanguages) {
 			try {
-				Model model = read(unclosableIn, lang);
+				read(unclosableIn, lang, model);
 				in.close();
 				return model;
 			} catch (Throwable t) {
@@ -89,21 +89,19 @@ public class Models {
 		throw new IllegalArgumentException("Unknown RDF language.");
 	}
 
-	public static Model read(InputStream in, Lang lang) throws IOException {
-		Model model = ModelFactory.createDefaultModel();
+	public static Model read(InputStream in, Lang lang, Model model) throws IOException {
 		RDFDataMgr.read(model, in, lang);
 		return model;
 	}
 
-	public static Model read(URL url) throws IllegalArgumentException, IOException {
+	public static Model read(URL url, Model model) throws IllegalArgumentException, IOException {
 		try {
-			Model model = ModelFactory.createDefaultModel();
 			// using the content type or file extension for language detection
 			RDFDataMgr.read(model, url.toString());
 			return model;
 		} catch (Exception e) {
 			// try again using brute force language detection
-			return read(url.openStream());
+			return read(url.openStream(), model);
 		}
 	}
 
