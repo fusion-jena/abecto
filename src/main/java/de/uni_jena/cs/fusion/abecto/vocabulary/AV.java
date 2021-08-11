@@ -31,8 +31,8 @@ public class AV {
 			.createProperty("http://w3id.org/abecto-vocabulary#comparedToResource");
 	public static final Property comparedToValue = ResourceFactory
 			.createProperty("http://w3id.org/abecto-vocabulary#comparedToValue");
-	public static final Property containdResource = ResourceFactory
-			.createProperty("http://w3id.org/abecto-vocabulary#containdResource");
+	public static final Property containedResource = ResourceFactory
+			.createProperty("http://w3id.org/abecto-vocabulary#containedResource");
 	public static final Resource CorrespondenceSet = ResourceFactory
 			.createResource("http://w3id.org/abecto-vocabulary#CorrespondenceSet");
 	public static final Property definingQuery = ResourceFactory

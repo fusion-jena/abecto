@@ -40,8 +40,8 @@ public class Metadata {
 
 	private static AskBuilder CORRESPONDENCE_EXISTS_OR_CONTRADICTS_QUERY = new AskBuilder()
 			.addWhere(Var.alloc("set"), RDF.type, Var.alloc("setType"))
-			.addWhere(Var.alloc("set"), AV.containdResource, Var.alloc("resource1"))
-			.addWhere(Var.alloc("set"), AV.containdResource, Var.alloc("resource2"))
+			.addWhere(Var.alloc("set"), AV.containedResource, Var.alloc("resource1"))
+			.addWhere(Var.alloc("set"), AV.containedResource, Var.alloc("resource2"))
 			.addWhere(Var.alloc("set"), AV.affectedAspect, Var.alloc("aspect"));
 
 	/**
@@ -69,8 +69,8 @@ public class Metadata {
 
 	private static ConstructBuilder ADD_CORRESPONDENCE_QUERY = new ConstructBuilder()
 			.addConstruct(Var.alloc("set"), RDF.type, Var.alloc("setType"))
-			.addConstruct(Var.alloc("set"), AV.containdResource, Var.alloc("resource1"))
-			.addConstruct(Var.alloc("set"), AV.containdResource, Var.alloc("resource2"))
+			.addConstruct(Var.alloc("set"), AV.containedResource, Var.alloc("resource1"))
+			.addConstruct(Var.alloc("set"), AV.containedResource, Var.alloc("resource2"))
 			.addConstruct(Var.alloc("set"), AV.affectedAspect, Var.alloc("aspect"));
 
 	private static void add(Resource resource1, Resource resource2, Aspect aspect, boolean incorrespondence,
@@ -84,32 +84,32 @@ public class Metadata {
 	}
 
 	private static ConstructBuilder ADD_TRANSITIVE_CORRESPONDENCE_QUERY = new ConstructBuilder()
-			.addConstruct(Var.alloc("set"), AV.containdResource, Var.alloc("resourceTransitive"))
+			.addConstruct(Var.alloc("set"), AV.containedResource, Var.alloc("resourceTransitive"))
 			.addWhere(Var.alloc("set"), RDF.type, AV.CorrespondenceSet)
-			.addWhere(Var.alloc("set"), AV.containdResource, Var.alloc("resource1"))
-			.addWhere(Var.alloc("set"), AV.containdResource, Var.alloc("resource2"))
+			.addWhere(Var.alloc("set"), AV.containedResource, Var.alloc("resource1"))
+			.addWhere(Var.alloc("set"), AV.containedResource, Var.alloc("resource2"))
 			.addWhere(Var.alloc("set"), AV.affectedAspect, Var.alloc("aspect"))
 			.addWhere(Var.alloc("otherSet"), RDF.type, AV.CorrespondenceSet)
-			.addWhere(Var.alloc("otherSet"), AV.containdResource, Var.alloc("resourceTransitive"))
+			.addWhere(Var.alloc("otherSet"), AV.containedResource, Var.alloc("resourceTransitive"))
 			.addWhere(Var.alloc("otherSet"), AV.affectedAspect, Var.alloc("aspect"))//
 			.addWhere(new WhereBuilder()//
-					.addWhere(Var.alloc("otherSet"), AV.containdResource, Var.alloc("resource1"))
+					.addWhere(Var.alloc("otherSet"), AV.containedResource, Var.alloc("resource1"))
 					.addUnion(new WhereBuilder()//
-							.addWhere(Var.alloc("otherSet"), AV.containdResource, Var.alloc("resource2"))));
+							.addWhere(Var.alloc("otherSet"), AV.containedResource, Var.alloc("resource2"))));
 
 	private static ConstructBuilder ADD_TRANSITIVE_INCORRESPONDENCE_QUERY = new ConstructBuilder()
 			.addConstruct(Var.alloc("transitiveSet"), RDF.type, AV.IncorrespondenceSet)
-			.addConstruct(Var.alloc("transitiveSet"), AV.containdResource, Var.alloc("resourceTransitive1"))
-			.addConstruct(Var.alloc("transitiveSet"), AV.containdResource, Var.alloc("resourceTransitive2"))
+			.addConstruct(Var.alloc("transitiveSet"), AV.containedResource, Var.alloc("resourceTransitive1"))
+			.addConstruct(Var.alloc("transitiveSet"), AV.containedResource, Var.alloc("resourceTransitive2"))
 			.addConstruct(Var.alloc("transitiveSet"), AV.affectedAspect, Var.alloc("aspect"))
 			.addWhere(Var.alloc("otherSet"), RDF.type, AV.CorrespondenceSet)
-			.addWhere(Var.alloc("otherSet"), AV.containdResource, Var.alloc("resourceTransitive2"))
+			.addWhere(Var.alloc("otherSet"), AV.containedResource, Var.alloc("resourceTransitive2"))
 			.addWhere(Var.alloc("otherSet"), AV.affectedAspect, Var.alloc("aspect"))//
 			.addWhere(new WhereBuilder()//
-					.addWhere(Var.alloc("otherSet"), AV.containdResource, Var.alloc("resource1"))
+					.addWhere(Var.alloc("otherSet"), AV.containedResource, Var.alloc("resource1"))
 					.addBind(new ExprVar(Var.alloc("resource2")), Var.alloc("resourceTransitive1"))
 					.addUnion(new WhereBuilder()//
-							.addWhere(Var.alloc("otherSet"), AV.containdResource, Var.alloc("resource2"))
+							.addWhere(Var.alloc("otherSet"), AV.containedResource, Var.alloc("resource2"))
 							.addBind(new ExprVar(Var.alloc("resource1")), Var.alloc("resourceTransitive1"))));
 
 	private static void addTransitiveInCorrespondence(Resource resource1, Resource resource2, Aspect aspect,
@@ -164,8 +164,8 @@ public class Metadata {
 
 	private static SelectBuilder GET_CORRESPONDENCE_QUERY = new SelectBuilder().addVar(Var.alloc("resource1"))
 			.addVar(Var.alloc("resource2")).addWhere(Var.alloc("set"), RDF.type, AV.CorrespondenceSet)
-			.addWhere(Var.alloc("set"), AV.containdResource, Var.alloc("resource1"))
-			.addWhere(Var.alloc("set"), AV.containdResource, Var.alloc("resource2"))
+			.addWhere(Var.alloc("set"), AV.containedResource, Var.alloc("resource1"))
+			.addWhere(Var.alloc("set"), AV.containedResource, Var.alloc("resource2"))
 			.addWhere(Var.alloc("set"), AV.affectedAspect, Var.alloc("aspect"));
 
 	public static Stream<Resource[]> getCorrespondences(Aspect aspect, Model inputModel) {
