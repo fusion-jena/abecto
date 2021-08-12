@@ -97,8 +97,8 @@ class ResourceDeviationProcessorTest {
 				metaModel);
 
 		// result test
-		ResourceDeviationProcessor processor = new ResourceDeviationProcessor();
-		ResourceDeviationProcessor.Parameter parameter = new ResourceDeviationProcessor.Parameter();
+		ResourceValueComparisonProcessor processor = new ResourceValueComparisonProcessor();
+		ResourceValueComparisonProcessor.Parameter parameter = new ResourceValueComparisonProcessor.Parameter();
 		parameter.variables = Collections.singletonMap("entity", Arrays.asList("other", "self"));
 		processor.setParameters(parameter);
 		processor.addInputModelGroups(Map.of(id1, Collections.singleton(model1), id2, Collections.singleton(model2)));
