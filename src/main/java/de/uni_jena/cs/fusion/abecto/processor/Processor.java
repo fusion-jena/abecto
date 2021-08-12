@@ -262,8 +262,8 @@ public abstract class Processor implements Runnable {
 		this.aspects = aspects;
 	}
 
-	public final void setOutputMetaModel(@Nullable Resource dataset, Model outpuMetaModel) {
-		this.outputMetaModelsByDataset.put(dataset, outpuMetaModel);
+	public final void setOutputMetaModel(@Nullable Resource dataset, Model outputMetaModel) {
+		this.outputMetaModelsByDataset.put(dataset, outputMetaModel);
 	}
 
 	public final void setOutputPrimaryModel(Resource dataset, Model outputPrimaryModel) {
