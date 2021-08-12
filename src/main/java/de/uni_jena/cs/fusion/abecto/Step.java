@@ -94,6 +94,7 @@ public class Step implements Runnable {
 			outputModelIri.addProperty(DQV.computedOn, datasetIri);
 			Model outputModel = ModelFactory.createDefaultModel();
 			dataset.addNamedModel(outputModelIri.getURI(), outputModel);
+			processor.setOutputMetaModel(datasetIri, outputModel);
 		}
 		{// prepare general output meta model
 			Resource outputModelIri = configurationModel.createResource(AV.MetaDataGraph);
@@ -101,6 +102,7 @@ public class Step implements Runnable {
 			outputModelIri.addProperty(PROV.wasGeneratedBy, stepExecutionIri);
 			Model outputModel = ModelFactory.createDefaultModel();
 			dataset.addNamedModel(outputModelIri.getURI(), outputModel);
+			processor.setOutputMetaModel(null, outputModel);
 		}
 		// prepare output primary model, if needed
 		Models.assertOneOptional(configurationModel.listObjectsOfProperty(stepIri, AV.associatedDataset))
@@ -111,6 +113,7 @@ public class Step implements Runnable {
 					outputModelIri.addProperty(AV.associatedDataset, datasetIri);
 					Model outputModel = ModelFactory.createDefaultModel();
 					dataset.addNamedModel(outputModelIri.getURI(), outputModel);
+					processor.setOutputPrimaryModel(datasetIri.asResource(), outputModel);
 				});
 
 		// run the processor
