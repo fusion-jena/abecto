@@ -65,8 +65,8 @@ class LiteralDeviationProcessorTest {
 				entity1, entity2)), metaModel);
 
 		// execute LiteralDeviationProcessorTest
-		LiteralDeviationProcessor processor = new LiteralDeviationProcessor();
-		LiteralDeviationProcessor.Parameter parameter = new LiteralDeviationProcessor.Parameter();
+		LiteralValueComparisonProcessor processor = new LiteralValueComparisonProcessor();
+		LiteralValueComparisonProcessor.Parameter parameter = new LiteralValueComparisonProcessor.Parameter();
 		parameter.variables = Collections.singletonMap("entity", Arrays.asList("value"));
 		processor.setParameters(parameter);
 		processor.addInputModelGroups(Map.of(id1, Collections.singleton(model1), id2, Collections.singleton(model2)));
