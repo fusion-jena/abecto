@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
 import de.uni_jena.cs.fusion.abecto.Aspect;
 import de.uni_jena.cs.fusion.abecto.Parameter;
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
-import de.uni_jena.cs.fusion.abecto.util.Metadata;
+import de.uni_jena.cs.fusion.abecto.util.Correspondences;
 import de.uni_jena.cs.fusion.abecto.util.Default;
 
 public class UsePresentMappingProcessor extends Processor {
@@ -80,8 +80,7 @@ public class UsePresentMappingProcessor extends Processor {
 						try {
 							Resource resource1 = solution.getResource("s");
 							Resource resource2 = solution.getResource("o");
-							Metadata.addCorrespondence(resource1, resource2, aspect, metaModel,
-									outputMetaModel);
+							Correspondences.addCorrespondence(resource1, resource2, aspect.name, metaModel, outputMetaModel);
 						} catch (ClassCastException e) {
 							// TODO add issue to outpurMetaModel
 							log.warn(String.format("UnexpectedValueType: Subject or object is not a resource: %s %s %s",

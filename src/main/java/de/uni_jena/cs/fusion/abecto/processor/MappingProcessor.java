@@ -18,12 +18,12 @@ package de.uni_jena.cs.fusion.abecto.processor;
 import org.apache.jena.rdf.model.Resource;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
-import de.uni_jena.cs.fusion.abecto.util.Metadata;
+import de.uni_jena.cs.fusion.abecto.util.Correspondences;
 
 public abstract class MappingProcessor extends Processor {
 
 	/**
-	 * Check if a correspondence or incorrespondence for two given resources in a
+	 * Checks if a correspondence or incorrespondence for two given resources in a
 	 * given aspect already exist.
 	 * <p>
 	 * <strong>Note:<strong> The use of this method is not mandatory, as it will
@@ -35,27 +35,27 @@ public abstract class MappingProcessor extends Processor {
 	 * @param aspect    aspect affected by the (in)correspondence
 	 * @return
 	 */
-	public final boolean existsOrContradicts(Resource resource1, Resource resource2, Aspect aspect) {
-		return Metadata.existsOrContradicts(resource1, resource2, aspect, this.getMetaModelUnion(null));
+	public final boolean correspondentOrIncorrespondent(Resource resource1, Resource resource2) {
+		return Correspondences.correspondentOrIncorrespondent(resource1, resource2, this.getMetaModelUnion(null));
 	}
 
 	/**
-	 * Add a correspondence of two resources affecting a certain aspect and thereby
-	 * transitive implied correspondence. If the correspondence is already known or
-	 * contradicts an existing incorrespondence, the correspondence will be discard
-	 * silently.
+	 * Adds a correspondence of two resources belonging to a certain aspect and
+	 * thereby transitive implied correspondence. If the correspondence is already
+	 * known or contradicts an existing incorrespondence, the correspondence will be
+	 * discard silently.
 	 * 
 	 * @param resource1 first corresponding resource
 	 * @param resource2 second corresponding resource
 	 * @param aspect    aspect affected by the correspondence
 	 */
 	public final void addCorrespondence(Resource resource1, Resource resource2, Aspect aspect) {
-		Metadata.addCorrespondence(resource1, resource2, aspect, this.getMetaModelUnion(null),
+		Correspondences.addCorrespondence(resource1, resource2, aspect.name, this.getMetaModelUnion(null),
 				this.getOutputMetaModel(null));
 	}
 
 	/**
-	 * Add an incorrespondence of two resources affecting a certain aspect and
+	 * Adds an incorrespondence of two resources affecting a certain aspect and
 	 * thereby transitive implied incorrespondence. If the incorrespondence is
 	 * already known or contradicts an existing correspondence, the correspondence
 	 * will be discard silently.
@@ -65,7 +65,7 @@ public abstract class MappingProcessor extends Processor {
 	 * @param aspect    aspect affected by the correspondence
 	 */
 	public final void addIncorrespondence(Resource resource1, Resource resource2, Aspect aspect) {
-		Metadata.addIncorrespondence(resource1, resource2, aspect, this.getMetaModelUnion(null),
+		Correspondences.addIncorrespondence(resource1, resource2, aspect.name, this.getMetaModelUnion(null),
 				this.getOutputMetaModel(null));
 	}
 
@@ -78,7 +78,7 @@ public abstract class MappingProcessor extends Processor {
 	public abstract void mapDatasets(Resource dataset1, Resource dataset2);
 
 	@Override
-	public final void run() {
+	public void run() {
 		for (Resource dataset1 : this.getInputDatasets()) {
 			for (Resource dataset2 : this.getInputDatasets()) {
 				if (dataset1.getURI().compareTo(dataset2.getURI()) > 0) { // do not do work twice

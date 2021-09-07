@@ -24,13 +24,15 @@ public class AV {
 	public static final Property comparedToDataset = ResourceFactory.createProperty(namespace, "comparedToDataset");
 	public static final Property comparedToResource = ResourceFactory.createProperty(namespace, "comparedToResource");
 	public static final Property comparedToValue = ResourceFactory.createProperty(namespace, "comparedToValue");
-	public static final Property containedResource = ResourceFactory.createProperty(namespace, "containedResource");
-	public static final Resource CorrespondenceSet = ResourceFactory.createResource(namespace + "CorrespondenceSet");
+	public static final Property correspondsNotToResource = ResourceFactory.createProperty(namespace,
+			"correspondsNotToResource");
+	public static final Property correspondsToResource = ResourceFactory.createProperty(namespace,
+			"correspondsToResource");
 	public static final Property definingQuery = ResourceFactory.createProperty(namespace, "definingQuery");
+	public static final Resource Deviation = ResourceFactory.createResource(namespace + "Deviation");
 	public static final Property hasParameter = ResourceFactory.createProperty(namespace, "hasParameter");
-	public static final Resource IncorrespondenceSet = ResourceFactory
-			.createResource(namespace + "IncorrespondenceSet");
 	public static final Property inputMetaDataGraph = ResourceFactory.createProperty(namespace, "inputMetaDataGraph");
+	public static final Resource Issue = ResourceFactory.createResource(namespace + "Issue");
 	public static final Property key = ResourceFactory.createProperty(namespace, "key");
 	public static final Property keyVariableName = ResourceFactory.createProperty(namespace, "keyVariableName");
 	public static final Resource MetaDataGraph = ResourceFactory.createResource(namespace + "MetaDataGraph");
@@ -39,8 +41,12 @@ public class AV {
 	public static final Property processorClass = ResourceFactory.createProperty(namespace, "processorClass");
 	public static final Resource QualityAnnotationBody = ResourceFactory
 			.createResource(namespace + "QualityAnnotationBody");
+	public static final Resource QualityMeasurement = ResourceFactory.createResource(namespace + "QualityMeasurement");
+	public static final Property relevantResource = ResourceFactory.createProperty(namespace, "relevantResource");
+	public static final Resource ResourceOmission = ResourceFactory.createResource(namespace + "ResourceOmission");
 	public static final Resource Sparql11SelectQuery = ResourceFactory
 			.createResource(namespace + "Sparql11SelectQuery");
 	public static final Resource StepExecution = ResourceFactory.createResource(namespace + "StepExecution");
-
+	public static final Resource ValueOmission = ResourceFactory.createResource(namespace + "ValueOmission");
+	public static final Resource WrongValue = ResourceFactory.createResource(namespace + "WrongValue");
 }

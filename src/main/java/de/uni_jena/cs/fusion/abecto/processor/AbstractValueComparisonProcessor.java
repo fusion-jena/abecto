@@ -27,6 +27,7 @@ import org.apache.jena.rdf.model.Resource;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
 import de.uni_jena.cs.fusion.abecto.Parameter;
+import de.uni_jena.cs.fusion.abecto.util.Correspondences;
 import de.uni_jena.cs.fusion.abecto.util.Metadata;
 
 public abstract class AbstractValueComparisonProcessor extends Processor {
@@ -41,28 +42,37 @@ public abstract class AbstractValueComparisonProcessor extends Processor {
 	@Override
 	public final void run() {
 		Aspect aspect = this.getAspects().get(this.aspect);
-		Metadata.getCorrespondenceSets(aspect, this.getInputMetaModelUnion(null)).forEach(correspondingResources -> {
-			for (Resource correspondingResource1 : correspondingResources) {
-				for (Resource dataset1 : this.getInputDatasets()) {
-					Optional<Map<String, Set<RDFNode>>> values1 = aspect.getResource(dataset1, correspondingResource1,
-							this.getInputPrimaryModelUnion(dataset1));
-					if (values1.isPresent()) {
-						for (Resource correspondingResource2 : correspondingResources) {
-							if (correspondingResource1.getURI().compareTo(correspondingResource2.getURI()) >= 0) {
-								// avoid doing work twice, but enable comparing representations of one resource
-								// in different datasets
-								for (Resource dataset2 : this.getInputDatasets()) {
-									if (!correspondingResource1.equals(correspondingResource2)
-											|| !dataset1.equals(dataset2)) {
-										// avoid comparing the representation of one resource in one dataset with itself
-										Optional<Map<String, Set<RDFNode>>> values2 = aspect.getResource(dataset1,
-												correspondingResource1, this.getInputPrimaryModelUnion(dataset1));
-										if (values2.isPresent()) {
-											for (String variable : this.variables) {
-												this.compareVariableValues(variable, dataset1, correspondingResource1,
-														values1.get().getOrDefault(variable, Collections.emptySet()),
-														dataset2, correspondingResource2,
-														values2.get().getOrDefault(variable, Collections.emptySet()));
+		Correspondences.getCorrespondenceSets(this.getInputMetaModelUnion(null), aspect.name)
+				.forEach(correspondingResources -> {
+					for (Resource correspondingResource1 : correspondingResources) {
+						for (Resource dataset1 : this.getInputDatasets()) {
+							Optional<Map<String, Set<RDFNode>>> values1 = aspect.getResource(dataset1,
+									correspondingResource1, this.getInputPrimaryModelUnion(dataset1));
+							if (values1.isPresent()) {
+								for (Resource correspondingResource2 : correspondingResources) {
+									if (correspondingResource1.getURI()
+											.compareTo(correspondingResource2.getURI()) >= 0) {
+										// avoid doing work twice, but enable comparing representations of one resource
+										// in different datasets
+										for (Resource dataset2 : this.getInputDatasets()) {
+											if (!correspondingResource1.equals(correspondingResource2)
+													|| !dataset1.equals(dataset2)) {
+												// avoid comparing the representation of one resource in one dataset
+												// with itself
+												Optional<Map<String, Set<RDFNode>>> values2 = aspect.getResource(
+														dataset1, correspondingResource1,
+														this.getInputPrimaryModelUnion(dataset1));
+												if (values2.isPresent()) {
+													for (String variable : this.variables) {
+														this.compareVariableValues(variable, dataset1,
+																correspondingResource1,
+																values1.get().getOrDefault(variable,
+																		Collections.emptySet()),
+																dataset2, correspondingResource2,
+																values2.get().getOrDefault(variable,
+																		Collections.emptySet()));
+													}
+												}
 											}
 										}
 									}
@@ -70,9 +80,7 @@ public abstract class AbstractValueComparisonProcessor extends Processor {
 							}
 						}
 					}
-				}
-			}
-		});
+				});
 	}
 
 	/**
@@ -93,50 +101,90 @@ public abstract class AbstractValueComparisonProcessor extends Processor {
 	public void compareVariableValues(String variable, Resource dataset1, Resource correspondingResource1,
 			Set<RDFNode> values1, Resource dataset2, Resource correspondingResource2, Set<RDFNode> values2) {
 
-		// TODO remove known wrong values
-		// TODO report missing values
+		// TODO report invalid values
 
 		// remove invalid values and pairs of equivalent values
 		Iterator<RDFNode> valuesIterator1, valuesIterator2;
 		valuesIterator1 = values1.iterator();
 		value1loop: while (valuesIterator1.hasNext()) {
 			RDFNode value1 = valuesIterator1.next();
-			if (this.isValidValue(variable, dataset1, correspondingResource1, value1)) {
+			if (this.isValidValue(variable, dataset1, correspondingResource1, value1)
+					&& !this.isWrongValue(variable, dataset1, correspondingResource1, value1)) {
 				valuesIterator2 = values2.iterator();
 				while (valuesIterator2.hasNext()) {
 					RDFNode value2 = valuesIterator2.next();
-					if (this.isValidValue(variable, dataset2, correspondingResource2, value2)) {
-						if (this.equalValues(value1, value2)) {
+					if (this.isValidValue(variable, dataset2, correspondingResource2, value2)
+							&& !this.isWrongValue(variable, dataset2, correspondingResource2, value2)) {
+						if (this.equivalentValues(value1, value2)) {
 							// remove pair of equivalent values
 							valuesIterator1.remove();
 							valuesIterator2.remove();
 							continue value1loop;
 						}
 					} else {
-						// remove invalid value to avoid further processing
+						// remove invalid or wrong value to avoid further processing
 						valuesIterator2.remove();
 					}
 				}
 			} else {
-				// remove invalid value to avoid further processing
+				// remove invalid or wrong value to avoid further processing
 				valuesIterator1.remove();
 			}
 		}
 
-		// report all pairs of deviating values
-		for (RDFNode value1 : values1) {
+		if (values1.isEmpty()) {
+			// report missing values
 			for (RDFNode value2 : values2) {
-				Metadata.addDeviation(correspondingResource1.asResource(), variable, value1, dataset2,
+				Metadata.addValuesOmission(correspondingResource1.asResource(), variable, dataset1,
 						correspondingResource2.asResource(), value2, this.getAspects().get(this.aspect),
 						this.getOutputMetaModel(dataset1));
-				Metadata.addDeviation(correspondingResource2.asResource(), variable, value2, dataset1,
+			}
+		} else if (values2.isEmpty()) {
+			// report missing values
+			for (RDFNode value1 : values1) {
+				Metadata.addValuesOmission(correspondingResource2.asResource(), variable, dataset2,
 						correspondingResource1.asResource(), value1, this.getAspects().get(this.aspect),
 						this.getOutputMetaModel(dataset2));
+			}
+		} else {
+			// report pairs of deviating values
+			for (RDFNode value1 : values1) {
+				for (RDFNode value2 : values2) {
+					Metadata.addDeviation(correspondingResource1.asResource(), variable, value1, dataset2,
+							correspondingResource2.asResource(), value2, this.getAspects().get(this.aspect),
+							this.getOutputMetaModel(dataset1));
+					Metadata.addDeviation(correspondingResource2.asResource(), variable, value2, dataset1,
+							correspondingResource1.asResource(), value1, this.getAspects().get(this.aspect),
+							this.getOutputMetaModel(dataset2));
+				}
 			}
 		}
 	}
 
+	public final boolean isWrongValue(String variable, Resource dataset, Resource resource, RDFNode value) {
+		// TODO remove known wrong values
+		return false;
+	}
+
+	/**
+	 * Checks if a value is valid.
+	 * 
+	 * @param variable the variable the value belongs to
+	 * @param dataset  the dataset the value belongs to
+	 * @param resource the resource the value belongs to
+	 * @param value    the value to check
+	 * @return {@code true}, if the value is valid, otherwise {@code false}
+	 */
 	public abstract boolean isValidValue(String variable, Resource dataset, Resource resource, RDFNode value);
 
-	public abstract boolean equalValues(RDFNode value1, RDFNode value2);
+	/**
+	 * Checks if two values are equivalent.
+	 * 
+	 * @param variable the variable the value belongs to
+	 * @param dataset  the dataset the value belongs to
+	 * @param resource the resource the value belongs to
+	 * @param value    the value to check
+	 * @return {@code true}, if the value is valid, otherwise {@code false}
+	 */
+	public abstract boolean equivalentValues(RDFNode value1, RDFNode value2);
 }

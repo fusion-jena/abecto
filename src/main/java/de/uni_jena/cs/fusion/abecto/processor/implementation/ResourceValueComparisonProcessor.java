@@ -20,7 +20,7 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 
 import de.uni_jena.cs.fusion.abecto.processor.AbstractValueComparisonProcessor;
-import de.uni_jena.cs.fusion.abecto.util.Metadata;
+import de.uni_jena.cs.fusion.abecto.util.Correspondences;
 
 public class ResourceValueComparisonProcessor extends AbstractValueComparisonProcessor {
 
@@ -36,10 +36,10 @@ public class ResourceValueComparisonProcessor extends AbstractValueComparisonPro
 	}
 
 	@Override
-	public boolean equalValues(RDFNode value1, RDFNode value2) {
+	public boolean equivalentValues(RDFNode value1, RDFNode value2) {
 		if (this.mappingModel == null) {
 			this.mappingModel = this.getInputMetaModelUnion(null);
 		}
-		return Metadata.correspond(value1.asResource(), value2.asResource(), this.aspect, this.mappingModel);
+		return Correspondences.correspond(value1.asResource(), value2.asResource(), this.mappingModel);
 	}
 }
