@@ -30,7 +30,7 @@ public class Step implements Runnable {
 	private final Model configurationModel;
 	private final Collection<Step> inputSteps;
 	private final Collection<Resource> inputModelIris = new ArrayList<>();
-	private final Collection<Resource> outputModelIris = new ArrayList<>();
+	private final Map<Resource, Model> outputModelByIri = new HashMap<>();
 
 	public Step(Dataset dataset, Model configurationModel, Resource stepIri, Collection<Step> inputSteps,
 			Map<Resource, Aspect> aspects) throws ClassCastException, ReflectiveOperationException {
@@ -74,7 +74,7 @@ public class Step implements Runnable {
 		for (Step inputStep : inputSteps) {
 			processor.addInputProcessor(inputStep.processor);
 			inputModelIris.addAll(inputStep.inputModelIris);
-			inputModelIris.addAll(inputStep.outputModelIris);
+			inputModelIris.addAll(inputStep.outputModelByIri.keySet());
 		}
 		configurationModel.listObjectsOfProperty(stepIri, AV.inputMetaDataGraph).forEach(object -> {
 			Resource inputMetaModelIri = object.asResource();
@@ -89,30 +89,27 @@ public class Step implements Runnable {
 		for (Resource datasetIri : processor.getInputDatasets()) {
 			// prepare output meta model for a dataset
 			Resource outputModelIri = configurationModel.createResource(AV.MetaDataGraph);
-			outputModelIris.add(outputModelIri);
+			Model outputModel = ModelFactory.createDefaultModel();
+			outputModelByIri.put(outputModelIri, outputModel);
 			outputModelIri.addProperty(PROV.wasGeneratedBy, stepExecutionIri);
 			outputModelIri.addProperty(DQV.computedOn, datasetIri);
-			Model outputModel = ModelFactory.createDefaultModel();
-			dataset.addNamedModel(outputModelIri.getURI(), outputModel);
 			processor.setOutputMetaModel(datasetIri, outputModel);
 		}
 		{// prepare general output meta model
 			Resource outputModelIri = configurationModel.createResource(AV.MetaDataGraph);
-			outputModelIris.add(outputModelIri);
-			outputModelIri.addProperty(PROV.wasGeneratedBy, stepExecutionIri);
 			Model outputModel = ModelFactory.createDefaultModel();
-			dataset.addNamedModel(outputModelIri.getURI(), outputModel);
+			outputModelByIri.put(outputModelIri, outputModel);
+			outputModelIri.addProperty(PROV.wasGeneratedBy, stepExecutionIri);
 			processor.setOutputMetaModel(null, outputModel);
 		}
 		// prepare output primary model, if needed
 		Models.assertOneOptional(configurationModel.listObjectsOfProperty(stepIri, AV.associatedDataset))
 				.ifPresent(datasetIri -> {
 					Resource outputModelIri = configurationModel.createResource(AV.PrimaryDataGraph);
-					outputModelIris.add(outputModelIri);
+					Model outputModel = ModelFactory.createDefaultModel();
+					outputModelByIri.put(outputModelIri, outputModel);
 					outputModelIri.addProperty(PROV.wasGeneratedBy, stepExecutionIri);
 					outputModelIri.addProperty(AV.associatedDataset, datasetIri);
-					Model outputModel = ModelFactory.createDefaultModel();
-					dataset.addNamedModel(outputModelIri.getURI(), outputModel);
 					processor.setOutputPrimaryModel(datasetIri.asResource(), outputModel);
 				});
 
@@ -121,11 +118,13 @@ public class Step implements Runnable {
 		processor.run();
 		stepExecutionIri.addLiteral(PROV.endedAtTime, LocalDateTime.now());
 
-		// remove unused output data models
-		for (Resource outputModelIri : outputModelIris) {
-			if (dataset.getNamedModel(outputModelIri.getURI()).isEmpty()) {
-				dataset.removeNamedModel(outputModelIri.getURI());
+		// remove metadata of empty output models, add others to dataset
+		for (Resource outputModelIri : outputModelByIri.keySet()) {
+			Model outputModel = outputModelByIri.get(outputModelIri);
+			if (outputModel.isEmpty()) {
 				outputModelIri.removeProperties();
+			} else {
+				dataset.addNamedModel(outputModelIri.getURI(), outputModel);
 			}
 		}
 		processor.removeEmptyModels();

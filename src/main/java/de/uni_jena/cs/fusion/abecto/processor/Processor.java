@@ -48,6 +48,10 @@ public abstract class Processor implements Runnable {
 	private Map<Resource, Collection<Model>> inputPrimaryModelsByDataset = new HashMap<>();
 	private Map<Resource, Model> outputMetaModelsByDataset = new HashMap<>();
 	private Optional<Resource> associatedDataset = Optional.empty();
+	/**
+	 * The primary data output model of this {@link Processor}. Might be replaces
+	 * during processing using {@link #replaceOutputPrimaryModel(Model)}.
+	 */
 	private Optional<Model> outputPrimaryModel = Optional.empty();
 	private Map<Resource, Aspect> aspects;
 
@@ -125,6 +129,13 @@ public abstract class Processor implements Runnable {
 		return Models.union(this.outputMetaModelsByDataset.values());
 	}
 
+	/**
+	 * Returns the primary data output model of this {@link Processor}. The model
+	 * can be replaces during processing using
+	 * {@link #replaceOutputPrimaryModel(Model)}.
+	 * 
+	 * @return the primary data output model
+	 */
 	public final Optional<Model> getOutputPrimaryModel() {
 		return this.outputPrimaryModel;
 	}
@@ -268,6 +279,22 @@ public abstract class Processor implements Runnable {
 
 	public final void setOutputPrimaryModel(Resource dataset, Model outputPrimaryModel) {
 		this.associatedDataset = Optional.of(dataset);
+		this.outputPrimaryModel = Optional.of(outputPrimaryModel);
+	}
+
+	/**
+	 * Replaces the current output primary model.
+	 * <p>
+	 * This enables the use of none in-memory models by source processors. Data
+	 * added to the current output primary model will get lost.
+	 * 
+	 * @param outputPrimaryModel the model that replaces the current output primary
+	 *                           model
+	 */
+	public final void replaceOutputPrimaryModel(Model outputPrimaryModel) {
+		if (this.associatedDataset.isEmpty()) {
+			throw new IllegalStateException("Operation only permited, if step is associated with a dataset.");
+		}
 		this.outputPrimaryModel = Optional.of(outputPrimaryModel);
 	}
 
