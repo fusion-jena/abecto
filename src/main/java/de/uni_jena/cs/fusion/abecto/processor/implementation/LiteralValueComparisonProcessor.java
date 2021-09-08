@@ -23,19 +23,22 @@ import org.apache.jena.datatypes.xsd.impl.XSDDouble;
 import org.apache.jena.datatypes.xsd.impl.XSDFloat;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.Resource;
 
 import de.uni_jena.cs.fusion.abecto.processor.AbstractValueComparisonProcessor;
 
 public class LiteralValueComparisonProcessor extends AbstractValueComparisonProcessor {
 
 	@Override
-	public boolean isValidValue(String variable, Resource dataset, Resource resource, RDFNode value) {
+	public boolean isValidValue(RDFNode value) {
 		if (!value.isLiteral()) {
-			// TODO create issue
 			return false;
 		}
 		return true;
+	}
+
+	@Override
+	public String invalidValueComment() {
+		return "Should be a literal.";
 	}
 
 	@Override
