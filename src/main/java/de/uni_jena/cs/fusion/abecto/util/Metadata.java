@@ -26,6 +26,7 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.vocabulary.RDFS;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
@@ -44,6 +45,19 @@ public class Metadata {
 		deviation.addProperty(AV.comparedToDataset, comparedToDataset);
 		deviation.addProperty(AV.comparedToResource, comparedToResource);
 		deviation.addLiteral(AV.comparedToValue, comparedToValue);
+		Resource qualityAnnotation = outputAffectedDatasetMetaModel.createResource(DQV.QualityAnnotation);
+		qualityAnnotation.addProperty(OA.hasTarget, affectedResource);
+		qualityAnnotation.addProperty(OA.hasBody, deviation);
+	}
+
+	public static void addIssue(Resource affectedResource, String affectedVariableName, RDFNode affectedValue,
+			Resource affectedAspect, String issueType, String comment, Model outputAffectedDatasetMetaModel) {
+		Resource deviation = outputAffectedDatasetMetaModel.createResource(AV.Issue);
+		deviation.addProperty(AV.affectedAspect, affectedAspect);
+		deviation.addLiteral(AV.affectedVariableName, affectedVariableName);
+		deviation.addLiteral(AV.affectedValue, affectedValue);
+		deviation.addLiteral(AV.issueType, issueType);
+		deviation.addLiteral(RDFS.comment, comment);
 		Resource qualityAnnotation = outputAffectedDatasetMetaModel.createResource(DQV.QualityAnnotation);
 		qualityAnnotation.addProperty(OA.hasTarget, affectedResource);
 		qualityAnnotation.addProperty(OA.hasBody, deviation);
@@ -89,13 +103,25 @@ public class Metadata {
 			.addWhere(QUALITY_ANNOTATION_BODY, AV.affectedValue, AFFECTED_VALUE)
 			.addWhere(QUALITY_ANNOTATION_BODY, AV.affectedVariableName, AFFECTED_VARIABLE_NAME).build();
 
+	/**
+	 * Checks if a value is known to be wrong.
+	 * 
+	 * @param affectedResource              the resource the value belongs to
+	 * @param affectedVariableName          the variable the value belongs to
+	 * @param affectedValue                 the value to check
+	 * @param affectedAspect                the aspect the resource belongs to
+	 * @param inputAffectedDatasetMetaModel the model containing information about
+	 *                                      wrong values
+	 * @return {@code true} if the value is known to be wrong, otherwise
+	 *         {@code false}
+	 */
 	public static boolean isWrongValue(Resource affectedResource, String affectedVariableName, RDFNode affectedValue,
-			Aspect affectedAspect, Model inputAffectedDatasetMetaModel) {
+			Resource affectedAspect, Model inputAffectedDatasetMetaModel) {
 		Query query = AskBuilder.rewrite(IS_WRONG_VALUE_QUERY.cloneQuery(),
 				Map.of(AFFECTED_RESOURCE, affectedResource.asNode(), //
 						AFFECTED_VARIABLE_NAME, NodeFactory.createLiteral(affectedVariableName), //
 						AFFECTED_VALUE, affectedValue.asNode(), //
-						AFFECTED_ASPECT, affectedAspect.name.asNode()));
+						AFFECTED_ASPECT, affectedAspect.asNode()));
 		return QueryExecutionFactory.create(query, inputAffectedDatasetMetaModel).execAsk();
 
 	}

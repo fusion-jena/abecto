@@ -101,33 +101,47 @@ public abstract class AbstractValueComparisonProcessor extends Processor {
 	public void compareVariableValues(String variable, Resource dataset1, Resource correspondingResource1,
 			Set<RDFNode> values1, Resource dataset2, Resource correspondingResource2, Set<RDFNode> values2) {
 
-		// TODO report invalid values
-
-		// remove invalid values and pairs of equivalent values
+		// remove invalid or wrong values and pairs of equivalent values
 		Iterator<RDFNode> valuesIterator1, valuesIterator2;
 		valuesIterator1 = values1.iterator();
 		value1loop: while (valuesIterator1.hasNext()) {
 			RDFNode value1 = valuesIterator1.next();
-			if (this.isValidValue(variable, dataset1, correspondingResource1, value1)
-					&& !this.isWrongValue(variable, dataset1, correspondingResource1, value1)) {
-				valuesIterator2 = values2.iterator();
-				while (valuesIterator2.hasNext()) {
-					RDFNode value2 = valuesIterator2.next();
-					if (this.isValidValue(variable, dataset2, correspondingResource2, value2)
-							&& !this.isWrongValue(variable, dataset2, correspondingResource2, value2)) {
-						if (this.equivalentValues(value1, value2)) {
-							// remove pair of equivalent values
-							valuesIterator1.remove();
+			if (this.isValidValue(value1)) {
+				if (!Metadata.isWrongValue(correspondingResource1, variable, value1, aspect,
+						this.getInputMetaModelUnion(dataset1))) {
+					valuesIterator2 = values2.iterator();
+					while (valuesIterator2.hasNext()) {
+						RDFNode value2 = valuesIterator2.next();
+						if (this.isValidValue(value2)) {
+							if (!Metadata.isWrongValue(correspondingResource2, variable, value2, aspect,
+									this.getInputMetaModelUnion(dataset2))) {
+								if (this.equivalentValues(value1, value2)) {
+									// remove pair of equivalent values
+									valuesIterator1.remove();
+									valuesIterator2.remove();
+									continue value1loop;
+								}
+							} else {
+								// remove wrong value to avoid further processing
+								valuesIterator2.remove();
+							}
+						} else {
+							// report invalid value
+							Metadata.addIssue(correspondingResource2, variable, value2, aspect, "Invalid Value",
+									this.invalidValueComment(), this.getOutputMetaModel(dataset2));
+							// remove invalid value to avoid further processing
 							valuesIterator2.remove();
-							continue value1loop;
 						}
-					} else {
-						// remove invalid or wrong value to avoid further processing
-						valuesIterator2.remove();
 					}
+				} else {
+					// remove wrong value to avoid further processing
+					valuesIterator1.remove();
 				}
 			} else {
-				// remove invalid or wrong value to avoid further processing
+				// report invalid value
+				Metadata.addIssue(correspondingResource1, variable, value1, aspect, "Invalid Value",
+						this.invalidValueComment(), this.getOutputMetaModel(dataset1));
+				// remove invalid value to avoid further processing
 				valuesIterator1.remove();
 			}
 		}
@@ -161,11 +175,6 @@ public abstract class AbstractValueComparisonProcessor extends Processor {
 		}
 	}
 
-	public final boolean isWrongValue(String variable, Resource dataset, Resource resource, RDFNode value) {
-		// TODO remove known wrong values
-		return false;
-	}
-
 	/**
 	 * Checks if a value is valid.
 	 * 
@@ -175,7 +184,9 @@ public abstract class AbstractValueComparisonProcessor extends Processor {
 	 * @param value    the value to check
 	 * @return {@code true}, if the value is valid, otherwise {@code false}
 	 */
-	public abstract boolean isValidValue(String variable, Resource dataset, Resource resource, RDFNode value);
+	public abstract boolean isValidValue(RDFNode value);
+
+	public abstract String invalidValueComment();
 
 	/**
 	 * Checks if two values are equivalent.

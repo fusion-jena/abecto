@@ -33,6 +33,7 @@ public class AV {
 	public static final Property hasParameter = ResourceFactory.createProperty(namespace, "hasParameter");
 	public static final Property inputMetaDataGraph = ResourceFactory.createProperty(namespace, "inputMetaDataGraph");
 	public static final Resource Issue = ResourceFactory.createResource(namespace + "Issue");
+	public static final Property issueType = ResourceFactory.createProperty(namespace, "issueType");;
 	public static final Property key = ResourceFactory.createProperty(namespace, "key");
 	public static final Property keyVariableName = ResourceFactory.createProperty(namespace, "keyVariableName");
 	public static final Resource MetaDataGraph = ResourceFactory.createResource(namespace + "MetaDataGraph");
