@@ -78,7 +78,7 @@ public class JaroWinklerMappingProcessorTest {
 				metaModel);
 		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor();
 		JaroWinklerMappingProcessor.Parameter parameter = new JaroWinklerMappingProcessor.Parameter();
-		parameter.case_sensitive = false;
+		parameter.caseSensitive = false;
 		parameter.threshold = 0.90D;
 		parameter.category = "entity";
 		parameter.variables = Collections.singleton("label");
@@ -121,7 +121,7 @@ public class JaroWinklerMappingProcessorTest {
 				metaModel);
 		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor();
 		JaroWinklerMappingProcessor.Parameter parameter = new JaroWinklerMappingProcessor.Parameter();
-		parameter.case_sensitive = false;
+		parameter.caseSensitive = false;
 		parameter.threshold = 0.90D;
 		parameter.category = "entity";
 		parameter.variables = Collections.singleton("label");
@@ -170,7 +170,7 @@ public class JaroWinklerMappingProcessorTest {
 				, ontologyId2), metaModel);
 		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor();
 		JaroWinklerMappingProcessor.Parameter parameter = new JaroWinklerMappingProcessor.Parameter();
-		parameter.case_sensitive = false;
+		parameter.caseSensitive = false;
 		parameter.threshold = 0.90D;
 		parameter.category = "entity";
 		parameter.variables = Collections.singleton("label");
@@ -203,7 +203,7 @@ public class JaroWinklerMappingProcessorTest {
 				metaModel);
 		JaroWinklerMappingProcessor processor;
 		JaroWinklerMappingProcessor.Parameter parameter = new JaroWinklerMappingProcessor.Parameter();
-		parameter.case_sensitive = false;
+		parameter.caseSensitive = false;
 		parameter.threshold = 0.90D;
 		parameter.category = "entity";
 		parameter.variables = Collections.singleton("label");
@@ -242,7 +242,7 @@ public class JaroWinklerMappingProcessorTest {
 				metaModel);
 		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor();
 		JaroWinklerMappingProcessor.Parameter parameter = new JaroWinklerMappingProcessor.Parameter();
-		parameter.case_sensitive = false;
+		parameter.caseSensitive = false;
 		parameter.threshold = 0.90D;
 		parameter.category = "entity";
 		parameter.variables = Collections.singleton("label");
@@ -276,7 +276,7 @@ public class JaroWinklerMappingProcessorTest {
 				, ontologyId2), metaModel);
 
 		JaroWinklerMappingProcessor.Parameter parameter = new JaroWinklerMappingProcessor.Parameter();
-		parameter.case_sensitive = false;
+		parameter.caseSensitive = false;
 		parameter.threshold = 0.90D;
 		parameter.category = "entity";
 		parameter.variables = Collections.singleton("label");
@@ -340,7 +340,7 @@ public class JaroWinklerMappingProcessorTest {
 		// case-insensitive
 		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor();
 		processor.setParameters(parameter);
-		parameter.case_sensitive = false;
+		parameter.caseSensitive = false;
 		processor.addInputModelGroups(
 				Map.of(ontologyId1, Collections.singleton(model1), ontologyId2, Collections.singleton(model2)));
 		processor.addMetaModels(Collections.singleton(metaModel));
@@ -355,7 +355,7 @@ public class JaroWinklerMappingProcessorTest {
 		// case-sensitive
 		processor = new JaroWinklerMappingProcessor();
 		processor.setParameters(parameter);
-		parameter.case_sensitive = true;
+		parameter.caseSensitive = true;
 		processor.addInputModelGroups(
 				Map.of(ontologyId1, Collections.singleton(model1), ontologyId2, Collections.singleton(model2)));
 		processor.addMetaModels(Collections.singleton(metaModel));

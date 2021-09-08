@@ -18,27 +18,20 @@ package de.uni_jena.cs.fusion.abecto.processor.implementation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.UUID;
-import java.util.stream.Collectors;
+import java.util.Set;
+import java.util.function.Function;
 
-import org.apache.jena.query.QuerySolution;
-import org.apache.jena.query.ResultSet;
-import org.apache.jena.rdf.model.Literal;
-import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.sparql.core.Var;
 
+import de.uni_jena.cs.fusion.abecto.Aspect;
+import de.uni_jena.cs.fusion.abecto.Aspects;
 import de.uni_jena.cs.fusion.abecto.Parameter;
-import de.uni_jena.cs.fusion.abecto.metaentity.Category;
-import de.uni_jena.cs.fusion.abecto.metaentity.Issue;
-import de.uni_jena.cs.fusion.abecto.metaentity.Mapping;
 import de.uni_jena.cs.fusion.abecto.processor.MappingProcessor;
-import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
+import de.uni_jena.cs.fusion.abecto.util.Correspondences;
 import de.uni_jena.cs.fusion.similarity.jarowinkler.JaroWinklerSimilarity;
 
 public class JaroWinklerMappingProcessor extends MappingProcessor {
@@ -46,134 +39,51 @@ public class JaroWinklerMappingProcessor extends MappingProcessor {
 	// TODO add language handling parameter
 
 	@Parameter
-	public Double threshold;
-	@Parameter
-	public Boolean case_sensitive;
-	@Parameter
-	public String category;
+	public Resource aspect;
 	@Parameter
 	public Collection<String> variables;
 	@Parameter
-	public String defaultLangTag = "en";
-
-	/**
-	 * the variablesByCategoryByOntology relevant for the category mapped with
-	 * contained variables
-	 */
-	private Map<UUID, Map<Category, Collection<Var>>> variablesByCategoryByOntology = new HashMap<>();
-	/** the variable values mapped with the entities of the category by model */
-	private Map<Model, Map<Var, Map<String, Collection<Resource>>>> valuesByVariableByModel = new HashMap<>();
-
-	private Map<Var, Map<String, Collection<Resource>>> getValuesByVariable(Model model, UUID ontologyId,
-			Map<Category, Collection<Var>> variablesByCategory, boolean caseSensitive, Locale defaultLocale) {
-		if (!this.valuesByVariableByModel.containsKey(model)) {
-			// do it only once for this processor instance
-
-			// get valuesByVariableByModel map for the model
-			Map<Var, Map<String, Collection<Resource>>> modelValues = this.valuesByVariableByModel
-					.computeIfAbsent(model, m -> new HashMap<>());
-
-			Collection<Issue> issues = new HashSet<>();
-
-			// iterate the variablesByCategoryByOntology
-			for (Entry<Category, Collection<Var>> entry : variablesByCategory.entrySet()) {
-				Category category = entry.getKey();
-				Collection<Var> variables = entry.getValue();
-
-				// add value maps for each variable
-				variables.forEach((variable -> modelValues.computeIfAbsent(variable, v -> new HashMap<>())));
-
-				// execute query of the pattern
-				ResultSet results = category.selectCategory(model);
-
-				// iterate results
-				while (results.hasNext()) {
-					QuerySolution result = results.next();
-
-					// get resource of the result
-					Resource entity = result.get(category.name).asResource();
-
-					// iterate result variables
-					for (Var variable : variables) {
-						String varName = variable.getVarName();
-						if (result.contains(varName)) {
-							try {
-								Literal literal = result.getLiteral(varName);
-								String value = literal.getString();
-
-								if (!caseSensitive) {
-									String langTag = literal.getLanguage();
-									Locale locale = langTag.isEmpty() ? defaultLocale : Locale.forLanguageTag(langTag);
-									value = value.toLowerCase(locale);
-								}
-
-								// add result variable value to valuesByVariableByModel
-								modelValues.get(variable).computeIfAbsent(value, v -> new HashSet<>()).add(entity);
-
-							} catch (ClassCastException e) { // not a literal
-								// create issue
-								issues.add(Issue.unexpectedValueType(ontologyId, entity, varName,
-										"literal with datatype string"));
-							}
-						}
-					}
-				}
-			}
-			SparqlEntityManager.insert(issues, this.getResultModel());
-		}
-		return valuesByVariableByModel.get(model);
-	}
-
-	public Map<Category, Collection<Var>> variablesByCategory(String categoryName, Collection<String> variables,
-			UUID ontology)
-			throws IllegalStateException, NullPointerException, IllegalArgumentException, ReflectiveOperationException {
-		if (!this.variablesByCategoryByOntology.containsKey(ontology)) { // only once for this processor instance
-			// add ontology to variablesByCategoryByOntology
-			Map<Category, Collection<Var>> variablesByCategory = this.variablesByCategoryByOntology
-					.computeIfAbsent(ontology, (o) -> new HashMap<>());
-			// get categories by name and ontology
-			for (Category category : SparqlEntityManager.select(new Category(categoryName, null, ontology),
-					this.metaModel)) {
-				// get mapping of current category variables
-				Collection<Var> mappingVariables = category.getPatternVariables().stream()
-						.filter((var) -> variables.contains(var.getName())) // only variables used for mapping
-						.collect(Collectors.toList());
-				if (!mappingVariables.isEmpty()) {
-					// add category if relevant
-					variablesByCategory.put(category, mappingVariables);
-				}
-			}
-		}
-		return this.variablesByCategoryByOntology.get(ontology);
-	}
+	public Double threshold;
+	@Parameter
+	public Boolean caseSensitive;
 
 	@Override
 	public void mapDatasets(Resource dataset1, Resource dataset2) {
-	//public Collection<Mapping> computeMapping(Model model1, Model model2, UUID ontologyId1, UUID ontologyId2)
-	//		throws ParseException, IllegalStateException, NullPointerException, ReflectiveOperationException {
-	
+
 		// get parameters
-		boolean caseSensitive = this.case_sensitive;
 		double threshold = this.threshold;
-		Collection<String> variables = this.variables;
-		String categoryName = this.category;
-		Locale defaultLocale = Locale.forLanguageTag(this.defaultLangTag);
+		Aspect aspect = this.getAspects().get(this.aspect);
 
-		// get valuesByVariableByModel
-		Map<Var, Map<String, Collection<Resource>>> valuesByVariable1 = getValuesByVariable(model1, ontologyId1,
-				variablesByCategory(categoryName, variables, ontologyId1), caseSensitive, defaultLocale);
-		Map<Var, Map<String, Collection<Resource>>> valuesByVariable2 = getValuesByVariable(model2, ontologyId2,
-				variablesByCategory(categoryName, variables, ontologyId2), caseSensitive, defaultLocale);
+		// make index case insensitive, if requested
+		Function<RDFNode, String> modifier;
+		if (this.caseSensitive) {
+			modifier = new Function<>() {
+				@Override
+				public String apply(RDFNode t) {
+					return t.asLiteral().getString();
+				}
+			};
+		} else {
+			modifier = new Function<>() {
+				@Override
+				public String apply(RDFNode t) {
+					return t.asLiteral().getString().toLowerCase();
+				}
+			};
+		}
 
-		// prepare mappings collection
-		Collection<Mapping> mappings = new ArrayList<>();
+		// get resource indices
+		Map<String, Map<String, Set<Resource>>> valuesByVariable1 = Aspects.getResourceIndex(aspect, dataset1,
+				this.variables, this.getInputPrimaryModelUnion(dataset1), modifier);
+		Map<String, Map<String, Set<Resource>>> valuesByVariable2 = Aspects.getResourceIndex(aspect, dataset2,
+				this.variables, this.getInputPrimaryModelUnion(dataset2), modifier);
 
 		// iterate variables
-		for (Var variable : valuesByVariable1.keySet()) {
+		for (String variable : valuesByVariable1.keySet()) {
 			if (valuesByVariable1.containsKey(variable) && valuesByVariable2.containsKey(variable)) {
 
-				Map<String, Collection<Resource>> values1 = valuesByVariable1.get(variable);
-				Map<String, Collection<Resource>> values2 = valuesByVariable2.get(variable);
+				Map<String, Set<Resource>> values1 = valuesByVariable1.get(variable);
+				Map<String, Set<Resource>> values2 = valuesByVariable2.get(variable);
 
 				JaroWinklerSimilarity<String> matcher1 = JaroWinklerSimilarity.with(values1.keySet(), threshold);
 				JaroWinklerSimilarity<String> matcher2 = JaroWinklerSimilarity.with(values2.keySet(), threshold);
@@ -190,13 +100,14 @@ public class JaroWinklerMappingProcessor extends MappingProcessor {
 						if (matches1.get(value1).contains(value2)) { // is bidirectional match
 							/*
 							 * NOTE: bidirectional matches are required to make the processor commutative
-							 * regarding ontology order
+							 * regarding dataset order
 							 */
 
 							// convert match into mappings
 							for (Resource resource1 : values1.get(value1)) {
 								for (Resource resource2 : values2.get(value2)) {
-									mappings.add(Mapping.of(resource1, resource2));
+									Correspondences.addCorrespondence(resource1, resource2, aspect.iri,
+											this.getMetaModelUnion(null), this.getOutputMetaModel(null));
 								}
 							}
 						}

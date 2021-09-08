@@ -39,7 +39,7 @@ public class Metadata {
 			Resource comparedToDataset, Resource comparedToResource, RDFNode comparedToValue, Aspect affectedAspect,
 			Model outputAffectedDatasetMetaModel) {
 		Resource deviation = outputAffectedDatasetMetaModel.createResource(AV.Deviation);
-		deviation.addProperty(AV.affectedAspect, affectedAspect.name);
+		deviation.addProperty(AV.affectedAspect, affectedAspect.iri);
 		deviation.addLiteral(AV.affectedVariableName, affectedVariableName);
 		deviation.addLiteral(AV.affectedValue, affectedValue);
 		deviation.addProperty(AV.comparedToDataset, comparedToDataset);
@@ -66,7 +66,7 @@ public class Metadata {
 	public static void addResourceOmission(Resource affectedDataset, Resource comparedToDataset,
 			Resource comparedToResource, Aspect affectedAspect, Model outputAffectedDatasetMetaModel) {
 		Resource omission = outputAffectedDatasetMetaModel.createResource(AV.ResourceOmission);
-		omission.addProperty(AV.affectedAspect, affectedAspect.name);
+		omission.addProperty(AV.affectedAspect, affectedAspect.iri);
 		omission.addProperty(AV.comparedToDataset, comparedToDataset);
 		omission.addProperty(AV.comparedToResource, comparedToResource);
 		Resource qualityAnnotation = outputAffectedDatasetMetaModel.createResource(DQV.QualityAnnotation);
@@ -78,7 +78,7 @@ public class Metadata {
 			Resource comparedToDataset, Resource comparedToResource, RDFNode comparedToValue, Aspect affectedAspect,
 			Model outputAffectedDatasetMetaModel) {
 		Resource deviation = outputAffectedDatasetMetaModel.createResource(AV.ValueOmission);
-		deviation.addProperty(AV.affectedAspect, affectedAspect.name);
+		deviation.addProperty(AV.affectedAspect, affectedAspect.iri);
 		deviation.addLiteral(AV.affectedVariableName, affectedVariableName);
 		deviation.addProperty(AV.comparedToDataset, comparedToDataset);
 		deviation.addProperty(AV.comparedToResource, comparedToResource);

@@ -80,7 +80,7 @@ public class UsePresentMappingProcessor extends Processor {
 						try {
 							Resource resource1 = solution.getResource("s");
 							Resource resource2 = solution.getResource("o");
-							Correspondences.addCorrespondence(resource1, resource2, aspect.name, metaModel, outputMetaModel);
+							Correspondences.addCorrespondence(resource1, resource2, aspect.iri, metaModel, outputMetaModel);
 						} catch (ClassCastException e) {
 							// TODO add issue to outpurMetaModel
 							log.warn(String.format("UnexpectedValueType: Subject or object is not a resource: %s %s %s",

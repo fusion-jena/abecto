@@ -26,6 +26,7 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
+import de.uni_jena.cs.fusion.abecto.Aspects;
 import de.uni_jena.cs.fusion.abecto.Parameter;
 import de.uni_jena.cs.fusion.abecto.util.Correspondences;
 import de.uni_jena.cs.fusion.abecto.util.Metadata;
@@ -42,11 +43,11 @@ public abstract class AbstractValueComparisonProcessor extends Processor {
 	@Override
 	public final void run() {
 		Aspect aspect = this.getAspects().get(this.aspect);
-		Correspondences.getCorrespondenceSets(this.getInputMetaModelUnion(null), aspect.name)
+		Correspondences.getCorrespondenceSets(this.getInputMetaModelUnion(null), aspect.iri)
 				.forEach(correspondingResources -> {
 					for (Resource correspondingResource1 : correspondingResources) {
 						for (Resource dataset1 : this.getInputDatasets()) {
-							Optional<Map<String, Set<RDFNode>>> values1 = aspect.getResource(dataset1,
+							Optional<Map<String, Set<RDFNode>>> values1 = Aspects.getResource(aspect, dataset1,
 									correspondingResource1, this.getInputPrimaryModelUnion(dataset1));
 							if (values1.isPresent()) {
 								for (Resource correspondingResource2 : correspondingResources) {
@@ -59,8 +60,8 @@ public abstract class AbstractValueComparisonProcessor extends Processor {
 													|| !dataset1.equals(dataset2)) {
 												// avoid comparing the representation of one resource in one dataset
 												// with itself
-												Optional<Map<String, Set<RDFNode>>> values2 = aspect.getResource(
-														dataset1, correspondingResource1,
+												Optional<Map<String, Set<RDFNode>>> values2 = Aspects.getResource(
+														aspect, dataset1, correspondingResource1,
 														this.getInputPrimaryModelUnion(dataset1));
 												if (values2.isPresent()) {
 													for (String variable : this.variables) {
