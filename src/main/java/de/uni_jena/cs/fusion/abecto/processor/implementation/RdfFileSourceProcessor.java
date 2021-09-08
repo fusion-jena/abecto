@@ -15,26 +15,25 @@
  */
 package de.uni_jena.cs.fusion.abecto.processor.implementation;
 
-import java.io.InputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
 
-import de.uni_jena.cs.fusion.abecto.parameter_model.EmptyParameters;
-import de.uni_jena.cs.fusion.abecto.processor.AbstractSourceProcessor;
-import de.uni_jena.cs.fusion.abecto.processor.UploadSourceProcessor;
+import de.uni_jena.cs.fusion.abecto.Parameter;
+import de.uni_jena.cs.fusion.abecto.processor.Processor;
 import de.uni_jena.cs.fusion.abecto.util.Models;
 
-public class RdfFileSourceProcessor extends AbstractSourceProcessor<EmptyParameters>
-		implements UploadSourceProcessor<EmptyParameters> {
-	
-	InputStream stream;
+public class RdfFileSourceProcessor extends Processor {
+
+	@Parameter
+	String path;
 
 	@Override
-	public void computeResultModel() throws Exception {
-		this.setModel(Models.read(this.stream));
-	}
-
-	@Override
-	public void setUploadStream(InputStream stream) {
-		this.stream = stream;
+	public void run() {
+		try {
+			Models.read(new FileInputStream(this.path), this.getOutputPrimaryModel().get());
+		} catch (IOException e) {
+			throw new RuntimeException("Failed to read RDF file.", e);
+		}
 	}
 
 }
