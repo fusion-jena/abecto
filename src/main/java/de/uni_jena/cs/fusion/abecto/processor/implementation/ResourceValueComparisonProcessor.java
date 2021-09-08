@@ -17,7 +17,6 @@ package de.uni_jena.cs.fusion.abecto.processor.implementation;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.Resource;
 
 import de.uni_jena.cs.fusion.abecto.processor.AbstractValueComparisonProcessor;
 import de.uni_jena.cs.fusion.abecto.util.Correspondences;
@@ -27,12 +26,16 @@ public class ResourceValueComparisonProcessor extends AbstractValueComparisonPro
 	private Model mappingModel;
 
 	@Override
-	public boolean isValidValue(String variable, Resource dataset, Resource resource, RDFNode value) {
+	public boolean isValidValue(RDFNode value) {
 		if (!value.isResource()) {
-			// TODO create issue
 			return false;
 		}
 		return true;
+	}
+
+	@Override
+	public String invalidValueComment() {
+		return "Should not be a literal.";
 	}
 
 	@Override
