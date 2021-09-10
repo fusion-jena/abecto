@@ -38,6 +38,8 @@ public class AV {
 	public static final Property issueType = ResourceFactory.createProperty(namespace, "issueType");;
 	public static final Property key = ResourceFactory.createProperty(namespace, "key");
 	public static final Property keyVariableName = ResourceFactory.createProperty(namespace, "keyVariableName");
+	// TODO markAndRecapture might become renamed
+	public static final Resource markAndRecapture = ResourceFactory.createResource(namespace + "markAndRecapture");
 	public static final Resource MetaDataGraph = ResourceFactory.createResource(namespace + "MetaDataGraph");
 	public static final Property ofAspect = ResourceFactory.createProperty(namespace, "ofAspect");
 	public static final Resource PrimaryDataGraph = ResourceFactory.createResource(namespace + "PrimaryDataGraph");
@@ -53,4 +55,5 @@ public class AV {
 	public static final Resource StepExecution = ResourceFactory.createResource(namespace + "StepExecution");
 	public static final Resource ValueOmission = ResourceFactory.createResource(namespace + "ValueOmission");
 	public static final Resource WrongValue = ResourceFactory.createResource(namespace + "WrongValue");
+
 }

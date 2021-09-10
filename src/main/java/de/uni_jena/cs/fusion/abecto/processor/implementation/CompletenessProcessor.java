@@ -15,6 +15,8 @@
  */
 package de.uni_jena.cs.fusion.abecto.processor.implementation;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -34,14 +36,9 @@ import de.uni_jena.cs.fusion.abecto.vocabulary.OM;
 
 /**
  * Provides measurements for <strong>number of duplicates</strong>,
- * <strong>absolute coverage</strong>, and <strong>relative coverage</strong>
- * per aspect, as well as <strong>resource omission</strong> and
- * <strong>duplicate</strong> annotations.
- * <p>
- * <strong>Note:</strong> Absolute coverage might not be symmetric in case of
- * duplicates.
- * <p>
- * TODO measure <strong>completeness</strong>
+ * <strong>absolute coverage</strong>, <strong>relative coverage</strong>, and
+ * <strong>completeness</strong> per aspect, as well as <strong>resource
+ * omission</strong> and <strong>duplicate</strong> annotations.
  */
 public class CompletenessProcessor extends Processor {
 
@@ -54,7 +51,7 @@ public class CompletenessProcessor extends Processor {
 	/** Number of covered resources of another dataset, excluding duplicates. */
 	Map<Resource, Map<Resource, Integer>> absoluteCoverage = new HashMap<>();
 	/** Ratio of covered resources of another dataset, excluding duplicates. */
-	Map<Resource, Map<Resource, Integer>> relativeCoverage = new HashMap<>();
+	Map<Resource, Map<Resource, BigDecimal>> relativeCoverage = new HashMap<>();
 	/** Number of duplicate resources in this dataset, excluding the on to stay. */
 	Map<Resource, Integer> duplicates = new HashMap<>();
 	/** Number of resources in this dataset, excluding duplicates. */
@@ -62,7 +59,7 @@ public class CompletenessProcessor extends Processor {
 	/** Number of resources not covered by this dataset. */
 	Map<Resource, Integer> omissions = new HashMap<>();
 	/** Ratio of resources in an estimated polulation covered by this dataset. */
-	Map<Resource, Integer> completeness = new HashMap<>();
+	Map<Resource, BigDecimal> completeness = new HashMap<>();
 	/** Number of correspondence set found over all dataset. */
 	int correspondenceSetsCount = 0;
 	/** Number of overlaps between all pairs of dataset, excluding duplicates. */
@@ -148,10 +145,24 @@ public class CompletenessProcessor extends Processor {
 				count.put(dataset, resourcesByDataset.get(dataset).size() - duplicates.get(dataset));
 			}
 
+			// calculate population size
+			BigDecimal populationSize = BigDecimal.ZERO;
+			for (Resource dataset : this.getInputDatasets()) {
+				for (Resource datasetComparedTo : this.getInputDatasets()) {
+					if (dataset.getURI().compareTo(datasetComparedTo.getURI()) > 0) {
+						populationSize = populationSize.add(BigDecimal.valueOf(count.get(dataset))
+								.multiply(BigDecimal.valueOf(count.get(dataset))));
+					}
+				}
+			}
+			populationSize = populationSize.divide(BigDecimal.valueOf(totalPairwiseOverlap), 0, RoundingMode.HALF_UP);
+
 			// calculate measurements
 			for (Resource dataset : this.getInputDatasets()) {
 
-				// TODO calculate completeness
+				// calculate completeness
+				completeness.put(dataset,
+						populationSize.divide(BigDecimal.valueOf(count.get(dataset)), 2, RoundingMode.HALF_UP));
 
 				// calculate relative coverage
 				relativeCoverage.put(dataset, new HashMap<>());
@@ -159,7 +170,8 @@ public class CompletenessProcessor extends Processor {
 					if (!dataset.equals(datasetComparedTo)) {
 						int countComparedTo = count.get(datasetComparedTo);
 						int overlap = absoluteCoverage.get(dataset).get(datasetComparedTo);
-						relativeCoverage.get(dataset).put(datasetComparedTo, overlap / countComparedTo);
+						relativeCoverage.get(dataset).put(datasetComparedTo, BigDecimal.valueOf(overlap)
+								.divide(BigDecimal.valueOf(countComparedTo), 2, RoundingMode.HALF_UP));
 					}
 				}
 			}
@@ -170,11 +182,11 @@ public class CompletenessProcessor extends Processor {
 				Metadata.addQualityMeasurement(AV.count, count.get(dataset), OM.one, dataset, aspect,
 						this.getOutputMetaModel(dataset));
 
-				// TODO store completeness
-				// Collection<Resource> otherDatasets = this.getInputDatasets();
-				// otherDatasets.remove(dataset);
-				// Metadata.addQualityMeasurement(AV., OM.one, dataset, otherDatasets, aspect,
-				// this.getOutputMetaModel(dataset));
+				// store completeness
+				Collection<Resource> otherDatasets = this.getInputDatasets();
+				otherDatasets.remove(dataset);
+				Metadata.addQualityMeasurement(AV.markAndRecapture, completeness.get(dataset), OM.one, dataset,
+						otherDatasets, aspect, this.getOutputMetaModel(dataset));
 
 				for (Resource datasetComparedTo : this.getInputDatasets()) {
 					if (!dataset.equals(datasetComparedTo)) {
