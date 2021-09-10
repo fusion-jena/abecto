@@ -51,22 +51,18 @@ public class CompletenessProcessor extends Processor {
 	@Parameter
 	public Collection<Resource> aspects;
 
-	/** Number of resources in another dataset that are covered by this dataset. */
+	/** Number of covered resources of another dataset, excluding duplicates. */
 	Map<Resource, Map<Resource, Integer>> absoluteCoverage = new HashMap<>();
+	/** Ratio of covered resources of another dataset, excluding duplicates. */
+	Map<Resource, Map<Resource, Integer>> relativeCoverage = new HashMap<>();
 	/** Number of duplicate resources in this dataset, excluding the on to stay. */
 	Map<Resource, Integer> duplicates = new HashMap<>();
 	/** Number of resources in this dataset, excluding duplicates. */
 	Map<Resource, Integer> count = new HashMap<>();
-	/** Number of resources in this dataset including duplicates. */
-	Map<Resource, Integer> total = new HashMap<>();
 	/** Number of resources not covered by this dataset. */
 	Map<Resource, Integer> omissions = new HashMap<>();
-	/** Number of resources not covered by any other dataset. */
-	Map<Resource, Integer> unique = new HashMap<>();
 	/** Ratio of resources in an estimated polulation covered by this dataset. */
 	Map<Resource, Integer> completeness = new HashMap<>();
-	/** Ratio of resources in another dataset covered by this dataset. */
-	Map<Resource, Map<Resource, Integer>> relativeCoverage = new HashMap<>();
 	/** Number of correspondence set found over all dataset. */
 	int correspondenceSetsCount = 0;
 	/** Number of overlaps between all pairs of dataset, excluding duplicates. */
@@ -86,13 +82,10 @@ public class CompletenessProcessor extends Processor {
 			}
 
 			// prepare measurements
-			for (Resource dataset1 : this.getInputDatasets()) {
-				// get total number of resources per dataset
-				total.put(dataset1, resourcesByDataset.get(dataset1).size());
-				for (Resource dataset2 : this.getInputDatasets()) {
-					if (!dataset1.equals(dataset2)) {
-						// NOTE: In case of duplicates absolute coverage is not symmetric
-						absoluteCoverage.computeIfAbsent(dataset1, x -> new HashMap<>());
+			for (Resource dataset : this.getInputDatasets()) {
+				for (Resource datasetComparedTo : this.getInputDatasets()) {
+					if (dataset.getURI().compareTo(datasetComparedTo.getURI()) > 0) {
+						absoluteCoverage.computeIfAbsent(dataset, x -> new HashMap<>());
 					}
 				}
 			}
@@ -130,33 +123,29 @@ public class CompletenessProcessor extends Processor {
 							}
 							if (occurrences > 0) {
 								for (Resource datasetComparedTo : this.getInputDatasets()) {
-									if (!dataset.equals(datasetComparedTo)) {
-										int coverage = occurrencesByDataset.get(datasetComparedTo).size();
-										// count covered resources of the compared dataset
-										absoluteCoverage.get(dataset).merge(datasetComparedTo, coverage, Integer::sum);
-										if (coverage > 0
-												&& dataset.getURI().compareTo(datasetComparedTo.getURI()) > 0) {
-											// for compared datasets also in the correspndence set, only once per pair
+									if (!occurrencesByDataset.get(datasetComparedTo).isEmpty()) {
+										if (dataset.getURI().compareTo(datasetComparedTo.getURI()) > 0) {
+											// only once per pair
+
+											// count covered resources of the compared dataset
+											absoluteCoverage.get(dataset).merge(datasetComparedTo, 1, Integer::sum);
 
 											// count total pairwise overlap
 											totalPairwiseOverlap++;
 										}
 									}
 								}
-							}
-							if (occurrences > 1) {
-								// count duplicates, excluding the one to stay
-								duplicates.merge(dataset, occurrences - 1, Integer::sum);
+								if (occurrences > 1) {
+									// count duplicates, excluding the one to stay
+									duplicates.merge(dataset, occurrences - 1, Integer::sum);
+								}
 							}
 						}
 					});
 
+			// calculate resource count
 			for (Resource dataset : this.getInputDatasets()) {
-				// calculate unique resource
-				unique.put(dataset, total.get(dataset) - correspondenceSetsCount + omissions.get(dataset)
-						- duplicates.get(dataset));
-				// calculate resource count
-				count.put(dataset, total.get(dataset) - duplicates.get(dataset));
+				count.put(dataset, resourcesByDataset.get(dataset).size() - duplicates.get(dataset));
 			}
 
 			// calculate measurements
@@ -164,35 +153,45 @@ public class CompletenessProcessor extends Processor {
 
 				// TODO calculate completeness
 
+				// calculate relative coverage
 				relativeCoverage.put(dataset, new HashMap<>());
 				for (Resource datasetComparedTo : this.getInputDatasets()) {
 					if (!dataset.equals(datasetComparedTo)) {
-						// calculate relative coverage
-						int totalComparedTo = total.get(datasetComparedTo);
+						int countComparedTo = count.get(datasetComparedTo);
 						int overlap = absoluteCoverage.get(dataset).get(datasetComparedTo);
-						relativeCoverage.get(dataset).put(datasetComparedTo, overlap / totalComparedTo);
+						relativeCoverage.get(dataset).put(datasetComparedTo, overlap / countComparedTo);
 					}
 				}
 			}
 
 			// store measures
 			for (Resource dataset : this.getInputDatasets()) {
-				Collection<Resource> otherDatasets = this.getInputDatasets();
-				otherDatasets.remove(dataset);
-
-				// TODO store completeness
-				// Metadata.addQualityMeasurement(AV., OM.one, dataset, otherDatasets, aspect,
-				// this.getOutputMetaModel(dataset));
+				// store count
 				Metadata.addQualityMeasurement(AV.count, count.get(dataset), OM.one, dataset, aspect,
 						this.getOutputMetaModel(dataset));
 
+				// TODO store completeness
+				// Collection<Resource> otherDatasets = this.getInputDatasets();
+				// otherDatasets.remove(dataset);
+				// Metadata.addQualityMeasurement(AV., OM.one, dataset, otherDatasets, aspect,
+				// this.getOutputMetaModel(dataset));
+
 				for (Resource datasetComparedTo : this.getInputDatasets()) {
-					Metadata.addQualityMeasurement(AV.absoluteCoverage,
-							relativeCoverage.get(dataset).get(datasetComparedTo), OM.one, dataset, datasetComparedTo,
-							aspect, this.getOutputMetaModel(dataset));
-					Metadata.addQualityMeasurement(AV.relativeCoverage,
-							relativeCoverage.get(dataset).get(datasetComparedTo), OM.one, dataset, datasetComparedTo,
-							aspect, this.getOutputMetaModel(dataset));
+					if (!dataset.equals(datasetComparedTo)) {
+						Metadata.addQualityMeasurement(AV.relativeCoverage,
+								relativeCoverage.get(dataset).get(datasetComparedTo), OM.one, dataset,
+								datasetComparedTo, aspect, this.getOutputMetaModel(dataset));
+						if (dataset.getURI().compareTo(datasetComparedTo.getURI()) > 0) {
+							// only once per pair
+
+							Metadata.addQualityMeasurement(AV.absoluteCoverage,
+									absoluteCoverage.get(dataset).get(datasetComparedTo), OM.one, dataset,
+									datasetComparedTo, aspect, this.getOutputMetaModel(dataset));
+							Metadata.addQualityMeasurement(AV.absoluteCoverage,
+									absoluteCoverage.get(datasetComparedTo).get(dataset), OM.one, dataset,
+									datasetComparedTo, aspect, this.getOutputMetaModel(datasetComparedTo));
+						}
+					}
 				}
 			}
 
