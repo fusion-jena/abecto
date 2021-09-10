@@ -16,6 +16,8 @@ public class DQV {
 	 */
 	public static final String namespace = "http://www.w3.org/ns/dqv#";
 
-	public final static Property computedOn = ResourceFactory.createProperty(namespace, "computedOn");
+	public static final Property computedOn = ResourceFactory.createProperty(namespace, "computedOn");
+	public static final Property isMeasurementOf = ResourceFactory.createProperty(namespace, "isMeasurementOf");
 	public static final Resource QualityAnnotation = ResourceFactory.createResource(namespace + "QualityAnnotation");
+	public static final Property value = ResourceFactory.createProperty(namespace, "value");
 }

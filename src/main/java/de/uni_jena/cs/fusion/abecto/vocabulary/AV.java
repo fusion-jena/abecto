@@ -14,6 +14,7 @@ public class AV {
 	 */
 	public static final String namespace = "http://w3id.org/abecto-vocabulary#";
 
+	public static final Resource absoluteCoverage = ResourceFactory.createResource(namespace + "absoluteCoverage");
 	public static final Property affectedAspect = ResourceFactory.createProperty(namespace, "affectedAspect");
 	public static final Property affectedValue = ResourceFactory.createProperty(namespace, "affectedValue");
 	public static final Property affectedVariableName = ResourceFactory.createProperty(namespace,
@@ -28,6 +29,7 @@ public class AV {
 			"correspondsNotToResource");
 	public static final Property correspondsToResource = ResourceFactory.createProperty(namespace,
 			"correspondsToResource");
+	public static final Resource count = ResourceFactory.createResource(namespace + "count");
 	public static final Property definingQuery = ResourceFactory.createProperty(namespace, "definingQuery");
 	public static final Resource Deviation = ResourceFactory.createResource(namespace + "Deviation");
 	public static final Property hasParameter = ResourceFactory.createProperty(namespace, "hasParameter");
@@ -43,6 +45,7 @@ public class AV {
 	public static final Resource QualityAnnotationBody = ResourceFactory
 			.createResource(namespace + "QualityAnnotationBody");
 	public static final Resource QualityMeasurement = ResourceFactory.createResource(namespace + "QualityMeasurement");
+	public static final Resource relativeCoverage = ResourceFactory.createResource(namespace + "relativeCoverage");
 	public static final Property relevantResource = ResourceFactory.createProperty(namespace, "relevantResource");
 	public static final Resource ResourceOmission = ResourceFactory.createResource(namespace + "ResourceOmission");
 	public static final Resource Sparql11SelectQuery = ResourceFactory

@@ -107,4 +107,20 @@ public class Aspects {
 		}
 		return index;
 	}
+
+	public static Set<Resource> getResourceKeys(Aspect aspect, Resource dataset, Model datasetModels) {
+		Set<Resource> resourceKeys = new HashSet<>();
+
+		Query query = aspect.getPattern(dataset).cloneQuery();
+		query.resetResultVars();
+		query.addResultVar(aspect.getKeyVariable());
+		ResultSet results = QueryExecutionFactory.create(query, datasetModels).execSelect();
+
+		String keyVariableName = aspect.getKeyVariableName();
+		while (results.hasNext()) {
+			resourceKeys.add(results.next().getResource(keyVariableName));
+		}
+
+		return resourceKeys;
+	}
 }

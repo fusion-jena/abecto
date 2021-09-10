@@ -15,7 +15,10 @@
  */
 package de.uni_jena.cs.fusion.abecto.util;
 
+import java.util.Collections;
 import java.util.Map;
+
+import javax.annotation.Nullable;
 
 import org.apache.jena.arq.querybuilder.AskBuilder;
 import org.apache.jena.graph.NodeFactory;
@@ -32,6 +35,7 @@ import de.uni_jena.cs.fusion.abecto.Aspect;
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 import de.uni_jena.cs.fusion.abecto.vocabulary.DQV;
 import de.uni_jena.cs.fusion.abecto.vocabulary.OA;
+import de.uni_jena.cs.fusion.abecto.vocabulary.SdmxAttribute;
 
 public class Metadata {
 
@@ -52,40 +56,87 @@ public class Metadata {
 
 	public static void addIssue(Resource affectedResource, String affectedVariableName, RDFNode affectedValue,
 			Resource affectedAspect, String issueType, String comment, Model outputAffectedDatasetMetaModel) {
-		Resource deviation = outputAffectedDatasetMetaModel.createResource(AV.Issue);
-		deviation.addProperty(AV.affectedAspect, affectedAspect);
-		deviation.addLiteral(AV.affectedVariableName, affectedVariableName);
-		deviation.addLiteral(AV.affectedValue, affectedValue);
-		deviation.addLiteral(AV.issueType, issueType);
-		deviation.addLiteral(RDFS.comment, comment);
+		Resource issue = outputAffectedDatasetMetaModel.createResource(AV.Issue);
+		issue.addProperty(AV.affectedAspect, affectedAspect);
+		issue.addLiteral(AV.affectedVariableName, affectedVariableName);
+		issue.addLiteral(AV.affectedValue, affectedValue);
+		issue.addLiteral(AV.issueType, issueType);
+		issue.addLiteral(RDFS.comment, comment);
 		Resource qualityAnnotation = outputAffectedDatasetMetaModel.createResource(DQV.QualityAnnotation);
 		qualityAnnotation.addProperty(OA.hasTarget, affectedResource);
-		qualityAnnotation.addProperty(OA.hasBody, deviation);
+		qualityAnnotation.addProperty(OA.hasBody, issue);
 	}
 
 	public static void addResourceOmission(Resource affectedDataset, Resource comparedToDataset,
 			Resource comparedToResource, Aspect affectedAspect, Model outputAffectedDatasetMetaModel) {
-		Resource omission = outputAffectedDatasetMetaModel.createResource(AV.ResourceOmission);
-		omission.addProperty(AV.affectedAspect, affectedAspect.iri);
-		omission.addProperty(AV.comparedToDataset, comparedToDataset);
-		omission.addProperty(AV.comparedToResource, comparedToResource);
+		Resource resourceOmission = outputAffectedDatasetMetaModel.createResource(AV.ResourceOmission);
+		resourceOmission.addProperty(AV.affectedAspect, affectedAspect.iri);
+		resourceOmission.addProperty(AV.comparedToDataset, comparedToDataset);
+		resourceOmission.addProperty(AV.comparedToResource, comparedToResource);
 		Resource qualityAnnotation = outputAffectedDatasetMetaModel.createResource(DQV.QualityAnnotation);
 		qualityAnnotation.addProperty(OA.hasTarget, affectedDataset);
-		qualityAnnotation.addProperty(OA.hasBody, omission);
+		qualityAnnotation.addProperty(OA.hasBody, resourceOmission);
 	}
 
 	public static void addValuesOmission(Resource affectedResource, String affectedVariableName,
 			Resource comparedToDataset, Resource comparedToResource, RDFNode comparedToValue, Aspect affectedAspect,
 			Model outputAffectedDatasetMetaModel) {
-		Resource deviation = outputAffectedDatasetMetaModel.createResource(AV.ValueOmission);
-		deviation.addProperty(AV.affectedAspect, affectedAspect.iri);
-		deviation.addLiteral(AV.affectedVariableName, affectedVariableName);
-		deviation.addProperty(AV.comparedToDataset, comparedToDataset);
-		deviation.addProperty(AV.comparedToResource, comparedToResource);
-		deviation.addLiteral(AV.comparedToValue, comparedToValue);
+		Resource valuesOmission = outputAffectedDatasetMetaModel.createResource(AV.ValueOmission);
+		valuesOmission.addProperty(AV.affectedAspect, affectedAspect.iri);
+		valuesOmission.addLiteral(AV.affectedVariableName, affectedVariableName);
+		valuesOmission.addProperty(AV.comparedToDataset, comparedToDataset);
+		valuesOmission.addProperty(AV.comparedToResource, comparedToResource);
+		valuesOmission.addLiteral(AV.comparedToValue, comparedToValue);
 		Resource qualityAnnotation = outputAffectedDatasetMetaModel.createResource(DQV.QualityAnnotation);
 		qualityAnnotation.addProperty(OA.hasTarget, affectedResource);
-		qualityAnnotation.addProperty(OA.hasBody, deviation);
+		qualityAnnotation.addProperty(OA.hasBody, valuesOmission);
+	}
+
+	public static void addQualityMeasurement(Resource measure, Number value, Resource unit, Resource computedOnDataset,
+			Aspect affectedAspect, Model outputAffectedDatasetMetaModel) {
+		addQualityMeasurement(measure, value, unit, computedOnDataset, null, Collections.emptyList(), affectedAspect,
+				outputAffectedDatasetMetaModel);
+	}
+
+	public static void addQualityMeasurement(Resource measure, Number value, Resource unit, Resource computedOnDataset,
+			String affectedVariableName, Aspect affectedAspect, Model outputAffectedDatasetMetaModel) {
+		addQualityMeasurement(measure, value, unit, computedOnDataset, affectedVariableName, Collections.emptyList(),
+				affectedAspect, outputAffectedDatasetMetaModel);
+	}
+
+	public static void addQualityMeasurement(Resource measure, Number value, Resource unit, Resource computedOnDataset,
+			Resource comparedToDataset, Aspect affectedAspect, Model outputAffectedDatasetMetaModel) {
+		addQualityMeasurement(measure, value, unit, computedOnDataset, null,
+				Collections.singletonList(comparedToDataset), affectedAspect, outputAffectedDatasetMetaModel);
+	}
+
+	public static void addQualityMeasurement(Resource measure, Number value, Resource unit, Resource computedOnDataset,
+			String affectedVariableName, Resource comparedToDataset, Aspect affectedAspect,
+			Model outputAffectedDatasetMetaModel) {
+		addQualityMeasurement(measure, value, unit, computedOnDataset, affectedVariableName,
+				Collections.singletonList(comparedToDataset), affectedAspect, outputAffectedDatasetMetaModel);
+	}
+
+	public static void addQualityMeasurement(Resource measure, Number value, Resource unit, Resource computedOnDataset,
+			Iterable<Resource> comparedToDatasets, Aspect affectedAspect, Model outputAffectedDatasetMetaModel) {
+		addQualityMeasurement(measure, value, unit, computedOnDataset, null, comparedToDatasets, affectedAspect,
+				outputAffectedDatasetMetaModel);
+	}
+
+	public static void addQualityMeasurement(Resource measure, Number value, Resource unit, Resource computedOnDataset,
+			@Nullable String affectedVariableName, Iterable<Resource> comparedToDatasets, Aspect affectedAspect,
+			Model outputAffectedDatasetMetaModel) {
+		Resource qualityMeasurement = outputAffectedDatasetMetaModel.createResource(AV.QualityMeasurement);
+		qualityMeasurement.addProperty(DQV.isMeasurementOf, measure);
+		qualityMeasurement.addLiteral(DQV.value, value);
+		qualityMeasurement.addProperty(SdmxAttribute.unitMeasure, unit);
+		qualityMeasurement.addProperty(AV.affectedAspect, affectedAspect.iri);
+		if (affectedVariableName != null) {
+			qualityMeasurement.addLiteral(AV.affectedVariableName, affectedVariableName);
+		}
+		for (Resource comparedToDataset : comparedToDatasets) {
+			qualityMeasurement.addProperty(AV.comparedToDataset, comparedToDataset);
+		}
 	}
 
 	private static final Var QUALITY_ANNOTATION = Var.alloc("qualityAnnotation");
