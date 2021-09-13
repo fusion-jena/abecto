@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.uni_jena.cs.fusion.abecto.processor.implementation;
+package de.uni_jena.cs.fusion.abecto.processor;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 
-import de.uni_jena.cs.fusion.abecto.processor.AbstractValueComparisonProcessor;
 import de.uni_jena.cs.fusion.abecto.util.Correspondences;
 
 public class ResourceValueComparisonProcessor extends AbstractValueComparisonProcessor {

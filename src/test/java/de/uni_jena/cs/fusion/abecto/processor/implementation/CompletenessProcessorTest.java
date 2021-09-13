@@ -33,6 +33,7 @@ import de.uni_jena.cs.fusion.abecto.metaentity.Issue;
 import de.uni_jena.cs.fusion.abecto.metaentity.Mapping;
 import de.uni_jena.cs.fusion.abecto.metaentity.Measurement;
 import de.uni_jena.cs.fusion.abecto.metaentity.Omission;
+import de.uni_jena.cs.fusion.abecto.processor.CompletenessProcessor;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 import de.uni_jena.cs.fusion.abecto.util.Models;
 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.uni_jena.cs.fusion.abecto.processor.implementation;
+package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,7 +27,6 @@ import org.apache.jena.rdf.model.Resource;
 import de.uni_jena.cs.fusion.abecto.Aspect;
 import de.uni_jena.cs.fusion.abecto.Aspects;
 import de.uni_jena.cs.fusion.abecto.Parameter;
-import de.uni_jena.cs.fusion.abecto.processor.MappingProcessor;
 import de.uni_jena.cs.fusion.abecto.util.Correspondences;
 
 public class RelationalMappingProcessor extends MappingProcessor {

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.uni_jena.cs.fusion.abecto.processor.implementation;
+package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.math.BigDecimal;
 
@@ -23,8 +23,6 @@ import org.apache.jena.datatypes.xsd.impl.XSDDouble;
 import org.apache.jena.datatypes.xsd.impl.XSDFloat;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.RDFNode;
-
-import de.uni_jena.cs.fusion.abecto.processor.AbstractValueComparisonProcessor;
 
 public class LiteralValueComparisonProcessor extends AbstractValueComparisonProcessor {
 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.uni_jena.cs.fusion.abecto.processor.implementation;
+package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.util.logging.Level;
 
@@ -21,7 +21,6 @@ import org.apache.jena.rdf.model.InfModel;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 
-import de.uni_jena.cs.fusion.abecto.processor.Processor;
 import openllet.jena.PelletReasoner;
 import openllet.shared.tools.Log;
 

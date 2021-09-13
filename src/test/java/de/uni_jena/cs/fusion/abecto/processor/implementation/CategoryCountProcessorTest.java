@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 
 import de.uni_jena.cs.fusion.abecto.TestDataGenerator;
 import de.uni_jena.cs.fusion.abecto.metaentity.Measurement;
+import de.uni_jena.cs.fusion.abecto.processor.RdfFileSourceProcessor;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 
 public class CategoryCountProcessorTest {

@@ -32,6 +32,7 @@ import org.junit.jupiter.api.Test;
 
 import de.uni_jena.cs.fusion.abecto.metaentity.Category;
 import de.uni_jena.cs.fusion.abecto.metaentity.Mapping;
+import de.uni_jena.cs.fusion.abecto.processor.JaroWinklerMappingProcessor;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
 import de.uni_jena.cs.fusion.abecto.util.Metadata;
 import de.uni_jena.cs.fusion.abecto.util.Models;

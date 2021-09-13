@@ -34,7 +34,8 @@ import org.apache.jena.vocabulary.RDFS;
 import org.eclipse.jetty.server.ServerConnector;
 import org.junit.jupiter.api.Test;
 
-import de.uni_jena.cs.fusion.abecto.processor.implementation.SparqlSourceProcessor.Parameter;
+import de.uni_jena.cs.fusion.abecto.processor.SparqlSourceProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.SparqlSourceProcessor.Parameter;
 
 public class SparqlSourceProcessorTest {
 

@@ -21,7 +21,8 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.junit.jupiter.api.Test;
 
-import de.uni_jena.cs.fusion.abecto.processor.implementation.UrlSourceProcessor.Parameter;
+import de.uni_jena.cs.fusion.abecto.processor.UrlSourceProcessor;
+import de.uni_jena.cs.fusion.abecto.processor.UrlSourceProcessor.Parameter;
 
 public class UrlSourceProcessorTest {
 	@Test

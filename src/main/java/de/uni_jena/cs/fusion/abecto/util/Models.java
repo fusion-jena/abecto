@@ -26,25 +26,14 @@ import java.util.Collection;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
-import org.apache.jena.graph.Graph;
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.ontology.OntModelSpec;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.NodeIterator;
-import org.apache.jena.rdf.model.Property;
-import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.ResIterator;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.util.iterator.ExtendedIterator;
-import org.apache.jena.vocabulary.DCTerms;
-import org.apache.jena.vocabulary.OWL2;
-import org.apache.jena.vocabulary.RDF;
-import org.apache.jena.vocabulary.SKOS;
 
 /**
  * Provides a couple of handy methods to easy work with {@link Model}s.
@@ -58,10 +47,6 @@ public class Models {
 	 */
 	private static int MAX_BUFFER_SIZE = Integer.MAX_VALUE - 8;
 
-	public static Model getEmptyModel() {
-		return ModelFactory.createModelForGraph(Graph.emptyGraph);
-	}
-
 	public static OntModel getEmptyOntModel() {
 		return ModelFactory.createOntologyModel(OntModelSpec.OWL_MEM);
 	}
@@ -69,7 +54,7 @@ public class Models {
 	public static final Collection<Lang> supportedLanguages = Arrays.asList(Lang.RDFXML, Lang.NT, Lang.N3, Lang.TTL,
 			Lang.JSONLD, Lang.RDFJSON, Lang.NQ, Lang.TRIG, Lang.RDFTHRIFT, Lang.TRIX, Lang.SHACLC);
 
-	public static Model read(InputStream in, Model model) throws IOException, IllegalArgumentException {
+	public static Model read(Model model, InputStream in) throws IOException, IllegalArgumentException {
 		if (!in.markSupported()) {
 			in = new BufferedInputStream(in);
 		}
@@ -78,7 +63,7 @@ public class Models {
 		InputStream unclosableIn = new UncloseableInputStream(in);
 		for (Lang lang : supportedLanguages) {
 			try {
-				read(unclosableIn, lang, model);
+				RDFDataMgr.read(model, unclosableIn, lang);
 				in.close();
 				return model;
 			} catch (Throwable t) {
@@ -89,101 +74,15 @@ public class Models {
 		throw new IllegalArgumentException("Unknown RDF language.");
 	}
 
-	public static Model read(InputStream in, Lang lang, Model model) throws IOException {
-		RDFDataMgr.read(model, in, lang);
-		return model;
-	}
-
-	public static Model read(URL url, Model model) throws IllegalArgumentException, IOException {
+	public static Model read(Model model, URL url) throws IllegalArgumentException, IOException {
 		try {
 			// using the content type or file extension for language detection
 			RDFDataMgr.read(model, url.toString());
 			return model;
 		} catch (Exception e) {
 			// try again using brute force language detection
-			return read(url.openStream(), model);
+			return read(model, url.openStream());
 		}
-	}
-
-	public static Optional<Resource> readOntologyIri(Model model) {
-		Collection<Resource> types = Arrays.asList(OWL2.Ontology, SKOS.ConceptScheme);
-
-		for (Resource type : types) {
-			ResIterator iterator = model.listSubjectsWithProperty(RDF.type, type);
-			while (iterator.hasNext()) {
-				try {
-					return Optional.of(iterator.next());
-				} catch (Throwable e) {
-					// ignore exceptions
-				}
-			}
-		}
-		return Optional.empty();
-	}
-
-	public static Optional<String> readVersion(Model model) {
-		Optional<Resource> ontologyIri = readOntologyIri(model);
-		if (ontologyIri.isPresent()) {
-			return readVersion(ontologyIri.get(), model);
-		}
-		return Optional.empty();
-	}
-
-	public static Optional<String> readVersion(Resource ontologyIri, Model model) {
-		NodeIterator iterator = model.listObjectsOfProperty(ontologyIri, OWL2.versionInfo);
-		while (iterator.hasNext()) {
-			try {
-				RDFNode value = iterator.next();
-				if (value.isLiteral()) {
-					return Optional.of(value.asLiteral().getLexicalForm());
-				}
-			} catch (Throwable e) {
-				// ignore all exceptions
-			}
-		}
-		return Optional.empty();
-	}
-
-	public static Optional<String> readVersionDateTime(Model model) {
-		Optional<Resource> ontologyIri = readOntologyIri(model);
-		if (ontologyIri.isPresent()) {
-			return readVersionDateTime(ontologyIri.get(), model);
-		}
-		return Optional.empty();
-	}
-
-	public static Optional<String> readVersionDateTime(Resource ontologyIri, Model model) {
-		Collection<Property> properties = Arrays.asList(DCTerms.modified, DCTerms.available, DCTerms.created,
-				DCTerms.date, ResourceFactory.createProperty("http://purl.org/dc/elements/1.1/date"));
-		for (Property property : properties) {
-			NodeIterator iterator = model.listObjectsOfProperty(ontologyIri, property);
-			while (iterator.hasNext()) {
-				try {
-					RDFNode value = iterator.next();
-					if (value.isLiteral()) {
-						return Optional.of(value.asLiteral().getLexicalForm());
-					}
-				} catch (Throwable e) {
-					// ignore exceptions
-				}
-			}
-		}
-		return Optional.empty();
-	}
-
-	public static Optional<Resource> readVersionIri(Model model) {
-		NodeIterator iterator = model.listObjectsOfProperty(OWL2.versionIRI);
-		while (iterator.hasNext()) {
-			try {
-				RDFNode value = iterator.next();
-				if (value.isResource()) {
-					return Optional.of(value.asResource());
-				}
-			} catch (Throwable e) {
-				// ignore all exceptions
-			}
-		}
-		return Optional.empty();
 	}
 
 	public static OntModel union(Collection<Collection<Model>> modelCollections) {
@@ -221,12 +120,6 @@ public class Models {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		Models.write(out, model, lang);
 		return out.toByteArray();
-	}
-
-	public static String writeString(Model model, Lang lang) throws IOException {
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		Models.write(out, model, lang);
-		return out.toString();
 	}
 
 	public static <T> Optional<T> assertOneOptional(ExtendedIterator<T> iterator) throws ToManyElementsException {

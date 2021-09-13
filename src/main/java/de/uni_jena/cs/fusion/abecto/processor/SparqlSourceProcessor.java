@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.uni_jena.cs.fusion.abecto.processor.implementation;
+package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,7 +46,6 @@ import org.apache.jena.sparql.syntax.Template;
 import org.apache.jena.vocabulary.RDFS;
 
 import de.uni_jena.cs.fusion.abecto.Parameter;
-import de.uni_jena.cs.fusion.abecto.processor.Processor;
 
 public class SparqlSourceProcessor extends Processor {
 	/** URL of the SPARQL endpoint to use. */

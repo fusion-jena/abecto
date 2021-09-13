@@ -27,6 +27,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import de.uni_jena.cs.fusion.abecto.TestDataGenerator;
+import de.uni_jena.cs.fusion.abecto.processor.RdfFileSourceProcessor;
 
 public class ManualCategoryProcessorTest {
 

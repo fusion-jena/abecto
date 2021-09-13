@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.uni_jena.cs.fusion.abecto.processor.implementation;
+package de.uni_jena.cs.fusion.abecto.processor;
 
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 
 import de.uni_jena.cs.fusion.abecto.Parameter;
-import de.uni_jena.cs.fusion.abecto.processor.Processor;
-import de.uni_jena.cs.fusion.abecto.util.Models;
 
 public class SparqlConstructProcessor extends Processor {
 
@@ -41,7 +40,7 @@ public class SparqlConstructProcessor extends Processor {
 			QueryExecution queryExecution = QueryExecutionFactory.create(query, primaryModelUnion);
 
 			// execute and write into intermediate result model
-			Model intermediateResultModel = queryExecution.execConstruct(Models.getEmptyOntModel());
+			Model intermediateResultModel = queryExecution.execConstruct(ModelFactory.createDefaultModel());
 
 			// add new statements (if any) to result model, otherwise break
 			if (!primaryModelUnion.containsAll(intermediateResultModel)) {

@@ -13,18 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.uni_jena.cs.fusion.abecto.sparq;
+package de.uni_jena.cs.fusion.abecto.processor;
 
-import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import java.io.FileInputStream;
+import java.io.IOException;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+import de.uni_jena.cs.fusion.abecto.Parameter;
+import de.uni_jena.cs.fusion.abecto.util.Models;
 
-@Documented
-@Retention(RUNTIME)
-@Target(TYPE)
-public @interface SparqlNamespaces {
-	SparqlNamespace[] value();
+public class RdfFileSourceProcessor extends Processor {
+
+	@Parameter
+	String path;
+
+	@Override
+	public void run() {
+		try {
+			Models.read(this.getOutputPrimaryModel().get(), new FileInputStream(this.path));
+		} catch (IOException e) {
+			throw new RuntimeException("Failed to read RDF file.", e);
+		}
+	}
+
 }

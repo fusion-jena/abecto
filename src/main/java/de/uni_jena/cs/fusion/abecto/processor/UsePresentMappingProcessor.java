@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.uni_jena.cs.fusion.abecto.processor.implementation;
+package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.io.ByteArrayInputStream;
 import java.util.Collection;
@@ -35,7 +35,6 @@ import org.slf4j.LoggerFactory;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
 import de.uni_jena.cs.fusion.abecto.Parameter;
-import de.uni_jena.cs.fusion.abecto.processor.Processor;
 import de.uni_jena.cs.fusion.abecto.util.Correspondences;
 import de.uni_jena.cs.fusion.abecto.util.Default;
 
