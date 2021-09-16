@@ -18,7 +18,7 @@ package de.uni_jena.cs.fusion.abecto.processor;
 import org.apache.jena.rdf.model.Resource;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
-import de.uni_jena.cs.fusion.abecto.util.Correspondences;
+import de.uni_jena.cs.fusion.abecto.Correspondences;
 
 public abstract class MappingProcessor extends Processor {
 

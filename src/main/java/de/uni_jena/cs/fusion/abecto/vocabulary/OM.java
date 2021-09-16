@@ -10,4 +10,8 @@ public class OM {
 	public static final String namespace = "http://www.ontology-of-units-of-measure.org/resource/om-2/";
 
 	public static final Resource one = ResourceFactory.createResource(namespace + "one");
+
+	public static String getURI() {
+		return namespace;
+	}
 }

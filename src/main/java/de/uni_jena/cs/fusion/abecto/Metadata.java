@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.uni_jena.cs.fusion.abecto.util;
+package de.uni_jena.cs.fusion.abecto;
 
 import java.util.Collections;
 import java.util.Map;
@@ -28,13 +28,12 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.vocabulary.OA;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 
-import de.uni_jena.cs.fusion.abecto.Aspect;
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 import de.uni_jena.cs.fusion.abecto.vocabulary.DQV;
-import de.uni_jena.cs.fusion.abecto.vocabulary.OA;
 import de.uni_jena.cs.fusion.abecto.vocabulary.SdmxAttribute;
 
 public class Metadata {

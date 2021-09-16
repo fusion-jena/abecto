@@ -48,7 +48,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.uni_jena.cs.fusion.abecto.datatype.Sparql11SelectQuery;
-import de.uni_jena.cs.fusion.abecto.util.Datasets;
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;

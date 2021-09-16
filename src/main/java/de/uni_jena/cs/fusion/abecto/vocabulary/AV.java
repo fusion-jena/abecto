@@ -56,4 +56,7 @@ public class AV {
 	public static final Resource ValueOmission = ResourceFactory.createResource(namespace + "ValueOmission");
 	public static final Resource WrongValue = ResourceFactory.createResource(namespace + "WrongValue");
 
+	public static String getURI() {
+		return namespace;
+	}
 }

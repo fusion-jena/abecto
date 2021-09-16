@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.uni_jena.cs.fusion.abecto.util;
+package de.uni_jena.cs.fusion.abecto;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
@@ -34,6 +34,9 @@ import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.util.iterator.ExtendedIterator;
+
+import de.uni_jena.cs.fusion.abecto.util.ToManyElementsException;
+import de.uni_jena.cs.fusion.abecto.util.UncloseableInputStream;
 
 /**
  * Provides a couple of handy methods to easy work with {@link Model}s.

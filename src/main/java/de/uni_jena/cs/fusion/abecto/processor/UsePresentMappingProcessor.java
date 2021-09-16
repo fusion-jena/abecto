@@ -34,9 +34,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
+import de.uni_jena.cs.fusion.abecto.Correspondences;
+import de.uni_jena.cs.fusion.abecto.Vocabularies;
 import de.uni_jena.cs.fusion.abecto.Parameter;
-import de.uni_jena.cs.fusion.abecto.util.Correspondences;
-import de.uni_jena.cs.fusion.abecto.util.Default;
 
 public class UsePresentMappingProcessor extends Processor {
 	final static Logger log = LoggerFactory.getLogger(UsePresentMappingProcessor.class);
@@ -53,7 +53,7 @@ public class UsePresentMappingProcessor extends Processor {
 			try {
 				// get path
 				SPARQLParser11 parser = new SPARQLParser11(new ByteArrayInputStream(unparsedAssignmentPath.getBytes()));
-				parser.setPrologue(Default.PROLOGUE);
+				parser.setPrologue(Vocabularies.getDefaultPrologue());
 				Path assignmentPath = parser.Path();
 
 				// create query

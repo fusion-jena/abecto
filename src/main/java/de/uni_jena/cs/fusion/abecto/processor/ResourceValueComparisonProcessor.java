@@ -18,7 +18,7 @@ package de.uni_jena.cs.fusion.abecto.processor;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 
-import de.uni_jena.cs.fusion.abecto.util.Correspondences;
+import de.uni_jena.cs.fusion.abecto.Correspondences;
 
 public class ResourceValueComparisonProcessor extends AbstractValueComparisonProcessor {
 

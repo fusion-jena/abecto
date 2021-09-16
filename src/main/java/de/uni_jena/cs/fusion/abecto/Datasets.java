@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.uni_jena.cs.fusion.abecto.util;
+package de.uni_jena.cs.fusion.abecto;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -24,6 +24,8 @@ import java.util.List;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
+
+import de.uni_jena.cs.fusion.abecto.util.UncloseableInputStream;
 
 public class Datasets {
 

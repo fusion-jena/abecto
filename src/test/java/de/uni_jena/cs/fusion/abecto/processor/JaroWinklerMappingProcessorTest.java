@@ -30,12 +30,12 @@ import org.apache.jena.sys.JenaSystem;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import de.uni_jena.cs.fusion.abecto.Metadata;
+import de.uni_jena.cs.fusion.abecto.Models;
 import de.uni_jena.cs.fusion.abecto.metaentity.Category;
 import de.uni_jena.cs.fusion.abecto.metaentity.Mapping;
 import de.uni_jena.cs.fusion.abecto.processor.JaroWinklerMappingProcessor;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
-import de.uni_jena.cs.fusion.abecto.util.Metadata;
-import de.uni_jena.cs.fusion.abecto.util.Models;
 
 public class JaroWinklerMappingProcessorTest {
 	@BeforeAll

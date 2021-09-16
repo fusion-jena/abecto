@@ -29,13 +29,13 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.junit.jupiter.api.Test;
 
+import de.uni_jena.cs.fusion.abecto.Metadata;
+import de.uni_jena.cs.fusion.abecto.Models;
 import de.uni_jena.cs.fusion.abecto.metaentity.Category;
 import de.uni_jena.cs.fusion.abecto.metaentity.Issue;
 import de.uni_jena.cs.fusion.abecto.metaentity.Mapping;
 import de.uni_jena.cs.fusion.abecto.processor.RelationalMappingProcessor;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
-import de.uni_jena.cs.fusion.abecto.util.Metadata;
-import de.uni_jena.cs.fusion.abecto.util.Models;
 
 class RelationalMappingProcessorTest {
 

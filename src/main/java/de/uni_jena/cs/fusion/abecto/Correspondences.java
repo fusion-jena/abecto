@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.util;
+package de.uni_jena.cs.fusion.abecto;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -22,7 +22,6 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingFactory;
 
-import de.uni_jena.cs.fusion.abecto.Aspect;
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 
 public class Correspondences {

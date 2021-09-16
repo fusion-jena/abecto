@@ -1,4 +1,4 @@
-package de.uni_jena.cs.fusion.abecto.util;
+package de.uni_jena.cs.fusion.abecto;
 
 import java.util.ArrayList;
 import java.util.Collections;

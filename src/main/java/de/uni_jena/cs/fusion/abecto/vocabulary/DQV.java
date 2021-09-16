@@ -20,4 +20,8 @@ public class DQV {
 	public static final Property isMeasurementOf = ResourceFactory.createProperty(namespace, "isMeasurementOf");
 	public static final Resource QualityAnnotation = ResourceFactory.createResource(namespace + "QualityAnnotation");
 	public static final Property value = ResourceFactory.createProperty(namespace, "value");
+
+	public static String getURI() {
+		return namespace;
+	}
 }

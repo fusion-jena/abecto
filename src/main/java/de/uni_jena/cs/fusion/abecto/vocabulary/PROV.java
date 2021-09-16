@@ -19,4 +19,8 @@ public class PROV {
 	public final static Property endedAtTime = ResourceFactory.createProperty(namespace, "endedAtTime");
 	public final static Property wasGeneratedBy = ResourceFactory.createProperty(namespace, "wasGeneratedBy");
 	public final static Property used = ResourceFactory.createProperty(namespace, "used");
+
+	public static String getURI() {
+		return namespace;
+	}
 }

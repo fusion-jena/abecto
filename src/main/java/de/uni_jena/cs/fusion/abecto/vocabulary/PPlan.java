@@ -20,4 +20,8 @@ public class PPlan {
 	public final static Property isStepOfPlan = ResourceFactory.createProperty(namespace, "isStepOfPlan");
 	public final static Property isPrecededBy = ResourceFactory.createProperty(namespace, "isPrecededBy");
 	public final static Property correspondsToStep = ResourceFactory.createProperty(namespace, "correspondsToStep");
+
+	public static String getURI() {
+		return namespace;
+	}
 }

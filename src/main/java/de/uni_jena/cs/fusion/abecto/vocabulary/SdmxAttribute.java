@@ -10,4 +10,8 @@ public class SdmxAttribute {
 	public static final String namespace = "http://purl.org/linked-data/sdmx/2009/attribute#";
 
 	public static final Property unitMeasure = ResourceFactory.createProperty(namespace, "unitMeasure");
+
+	public static String getURI() {
+		return namespace;
+	}
 }

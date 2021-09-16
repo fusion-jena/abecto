@@ -30,13 +30,13 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.junit.jupiter.api.Test;
 
+import de.uni_jena.cs.fusion.abecto.Models;
 import de.uni_jena.cs.fusion.abecto.metaentity.Category;
 import de.uni_jena.cs.fusion.abecto.metaentity.Deviation;
 import de.uni_jena.cs.fusion.abecto.metaentity.Issue;
 import de.uni_jena.cs.fusion.abecto.metaentity.Mapping;
 import de.uni_jena.cs.fusion.abecto.processor.ResourceValueComparisonProcessor;
 import de.uni_jena.cs.fusion.abecto.sparq.SparqlEntityManager;
-import de.uni_jena.cs.fusion.abecto.util.Models;
 
 class ResourceDeviationProcessorTest {
 
