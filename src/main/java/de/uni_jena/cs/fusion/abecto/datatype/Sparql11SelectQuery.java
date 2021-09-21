@@ -22,9 +22,6 @@ import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryException;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.Syntax;
-import org.slf4j.LoggerFactory;
-
-import de.uni_jena.cs.fusion.abecto.Abecto;
 
 public class Sparql11SelectQuery extends BaseDatatype {
 
@@ -52,9 +49,7 @@ public class Sparql11SelectQuery extends BaseDatatype {
 			}
 			return query;
 		} catch (QueryException e) {
-			// TODO add cause, remove log if https://github.com/apache/jena/pull/1044 done
-			LoggerFactory.getLogger(Abecto.class).error("Not a valid SPARQL 1.1 query.", e);
-			throw new DatatypeFormatException("Not a valid SPARQL 1.1 query.");
+			throw new DatatypeFormatException("Not a valid SPARQL 1.1 query.", e);
 		}
 	}
 
