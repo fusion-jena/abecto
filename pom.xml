@@ -36,7 +36,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<apache.jena.version>4.1.0</apache.jena.version>
+		<apache.jena.version>4.2.0</apache.jena.version>
 		<junit.jupiter.version>5.5.1</junit.jupiter.version>
 		<fasterxml.jackson.version>2.12.5</fasterxml.jackson.version>
 	</properties>
@@ -100,6 +100,13 @@
 			<artifactId>jena-fuseki-main</artifactId>
 			<version>${apache.jena.version}</version>
 			<scope>test</scope>
+			<exclusions>
+				<exclusion>
+					<!-- solve conflict with wiremock-jre8 -->
+					<groupId>org.eclipse.jetty</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>com.github.galigator.openllet</groupId>
