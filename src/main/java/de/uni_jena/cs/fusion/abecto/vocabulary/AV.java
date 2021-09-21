@@ -57,6 +57,7 @@ public class AV {
 	public static final Resource markAndRecapture = ResourceFactory.createResource(namespace + "markAndRecapture");
 	public static final Resource MetaDataGraph = ResourceFactory.createResource(namespace + "MetaDataGraph");
 	public static final Property ofAspect = ResourceFactory.createProperty(namespace, "ofAspect");
+	public static final Resource Parameter = ResourceFactory.createResource(namespace + "Parameter");
 	public static final Resource PrimaryDataGraph = ResourceFactory.createResource(namespace + "PrimaryDataGraph");
 	public static final Property processorClass = ResourceFactory.createProperty(namespace, "processorClass");
 	public static final Resource QualityAnnotationBody = ResourceFactory
@@ -67,6 +68,7 @@ public class AV {
 	public static final Resource ResourceOmission = ResourceFactory.createResource(namespace + "ResourceOmission");
 	public static final Resource Sparql11SelectQuery = ResourceFactory
 			.createResource(namespace + "Sparql11SelectQuery");
+	public static final Resource Step = ResourceFactory.createResource(namespace + "Step");
 	public static final Resource StepExecution = ResourceFactory.createResource(namespace + "StepExecution");
 	public static final Resource ValueOmission = ResourceFactory.createResource(namespace + "ValueOmission");
 	public static final Resource WrongValue = ResourceFactory.createResource(namespace + "WrongValue");

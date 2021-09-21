@@ -269,7 +269,7 @@ public abstract class Processor implements Runnable {
 		}
 	}
 
-	public void setAspects(Map<Resource, Aspect> aspects) {
+	public void setAspectMap(Map<Resource, Aspect> aspects) {
 		this.aspects = aspects;
 	}
 

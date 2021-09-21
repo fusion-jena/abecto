@@ -46,8 +46,36 @@ public class Step implements Runnable {
 	private final Collection<Resource> inputModelIris = new ArrayList<>();
 	private final Map<Resource, Model> outputModelByIri = new HashMap<>();
 
+	/**
+	 * Creates an {@link Step} as defined in the configuration model of an ABECTO
+	 * execution plan and the associated {@link Processor} instance, sets the
+	 * {@link Processor Processors} parameters and provides the {@link Aspect}
+	 * instances.
+	 * 
+	 * @param dataset            the {@link Dataset} that contains the ABECTO
+	 *                           execution plan and will contain result models of
+	 *                           the {@link Step Steps}
+	 * @param configurationModel the configuration model describing the ABECTO
+	 *                           execution plan, which is part of the
+	 *                           {@code dataset}.
+	 * @param stepIri            the IRI of this step in the {@code dataset}
+	 * @param inputSteps         the objects of the input {@link Step} of this
+	 *                           {@link Step}
+	 * @param aspectMap          the {@link Aspect Aspect} instances for the ABECTO
+	 *                           execution plan.
+	 * 
+	 * 
+	 * @throws ClassCastException           if this {@link Step Steps} processor
+	 *                                      class was not found
+	 * @throws IllegalArgumentException     if the IRI of this {@link Step Steps}
+	 *                                      processor class is ill-formed
+	 * @throws ReflectiveOperationException if this {@link Step Steps} processor
+	 *                                      class could not be instantiated
+	 */
+	@SuppressWarnings("unchecked")
 	public Step(Dataset dataset, Model configurationModel, Resource stepIri, Collection<Step> inputSteps,
-			Map<Resource, Aspect> aspects) throws ClassCastException, ReflectiveOperationException {
+			Map<Resource, Aspect> aspectMap)
+			throws IllegalArgumentException, ClassCastException, ReflectiveOperationException {
 		this.dataset = dataset;
 		this.configurationModel = configurationModel;
 		this.stepIri = stepIri;
@@ -55,10 +83,20 @@ public class Step implements Runnable {
 
 		// get processor instance
 		// Note: done in constructor to fail early
-		@SuppressWarnings("unchecked")
-		Class<Processor> processorClass = (Class<Processor>) Models
-				.assertOne(configurationModel.listObjectsOfProperty(stepIri, AV.processorClass)).asLiteral().getValue();
-		processor = processorClass.getDeclaredConstructor(new Class[0]).newInstance();
+		// Note: expecting unofficial java scheme resource, e.g.
+		// "java:java.util.Collection"
+		String classUri = Models.assertOne(configurationModel.listObjectsOfProperty(stepIri, AV.processorClass))
+				.asResource().getURI();
+		if (!classUri.startsWith("java:")) {
+			throw new IllegalArgumentException(
+					"Failed to load processor class. Expected IRI of scheme \"java:\", but got: " + classUri);
+		}
+		Class<?> processorClass = Class.forName(classUri.substring(5));
+		if (!Processor.class.isAssignableFrom(processorClass)) {
+			throw new IllegalArgumentException("Failed to load processor class. Expected subclass of \""
+					+ Processor.class.getCanonicalName() + "\", but got: " + classUri);
+		}
+		processor = ((Class<Processor>) processorClass).getDeclaredConstructor(new Class[0]).newInstance();
 
 		// get processor parameter
 		Map<String, List<?>> parameters = new HashMap<>();
@@ -67,13 +105,13 @@ public class Step implements Runnable {
 			Resource parameter = parameterIterator.next().asResource();
 			String key = parameter.getRequiredProperty(AV.key).getString();
 			List<Object> values = new ArrayList<>();
-			parameter.listProperties(RDF.value).forEach(values::add);
+			parameter.listProperties(RDF.value).forEach(stmt -> values.add(stmt.getObject().asLiteral().getValue()));
 			parameters.put(key, values);
 		}
 		Parameters.setParameters(processor, parameters);
 
 		// set aspects
-		processor.setAspects(aspects);
+		processor.setAspectMap(aspectMap);
 	}
 
 	@Override
