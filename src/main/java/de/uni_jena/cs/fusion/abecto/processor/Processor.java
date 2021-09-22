@@ -38,7 +38,7 @@ import de.uni_jena.cs.fusion.abecto.util.ToManyElementsException;
 
 /**
  * Provides an abstraction of step processors that generate new primary data or
- * meta data graphs based on its input primary data and meta data graphs an
+ * meta data graphs based on its input primary data, meta data graphs and
  * processor parameters.
  */
 public abstract class Processor implements Runnable {
