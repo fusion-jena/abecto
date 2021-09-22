@@ -27,6 +27,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.NodeIterator;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.shared.Lock;
 import org.apache.jena.vocabulary.RDF;
 
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
@@ -83,8 +84,7 @@ public class Step implements Runnable {
 
 		// get processor instance
 		// Note: done in constructor to fail early
-		// Note: expecting unofficial java scheme resource, e.g.
-		// "java:java.util.Collection"
+		// Note: expecting unofficial java scheme resource, e.g. "java:java.util.List"
 		String classUri = Models.assertOne(configurationModel.listObjectsOfProperty(stepIri, AV.processorClass))
 				.asResource().getURI();
 		if (!classUri.startsWith("java:")) {
@@ -114,61 +114,81 @@ public class Step implements Runnable {
 		processor.setAspectMap(aspectMap);
 	}
 
+	/**
+	 * Executes the processor to produce the result models.
+	 * <p>
+	 * <strong>Note:</strong> This method might run concurrently. Therefore,
+	 * <a href=
+	 * "http://jena.apache.org/documentation/notes/concurrency-howto.html">locks on
+	 * the configuration model</a> are used to to avoid dangerous concurrent
+	 * updates.
+	 */
 	@Override
 	public void run() {
-		// TODO concurrency relevant for updates on configurationModel?
+		configurationModel.enterCriticalSection(Lock.WRITE);
+		try {
+			// write provenance data to configuration model
+			stepExecutionIri = configurationModel.createResource(AV.StepExecution);
+			stepExecutionIri.addProperty(PPlan.correspondsToStep, this.stepIri);
 
-		// write provenance data to configuration model
-		stepExecutionIri = configurationModel.createResource(AV.StepExecution);
-		stepExecutionIri.addProperty(PPlan.correspondsToStep, this.stepIri);
+			// get input models
+			for (Step inputStep : inputSteps) {
+				processor.addInputProcessor(inputStep.processor);
+				inputModelIris.addAll(inputStep.inputModelIris);
+				inputModelIris.addAll(inputStep.outputModelByIri.keySet());
+			}
+			configurationModel.listObjectsOfProperty(stepIri, AV.inputMetaDataGraph).forEach(object -> {
+				Resource inputMetaModelIri = object.asResource();
+				processor.addInputMetaModel(inputMetaModelIri, dataset.getNamedModel(inputMetaModelIri.getURI()));
+				inputModelIris.add(inputMetaModelIri);
+			});
+			for (Resource inputModelIri : inputModelIris) {
+				stepExecutionIri.addProperty(PROV.used, inputModelIri);
+			}
 
-		// get input models
-		for (Step inputStep : inputSteps) {
-			processor.addInputProcessor(inputStep.processor);
-			inputModelIris.addAll(inputStep.inputModelIris);
-			inputModelIris.addAll(inputStep.outputModelByIri.keySet());
-		}
-		configurationModel.listObjectsOfProperty(stepIri, AV.inputMetaDataGraph).forEach(object -> {
-			Resource inputMetaModelIri = object.asResource();
-			processor.addInputMetaModel(inputMetaModelIri, dataset.getNamedModel(inputMetaModelIri.getURI()));
-			inputModelIris.add(inputMetaModelIri);
-		});
-		for (Resource inputModelIri : inputModelIris) {
-			stepExecutionIri.addProperty(PROV.used, inputModelIri);
+			// prepare output models
+			for (Resource datasetIri : processor.getInputDatasets()) {
+				// prepare output meta model for a dataset
+				Resource outputModelIri = configurationModel.createResource(AV.MetaDataGraph);
+				Model outputModel = ModelFactory.createDefaultModel();
+				outputModelByIri.put(outputModelIri, outputModel);
+				outputModelIri.addProperty(PROV.wasGeneratedBy, stepExecutionIri);
+				outputModelIri.addProperty(DQV.computedOn, datasetIri);
+				processor.setOutputMetaModel(datasetIri, outputModel);
+			}
+			{// prepare general output meta model
+				Resource outputModelIri = configurationModel.createResource(AV.MetaDataGraph);
+				Model outputModel = ModelFactory.createDefaultModel();
+				outputModelByIri.put(outputModelIri, outputModel);
+				outputModelIri.addProperty(PROV.wasGeneratedBy, stepExecutionIri);
+				processor.setOutputMetaModel(null, outputModel);
+			}
+			// prepare output primary model, if needed
+			Models.assertOneOptional(configurationModel.listObjectsOfProperty(stepIri, AV.associatedDataset))
+					.ifPresent(datasetIri -> {
+						Resource outputModelIri = configurationModel.createResource(AV.PrimaryDataGraph);
+						Model outputModel = ModelFactory.createDefaultModel();
+						outputModelByIri.put(outputModelIri, outputModel);
+						outputModelIri.addProperty(PROV.wasGeneratedBy, stepExecutionIri);
+						outputModelIri.addProperty(AV.associatedDataset, datasetIri);
+						processor.setOutputPrimaryModel(datasetIri.asResource(), outputModel);
+					});
+
+			// run the processor
+			stepExecutionIri.addLiteral(PROV.startedAtTime, LocalDateTime.now());
+
+		} finally {
+			configurationModel.leaveCriticalSection();
 		}
 
-		// prepare output models
-		for (Resource datasetIri : processor.getInputDatasets()) {
-			// prepare output meta model for a dataset
-			Resource outputModelIri = configurationModel.createResource(AV.MetaDataGraph);
-			Model outputModel = ModelFactory.createDefaultModel();
-			outputModelByIri.put(outputModelIri, outputModel);
-			outputModelIri.addProperty(PROV.wasGeneratedBy, stepExecutionIri);
-			outputModelIri.addProperty(DQV.computedOn, datasetIri);
-			processor.setOutputMetaModel(datasetIri, outputModel);
-		}
-		{// prepare general output meta model
-			Resource outputModelIri = configurationModel.createResource(AV.MetaDataGraph);
-			Model outputModel = ModelFactory.createDefaultModel();
-			outputModelByIri.put(outputModelIri, outputModel);
-			outputModelIri.addProperty(PROV.wasGeneratedBy, stepExecutionIri);
-			processor.setOutputMetaModel(null, outputModel);
-		}
-		// prepare output primary model, if needed
-		Models.assertOneOptional(configurationModel.listObjectsOfProperty(stepIri, AV.associatedDataset))
-				.ifPresent(datasetIri -> {
-					Resource outputModelIri = configurationModel.createResource(AV.PrimaryDataGraph);
-					Model outputModel = ModelFactory.createDefaultModel();
-					outputModelByIri.put(outputModelIri, outputModel);
-					outputModelIri.addProperty(PROV.wasGeneratedBy, stepExecutionIri);
-					outputModelIri.addProperty(AV.associatedDataset, datasetIri);
-					processor.setOutputPrimaryModel(datasetIri.asResource(), outputModel);
-				});
-
-		// run the processor
-		stepExecutionIri.addLiteral(PROV.startedAtTime, LocalDateTime.now());
 		processor.run();
-		stepExecutionIri.addLiteral(PROV.endedAtTime, LocalDateTime.now());
+
+		configurationModel.enterCriticalSection(Lock.WRITE);
+		try {
+			stepExecutionIri.addLiteral(PROV.endedAtTime, LocalDateTime.now());
+		} finally {
+			configurationModel.leaveCriticalSection();
+		}
 
 		// remove metadata of empty output models, add others to dataset
 		for (Resource outputModelIri : outputModelByIri.keySet()) {
