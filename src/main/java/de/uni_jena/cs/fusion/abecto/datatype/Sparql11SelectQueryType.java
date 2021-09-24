@@ -23,13 +23,12 @@ import org.apache.jena.query.QueryException;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.Syntax;
 
-public class Sparql11SelectQuery extends BaseDatatype {
+import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 
-	/**
-	 * @param uri the URI label to use for this datatype
-	 */
-	public Sparql11SelectQuery(String uri) {
-		super(uri);
+public class Sparql11SelectQueryType extends BaseDatatype {
+
+	public Sparql11SelectQueryType() {
+		super(AV.Sparql11SelectQuery.getURI());
 	}
 
 	@Override
