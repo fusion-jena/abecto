@@ -26,6 +26,8 @@ import java.util.Collection;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
+import javax.annotation.Nullable;
+
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.ontology.OntModelSpec;
 import org.apache.jena.rdf.model.Model;
@@ -94,9 +96,11 @@ public class Models {
 		return union;
 	}
 
-	public static OntModel union(Collection<Model> modelCollection, Model... modelArray) {
+	public static OntModel union(@Nullable Collection<Model> modelCollection, Model... modelArray) {
 		OntModel union = getEmptyOntModel();
-		modelCollection.forEach(union::addSubModel);
+		if (modelCollection != null) {
+			modelCollection.forEach(union::addSubModel);
+		}
 		for (Model model : modelArray) {
 			union.addSubModel(model);
 		}

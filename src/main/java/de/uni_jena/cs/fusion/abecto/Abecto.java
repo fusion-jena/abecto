@@ -48,6 +48,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.uni_jena.cs.fusion.abecto.datatype.Sparql11SelectQuery;
+import de.uni_jena.cs.fusion.abecto.datatype.XsdDateTimeStampType;
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -139,9 +140,10 @@ public class Abecto implements Callable<Integer> {
 		return 0;
 	}
 
-	private void initApacheJena() {
+	public static void initApacheJena() {
 		JenaSystem.init();
 		// register custom datatypes
+		TypeMapper.getInstance().registerDatatype(new XsdDateTimeStampType());
 		TypeMapper.getInstance().registerDatatype(new Sparql11SelectQuery(AV.Sparql11SelectQuery.getURI()));
 	}
 

@@ -90,6 +90,7 @@ public abstract class Processor implements Runnable {
 		Set<Resource> inputDatasets = new HashSet<>();
 		inputDatasets.addAll(this.inputMetaModelsByDataset.keySet());
 		inputDatasets.addAll(this.inputPrimaryModelsByDataset.keySet());
+		inputDatasets.remove(null);
 		return inputDatasets;
 	}
 
