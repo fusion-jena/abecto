@@ -171,8 +171,6 @@ public class StepTest {
 				Arrays.asList(step1, step2, step3, step4), aspectsMap);
 		step5.run();
 
-		RDFDataMgr.write(System.out, graphs, Lang.TRIG);
-
 		Resource step1Execution = configurationModel
 				.listSubjectsWithProperty(PPlan.correspondsToStep, configurationModel.createResource(step1Iri)).next();
 		Resource step2Execution = configurationModel
