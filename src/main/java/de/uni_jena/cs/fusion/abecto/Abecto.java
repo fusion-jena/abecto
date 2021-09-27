@@ -49,7 +49,6 @@ import org.slf4j.LoggerFactory;
 
 import de.uni_jena.cs.fusion.abecto.datatype.Sparql11SelectQueryType;
 import de.uni_jena.cs.fusion.abecto.datatype.XsdDateTimeStampType;
-import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.IVersionProvider;
@@ -98,7 +97,7 @@ public class Abecto implements Callable<Integer> {
 			// TODO add transitive correspondences into inputMetaModels
 
 			// get aspects
-			Map<Resource, Aspect> aspects = Aspects.getAspects(configurationModel);
+			Map<Resource, Aspect> aspects = Aspect.getAspects(configurationModel);
 
 			// get steps and predecessors
 			Map<Resource, Set<Resource>> predecessors = Steps.getPredecessors(configurationModel, plan);

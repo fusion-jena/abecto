@@ -26,7 +26,6 @@ import java.util.Set;
 import org.apache.jena.rdf.model.Resource;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
-import de.uni_jena.cs.fusion.abecto.Aspects;
 import de.uni_jena.cs.fusion.abecto.Correspondences;
 import de.uni_jena.cs.fusion.abecto.Metadata;
 import de.uni_jena.cs.fusion.abecto.Parameter;
@@ -74,7 +73,7 @@ public class CompletenessProcessor extends Processor {
 			Map<Resource, Set<Resource>> resourcesByDataset = new HashMap<>();
 			for (Resource inputDataset : this.getInputDatasets()) {
 				resourcesByDataset.put(inputDataset,
-						Aspects.getResourceKeys(aspect, inputDataset, this.getInputPrimaryModelUnion(inputDataset)));
+						Aspect.getResourceKeys(aspect, inputDataset, this.getInputPrimaryModelUnion(inputDataset)));
 			}
 
 			// prepare measurements

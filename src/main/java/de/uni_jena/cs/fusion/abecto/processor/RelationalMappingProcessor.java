@@ -25,7 +25,6 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
-import de.uni_jena.cs.fusion.abecto.Aspects;
 import de.uni_jena.cs.fusion.abecto.Correspondences;
 import de.uni_jena.cs.fusion.abecto.Parameter;
 
@@ -47,12 +46,12 @@ public class RelationalMappingProcessor extends MappingProcessor {
 	public void run() {
 		Aspect referringAspect = this.getAspects().get(this.referringAspect);
 		Aspect referredAspect = this.getAspects().get(this.referredAspect);
-		Correspondences.getCorrespondenceSets(this.getInputMetaModelUnion(null), referringAspect.iri)
+		Correspondences.getCorrespondenceSets(this.getInputMetaModelUnion(null), referringAspect.getIri())
 				.forEach(referringResources -> {
 					Collection<Resource> referredResources = new ArrayList<>();
 					for (Resource referringResource : referringResources) {
 						for (Resource dataset : this.getInputDatasets()) {
-							Optional<Map<String, Set<RDFNode>>> referringResourceValues = Aspects.getResource(
+							Optional<Map<String, Set<RDFNode>>> referringResourceValues = Aspect.getResource(
 									referringAspect, dataset, referringResource,
 									this.getInputPrimaryModelUnion(dataset));
 							if (referringResourceValues.isPresent()
@@ -68,7 +67,7 @@ public class RelationalMappingProcessor extends MappingProcessor {
 						}
 					}
 					Correspondences.addCorrespondence(this.getMetaModelUnion(null), this.getOutputMetaModel(null),
-							referredAspect.iri, referredResources);
+							referredAspect.getIri(), referredResources);
 				});
 	}
 }

@@ -42,7 +42,7 @@ public class Metadata {
 			Resource comparedToDataset, Resource comparedToResource, RDFNode comparedToValue, Aspect affectedAspect,
 			Model outputAffectedDatasetMetaModel) {
 		Resource deviation = outputAffectedDatasetMetaModel.createResource(AV.Deviation);
-		deviation.addProperty(AV.affectedAspect, affectedAspect.iri);
+		deviation.addProperty(AV.affectedAspect, affectedAspect.getIri());
 		deviation.addLiteral(AV.affectedVariableName, affectedVariableName);
 		deviation.addLiteral(AV.affectedValue, affectedValue);
 		deviation.addProperty(AV.comparedToDataset, comparedToDataset);
@@ -69,7 +69,7 @@ public class Metadata {
 	public static void addResourceOmission(Resource affectedDataset, Resource comparedToDataset,
 			Resource comparedToResource, Aspect affectedAspect, Model outputAffectedDatasetMetaModel) {
 		Resource resourceOmission = outputAffectedDatasetMetaModel.createResource(AV.ResourceOmission);
-		resourceOmission.addProperty(AV.affectedAspect, affectedAspect.iri);
+		resourceOmission.addProperty(AV.affectedAspect, affectedAspect.getIri());
 		resourceOmission.addProperty(AV.comparedToDataset, comparedToDataset);
 		resourceOmission.addProperty(AV.comparedToResource, comparedToResource);
 		Resource qualityAnnotation = outputAffectedDatasetMetaModel.createResource(DQV.QualityAnnotation);
@@ -81,7 +81,7 @@ public class Metadata {
 			Resource comparedToDataset, Resource comparedToResource, RDFNode comparedToValue, Aspect affectedAspect,
 			Model outputAffectedDatasetMetaModel) {
 		Resource valuesOmission = outputAffectedDatasetMetaModel.createResource(AV.ValueOmission);
-		valuesOmission.addProperty(AV.affectedAspect, affectedAspect.iri);
+		valuesOmission.addProperty(AV.affectedAspect, affectedAspect.getIri());
 		valuesOmission.addLiteral(AV.affectedVariableName, affectedVariableName);
 		valuesOmission.addProperty(AV.comparedToDataset, comparedToDataset);
 		valuesOmission.addProperty(AV.comparedToResource, comparedToResource);
@@ -129,7 +129,7 @@ public class Metadata {
 		qualityMeasurement.addProperty(DQV.isMeasurementOf, measure);
 		qualityMeasurement.addLiteral(DQV.value, value);
 		qualityMeasurement.addProperty(SdmxAttribute.unitMeasure, unit);
-		qualityMeasurement.addProperty(AV.affectedAspect, affectedAspect.iri);
+		qualityMeasurement.addProperty(AV.affectedAspect, affectedAspect.getIri());
 		if (affectedVariableName != null) {
 			qualityMeasurement.addLiteral(AV.affectedVariableName, affectedVariableName);
 		}

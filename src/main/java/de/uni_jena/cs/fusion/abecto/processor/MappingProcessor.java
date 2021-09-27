@@ -50,7 +50,7 @@ public abstract class MappingProcessor extends Processor {
 	 * @param aspect    aspect affected by the correspondence
 	 */
 	public final void addCorrespondence(Resource resource1, Resource resource2, Aspect aspect) {
-		Correspondences.addCorrespondence(resource1, resource2, aspect.iri, this.getMetaModelUnion(null),
+		Correspondences.addCorrespondence(resource1, resource2, aspect.getIri(), this.getMetaModelUnion(null),
 				this.getOutputMetaModel(null));
 	}
 
@@ -65,7 +65,7 @@ public abstract class MappingProcessor extends Processor {
 	 * @param aspect    aspect affected by the correspondence
 	 */
 	public final void addIncorrespondence(Resource resource1, Resource resource2, Aspect aspect) {
-		Correspondences.addIncorrespondence(resource1, resource2, aspect.iri, this.getMetaModelUnion(null),
+		Correspondences.addIncorrespondence(resource1, resource2, aspect.getIri(), this.getMetaModelUnion(null),
 				this.getOutputMetaModel(null));
 	}
 

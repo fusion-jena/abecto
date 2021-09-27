@@ -28,7 +28,6 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
-import de.uni_jena.cs.fusion.abecto.Aspects;
 import de.uni_jena.cs.fusion.abecto.Correspondences;
 import de.uni_jena.cs.fusion.abecto.Parameter;
 import de.uni_jena.cs.fusion.similarity.jarowinkler.JaroWinklerSimilarity;
@@ -72,9 +71,9 @@ public class JaroWinklerMappingProcessor extends MappingProcessor {
 		}
 
 		// get resource indices
-		Map<String, Map<String, Set<Resource>>> valuesByVariable1 = Aspects.getResourceIndex(aspect, dataset1,
+		Map<String, Map<String, Set<Resource>>> valuesByVariable1 = Aspect.getResourceIndex(aspect, dataset1,
 				this.variables, this.getInputPrimaryModelUnion(dataset1), modifier);
-		Map<String, Map<String, Set<Resource>>> valuesByVariable2 = Aspects.getResourceIndex(aspect, dataset2,
+		Map<String, Map<String, Set<Resource>>> valuesByVariable2 = Aspect.getResourceIndex(aspect, dataset2,
 				this.variables, this.getInputPrimaryModelUnion(dataset2), modifier);
 
 		// iterate variables
@@ -105,7 +104,7 @@ public class JaroWinklerMappingProcessor extends MappingProcessor {
 							// convert match into mappings
 							for (Resource resource1 : values1.get(value1)) {
 								for (Resource resource2 : values2.get(value2)) {
-									Correspondences.addCorrespondence(resource1, resource2, aspect.iri,
+									Correspondences.addCorrespondence(resource1, resource2, aspect.getIri(),
 											this.getMetaModelUnion(null), this.getOutputMetaModel(null));
 								}
 							}
