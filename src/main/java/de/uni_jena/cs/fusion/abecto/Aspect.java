@@ -21,9 +21,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
-import java.util.Map.Entry;
 import java.util.function.Function;
 
 import org.apache.jena.arq.querybuilder.SelectBuilder;
@@ -39,10 +40,26 @@ import org.apache.jena.vocabulary.RDF;
 
 import com.google.common.base.Functions;
 
+import de.uni_jena.cs.fusion.abecto.util.ToManyElementsException;
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 
 public class Aspect {
-	public static Aspect getAspect(Model configurationModel, Resource aspectIri) {
+
+	/**
+	 * Returns an {@link Aspect} determined by an given IRI in the given
+	 * configuration {@link Model}.
+	 * 
+	 * @param configurationModel the configuration {@link Model} containing the
+	 *                           aspect definitions
+	 * @param aspectIri          the IRI of the {@link Aspect} to return
+	 * @return the {@link Aspect}
+	 * @throws NoSuchElementException  if there is no {@link Aspect} with the given
+	 *                                 IRI
+	 * @throws ToManyElementsException if there are multiple pattern defined for the
+	 *                                 same {@link Aspect} and dataset
+	 */
+	public static Aspect getAspect(Model configurationModel, Resource aspectIri)
+			throws NoSuchElementException, ToManyElementsException {
 		String keyVariableName = Models
 				.assertOne(configurationModel.listObjectsOfProperty(aspectIri, AV.keyVariableName)).asLiteral()
 				.getString();
@@ -50,7 +67,7 @@ public class Aspect {
 		Aspect aspect = new Aspect(aspectIri, keyVariableName);
 
 		// add patterns
-		for (Resource aspectPatter : configurationModel.listSubjectsWithProperty(AV.ofAspect, aspectIri).toList()) {
+		for (Resource aspectPatter : configurationModel.listResourcesWithProperty(AV.ofAspect, aspectIri).toList()) {
 			Resource dataset = assertOne(configurationModel.listObjectsOfProperty(aspectPatter, AV.associatedDataset))
 					.asResource();
 			Query pattern = (Query) assertOne(configurationModel.listObjectsOfProperty(aspectPatter, AV.definingQuery))
@@ -61,14 +78,22 @@ public class Aspect {
 		return aspect;
 	}
 
+	/**
+	 * Returns all {@link Aspect Aspects} in the given configuration {@link Model}.
+	 * 
+	 * @param configurationModel the configuration {@link Model} containing the
+	 *                           aspect definitions
+	 * @return the {@link Aspect Aspects} by IRI
+	 */
 	public static Map<Resource, Aspect> getAspects(Model configurationModel) {
 		// init aspcet map
 		Map<Resource, Aspect> aspects = new HashMap<>();
 		// get aspects
-		configurationModel.listSubjectsWithProperty(RDF.type, AV.Aspect)
+		configurationModel.listResourcesWithProperty(RDF.type, AV.Aspect)
 				.forEach(aspect -> aspects.put(aspect, getAspect(configurationModel, aspect)));
 		return aspects;
 	}
+
 	public static Optional<Map<String, Set<RDFNode>>> getResource(Aspect aspect, Resource dataset, Resource keyValue,
 			Model datasetModels) {
 		Query query = SelectBuilder.rewrite(aspect.getPattern(dataset).cloneQuery(),
@@ -92,11 +117,42 @@ public class Aspect {
 			return Optional.empty();
 		}
 	}
+
+	/**
+	 * Returns an index of all resources of a given {@link Aspect} and a given
+	 * dataset by its variables and by the variable values.
+	 * 
+	 * @param aspect        the aspect describing the resources to index
+	 * @param dataset       the dataset to index the resources for
+	 * @param variables     the variables to use for indexing
+	 * @param datasetModels the (union of) {@link Model Model(s)} containing the
+	 *                      resources to index
+	 * @return
+	 */
 	public static Map<String, Map<RDFNode, Set<Resource>>> getResourceIndex(Aspect aspect, Resource dataset,
 			Iterable<String> variables, Model datasetModels) {
 		return getResourceIndex(aspect, dataset, variables, datasetModels, Functions.identity());
 	}
 
+	/**
+	 * Returns an index of all resources of a given {@link Aspect} and a given
+	 * dataset by its variables and by the variable values. The variable values will
+	 * be modified by the provided {@link Function} {@code modifier}.
+	 * <p>
+	 * For example, the {@code modifier} could be used to convert all characters of
+	 * String variable values to lowercase characters.
+	 * 
+	 * @param <T>           Type of the variable values after application of the
+	 *                      {@code modifier}
+	 * @param aspect        the aspect describing the resources to index
+	 * @param dataset       the dataset to index the resources for
+	 * @param variables     the variables to use for indexing
+	 * @param datasetModels the (union of) {@link Model Model(s)} containing the
+	 *                      resources to index
+	 * @param modifier      the {@link Function} to modify the variable values
+	 *                      before building up the index
+	 * @return
+	 */
 	public static <T> Map<String, Map<T, Set<Resource>>> getResourceIndex(Aspect aspect, Resource dataset,
 			Iterable<String> variables, Model datasetModels, Function<RDFNode, T> modifier) {
 		Map<String, Map<T, Set<Resource>>> index = new HashMap<>();
@@ -142,7 +198,6 @@ public class Aspect {
 
 	private final Var keyVariable;
 
-
 	private final Map<Resource, Query> patternByDataset = new HashMap<>();
 
 	public Aspect(Resource iri, String keyVariableName) {
@@ -150,7 +205,7 @@ public class Aspect {
 		this.keyVariableName = keyVariableName;
 		this.keyVariable = Var.alloc(keyVariableName);
 	}
-	
+
 	public Resource getIri() {
 		return this.iri;
 	}
@@ -167,7 +222,7 @@ public class Aspect {
 		return patternByDataset.get(dataset);
 	}
 
-	private void setPattern(Resource dataset, Query pattern) {
+	public void setPattern(Resource dataset, Query pattern) {
 		patternByDataset.put(dataset, pattern);
 	}
 }
