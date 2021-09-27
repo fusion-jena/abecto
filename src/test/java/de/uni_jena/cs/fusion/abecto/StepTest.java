@@ -48,6 +48,11 @@ import de.uni_jena.cs.fusion.abecto.vocabulary.PPlan;
 import de.uni_jena.cs.fusion.abecto.vocabulary.PROV;
 
 public class StepTest {
+	public static final Property META_IN_EMPTY = ResourceFactory.createProperty("http://example.org/metaInEmpty");
+	public static final Property PRIMARY_IN_EMPTY = ResourceFactory.createProperty("http://example.org/primaryInEmpty");
+	public static final Resource ALL_DATASETS = ResourceFactory.createResource("http://example.org/allDataset");
+	public static final Property STEP_NUMBER = ResourceFactory.createProperty("http://example.org/stepNumber");
+
 	@Test
 	public void constructor()
 			throws IllegalArgumentException, IOException, ClassCastException, ReflectiveOperationException {
@@ -113,6 +118,11 @@ public class StepTest {
 		Dataset graphs = DatasetFactory.createGeneral();
 		graphs.setDefaultModel(configurationModel);
 
+		Model inputMetaDataModel = ModelFactory.createDefaultModel();
+		inputMetaDataModel.addLiteral(dataset2, STEP_NUMBER, 0);
+		Resource inputMetaDataModelIri = ResourceFactory.createResource("http://example.org/inputMetaDataModel");
+		graphs.addNamedModel(inputMetaDataModelIri.getURI(), inputMetaDataModel);
+
 		configurationModel.createResource(step1Iri, AV.Step)
 				.addProperty(AV.processorClass,
 						ResourceFactory.createResource("java:" + StepTest.TestProcessor.class.getName()))
@@ -128,8 +138,10 @@ public class StepTest {
 		configurationModel.createResource(step3Iri, AV.Step)
 				.addProperty(AV.processorClass,
 						ResourceFactory.createResource("java:" + StepTest.TestProcessor.class.getName()))
-				.addProperty(AV.associatedDataset, dataset2).addProperty(AV.hasParameter, configurationModel
-						.createResource(AV.Parameter).addLiteral(AV.key, "integerParameter").addLiteral(RDF.value, 3));
+				.addProperty(AV.associatedDataset, dataset2)
+				.addProperty(AV.hasParameter, configurationModel.createResource(AV.Parameter)
+						.addLiteral(AV.key, "integerParameter").addLiteral(RDF.value, 3))
+				.addProperty(AV.inputMetaDataGraph, inputMetaDataModelIri);
 
 		configurationModel.createResource(step4Iri, AV.Step)
 				.addProperty(AV.processorClass,
@@ -143,24 +155,24 @@ public class StepTest {
 				.addProperty(AV.hasParameter, configurationModel.createResource(AV.Parameter)
 						.addLiteral(AV.key, "integerParameter").addLiteral(RDF.value, 5));
 
-		Step dataset1Step1 = new Step(graphs, graphs.getDefaultModel(), configurationModel.createResource(step1Iri),
+		Step step1 = new Step(graphs, graphs.getDefaultModel(), configurationModel.createResource(step1Iri),
 				Collections.emptyList(), aspectsMap);
-		dataset1Step1.run();
-		Step dataset1Step2 = new Step(graphs, graphs.getDefaultModel(), configurationModel.createResource(step2Iri),
-				Collections.singletonList(dataset1Step1), aspectsMap);
-		dataset1Step2.run();
-		Step dataset2Step1 = new Step(graphs, graphs.getDefaultModel(), configurationModel.createResource(step3Iri),
+		step1.run();
+		Step step2 = new Step(graphs, graphs.getDefaultModel(), configurationModel.createResource(step2Iri),
+				Collections.singletonList(step1), aspectsMap);
+		step2.run();
+		Step step3 = new Step(graphs, graphs.getDefaultModel(), configurationModel.createResource(step3Iri),
 				Collections.emptyList(), aspectsMap);
-		dataset2Step1.run();
-		Step dataset2Step2 = new Step(graphs, graphs.getDefaultModel(), configurationModel.createResource(step4Iri),
-				Collections.singletonList(dataset2Step1), aspectsMap);
-		dataset2Step2.run();
-		Step datasetAllStep = new Step(graphs, graphs.getDefaultModel(), configurationModel.createResource(step5Iri),
-				Arrays.asList(dataset1Step1, dataset1Step2, dataset2Step1, dataset2Step2), aspectsMap);
-		datasetAllStep.run();
+		step3.run();
+		Step step4 = new Step(graphs, graphs.getDefaultModel(), configurationModel.createResource(step4Iri),
+				Collections.singletonList(step3), aspectsMap);
+		step4.run();
+		Step step5 = new Step(graphs, graphs.getDefaultModel(), configurationModel.createResource(step5Iri),
+				Arrays.asList(step1, step2, step3, step4), aspectsMap);
+		step5.run();
 
 		RDFDataMgr.write(System.out, graphs, Lang.TRIG);
-		// TODO assertions
+
 		Resource step1Execution = configurationModel
 				.listSubjectsWithProperty(PPlan.correspondsToStep, configurationModel.createResource(step1Iri)).next();
 		Resource step2Execution = configurationModel
@@ -172,53 +184,59 @@ public class StepTest {
 		Resource step5Execution = configurationModel
 				.listSubjectsWithProperty(PPlan.correspondsToStep, configurationModel.createResource(step5Iri)).next();
 
+		assertEquals(step1.getStepExecution(), step1Execution);
+		assertEquals(step2.getStepExecution(), step2Execution);
+		assertEquals(step3.getStepExecution(), step3Execution);
+		assertEquals(step4.getStepExecution(), step4Execution);
+		assertEquals(step5.getStepExecution(), step5Execution);
+
 		assertValidExecutionTime(step1Execution);
 		assertValidExecutionTime(step2Execution);
 		assertValidExecutionTime(step3Execution);
 		assertValidExecutionTime(step4Execution);
 		assertValidExecutionTime(step5Execution);
 
-		assertModelContains(graphs, step1Execution, AV.PrimaryDataGraph, dataset1, TestProcessor.STEP_NUMBER, 1);
-		assertModelContains(graphs, step2Execution, AV.PrimaryDataGraph, dataset1, TestProcessor.STEP_NUMBER, 2);
-		assertModelContains(graphs, step3Execution, AV.PrimaryDataGraph, dataset2, TestProcessor.STEP_NUMBER, 3);
-		assertModelContains(graphs, step4Execution, AV.PrimaryDataGraph, dataset2, TestProcessor.STEP_NUMBER, 4);
+		assertModelContains(graphs, step1Execution, AV.PrimaryDataGraph, dataset1, STEP_NUMBER, 1);
+		assertModelContains(graphs, step2Execution, AV.PrimaryDataGraph, dataset1, STEP_NUMBER, 2);
+		assertModelContains(graphs, step3Execution, AV.PrimaryDataGraph, dataset2, STEP_NUMBER, 3);
+		assertModelContains(graphs, step4Execution, AV.PrimaryDataGraph, dataset2, STEP_NUMBER, 4);
 
-		assertModelContains(graphs, step1Execution, AV.MetaDataGraph, dataset1, TestProcessor.STEP_NUMBER, 1);
-		assertModelContains(graphs, step2Execution, AV.MetaDataGraph, dataset1, TestProcessor.STEP_NUMBER, 2);
-		assertModelContains(graphs, step5Execution, AV.MetaDataGraph, dataset1, TestProcessor.STEP_NUMBER, 5);
+		assertModelContains(graphs, step1Execution, AV.MetaDataGraph, dataset1, STEP_NUMBER, 1);
+		assertModelContains(graphs, step2Execution, AV.MetaDataGraph, dataset1, STEP_NUMBER, 2);
+		assertModelContains(graphs, step5Execution, AV.MetaDataGraph, dataset1, STEP_NUMBER, 5);
 
-		assertModelContains(graphs, step3Execution, AV.MetaDataGraph, dataset2, TestProcessor.STEP_NUMBER, 3);
-		assertModelContains(graphs, step4Execution, AV.MetaDataGraph, dataset2, TestProcessor.STEP_NUMBER, 4);
-		assertModelContains(graphs, step5Execution, AV.MetaDataGraph, dataset2, TestProcessor.STEP_NUMBER, 5);
+		assertModelContains(graphs, step3Execution, AV.MetaDataGraph, dataset2, STEP_NUMBER, 3);
+		assertModelContains(graphs, step4Execution, AV.MetaDataGraph, dataset2, STEP_NUMBER, 4);
+		assertModelContains(graphs, step5Execution, AV.MetaDataGraph, dataset2, STEP_NUMBER, 5);
 
-		assertModelContains(graphs, step1Execution, AV.MetaDataGraph, null, TestProcessor.STEP_NUMBER, 1);
-		assertModelContains(graphs, step2Execution, AV.MetaDataGraph, null, TestProcessor.STEP_NUMBER, 2);
-		assertModelContains(graphs, step3Execution, AV.MetaDataGraph, null, TestProcessor.STEP_NUMBER, 3);
-		assertModelContains(graphs, step4Execution, AV.MetaDataGraph, null, TestProcessor.STEP_NUMBER, 4);
-		assertModelContains(graphs, step5Execution, AV.MetaDataGraph, null, TestProcessor.STEP_NUMBER, 5);
+		assertModelContains(graphs, step1Execution, AV.MetaDataGraph, null, STEP_NUMBER, 1);
+		assertModelContains(graphs, step2Execution, AV.MetaDataGraph, null, STEP_NUMBER, 2);
+		assertModelContains(graphs, step3Execution, AV.MetaDataGraph, null, STEP_NUMBER, 3);
+		assertModelContains(graphs, step4Execution, AV.MetaDataGraph, null, STEP_NUMBER, 4);
+		assertModelContains(graphs, step5Execution, AV.MetaDataGraph, null, STEP_NUMBER, 5);
 
-		assertModelContains(graphs, step1Execution, AV.MetaDataGraph, dataset1, TestProcessor.META_IN_EMPTY);
-		assertModelContains(graphs, step2Execution, AV.MetaDataGraph, dataset1, TestProcessor.META_IN_EMPTY, 0);
-		assertModelContains(graphs, step5Execution, AV.MetaDataGraph, dataset1, TestProcessor.META_IN_EMPTY, 0);
+		assertModelContains(graphs, step1Execution, AV.MetaDataGraph, dataset1, META_IN_EMPTY);
+		assertModelContains(graphs, step2Execution, AV.MetaDataGraph, dataset1, META_IN_EMPTY, 0);
+		assertModelContains(graphs, step5Execution, AV.MetaDataGraph, dataset1, META_IN_EMPTY, 0);
 
-		assertModelContains(graphs, step3Execution, AV.MetaDataGraph, dataset2, TestProcessor.META_IN_EMPTY);
-		assertModelContains(graphs, step4Execution, AV.MetaDataGraph, dataset2, TestProcessor.META_IN_EMPTY, 0);
-		assertModelContains(graphs, step5Execution, AV.MetaDataGraph, dataset2, TestProcessor.META_IN_EMPTY, 0);
+		assertModelContains(graphs, step3Execution, AV.MetaDataGraph, dataset2, META_IN_EMPTY);
+		assertModelContains(graphs, step4Execution, AV.MetaDataGraph, dataset2, META_IN_EMPTY, 0);
+		assertModelContains(graphs, step5Execution, AV.MetaDataGraph, dataset2, META_IN_EMPTY, 0);
 
-		assertModelContains(graphs, step1Execution, AV.MetaDataGraph, null, TestProcessor.META_IN_EMPTY, 1);
-		assertModelContains(graphs, step2Execution, AV.MetaDataGraph, null, TestProcessor.META_IN_EMPTY, 0);
-		assertModelContains(graphs, step3Execution, AV.MetaDataGraph, null, TestProcessor.META_IN_EMPTY, 1);
-		assertModelContains(graphs, step4Execution, AV.MetaDataGraph, null, TestProcessor.META_IN_EMPTY, 0);
-		assertModelContains(graphs, step5Execution, AV.MetaDataGraph, null, TestProcessor.META_IN_EMPTY, 0);
+		assertModelContains(graphs, step1Execution, AV.MetaDataGraph, null, META_IN_EMPTY, 1);
+		assertModelContains(graphs, step2Execution, AV.MetaDataGraph, null, META_IN_EMPTY, 0);
+		// due to inputMetaDataGraph not empty for step3Execution
+		assertModelContains(graphs, step3Execution, AV.MetaDataGraph, null, META_IN_EMPTY, 0);
+		assertModelContains(graphs, step4Execution, AV.MetaDataGraph, null, META_IN_EMPTY, 0);
+		assertModelContains(graphs, step5Execution, AV.MetaDataGraph, null, META_IN_EMPTY, 0);
 
-		assertModelContains(graphs, step1Execution, AV.MetaDataGraph, dataset1, TestProcessor.PRIMARY_IN_EMPTY);
-		assertModelContains(graphs, step2Execution, AV.MetaDataGraph, dataset1, TestProcessor.PRIMARY_IN_EMPTY, 0);
-		assertModelContains(graphs, step5Execution, AV.MetaDataGraph, dataset1, TestProcessor.PRIMARY_IN_EMPTY, 0);
+		assertModelContains(graphs, step1Execution, AV.MetaDataGraph, dataset1, PRIMARY_IN_EMPTY);
+		assertModelContains(graphs, step2Execution, AV.MetaDataGraph, dataset1, PRIMARY_IN_EMPTY, 0);
+		assertModelContains(graphs, step5Execution, AV.MetaDataGraph, dataset1, PRIMARY_IN_EMPTY, 0);
 
-		assertModelContains(graphs, step3Execution, AV.MetaDataGraph, dataset2, TestProcessor.PRIMARY_IN_EMPTY);
-		assertModelContains(graphs, step4Execution, AV.MetaDataGraph, dataset2, TestProcessor.PRIMARY_IN_EMPTY, 0);
-		assertModelContains(graphs, step5Execution, AV.MetaDataGraph, dataset2, TestProcessor.PRIMARY_IN_EMPTY, 0);
-
+		assertModelContains(graphs, step3Execution, AV.MetaDataGraph, dataset2, PRIMARY_IN_EMPTY);
+		assertModelContains(graphs, step4Execution, AV.MetaDataGraph, dataset2, PRIMARY_IN_EMPTY, 0);
+		assertModelContains(graphs, step5Execution, AV.MetaDataGraph, dataset2, PRIMARY_IN_EMPTY, 0);
 	}
 
 	private void assertValidExecutionTime(Resource execution) {
@@ -245,8 +263,8 @@ public class StepTest {
 		Model outputMetaModel = graphs.getNamedModel(iterator.next().getURI());
 
 		int[] actualValues = outputMetaModel
-				.listObjectsOfProperty(Objects.requireNonNullElse(dataset, TestProcessor.ALL_DATASETS), property)
-				.toList().stream().mapToInt(node -> node.asLiteral().getInt()).sorted().toArray();
+				.listObjectsOfProperty(Objects.requireNonNullElse(dataset, ALL_DATASETS), property).toList().stream()
+				.mapToInt(node -> node.asLiteral().getInt()).sorted().toArray();
 		Arrays.sort(expectedValues);
 		assertArrayEquals(expectedValues, actualValues, () -> String.format("Expected: %s but was: %s",
 				Arrays.toString(expectedValues), Arrays.toString(actualValues)));
@@ -254,11 +272,6 @@ public class StepTest {
 
 	public static class TestProcessor extends Processor {
 		static TestProcessor instance;
-		public static final Property META_IN_EMPTY = ResourceFactory.createProperty("http://example.org/metaInEmpty");
-		public static final Property PRIMARY_IN_EMPTY = ResourceFactory
-				.createProperty("http://example.org/primaryInEmpty");
-		public static final Resource ALL_DATASETS = ResourceFactory.createResource("http://example.org/allDataset");
-		public static final Property STEP_NUMBER = ResourceFactory.createProperty("http://example.org/stepNumber");
 
 		@Parameter
 		public int integerParameter;

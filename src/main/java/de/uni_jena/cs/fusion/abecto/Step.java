@@ -158,7 +158,7 @@ public class Step implements Runnable {
 			}
 			configurationModel.listObjectsOfProperty(stepIri, AV.inputMetaDataGraph).forEach(object -> {
 				Resource inputMetaModelIri = object.asResource();
-				processor.addInputMetaModel(inputMetaModelIri, dataset.getNamedModel(inputMetaModelIri.getURI()));
+				processor.addInputMetaModel(null, dataset.getNamedModel(inputMetaModelIri.getURI()));
 				inputModelIris.add(inputMetaModelIri);
 			});
 			for (Resource inputModelIri : inputModelIris) {
