@@ -126,7 +126,7 @@ public class Aspect {
 	 * @param dataset       the dataset to index the resources for
 	 * @param variables     the variables to use for indexing
 	 * @param datasetModels the (union of) {@link Model Model(s)} containing the
-	 *                      resources to index
+	 *                      {@link Resource Resources} to index
 	 * @return
 	 */
 	public static Map<String, Map<RDFNode, Set<Resource>>> getResourceIndex(Aspect aspect, Resource dataset,
@@ -148,7 +148,7 @@ public class Aspect {
 	 * @param dataset       the dataset to index the resources for
 	 * @param variables     the variables to use for indexing
 	 * @param datasetModels the (union of) {@link Model Model(s)} containing the
-	 *                      resources to index
+	 *                      {@link Resource Resources} to index
 	 * @param modifier      the {@link Function} to modify the variable values
 	 *                      before building up the index
 	 * @return
@@ -176,6 +176,18 @@ public class Aspect {
 		return index;
 	}
 
+	/**
+	 * Returns a {@link Set} of all resource keys of a given aspect in a given
+	 * dataset.
+	 * 
+	 * @param aspect        the {@link Aspect} the returned {@link Resource
+	 *                      Resources} belong to
+	 * @param dataset       the IRI of the source dataset of the {@link Resource
+	 *                      Resources}
+	 * @param datasetModels the (union of) {@link Model Model(s)} of the dataset
+	 *                      containing the {@link Resource Resources}
+	 * @return all resource keys of the given aspect in the given dataset
+	 */
 	public static Set<Resource> getResourceKeys(Aspect aspect, Resource dataset, Model datasetModels) {
 		Set<Resource> resourceKeys = new HashSet<>();
 

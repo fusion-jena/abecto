@@ -15,10 +15,13 @@
  */
 package de.uni_jena.cs.fusion.abecto;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -32,11 +35,18 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.sparql.core.Var;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.opentest4j.AssertionFailedError;
 
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 
 public class AspectTest {
+
+	@BeforeAll
+	public static void init() {
+		Abecto.initApacheJena();
+	}
 
 	@Test
 	public void contructor() {
@@ -49,8 +59,6 @@ public class AspectTest {
 
 	@Test
 	public void getAspect() {
-		Abecto.initApacheJena();
-
 		Resource dataset1 = ResourceFactory.createResource("http://example.org/dataset1");
 		Resource dataset2 = ResourceFactory.createResource("http://example.org/dataset2");
 
@@ -102,8 +110,6 @@ public class AspectTest {
 
 	@Test
 	public void getAspects() {
-		Abecto.initApacheJena();
-
 		Resource dataset1 = ResourceFactory.createResource("http://example.org/dataset1");
 		Resource dataset2 = ResourceFactory.createResource("http://example.org/dataset2");
 
@@ -156,25 +162,74 @@ public class AspectTest {
 
 	@Test
 	public void getResource() {
-		// TODO
+		Model primaryDataModel = ModelFactory.createDefaultModel();
+		Property property1 = ResourceFactory.createProperty("http://example.org/property1");
+		Property property2 = ResourceFactory.createProperty("http://example.org/property2");
+		Resource aspectIri = ResourceFactory.createResource("http://example.org/aspect");
+		Resource dataset = ResourceFactory.createResource("http://example.org/dataset");
+		Resource resource1 = ResourceFactory.createResource("http://example.org/1");
+		Resource resource2 = ResourceFactory.createResource("http://example.org/2");
+		Resource resource3 = ResourceFactory.createResource("http://example.org/3");
+		Resource resource4 = ResourceFactory.createResource("http://example.org/4");
+		primaryDataModel.addLiteral(resource1, property1, 1);
+		primaryDataModel.addLiteral(resource2, property1, 2);
+		primaryDataModel.addLiteral(resource3, property1, 3);
+		primaryDataModel.addLiteral(resource4, property1, 4);
+
+		primaryDataModel.addLiteral(resource1, property2, 1);
+		primaryDataModel.addLiteral(resource1, property2, 2);
+		primaryDataModel.addLiteral(resource1, property2, 3);
+
+		primaryDataModel.addLiteral(resource2, property2, 2);
+		primaryDataModel.addLiteral(resource2, property2, 3);
+		primaryDataModel.addLiteral(resource2, property2, 4);
+
+		primaryDataModel.addLiteral(resource3, property2, 3);
+		primaryDataModel.addLiteral(resource3, property2, 4);
+		primaryDataModel.addLiteral(resource3, property2, 5);
+
+		primaryDataModel.addLiteral(resource4, property2, 4);
+		primaryDataModel.addLiteral(resource4, property2, 5);
+		primaryDataModel.addLiteral(resource4, property2, 6);
+		Aspect aspect = new Aspect(aspectIri, "key");
+		Query pattern = QueryFactory.create("SELECT ?key ?value1 ?value2 WHERE {?key <" + property1.getURI()
+				+ "> ?value1 ; <" + property2.getURI() + "> ?value2 .}");
+		aspect.setPattern(dataset, pattern);
+
+		for (Resource key : Arrays.asList(resource1, resource2, resource3, resource4)) {
+			int resourceId = Integer.parseInt(key.getURI().substring("http://example.org/".length()));
+			int[] expectedValues1 = new int[] { resourceId };
+			int[] expectedValues2 = new int[] { resourceId, resourceId + 1, resourceId + 2 };
+			Map<String, Set<RDFNode>> resourceValues = Aspect.getResource(aspect, dataset, key, primaryDataModel)
+					.orElseThrow(() -> new AssertionFailedError(
+							String.format("Failed to get resource \"%s\".", key.getURI())));
+			assertArrayEquals(expectedValues1,
+					resourceValues.get("value1").stream().mapToInt(l -> l.asLiteral().getInt()).sorted().toArray(),
+					() -> String.format("Unexpected values for resource \"%s\" and variable \"%s\".", key.getURI(),
+							"value1"));
+			assertArrayEquals(expectedValues2,
+					resourceValues.get("value2").stream().mapToInt(l -> l.asLiteral().getInt()).sorted().toArray(),
+					() -> String.format("Unexpected values for resource \"%s\" and variable \"%s\".", key.getURI(),
+							"value1"));
+		}
+
+		assertFalse(Aspect.getResource(aspect, dataset, aspectIri, primaryDataModel).isPresent());
 	}
 
 	@Test
 	public void getResourceIndex() {
-		Abecto.initApacheJena();
-
 		Model primaryDataModel = ModelFactory.createDefaultModel();
 		Property property = ResourceFactory.createProperty("http://example.org/property");
 		Resource aspectIri = ResourceFactory.createResource("http://example.org/aspect");
 		Resource dataset = ResourceFactory.createResource("http://example.org/dataset");
-		Resource resoutce1 = ResourceFactory.createResource("http://example.org/1");
-		Resource resoutce2 = ResourceFactory.createResource("http://example.org/2");
-		Resource resoutce3 = ResourceFactory.createResource("http://example.org/3");
-		Resource resoutce4 = ResourceFactory.createResource("http://example.org/4");
-		primaryDataModel.addLiteral(resoutce1, property, 1);
-		primaryDataModel.addLiteral(resoutce2, property, 2);
-		primaryDataModel.addLiteral(resoutce3, property, 3);
-		primaryDataModel.addLiteral(resoutce4, property, 4);
+		Resource resource1 = ResourceFactory.createResource("http://example.org/1");
+		Resource resource2 = ResourceFactory.createResource("http://example.org/2");
+		Resource resource3 = ResourceFactory.createResource("http://example.org/3");
+		Resource resource4 = ResourceFactory.createResource("http://example.org/4");
+		primaryDataModel.addLiteral(resource1, property, 1);
+		primaryDataModel.addLiteral(resource2, property, 2);
+		primaryDataModel.addLiteral(resource3, property, 3);
+		primaryDataModel.addLiteral(resource4, property, 4);
 		Aspect aspect = new Aspect(aspectIri, "key");
 		Query pattern = QueryFactory.create("SELECT ?key ?value WHERE {?key <" + property.getURI() + "> ?value .}");
 		aspect.setPattern(dataset, pattern);
@@ -192,19 +247,19 @@ public class AspectTest {
 		for (RDFNode value : index1.get("value").keySet()) {
 			switch (value.asLiteral().getInt()) {
 			case 1:
-				assertTrue(index1.get("value").get(value).contains(resoutce1));
+				assertTrue(index1.get("value").get(value).contains(resource1));
 				assertEquals(1, index1.get("value").get(value).size());
 				break;
 			case 2:
-				assertTrue(index1.get("value").get(value).contains(resoutce2));
+				assertTrue(index1.get("value").get(value).contains(resource2));
 				assertEquals(1, index1.get("value").get(value).size());
 				break;
 			case 3:
-				assertTrue(index1.get("value").get(value).contains(resoutce3));
+				assertTrue(index1.get("value").get(value).contains(resource3));
 				assertEquals(1, index1.get("value").get(value).size());
 				break;
 			case 4:
-				assertTrue(index1.get("value").get(value).contains(resoutce4));
+				assertTrue(index1.get("value").get(value).contains(resource4));
 				assertEquals(1, index1.get("value").get(value).size());
 				break;
 			default:
@@ -223,23 +278,45 @@ public class AspectTest {
 		for (Integer value : index2.get("value").keySet()) {
 			switch (value.intValue()) {
 			case 0:
-				assertTrue(index2.get("value").get(value).contains(resoutce2));
-				assertTrue(index2.get("value").get(value).contains(resoutce4));
+				assertTrue(index2.get("value").get(value).contains(resource2));
+				assertTrue(index2.get("value").get(value).contains(resource4));
 				assertEquals(2, index2.get("value").get(value).size());
 				break;
 			case 1:
-				assertTrue(index2.get("value").get(value).contains(resoutce1));
-				assertTrue(index2.get("value").get(value).contains(resoutce3));
+				assertTrue(index2.get("value").get(value).contains(resource1));
+				assertTrue(index2.get("value").get(value).contains(resource3));
 				assertEquals(2, index2.get("value").get(value).size());
 				break;
 			default:
-				fail("");
+				fail("Unexpected value.");
 			}
 		}
 	}
 
 	@Test
 	public void getResourceKeys() {
-		// TODO
+		Model primaryDataModel = ModelFactory.createDefaultModel();
+		Property property = ResourceFactory.createProperty("http://example.org/property");
+		Resource aspectIri = ResourceFactory.createResource("http://example.org/aspect");
+		Resource dataset = ResourceFactory.createResource("http://example.org/dataset");
+		Resource resource1 = ResourceFactory.createResource("http://example.org/1");
+		Resource resource2 = ResourceFactory.createResource("http://example.org/2");
+		Resource resource3 = ResourceFactory.createResource("http://example.org/3");
+		Resource resource4 = ResourceFactory.createResource("http://example.org/4");
+		primaryDataModel.addLiteral(resource1, property, 1);
+		primaryDataModel.addLiteral(resource2, property, 2);
+		primaryDataModel.addLiteral(resource3, property, 3);
+		primaryDataModel.addLiteral(resource4, property, 4);
+		Aspect aspect = new Aspect(aspectIri, "key");
+		Query pattern = QueryFactory.create("SELECT ?key ?value WHERE {?key <" + property.getURI() + "> ?value .}");
+		aspect.setPattern(dataset, pattern);
+
+		Set<Resource> resources = Aspect.getResourceKeys(aspect, dataset, primaryDataModel);
+
+		assertEquals(4, resources.size());
+		assertTrue(resources.contains(resource1));
+		assertTrue(resources.contains(resource2));
+		assertTrue(resources.contains(resource3));
+		assertTrue(resources.contains(resource4));
 	}
 }
