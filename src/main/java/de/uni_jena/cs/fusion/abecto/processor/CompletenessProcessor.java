@@ -112,7 +112,7 @@ public class CompletenessProcessor extends Processor {
 								for (Resource datasetComparedTo : this.getInputDatasets()) {
 									for (Resource resourceComparedTo : occurrencesByDataset.get(dataset)) {
 										Metadata.addResourceOmission(dataset, datasetComparedTo, resourceComparedTo,
-												aspect, this.getOutputMetaModel(dataset));
+												aspect.getIri(), this.getOutputMetaModel(dataset));
 									}
 								}
 							}
@@ -177,29 +177,29 @@ public class CompletenessProcessor extends Processor {
 			// store measures
 			for (Resource dataset : this.getInputDatasets()) {
 				// store count
-				Metadata.addQualityMeasurement(AV.count, count.get(dataset), OM.one, dataset, aspect,
+				Metadata.addQualityMeasurement(AV.count, count.get(dataset), OM.one, dataset, aspect.getIri(),
 						this.getOutputMetaModel(dataset));
 
 				// store completeness
 				Collection<Resource> otherDatasets = this.getInputDatasets();
 				otherDatasets.remove(dataset);
 				Metadata.addQualityMeasurement(AV.markAndRecapture, completeness.get(dataset), OM.one, dataset,
-						otherDatasets, aspect, this.getOutputMetaModel(dataset));
+						otherDatasets, aspect.getIri(), this.getOutputMetaModel(dataset));
 
 				for (Resource datasetComparedTo : this.getInputDatasets()) {
 					if (!dataset.equals(datasetComparedTo)) {
 						Metadata.addQualityMeasurement(AV.relativeCoverage,
 								relativeCoverage.get(dataset).get(datasetComparedTo), OM.one, dataset,
-								datasetComparedTo, aspect, this.getOutputMetaModel(dataset));
+								datasetComparedTo, aspect.getIri(), this.getOutputMetaModel(dataset));
 						if (dataset.getURI().compareTo(datasetComparedTo.getURI()) > 0) {
 							// only once per pair
 
 							Metadata.addQualityMeasurement(AV.absoluteCoverage,
 									absoluteCoverage.get(dataset).get(datasetComparedTo), OM.one, dataset,
-									datasetComparedTo, aspect, this.getOutputMetaModel(dataset));
+									datasetComparedTo, aspect.getIri(), this.getOutputMetaModel(dataset));
 							Metadata.addQualityMeasurement(AV.absoluteCoverage,
 									absoluteCoverage.get(datasetComparedTo).get(dataset), OM.one, dataset,
-									datasetComparedTo, aspect, this.getOutputMetaModel(datasetComparedTo));
+									datasetComparedTo, aspect.getIri(), this.getOutputMetaModel(datasetComparedTo));
 						}
 					}
 				}

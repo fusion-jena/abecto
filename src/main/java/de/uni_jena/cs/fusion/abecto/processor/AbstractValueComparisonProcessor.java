@@ -150,25 +150,23 @@ public abstract class AbstractValueComparisonProcessor extends Processor {
 			// report missing values
 			for (RDFNode value2 : values2) {
 				Metadata.addValuesOmission(correspondingResource1.asResource(), variable, dataset1,
-						correspondingResource2.asResource(), value2, this.getAspects().get(this.aspect),
-						this.getOutputMetaModel(dataset1));
+						correspondingResource2.asResource(), value2, this.aspect, this.getOutputMetaModel(dataset1));
 			}
 		} else if (values2.isEmpty()) {
 			// report missing values
 			for (RDFNode value1 : values1) {
 				Metadata.addValuesOmission(correspondingResource2.asResource(), variable, dataset2,
-						correspondingResource1.asResource(), value1, this.getAspects().get(this.aspect),
-						this.getOutputMetaModel(dataset2));
+						correspondingResource1.asResource(), value1, this.aspect, this.getOutputMetaModel(dataset2));
 			}
 		} else {
 			// report pairs of deviating values
 			for (RDFNode value1 : values1) {
 				for (RDFNode value2 : values2) {
 					Metadata.addDeviation(correspondingResource1.asResource(), variable, value1, dataset2,
-							correspondingResource2.asResource(), value2, this.getAspects().get(this.aspect),
+							correspondingResource2.asResource(), value2, this.aspect,
 							this.getOutputMetaModel(dataset1));
 					Metadata.addDeviation(correspondingResource2.asResource(), variable, value2, dataset1,
-							correspondingResource1.asResource(), value1, this.getAspects().get(this.aspect),
+							correspondingResource1.asResource(), value1, this.aspect,
 							this.getOutputMetaModel(dataset2));
 				}
 			}
