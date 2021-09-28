@@ -48,33 +48,44 @@ public class ParametersTest {
 
 		List<Temporal> expectedMultiple = Arrays.asList(LocalDate.now(), LocalTime.now(), LocalDateTime.now());
 
+		// collection: null value
+		{
+			EmptyCollectionProcessor processor = new EmptyCollectionProcessor();
+			Parameters.setParameters(processor, Collections.emptyMap());
+			assertTrue(processor.parameter.isEmpty());
+		}
 		// collection: no value
 		{
-			CollectionProcessor processor = new CollectionProcessor();
-			Parameters.setParameters(processor, Collections.emptyMap());
+			EmptyCollectionProcessor processor = new EmptyCollectionProcessor();
+			Parameters.setParameters(processor, Collections.singletonMap("parameter", Collections.emptyList()));
 			assertTrue(processor.parameter.isEmpty());
 		}
 		// collection: one value
 		{
-			CollectionProcessor processor = new CollectionProcessor();
+			EmptyCollectionProcessor processor = new EmptyCollectionProcessor();
 			Parameters.setParameters(processor, Collections.singletonMap("parameter", expectedOne));
 			assertArrayEquals(expectedOne.toArray(l -> new Temporal[l]),
 					processor.parameter.toArray(l -> new Temporal[l]));
 		}
-		// collection: multiple value
+		// collection: multiple values
 		{
-			CollectionProcessor processor = new CollectionProcessor();
+			EmptyCollectionProcessor processor = new EmptyCollectionProcessor();
 			Parameters.setParameters(processor, Collections.singletonMap("parameter", expectedMultiple));
 			assertArrayEquals(expectedMultiple.toArray(l -> new Temporal[l]),
 					processor.parameter.toArray(l -> new Temporal[l]));
 		}
 
-		// default collection: no value
+		// default collection: null value
 		{
 			DefaultCollectionProcessor processor = new DefaultCollectionProcessor();
 			Parameters.setParameters(processor, Collections.emptyMap());
 			assertTrue(processor.parameter.contains(defaultValue));
-			assertEquals(1, processor.parameter.size());
+		}
+		// default collection: no value
+		{
+			DefaultCollectionProcessor processor = new DefaultCollectionProcessor();
+			Parameters.setParameters(processor, Collections.singletonMap("parameter", Collections.emptyList()));
+			assertTrue(processor.parameter.isEmpty());
 		}
 		// default collection: one value
 		{
@@ -83,7 +94,7 @@ public class ParametersTest {
 			assertArrayEquals(expectedOne.toArray(l -> new Temporal[l]),
 					processor.parameter.toArray(l -> new Temporal[l]));
 		}
-		// default collection: multiple value
+		// default collection: multiple values
 		{
 			DefaultCollectionProcessor processor = new DefaultCollectionProcessor();
 			Parameters.setParameters(processor, Collections.singletonMap("parameter", expectedMultiple));
@@ -91,10 +102,16 @@ public class ParametersTest {
 					processor.parameter.toArray(l -> new Temporal[l]));
 		}
 
-		// uninitialized collection: no value
+		// uninitialized collection: null value
 		{
 			UninitializedCollectionProcessor processor = new UninitializedCollectionProcessor();
 			Parameters.setParameters(processor, Collections.emptyMap());
+			assertTrue(processor.parameter.isEmpty());
+		}
+		// uninitialized collection: no value
+		{
+			UninitializedCollectionProcessor processor = new UninitializedCollectionProcessor();
+			Parameters.setParameters(processor, Collections.singletonMap("parameter", Collections.emptyList()));
 			assertTrue(processor.parameter.isEmpty());
 		}
 		// uninitialized collection: one value
@@ -104,7 +121,7 @@ public class ParametersTest {
 			assertArrayEquals(expectedOne.toArray(l -> new Temporal[l]),
 					processor.parameter.toArray(l -> new Temporal[l]));
 		}
-		// uninitialized collection: multiple value
+		// uninitialized collection: multiple values
 		{
 			UninitializedCollectionProcessor processor = new UninitializedCollectionProcessor();
 			Parameters.setParameters(processor, Collections.singletonMap("parameter", expectedMultiple));
@@ -112,10 +129,16 @@ public class ParametersTest {
 					processor.parameter.toArray(l -> new Temporal[l]));
 		}
 
-		// optional: no value
+		// optional: null value
 		{
 			OptionalProcessor processor = new OptionalProcessor();
 			Parameters.setParameters(processor, Collections.emptyMap());
+			assertTrue(processor.parameter.isEmpty());
+		}
+		// optional: no value
+		{
+			OptionalProcessor processor = new OptionalProcessor();
+			Parameters.setParameters(processor, Collections.singletonMap("parameter", Collections.emptyList()));
 			assertTrue(processor.parameter.isEmpty());
 		}
 		// optional: one value
@@ -124,18 +147,24 @@ public class ParametersTest {
 			Parameters.setParameters(processor, Collections.singletonMap("parameter", expectedOne));
 			assertEquals(expectedOne.get(0), processor.parameter.get());
 		}
-		// optional: multiple value
+		// optional: multiple values
 		{
 			OptionalProcessor processor = new OptionalProcessor();
 			assertThrows(ToManyElementsException.class,
 					() -> Parameters.setParameters(processor, Collections.singletonMap("parameter", expectedMultiple)));
 		}
 
-		// required: no value
+		// required: null value
 		{
 			RequiredProcessor processor = new RequiredProcessor();
 			assertThrows(NoSuchElementException.class,
 					() -> Parameters.setParameters(processor, Collections.emptyMap()));
+		}
+		// required: no value
+		{
+			RequiredProcessor processor = new RequiredProcessor();
+			assertThrows(NoSuchElementException.class,
+					() -> Parameters.setParameters(processor, Collections.singletonMap("parameter", Collections.emptyList())));
 		}
 		// required: one value
 		{
@@ -143,17 +172,23 @@ public class ParametersTest {
 			Parameters.setParameters(processor, Collections.singletonMap("parameter", expectedOne));
 			assertEquals(expectedOne.get(0), processor.parameter);
 		}
-		// required: multiple value
+		// required: multiple values
 		{
 			RequiredProcessor processor = new RequiredProcessor();
 			assertThrows(ToManyElementsException.class,
 					() -> Parameters.setParameters(processor, Collections.singletonMap("parameter", expectedMultiple)));
 		}
 
-		// default: no value
+		// default: null value
 		{
 			DefaultProcessor processor = new DefaultProcessor();
 			Parameters.setParameters(processor, Collections.emptyMap());
+			assertEquals(defaultValue, processor.parameter);
+		}
+		// default: no value
+		{
+			DefaultProcessor processor = new DefaultProcessor();
+			Parameters.setParameters(processor, Collections.singletonMap("parameter", Collections.emptyList()));
 			assertEquals(defaultValue, processor.parameter);
 		}
 		// default: one value
@@ -162,7 +197,7 @@ public class ParametersTest {
 			Parameters.setParameters(processor, Collections.singletonMap("parameter", expectedOne));
 			assertEquals(expectedOne.get(0), processor.parameter);
 		}
-		// default: multiple value
+		// default: multiple values
 		{
 			DefaultProcessor processor = new DefaultProcessor();
 			assertThrows(ToManyElementsException.class,
@@ -170,9 +205,11 @@ public class ParametersTest {
 		}
 	}
 
-	private static class CollectionProcessor extends Processor {
+	private static class EmptyCollectionProcessor extends Processor {
 		@Parameter
 		public Collection<Temporal> parameter = new ArrayList<>();
+		@SuppressWarnings("unused")
+		public Temporal notAParameter;
 
 		@Override
 		public void run() {
@@ -182,7 +219,9 @@ public class ParametersTest {
 
 	private static class UninitializedCollectionProcessor extends Processor {
 		@Parameter
-		public Collection<Temporal> parameter = new ArrayList<>();
+		public Collection<Temporal> parameter;
+		@SuppressWarnings("unused")
+		public Temporal notAParameter;
 
 		@Override
 		public void run() {
@@ -193,6 +232,8 @@ public class ParametersTest {
 	private static class DefaultCollectionProcessor extends Processor {
 		@Parameter
 		public Collection<Temporal> parameter = new ArrayList<>(Collections.singletonList(defaultValue));
+		@SuppressWarnings("unused")
+		public Temporal notAParameter;
 
 		@Override
 		public void run() {
@@ -203,6 +244,8 @@ public class ParametersTest {
 	private static class OptionalProcessor extends Processor {
 		@Parameter
 		public Optional<Temporal> parameter;
+		@SuppressWarnings("unused")
+		public Temporal notAParameter;
 
 		@Override
 		public void run() {
@@ -213,6 +256,8 @@ public class ParametersTest {
 	private static class RequiredProcessor extends Processor {
 		@Parameter
 		public Temporal parameter;
+		@SuppressWarnings("unused")
+		public Temporal notAParameter;
 
 		@Override
 		public void run() {
@@ -223,6 +268,8 @@ public class ParametersTest {
 	private static class DefaultProcessor extends Processor {
 		@Parameter
 		public Temporal parameter = defaultValue;
+		@SuppressWarnings("unused")
+		public Temporal notAParameter;
 
 		@Override
 		public void run() {

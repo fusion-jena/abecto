@@ -37,13 +37,13 @@ public class Parameters {
 			if (field.isAnnotationPresent(Parameter.class)) {
 				List<?> values = parameters.get(field.getName());
 				if (Collection.class.isAssignableFrom(field.getType())) {
+					Collection parameter = Collection.class.cast(field.get(processor));
+					// parameter collection not initialized
+					if (parameter == null) {
+						parameter = new ArrayList();
+						field.set(processor, parameter);
+					}
 					if (values != null) {
-						Collection parameter = Collection.class.cast(field.get(processor));
-						// parameter collection not initialized
-						if (parameter == null) {
-							parameter = new ArrayList();
-							field.set(processor, parameter);
-						}
 						// clear default values
 						parameter.clear();
 						// add values
@@ -67,7 +67,7 @@ public class Parameters {
 								throw new NoSuchElementException(
 										String.format("Missing value for required parameter \"%s\"", field.getName()));
 							}
-						} else if (values.size() == 1) {
+						} else {
 							field.set(processor, values.get(0));
 						}
 					}
