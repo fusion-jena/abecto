@@ -35,6 +35,7 @@ import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.vocabulary.RDF;
 
+@Deprecated
 public class TestDataGenerator {
 
 	private Lang lang = Lang.NTRIPLES;

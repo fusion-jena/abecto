@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 
@@ -36,6 +37,8 @@ import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.util.iterator.ExtendedIterator;
+
+import com.google.common.collect.Streams;
 
 import de.uni_jena.cs.fusion.abecto.util.ToManyElementsException;
 import de.uni_jena.cs.fusion.abecto.util.UncloseableInputStream;
@@ -64,7 +67,7 @@ public class Models {
 			in = new BufferedInputStream(in);
 		}
 		in.mark(MAX_BUFFER_SIZE);
-		// try each known language
+		// try each supported language
 		InputStream unclosableIn = new UncloseableInputStream(in);
 		for (Lang lang : supportedLanguages) {
 			try {
@@ -90,29 +93,22 @@ public class Models {
 		}
 	}
 
-	public static OntModel union(Collection<Collection<Model>> modelCollections) {
+	public static OntModel union(Stream<Model> models) {
 		OntModel union = getEmptyOntModel();
-		modelCollections.stream().flatMap(Collection::stream).forEach(union::addSubModel);
+		models.forEach(union::addSubModel);
 		return union;
 	}
 
 	public static OntModel union(@Nullable Collection<Model> modelCollection, Model... modelArray) {
-		OntModel union = getEmptyOntModel();
+		Stream<Model> stream = Arrays.stream(modelArray);
 		if (modelCollection != null) {
-			modelCollection.forEach(union::addSubModel);
+			stream = Streams.concat(stream, modelCollection.stream());
 		}
-		for (Model model : modelArray) {
-			union.addSubModel(model);
-		}
-		return union;
+		return union(stream);
 	}
 
 	public static OntModel union(Model... models) {
-		OntModel union = getEmptyOntModel();
-		for (Model model : models) {
-			union.addSubModel(model);
-		}
-		return union;
+		return union(Arrays.stream(models));
 	}
 
 	public static void write(OutputStream out, Model model, Lang lang) throws IOException {
