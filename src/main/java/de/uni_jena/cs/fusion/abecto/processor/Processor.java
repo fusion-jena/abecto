@@ -56,14 +56,19 @@ public abstract class Processor implements Runnable {
 	private Map<Resource, Aspect> aspects;
 
 	public final void addInputMetaModel(Resource dataset, Model inputMetaModel) {
+		this.cachedInputMetaModelUnionByDataset.remove(dataset);
+		this.cachedMetaModelUnionByDataset.remove(dataset);
 		this.inputMetaModelsByDataset.computeIfAbsent(dataset, d -> new HashSet<>()).add(inputMetaModel);
 	}
 
 	public final void addInputMetaModels(Resource dataset, Collection<Model> inputMetaModels) {
+		this.cachedInputMetaModelUnionByDataset.remove(dataset);
+		this.cachedMetaModelUnionByDataset.remove(dataset);
 		this.inputMetaModelsByDataset.computeIfAbsent(dataset, d -> new HashSet<>()).addAll(inputMetaModels);
 	}
 
 	public final void addInputPrimaryModels(Resource dataset, Collection<Model> inputPrimaryModels) {
+		this.cachedInputPrimaryModelUnionByDataset.remove(dataset);
 		this.inputPrimaryModelsByDataset.computeIfAbsent(dataset, d -> new HashSet<>()).addAll(inputPrimaryModels);
 	}
 
@@ -98,17 +103,25 @@ public abstract class Processor implements Runnable {
 		return Models.union(this.inputMetaModelsByDataset.values());
 	}
 
+	private Map<Resource, Model> cachedInputMetaModelUnionByDataset = new HashMap<>();
+
 	public final Model getInputMetaModelUnion(Resource dataset) {
-		return Models.union(this.inputMetaModelsByDataset.get(dataset));
+		return cachedInputMetaModelUnionByDataset.computeIfAbsent(dataset,
+				d -> Models.union(this.inputMetaModelsByDataset.get(dataset)));
 	}
 
+	private Map<Resource, Model> cachedInputPrimaryModelUnionByDataset = new HashMap<>();
+
 	public final Model getInputPrimaryModelUnion(Resource dataset) {
-		return Models.union(this.inputPrimaryModelsByDataset.get(dataset));
+		return cachedInputPrimaryModelUnionByDataset.computeIfAbsent(dataset,
+				d -> Models.union(this.inputPrimaryModelsByDataset.get(dataset)));
 	}
 
 	public Model getMetaModelUnion() {
 		return Models.union(this.getInputMetaModelUnion(), this.getOutputMetaModelUnion());
 	}
+
+	private Map<Resource, Model> cachedMetaModelUnionByDataset = new HashMap<>();
 
 	/**
 	 * Returns a union of the input meta models and the result meta model of a
@@ -119,7 +132,8 @@ public abstract class Processor implements Runnable {
 	 * @return union of the meta models
 	 */
 	public Model getMetaModelUnion(@Nullable Resource dataset) {
-		return Models.union(this.getInputMetaModelUnion(), this.getOutputMetaModel(dataset));
+		return cachedMetaModelUnionByDataset.computeIfAbsent(dataset,
+				d -> Models.union(this.getInputMetaModelUnion(), this.getOutputMetaModel(d)));
 	}
 
 	public final Model getOutputMetaModel(@Nullable Resource dataset) {
@@ -255,7 +269,7 @@ public abstract class Processor implements Runnable {
 	public Model getPrimaryModelUnion() {
 		return Models.union(
 				this.inputPrimaryModelsByDataset.get(
-						this.associatedDataset.orElseThrow(() -> new IllegalStateException("No assiciated dataset."))),
+						this.associatedDataset.orElseThrow(() -> new IllegalStateException("No associated dataset."))),
 				this.getOutputPrimaryModel().orElseThrow(() -> new IllegalStateException("No output primary model .")));
 	}
 
@@ -275,6 +289,7 @@ public abstract class Processor implements Runnable {
 	}
 
 	public final void setOutputMetaModel(@Nullable Resource dataset, Model outputMetaModel) {
+		this.cachedMetaModelUnionByDataset.remove(dataset);
 		this.outputMetaModelsByDataset.put(dataset, outputMetaModel);
 	}
 

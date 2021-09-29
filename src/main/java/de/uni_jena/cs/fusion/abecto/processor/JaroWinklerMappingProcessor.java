@@ -28,7 +28,6 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
-import de.uni_jena.cs.fusion.abecto.Correspondences;
 import de.uni_jena.cs.fusion.abecto.Parameter;
 import de.uni_jena.cs.fusion.similarity.jarowinkler.JaroWinklerSimilarity;
 
@@ -104,8 +103,7 @@ public class JaroWinklerMappingProcessor extends MappingProcessor {
 							// convert match into mappings
 							for (Resource resource1 : values1.get(value1)) {
 								for (Resource resource2 : values2.get(value2)) {
-									Correspondences.addCorrespondence(resource1, resource2, aspect.getIri(),
-											this.getMetaModelUnion(null), this.getOutputMetaModel(null));
+									this.addCorrespondence(aspect.getIri(), resource1, resource2);
 								}
 							}
 						}

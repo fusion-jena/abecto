@@ -94,42 +94,45 @@ public class Queries {
 	}
 
 	private static class GroupedResultSupplier implements Supplier<Map<String, List<RDFNode>>> {
-		QuerySolution next;
+		QuerySolution current;
 		ResultSet results;
-		String groupBy;
+		String groupByKey;
 		List<String> vars;
 
-		public GroupedResultSupplier(ResultSet results, String groupBy) {
+		public GroupedResultSupplier(ResultSet results, String groupByKey) {
 			if (results.hasNext()) {
 				this.results = results;
-				this.groupBy = groupBy;
-				this.next = results.next();
+				this.groupByKey = groupByKey;
+				this.current = nextOrNull();
 				this.vars = results.getResultVars();
-				this.vars.remove(groupBy);
+				this.vars.remove(groupByKey);
 			}
 		}
 
 		@Override
 		public Map<String, List<RDFNode>> get() {
-			if (this.next != null) {
-				Map<String, List<RDFNode>> result = new HashMap<>();
-				this.vars.forEach(k -> result.put(k, new ArrayList<>()));
-				Resource groupByValue = next.getResource(this.groupBy);
-				result.put(this.groupBy, Collections.singletonList(groupByValue));
+			if (this.current != null) {
+				Map<String, List<RDFNode>> group = new HashMap<>();
+				this.vars.forEach(k -> group.put(k, new ArrayList<>()));
+				Resource currentGroupByKey = current.getResource(this.groupByKey);
+				group.put(this.groupByKey, Collections.singletonList(currentGroupByKey));
 				do {
 					for (String var : this.vars) {
-						result.get(var).add(next.get(var));
+						group.get(var).add(current.get(var));
 					}
-					if (this.results.hasNext()) {
-						this.next = this.results.next();
-					} else {
-						this.next = null;
-					}
-				} while (this.next != null && next.getResource(this.groupBy).equals(groupByValue));
-				return result;
+					this.current = nextOrNull();
+				} while (this.current != null && current.getResource(this.groupByKey).equals(currentGroupByKey));
+				return group;
 			} else {
 				return null;
 			}
+		}
+
+		private QuerySolution nextOrNull() {
+			if (this.results.hasNext()) {
+				return this.results.next();
+			}
+			return null;
 		}
 	}
 

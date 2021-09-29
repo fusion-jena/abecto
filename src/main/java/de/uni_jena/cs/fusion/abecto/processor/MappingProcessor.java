@@ -32,7 +32,7 @@ public abstract class MappingProcessor extends Processor {
 	 * 
 	 * @param resource1 first resource to check
 	 * @param resource2 second resource to check
-	 * @param aspect    aspect affected by the (in)correspondence
+	 * @param aspect1    aspect affected by the (in)correspondence
 	 * @return
 	 */
 	public final boolean correspondentOrIncorrespondent(Resource resource1, Resource resource2) {
@@ -45,13 +45,13 @@ public abstract class MappingProcessor extends Processor {
 	 * known or contradicts an existing incorrespondence, the correspondence will be
 	 * discard silently.
 	 * 
+	 * @param aspect    aspect affected by the correspondence
 	 * @param resource1 first corresponding resource
 	 * @param resource2 second corresponding resource
-	 * @param aspect    aspect affected by the correspondence
 	 */
-	public final void addCorrespondence(Resource resource1, Resource resource2, Aspect aspect) {
-		Correspondences.addCorrespondence(resource1, resource2, aspect.getIri(), this.getMetaModelUnion(null),
-				this.getOutputMetaModel(null));
+	public final void addCorrespondence(Resource aspect, Resource... resources) {
+		Correspondences.addCorrespondence(this.getMetaModelUnion(null), this.getOutputMetaModel(null), aspect,
+				resources);
 	}
 
 	/**
@@ -64,9 +64,9 @@ public abstract class MappingProcessor extends Processor {
 	 * @param resource2 second corresponding resource
 	 * @param aspect    aspect affected by the correspondence
 	 */
-	public final void addIncorrespondence(Resource resource1, Resource resource2, Aspect aspect) {
-		Correspondences.addIncorrespondence(resource1, resource2, aspect.getIri(), this.getMetaModelUnion(null),
-				this.getOutputMetaModel(null));
+	public final void addIncorrespondence(Aspect aspect, Resource resource1, Resource resource2) {
+		Correspondences.addIncorrespondence(this.getMetaModelUnion(null), this.getOutputMetaModel(null),
+				aspect.getIri(), resource1, resource2);
 	}
 
 	/**
