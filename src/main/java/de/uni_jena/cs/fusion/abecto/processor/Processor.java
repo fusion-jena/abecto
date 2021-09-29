@@ -100,7 +100,7 @@ public abstract class Processor implements Runnable {
 	}
 
 	public final Model getInputMetaModelUnion() {
-		return Models.union(this.inputMetaModelsByDataset.values());
+		return Models.union(this.inputMetaModelsByDataset.values().stream().flatMap(Collection::stream));
 	}
 
 	private Map<Resource, Model> cachedInputMetaModelUnionByDataset = new HashMap<>();
