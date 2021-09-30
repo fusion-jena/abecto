@@ -92,7 +92,7 @@ public class Abecto implements Callable<Integer> {
 			configurationModel = dataset.getDefaultModel();
 
 			// get plan to process
-			Resource plan = Plans.getPlan(configurationModel, planIri);
+			Resource plan = Plans.getPlan(configurationModel, planIri.orElse(null));
 
 			// TODO add transitive correspondences into inputMetaModels
 
@@ -100,7 +100,7 @@ public class Abecto implements Callable<Integer> {
 			Map<Resource, Aspect> aspects = Aspect.getAspects(configurationModel);
 
 			// get steps and predecessors
-			Map<Resource, Set<Resource>> predecessors = Steps.getPredecessors(configurationModel, plan);
+			Map<Resource, Set<Resource>> predecessors = Plans.getStepPredecessors(configurationModel, plan);
 
 			// get execution order
 			List<Resource> stepOrder = new ArrayList<>(predecessors.keySet());
