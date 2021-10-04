@@ -53,7 +53,7 @@ public abstract class Processor implements Runnable {
 	 * during processing using {@link #replaceOutputPrimaryModel(Model)}.
 	 */
 	private Optional<Model> outputPrimaryModel = Optional.empty();
-	private Map<Resource, Aspect> aspects;
+	private Map<Resource, Aspect> aspects = Collections.emptyMap();
 
 	public final void addInputMetaModel(Resource dataset, Model inputMetaModel) {
 		this.cachedInputMetaModelUnionByDataset.remove(dataset);
@@ -65,6 +65,11 @@ public abstract class Processor implements Runnable {
 		this.cachedInputMetaModelUnionByDataset.remove(dataset);
 		this.cachedMetaModelUnionByDataset.remove(dataset);
 		this.inputMetaModelsByDataset.computeIfAbsent(dataset, d -> new HashSet<>()).addAll(inputMetaModels);
+	}
+
+	public final void addInputPrimaryModels(Resource dataset, Model inputPrimaryModel) {
+		this.cachedInputPrimaryModelUnionByDataset.remove(dataset);
+		this.inputPrimaryModelsByDataset.computeIfAbsent(dataset, d -> new HashSet<>()).add(inputPrimaryModel);
 	}
 
 	public final void addInputPrimaryModels(Resource dataset, Collection<Model> inputPrimaryModels) {

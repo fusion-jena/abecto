@@ -15,51 +15,89 @@
  */
 package de.uni_jena.cs.fusion.abecto.processor;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.Arrays;
+import java.util.Collections;
+
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.query.QueryFactory;
+import org.apache.jena.rdf.model.Literal;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
 import org.junit.jupiter.api.Test;
+
+import de.uni_jena.cs.fusion.abecto.Aspect;
+import de.uni_jena.cs.fusion.abecto.Correspondences;
+import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 
 public class UsePresentMappingProcessorTest {
 
 	@Test
 	public void computeResultModel() throws Exception {
-		// TODO rewrite
-//		UsePresentMappingProcessor.Parameter parameter = new UsePresentMappingProcessor.Parameter();
-//		parameter.assignmentPaths.add("<http://example.org/sameAs>");
-//		parameter.assignmentPaths.add("<http://example.org/same>/<http://example.org/as>");
-//
-//		String inputRdf = "<http://example.org/a1> <http://example.org/sameAs> <http://example.org/a2> ."
-//				+ "<http://example.org/b1> <http://example.org/same> <http://example.org/b-link> ."
-//				+ "<http://example.org/b-link> <http://example.org/as> <http://example.org/b2> ."
-//				+ "<http://example.org/c1> <http://example.org/sameAs> <http://example.org/c2> ."
-//				+ "<http://example.org/d1> <http://example.org/sameAs> <http://example.org/d2> ."
-//				+ "<http://example.org/e1> <http://example.org/sameAs> \"issue\" .";
-//		Model inputModel = Models.read(new ByteArrayInputStream(inputRdf.getBytes()));
-//
-//		Model inputMetaModel = Models.getEmptyOntModel();
-//		SparqlEntityManager.insert(Arrays.asList(
-//				Mapping.of(ResourceFactory.createResource("http://example.org/c1"),
-//						ResourceFactory.createResource("http://example.org/c2")),
-//				Mapping.not(ResourceFactory.createResource("http://example.org/d1"),
-//						ResourceFactory.createResource("http://example.org/d2"))),
-//				inputMetaModel);
-//
-//		UsePresentMappingProcessor processor = new UsePresentMappingProcessor();
-//		processor.addInputModelGroup(UUID.randomUUID(), Collections.singleton(inputModel));
-//		processor.addInputModelGroup(UUID.randomUUID(), Collections.singleton(Models.getEmptyModel()));
-//		processor.addMetaModels(Collections.singleton(inputMetaModel));
-//		processor.setParameters(parameter);
-//		Model outputModel = processor.call();
-//
-//		Collection<Mapping> mappings = Metadata.getMappings(outputModel);
-//		assertTrue(mappings.contains(Mapping.of(ResourceFactory.createResource("http://example.org/a1"),
-//				ResourceFactory.createResource("http://example.org/a2"))));
-//		assertTrue(mappings.contains(Mapping.of(ResourceFactory.createResource("http://example.org/b1"),
-//				ResourceFactory.createResource("http://example.org/b2"))));
-//		assertFalse(mappings.contains(Mapping.of(ResourceFactory.createResource("http://example.org/c1"),
-//				ResourceFactory.createResource("http://example.org/c2"))));
-//		assertFalse(mappings.contains(Mapping.of(ResourceFactory.createResource("http://example.org/d1"),
-//				ResourceFactory.createResource("http://example.org/d2"))));
-//
-//		Collection<Issue> issues = SparqlEntityManager.select(new Issue(), outputModel);
-//		assertFalse(issues.isEmpty());
+		Model inputPrimaryModel = ModelFactory.createDefaultModel();
+
+		Resource aspectIri = ResourceFactory.createResource("http://example.org/aspect");
+		Resource dataset = ResourceFactory.createResource("http://example.org/dataset");
+
+		Property sameAs = ResourceFactory.createProperty("http://example.org/sameAs");
+		Property same = ResourceFactory.createProperty("http://example.org/same");
+		Property as = ResourceFactory.createProperty("http://example.org/as");
+
+		Resource type = ResourceFactory.createResource("http://eample.org/type");
+
+		Resource a1 = inputPrimaryModel.createResource("http://example.org/a1", type);
+		Resource a2 = inputPrimaryModel.createResource("http://example.org/a2", type);
+		Resource b1 = inputPrimaryModel.createResource("http://example.org/b1", type);
+		Resource bLink = inputPrimaryModel.createResource("http://example.org/b-link", type);
+		Resource b2 = inputPrimaryModel.createResource("http://example.org/b2", type);
+		Resource c1 = inputPrimaryModel.createResource("http://example.org/c1", type);
+		Resource c2 = inputPrimaryModel.createResource("http://example.org/c2", type);
+		Resource d1 = inputPrimaryModel.createResource("http://example.org/d1", type);
+		Resource d2 = inputPrimaryModel.createResource("http://example.org/d2", type);
+		Resource e1 = inputPrimaryModel.createResource("http://example.org/e1", type);
+		Literal issueLiteral = inputPrimaryModel.createLiteral("issueLiteral");
+
+		inputPrimaryModel.add(a1, sameAs, a2).add(b1, same, bLink).add(bLink, as, b2).add(c1, sameAs, c2)
+				.add(d1, sameAs, d2).add(e1, sameAs, issueLiteral);
+
+		Model inputMetaModel = ModelFactory.createDefaultModel();
+		Correspondences.addCorrespondence(inputMetaModel, inputMetaModel, aspectIri, c1, c2);
+		Correspondences.addIncorrespondence(inputMetaModel, inputMetaModel, aspectIri, d1, d2);
+
+		Model outputMetaModel = ModelFactory.createDefaultModel();
+
+		Aspect aspect = new Aspect(aspectIri, "key");
+		aspect.setPattern(dataset, QueryFactory.create("SELECT ?key WHERE {?key a <" + type.getURI() + ">}"));
+
+		UsePresentMappingProcessor processor = new UsePresentMappingProcessor();
+		processor.setAspectMap(Collections.singletonMap(aspectIri, aspect));
+		processor.aspect = aspectIri;
+		processor.assignmentPaths = Arrays.asList("<http://example.org/sameAs>",
+				"<http://example.org/same>/<http://example.org/as>");
+		processor.addInputMetaModel(dataset, inputMetaModel);
+		processor.addInputPrimaryModels(dataset, inputPrimaryModel);
+		processor.setOutputMetaModel(null, outputMetaModel);
+		processor.run();
+
+		assertTrue(Correspondences.allCorrespondend(outputMetaModel, a1, a2));
+		assertTrue(Correspondences.allCorrespondend(outputMetaModel, b1, b2));
+		assertFalse(Correspondences.allCorrespondend(outputMetaModel, c1, c2));
+		assertFalse(Correspondences.allCorrespondend(outputMetaModel, d1, d2));
+
+		// assert issue present
+		Query query = QueryFactory.create(""//
+				+ "ASK WHERE {"//
+				+ "  ?issue a <" + AV.Issue + "> ;"//
+				+ "         <" + AV.affectedAspect + "> <" + aspectIri + "> ;"//
+				+ "         <" + AV.affectedValue + "> \"" + issueLiteral + "\" ;"//
+				+ "         <" + AV.issueType + "> \"Invalid Value\" ;"//
+				+ "}");
+		assertTrue(QueryExecutionFactory.create(query, outputMetaModel).execAsk());
 	}
 }

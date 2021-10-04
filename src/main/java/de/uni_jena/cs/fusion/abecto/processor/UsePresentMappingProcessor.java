@@ -17,13 +17,17 @@ package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.io.ByteArrayInputStream;
 import java.util.Collection;
+import java.util.Objects;
+import java.util.Set;
 
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceRequiredException;
 import org.apache.jena.sparql.core.TriplePath;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
@@ -35,8 +39,9 @@ import org.slf4j.LoggerFactory;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
 import de.uni_jena.cs.fusion.abecto.Correspondences;
-import de.uni_jena.cs.fusion.abecto.Vocabularies;
+import de.uni_jena.cs.fusion.abecto.Metadata;
 import de.uni_jena.cs.fusion.abecto.Parameter;
+import de.uni_jena.cs.fusion.abecto.Vocabularies;
 
 public class UsePresentMappingProcessor extends Processor {
 	final static Logger log = LoggerFactory.getLogger(UsePresentMappingProcessor.class);
@@ -48,7 +53,7 @@ public class UsePresentMappingProcessor extends Processor {
 
 	@Override
 	public void run() {
-		Aspect aspect = getAspects().get(this.aspect);
+		Aspect aspect = Objects.requireNonNull(getAspects().get(this.aspect), "Unknown aspect.");
 		for (String unparsedAssignmentPath : this.assignmentPaths) {
 			try {
 				// get path
@@ -67,25 +72,44 @@ public class UsePresentMappingProcessor extends Processor {
 				block.addTriple(new TriplePath(subject, assignmentPath, object));
 				query.setQueryPattern(block);
 
+				Model metaModel = this.getMetaModelUnion(null);
+				Model outputMetaModel = this.getOutputMetaModel(null);
 				// execute query for each dataset
 				for (Resource dataset : this.getInputDatasets()) {
 					Model inputPrimaryModel = this.getInputPrimaryModelUnion(dataset);
-					Model metaModel = this.getMetaModelUnion(null);
-					Model outputMetaModel = this.getOutputMetaModel(null);
+
+					// get aspects resource
+					Set<Resource> aspectResources = Aspect.getResourceKeys(aspect, dataset, inputPrimaryModel);
 
 					ResultSet resultSet = QueryExecutionFactory.create(query, inputPrimaryModel).execSelect();
 					while (resultSet.hasNext()) {
 						QuerySolution solution = resultSet.next();
-						try {
-							Resource resource1 = solution.getResource("s");
-							Resource resource2 = solution.getResource("o");
-							Correspondences.addCorrespondence(metaModel, outputMetaModel, aspect.getIri(), resource1,
-									resource2);
-						} catch (ClassCastException e) {
-							// TODO add issue to outputMetaModel
-							log.warn(String.format("UnexpectedValueType: Subject or object is not a resource: %s %s %s",
-									solution.get("s"), assignmentPath, solution.get("o")));
+						RDFNode node1 = solution.get("s");
+						RDFNode node2 = solution.get("o");
+						if (node1.isResource() && aspectResources.contains(node1.asResource())) {
+							try {
+								Correspondences.addCorrespondence(metaModel, outputMetaModel, this.aspect,
+										node1.asResource(), node2.asResource());
+							} catch (ResourceRequiredException e) {
+								Metadata.addIssue(node1.asResource(), null, node2, this.aspect, "Invalid Value",
+										String.format(
+												"Failed to get corresponding resource, found a literal: <%s> %s \"%s\"^^<%s>",
+												node1, assignmentPath, node2, node2.asLiteral().getDatatypeURI()),
+										outputMetaModel);
+							}
+						} else if (node2.isResource() && aspectResources.contains(node2.asResource())) {
+							try {
+								Correspondences.addCorrespondence(metaModel, outputMetaModel, this.aspect,
+										node1.asResource(), node2.asResource());
+							} catch (ResourceRequiredException e) {
+								Metadata.addIssue(node2.asResource(), null, node1, this.aspect, "Invalid Value",
+										String.format(
+												"Failed to get corresponding resource, found a literal: \"%s\"^^<%s> <%s> %s",
+												node1, node1.asLiteral().getDatatypeURI(), assignmentPath, node2),
+										outputMetaModel);
+							}
 						}
+						// else ignore
 					}
 				}
 			} catch (ParseException e) {

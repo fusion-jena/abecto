@@ -24,6 +24,7 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -95,7 +96,7 @@ public class Models {
 
 	public static OntModel union(Stream<Model> models) {
 		OntModel union = getEmptyOntModel();
-		models.forEach(union::addSubModel);
+		models.filter(Objects::nonNull).forEach(union::addSubModel);
 		return union;
 	}
 

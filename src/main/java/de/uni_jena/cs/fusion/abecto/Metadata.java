@@ -53,11 +53,13 @@ public class Metadata {
 		qualityAnnotation.addProperty(OA.hasBody, deviation);
 	}
 
-	public static void addIssue(Resource affectedResource, String affectedVariableName, RDFNode affectedValue,
+	public static void addIssue(Resource affectedResource, @Nullable String affectedVariableName, RDFNode affectedValue,
 			Resource affectedAspect, String issueType, String comment, Model outputAffectedDatasetMetaModel) {
 		Resource issue = outputAffectedDatasetMetaModel.createResource(AV.Issue);
 		issue.addProperty(AV.affectedAspect, affectedAspect);
-		issue.addLiteral(AV.affectedVariableName, affectedVariableName);
+		if (affectedVariableName != null) {
+			issue.addLiteral(AV.affectedVariableName, affectedVariableName);
+		}
 		issue.addProperty(AV.affectedValue, affectedValue);
 		issue.addLiteral(AV.issueType, issueType);
 		issue.addLiteral(RDFS.comment, comment);
