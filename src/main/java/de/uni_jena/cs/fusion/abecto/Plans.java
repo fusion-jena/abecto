@@ -30,6 +30,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.vocabulary.RDF;
 
+import de.uni_jena.cs.fusion.abecto.util.Models;
 import de.uni_jena.cs.fusion.abecto.util.ToManyElementsException;
 import de.uni_jena.cs.fusion.abecto.vocabulary.PPlan;
 

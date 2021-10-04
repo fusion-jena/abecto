@@ -32,8 +32,6 @@ import org.junit.jupiter.api.Test;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 
-import de.uni_jena.cs.fusion.abecto.Models;
-
 public class ModelsTest {
 
 	@Test

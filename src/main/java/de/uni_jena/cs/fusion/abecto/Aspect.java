@@ -15,7 +15,7 @@
  */
 package de.uni_jena.cs.fusion.abecto;
 
-import static de.uni_jena.cs.fusion.abecto.Models.assertOne;
+import static de.uni_jena.cs.fusion.abecto.util.Models.assertOne;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -40,6 +40,7 @@ import org.apache.jena.vocabulary.RDF;
 
 import com.google.common.base.Functions;
 
+import de.uni_jena.cs.fusion.abecto.util.Models;
 import de.uni_jena.cs.fusion.abecto.util.ToManyElementsException;
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 

@@ -33,6 +33,7 @@ import org.apache.jena.shared.Lock;
 import org.apache.jena.vocabulary.RDF;
 
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
+import de.uni_jena.cs.fusion.abecto.util.Models;
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 import de.uni_jena.cs.fusion.abecto.vocabulary.DQV;
 import de.uni_jena.cs.fusion.abecto.vocabulary.PPlan;

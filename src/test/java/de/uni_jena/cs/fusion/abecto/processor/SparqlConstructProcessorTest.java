@@ -28,8 +28,8 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.junit.jupiter.api.Test;
 
-import de.uni_jena.cs.fusion.abecto.Models;
 import de.uni_jena.cs.fusion.abecto.processor.SparqlConstructProcessor;
+import de.uni_jena.cs.fusion.abecto.util.Models;
 
 public class SparqlConstructProcessorTest {
 	@Test

@@ -34,6 +34,7 @@ import org.apache.jena.sparql.core.TriplePath;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.path.PathFactory;
 
+import de.uni_jena.cs.fusion.abecto.util.Queries;
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 
 public class Correspondences {

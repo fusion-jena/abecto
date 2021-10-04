@@ -18,8 +18,8 @@ package de.uni_jena.cs.fusion.abecto.processor;
 import java.io.FileInputStream;
 import java.io.IOException;
 
-import de.uni_jena.cs.fusion.abecto.Models;
 import de.uni_jena.cs.fusion.abecto.Parameter;
+import de.uni_jena.cs.fusion.abecto.util.Models;
 
 public class RdfFileSourceProcessor extends Processor {
 
