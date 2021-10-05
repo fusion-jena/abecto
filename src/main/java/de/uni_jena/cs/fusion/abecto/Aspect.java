@@ -235,7 +235,8 @@ public class Aspect {
 		return patternByDataset.get(dataset);
 	}
 
-	public void setPattern(Resource dataset, Query pattern) {
+	public Aspect setPattern(Resource dataset, Query pattern) {
 		patternByDataset.put(dataset, pattern);
+		return this;
 	}
 }
