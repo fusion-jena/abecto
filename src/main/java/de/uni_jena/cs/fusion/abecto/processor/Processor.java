@@ -298,6 +298,16 @@ public abstract class Processor implements Runnable {
 		this.outputMetaModelsByDataset.put(dataset, outputMetaModel);
 	}
 
+	/**
+	 * Sets a model as the output primary model.
+	 * <p>
+	 * Processors are allowed to replace the output primary model. Therefore,
+	 * {@link #getOutputPrimaryModel()} should always be used to access the content
+	 * of the output primary model.
+	 * 
+	 * @param dataset
+	 * @param outputPrimaryModel
+	 */
 	public final void setOutputPrimaryModel(Resource dataset, Model outputPrimaryModel) {
 		this.associatedDataset = Optional.of(dataset);
 		this.outputPrimaryModel = Optional.of(outputPrimaryModel);

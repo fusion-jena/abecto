@@ -15,21 +15,34 @@
  */
 package de.uni_jena.cs.fusion.abecto.processor;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.net.URL;
+
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
 import org.junit.jupiter.api.Test;
 
 public class UrlSourceProcessorTest {
 	@Test
 	public void computeResultModel() throws Exception {
-		// TODO rewrite
-//		UrlSourceProcessor.Parameter parameter = new Parameter();
-//		parameter.url = "http://www.w3.org/1999/02/22-rdf-syntax-ns";
-//		UrlSourceProcessor processor = new UrlSourceProcessor();
-//		processor.setParameters(parameter);
-//		Model outputModel = processor.call();
-//		assertTrue(
-//				outputModel.contains(ResourceFactory.createResource("http://www.w3.org/1999/02/22-rdf-syntax-ns#first"),
-//						ResourceFactory.createProperty("http://www.w3.org/2000/01/rdf-schema#label"),
-//						ResourceFactory.createPlainLiteral("first")));
+		UrlSourceProcessor processor = new UrlSourceProcessor();
+		processor.url = new URL("http://www.w3.org/1999/02/22-rdf-syntax-ns");
+
+		Resource dataset = ResourceFactory.createResource("http://example.org/dataset");
+		Model outputPrimaryModel = ModelFactory.createDefaultModel();
+		processor.setOutputPrimaryModel(dataset, outputPrimaryModel);
+
+		processor.run();
+
+		outputPrimaryModel = processor.getOutputPrimaryModel().get();
+
+		assertTrue(outputPrimaryModel.contains(
+				ResourceFactory.createResource("http://www.w3.org/1999/02/22-rdf-syntax-ns#first"),
+				ResourceFactory.createProperty("http://www.w3.org/2000/01/rdf-schema#label"),
+				ResourceFactory.createPlainLiteral("first")));
 	}
 
 }
