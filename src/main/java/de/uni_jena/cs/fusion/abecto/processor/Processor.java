@@ -30,6 +30,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
@@ -41,7 +42,7 @@ import de.uni_jena.cs.fusion.abecto.util.ToManyElementsException;
  * meta data graphs based on its input primary data, meta data graphs and
  * processor parameters.
  */
-public abstract class Processor implements Runnable {
+public abstract class Processor<P extends Processor<P>> implements Runnable {
 
 	private Map<String, List<Object>> parameter = new HashMap<>();
 	private Map<Resource, Collection<Model>> inputMetaModelsByDataset = new HashMap<>();
@@ -55,29 +56,33 @@ public abstract class Processor implements Runnable {
 	private Optional<Model> outputPrimaryModel = Optional.empty();
 	private Map<Resource, Aspect> aspects = Collections.emptyMap();
 
-	public final void addInputMetaModel(Resource dataset, Model inputMetaModel) {
+	public final P addInputMetaModel(Resource dataset, Model inputMetaModel) {
 		this.cachedInputMetaModelUnionByDataset.remove(dataset);
 		this.cachedMetaModelUnionByDataset.remove(dataset);
 		this.inputMetaModelsByDataset.computeIfAbsent(dataset, d -> new HashSet<>()).add(inputMetaModel);
+		return self();
 	}
 
-	public final void addInputPrimaryModel(Resource dataset, Model inputPrimaryModel) {
+	public final P addInputPrimaryModel(Resource dataset, Model inputPrimaryModel) {
 		this.cachedInputPrimaryModelUnionByDataset.remove(dataset);
 		this.inputPrimaryModelsByDataset.computeIfAbsent(dataset, d -> new HashSet<>()).add(inputPrimaryModel);
+		return self();
 	}
 
-	public final void addInputMetaModels(Resource dataset, Collection<Model> inputMetaModels) {
+	public final P addInputMetaModels(Resource dataset, Collection<Model> inputMetaModels) {
 		this.cachedInputMetaModelUnionByDataset.remove(dataset);
 		this.cachedMetaModelUnionByDataset.remove(dataset);
 		this.inputMetaModelsByDataset.computeIfAbsent(dataset, d -> new HashSet<>()).addAll(inputMetaModels);
+		return self();
 	}
 
-	public final void addInputPrimaryModels(Resource dataset, Collection<Model> inputPrimaryModels) {
+	public final P addInputPrimaryModels(Resource dataset, Collection<Model> inputPrimaryModels) {
 		this.cachedInputPrimaryModelUnionByDataset.remove(dataset);
 		this.inputPrimaryModelsByDataset.computeIfAbsent(dataset, d -> new HashSet<>()).addAll(inputPrimaryModels);
+		return self();
 	}
 
-	public final void addInputProcessor(Processor inputProcessor) {
+	public final P addInputProcessor(Processor<?> inputProcessor) {
 		inputProcessor.inputMetaModelsByDataset.forEach((d, m) -> this.addInputMetaModels(d, m));
 		inputProcessor.outputMetaModelsByDataset
 				.forEach((d, m) -> this.addInputMetaModels(d, Collections.singleton(m)));
@@ -86,6 +91,7 @@ public abstract class Processor implements Runnable {
 			this.addInputPrimaryModels(inputProcessor.associatedDataset.get(),
 					Collections.singleton(inputProcessor.outputPrimaryModel.get()));
 		}
+		return self();
 	}
 
 	public Map<Resource, Aspect> getAspects() {
@@ -289,28 +295,27 @@ public abstract class Processor implements Runnable {
 		}
 	}
 
-	public void setAspectMap(Map<Resource, Aspect> aspects) {
+	public P setAspectMap(Map<Resource, Aspect> aspects) {
 		this.aspects = aspects;
+		return self();
 	}
 
-	public final void setOutputMetaModel(@Nullable Resource dataset, Model outputMetaModel) {
+	public final P setOutputMetaModel(@Nullable Resource dataset, Model outputMetaModel) {
 		this.cachedMetaModelUnionByDataset.remove(dataset);
 		this.outputMetaModelsByDataset.put(dataset, outputMetaModel);
+		return self();
 	}
 
 	/**
-	 * Sets a model as the output primary model.
-	 * <p>
-	 * Processors are allowed to replace the output primary model. Therefore,
-	 * {@link #getOutputPrimaryModel()} should always be used to access the content
-	 * of the output primary model.
+	 * Sets the associated dataset of the processor, which is the dataset the output
+	 * primary model will belong to.
 	 * 
 	 * @param dataset
-	 * @param outputPrimaryModel
 	 */
-	public final void setOutputPrimaryModel(Resource dataset, Model outputPrimaryModel) {
+	public final P setAssociatedDataset(Resource dataset) {
 		this.associatedDataset = Optional.of(dataset);
-		this.outputPrimaryModel = Optional.of(outputPrimaryModel);
+		this.outputPrimaryModel = Optional.of(ModelFactory.createDefaultModel());
+		return self();
 	}
 
 	/**
@@ -322,11 +327,12 @@ public abstract class Processor implements Runnable {
 	 * @param outputPrimaryModel the model that replaces the current output primary
 	 *                           model
 	 */
-	public final void replaceOutputPrimaryModel(Model outputPrimaryModel) {
+	public final P replaceOutputPrimaryModel(Model outputPrimaryModel) {
 		if (this.associatedDataset.isEmpty()) {
 			throw new IllegalStateException("Operation only permited, if step is associated with a dataset.");
 		}
 		this.outputPrimaryModel = Optional.of(outputPrimaryModel);
+		return self();
 	}
 
 	/**
@@ -335,7 +341,13 @@ public abstract class Processor implements Runnable {
 	 * @param key   key of the parameter
 	 * @param value value of the parameter
 	 */
-	public final void setParameterValues(String key, List<Object> value) {
+	public final P setParameterValues(String key, List<Object> value) {
 		this.parameter.put(key, value);
+		return self();
+	}
+
+	@SuppressWarnings("unchecked")
+	private P self() {
+		return (P) this;
 	}
 }

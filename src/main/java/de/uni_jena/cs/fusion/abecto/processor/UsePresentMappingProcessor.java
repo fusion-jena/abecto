@@ -43,7 +43,7 @@ import de.uni_jena.cs.fusion.abecto.Metadata;
 import de.uni_jena.cs.fusion.abecto.Parameter;
 import de.uni_jena.cs.fusion.abecto.Vocabularies;
 
-public class UsePresentMappingProcessor extends Processor {
+public class UsePresentMappingProcessor extends Processor<UsePresentMappingProcessor> {
 	final static Logger log = LoggerFactory.getLogger(UsePresentMappingProcessor.class);
 
 	@Parameter

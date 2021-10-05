@@ -24,7 +24,7 @@ import org.apache.jena.rdf.model.ModelFactory;
 import openllet.jena.PelletReasoner;
 import openllet.shared.tools.Log;
 
-public class OpenlletReasoningProcessor extends Processor {
+public class OpenlletReasoningProcessor extends Processor<OpenlletReasoningProcessor> {
 
 	@Override
 	public void run() {

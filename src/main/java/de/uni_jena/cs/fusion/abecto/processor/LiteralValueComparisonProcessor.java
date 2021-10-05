@@ -24,7 +24,7 @@ import org.apache.jena.datatypes.xsd.impl.XSDFloat;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.RDFNode;
 
-public class LiteralValueComparisonProcessor extends AbstractValueComparisonProcessor {
+public class LiteralValueComparisonProcessor extends AbstractValueComparisonProcessor<LiteralValueComparisonProcessor> {
 
 	@Override
 	public boolean isValidValue(RDFNode value) {

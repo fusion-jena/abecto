@@ -47,7 +47,7 @@ import org.apache.jena.vocabulary.RDFS;
 
 import de.uni_jena.cs.fusion.abecto.Parameter;
 
-public class SparqlSourceProcessor extends Processor {
+public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 	/** URL of the SPARQL endpoint to use. */
 	@Parameter
 	public String service;

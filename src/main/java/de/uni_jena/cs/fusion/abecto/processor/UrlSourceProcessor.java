@@ -21,7 +21,7 @@ import java.net.URL;
 import de.uni_jena.cs.fusion.abecto.Parameter;
 import de.uni_jena.cs.fusion.abecto.util.Models;
 
-public class UrlSourceProcessor extends Processor {
+public class UrlSourceProcessor extends Processor<UrlSourceProcessor> {
 
 	@Parameter
 	URL url;

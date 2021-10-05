@@ -20,7 +20,7 @@ import org.apache.jena.rdf.model.Resource;
 import de.uni_jena.cs.fusion.abecto.Aspect;
 import de.uni_jena.cs.fusion.abecto.Correspondences;
 
-public abstract class MappingProcessor extends Processor {
+public abstract class MappingProcessor<P extends Processor<P>> extends Processor<P> {
 
 	/**
 	 * Checks if a correspondence or incorrespondence for two given resources in a

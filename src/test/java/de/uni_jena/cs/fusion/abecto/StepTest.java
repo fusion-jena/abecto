@@ -266,7 +266,7 @@ public class StepTest {
 				Arrays.toString(expectedValues), Arrays.toString(actualValues)));
 	}
 
-	public static class TestProcessor extends Processor {
+	public static class TestProcessor extends Processor<TestProcessor> {
 		static TestProcessor instance;
 
 		@Parameter

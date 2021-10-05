@@ -38,7 +38,7 @@ import de.uni_jena.cs.fusion.abecto.vocabulary.OM;
  * <strong>completeness</strong> per aspect, as well as <strong>resource
  * omission</strong> and <strong>duplicate</strong> annotations.
  */
-public class CompletenessProcessor extends Processor {
+public class CompletenessProcessor extends Processor<CompletenessProcessor> {
 
 	/**
 	 * The {@link Aspect Aspects} to process.

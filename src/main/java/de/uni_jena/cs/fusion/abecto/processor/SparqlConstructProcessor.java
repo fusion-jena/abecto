@@ -23,7 +23,7 @@ import org.apache.jena.rdf.model.ModelFactory;
 
 import de.uni_jena.cs.fusion.abecto.Parameter;
 
-public class SparqlConstructProcessor extends Processor {
+public class SparqlConstructProcessor extends Processor<SparqlConstructProcessor> {
 
 	@Parameter
 	public Query query;

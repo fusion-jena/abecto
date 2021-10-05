@@ -28,7 +28,7 @@ import de.uni_jena.cs.fusion.abecto.Aspect;
 import de.uni_jena.cs.fusion.abecto.Correspondences;
 import de.uni_jena.cs.fusion.abecto.Parameter;
 
-public class RelationalMappingProcessor extends MappingProcessor {
+public class RelationalMappingProcessor extends MappingProcessor<RelationalMappingProcessor> {
 
 	@Parameter
 	public Resource referringAspect;

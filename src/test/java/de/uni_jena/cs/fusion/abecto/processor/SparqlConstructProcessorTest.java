@@ -49,9 +49,9 @@ public class SparqlConstructProcessorTest {
 		Model outputPrimaryModel;
 
 		// test maxIterations = default ( = 1)
-		processor = new SparqlConstructProcessor();
-		processor.addInputPrimaryModel(dataset, inputPrimaryModel);
-		processor.setOutputPrimaryModel(dataset, ModelFactory.createDefaultModel());
+		processor = new SparqlConstructProcessor()//
+				.addInputPrimaryModel(dataset, inputPrimaryModel)//
+				.setAssociatedDataset(dataset);
 		processor.query = query;
 		processor.run();
 		outputPrimaryModel = processor.getOutputPrimaryModel().get();
@@ -71,9 +71,9 @@ public class SparqlConstructProcessorTest {
 		assertTrue(outputPrimaryModel.contains(r(4), p(1), r(6)));
 
 		// test maxIterations = 1
-		processor = new SparqlConstructProcessor();
-		processor.addInputPrimaryModel(dataset, inputPrimaryModel);
-		processor.setOutputPrimaryModel(dataset, ModelFactory.createDefaultModel());
+		processor = new SparqlConstructProcessor()//
+				.addInputPrimaryModel(dataset, inputPrimaryModel)//
+				.setAssociatedDataset(dataset);
 		processor.query = query;
 		processor.maxIterations = 1;
 		processor.run();
@@ -94,9 +94,9 @@ public class SparqlConstructProcessorTest {
 		assertTrue(outputPrimaryModel.contains(r(4), p(1), r(6)));
 
 		// test maxIterations = 2
-		processor = new SparqlConstructProcessor();
-		processor.addInputPrimaryModel(dataset, inputPrimaryModel);
-		processor.setOutputPrimaryModel(dataset, ModelFactory.createDefaultModel());
+		processor = new SparqlConstructProcessor()//
+				.addInputPrimaryModel(dataset, inputPrimaryModel)//
+				.setAssociatedDataset(dataset);
 		processor.query = query;
 		processor.maxIterations = 2;
 		processor.run();
@@ -117,9 +117,9 @@ public class SparqlConstructProcessorTest {
 		assertTrue(outputPrimaryModel.contains(r(4), p(1), r(6)));
 
 		// test maxIterations = 3
-		processor = new SparqlConstructProcessor();
-		processor.addInputPrimaryModel(dataset, inputPrimaryModel);
-		processor.setOutputPrimaryModel(dataset, ModelFactory.createDefaultModel());
+		processor = new SparqlConstructProcessor()//
+				.addInputPrimaryModel(dataset, inputPrimaryModel)//
+				.setAssociatedDataset(dataset);
 		processor.query = query;
 		processor.maxIterations = 3;
 		processor.run();
@@ -140,9 +140,9 @@ public class SparqlConstructProcessorTest {
 		assertTrue(outputPrimaryModel.contains(r(4), p(1), r(6)));
 
 		// test maxIterations = 4 (more than needed)
-		processor = new SparqlConstructProcessor();
-		processor.addInputPrimaryModel(dataset, inputPrimaryModel);
-		processor.setOutputPrimaryModel(dataset, ModelFactory.createDefaultModel());
+		processor = new SparqlConstructProcessor()//
+				.addInputPrimaryModel(dataset, inputPrimaryModel)//
+				.setAssociatedDataset(dataset);
 		processor.query = query;
 		processor.maxIterations = 4;
 		processor.run();

@@ -21,7 +21,7 @@ import java.io.IOException;
 import de.uni_jena.cs.fusion.abecto.Parameter;
 import de.uni_jena.cs.fusion.abecto.util.Models;
 
-public class RdfFileSourceProcessor extends Processor {
+public class RdfFileSourceProcessor extends Processor<RdfFileSourceProcessor> {
 
 	@Parameter
 	String path;

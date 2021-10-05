@@ -44,7 +44,7 @@ public class Step implements Runnable {
 	private final Dataset dataset;
 	private final Resource stepIri;
 	private Resource stepExecutionIri;
-	private final Processor processor;
+	private final Processor<?> processor;
 	private final Model configurationModel;
 	private final Collection<Step> inputSteps;
 	private final Collection<Resource> inputModelIris = new ArrayList<>();
@@ -99,7 +99,7 @@ public class Step implements Runnable {
 			throw new IllegalArgumentException("Failed to load processor class. Expected subclass of \""
 					+ Processor.class.getCanonicalName() + "\", but got: " + classUri);
 		}
-		processor = ((Class<Processor>) processorClass).getDeclaredConstructor(new Class[0]).newInstance();
+		processor = ((Class<Processor<?>>) processorClass).getDeclaredConstructor(new Class[0]).newInstance();
 
 		// get processor parameter
 		Map<String, List<?>> parameters = new HashMap<>();
@@ -117,20 +117,20 @@ public class Step implements Runnable {
 		processor.setAspectMap(aspectMap);
 	}
 
-	private void prepareModel(Resource modelType, Resource datasetIri) {
+	private void prepareOutputMetaModel(Resource datasetIri) {
+		Model outputModel = ModelFactory.createDefaultModel();
+		setOutputModelMetadata(AV.MetaDataGraph, datasetIri, outputModel);
+		processor.setOutputMetaModel(datasetIri, outputModel);
+	}
+
+	private void setOutputModelMetadata(Resource modelType, Resource datasetIri, Model outputModel) {
 		// TODO remove workaround for https://issues.apache.org/jira/browse/JENA-2169
 		Resource outputModelIri = configurationModel.createResource("uuid:" + UUID.randomUUID(), modelType);
-		Model outputModel = ModelFactory.createDefaultModel();
 		outputModelByIri.put(outputModelIri, outputModel);
 		outputModelIri.addProperty(PROV.wasGeneratedBy, stepExecutionIri);
 		if (datasetIri != null) {
 			outputModelIri.addProperty(modelType.equals(AV.MetaDataGraph) ? DQV.computedOn : AV.associatedDataset,
 					datasetIri);
-		}
-		if (modelType.equals(AV.MetaDataGraph)) {
-			processor.setOutputMetaModel(datasetIri, outputModel);
-		} else {
-			processor.setOutputPrimaryModel(datasetIri, outputModel);
 		}
 	}
 
@@ -169,17 +169,17 @@ public class Step implements Runnable {
 			// prepare output meta models for each input dataset
 			Set<Resource> inputDatasets = processor.getInputDatasets();
 			for (Resource datasetIri : processor.getInputDatasets()) {
-				prepareModel(AV.MetaDataGraph, datasetIri);
+				prepareOutputMetaModel(datasetIri);
 			}
 			// prepare general output meta model
-			prepareModel(AV.MetaDataGraph, null);
-			// prepare output meta and primary model for associated dataset, if needed
+			prepareOutputMetaModel(null);
+			// set associated dataset and prepare associated output meta model, if needed
 			Models.assertOneOptional(configurationModel.listObjectsOfProperty(stepIri, AV.associatedDataset))
 					.ifPresent(datasetNode -> {
 						Resource datasetIri = datasetNode.asResource();
-						prepareModel(AV.PrimaryDataGraph, datasetIri);
+						processor.setAssociatedDataset(datasetIri);
 						if (!inputDatasets.contains(datasetIri)) {
-							prepareModel(AV.MetaDataGraph, datasetIri);
+							prepareOutputMetaModel(datasetIri);
 						}
 					});
 
@@ -195,20 +195,25 @@ public class Step implements Runnable {
 		configurationModel.enterCriticalSection(Lock.WRITE);
 		try {
 			stepExecutionIri.addLiteral(PROV.endedAtTime, OffsetDateTime.now());
+			Models.assertOneOptional(configurationModel.listObjectsOfProperty(stepIri, AV.associatedDataset))
+					.ifPresent(datasetNode -> {
+						setOutputModelMetadata(AV.PrimaryDataGraph, datasetNode.asResource(),
+								processor.getOutputPrimaryModel().get());
+					});
+
+			// remove metadata of empty output models, add others to dataset
+			for (Resource outputModelIri : outputModelByIri.keySet()) {
+				Model outputModel = outputModelByIri.get(outputModelIri);
+				if (outputModel.isEmpty()) {
+					outputModelIri.removeProperties();
+				} else {
+					dataset.addNamedModel(outputModelIri.getURI(), outputModel);
+				}
+			}
+			processor.removeEmptyModels();
 		} finally {
 			configurationModel.leaveCriticalSection();
 		}
-
-		// remove metadata of empty output models, add others to dataset
-		for (Resource outputModelIri : outputModelByIri.keySet()) {
-			Model outputModel = outputModelByIri.get(outputModelIri);
-//			if (outputModel.isEmpty()) {
-//				outputModelIri.removeProperties();
-//			} else {
-			dataset.addNamedModel(outputModelIri.getURI(), outputModel);
-//			}
-		}
-		processor.removeEmptyModels();
 	}
 
 	public Resource getStepExecution() {

@@ -30,7 +30,7 @@ import de.uni_jena.cs.fusion.abecto.Correspondences;
 import de.uni_jena.cs.fusion.abecto.Metadata;
 import de.uni_jena.cs.fusion.abecto.Parameter;
 
-public abstract class AbstractValueComparisonProcessor extends Processor {
+public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> extends Processor<P> {
 
 	/** Aspect to process. */
 	@Parameter

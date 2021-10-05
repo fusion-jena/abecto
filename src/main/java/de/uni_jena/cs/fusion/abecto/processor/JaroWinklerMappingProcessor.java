@@ -31,7 +31,7 @@ import de.uni_jena.cs.fusion.abecto.Aspect;
 import de.uni_jena.cs.fusion.abecto.Parameter;
 import de.uni_jena.cs.fusion.similarity.jarowinkler.JaroWinklerSimilarity;
 
-public class JaroWinklerMappingProcessor extends MappingProcessor {
+public class JaroWinklerMappingProcessor extends MappingProcessor<JaroWinklerMappingProcessor> {
 
 	// TODO add language handling parameter
 
