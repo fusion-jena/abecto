@@ -61,15 +61,15 @@ public abstract class Processor implements Runnable {
 		this.inputMetaModelsByDataset.computeIfAbsent(dataset, d -> new HashSet<>()).add(inputMetaModel);
 	}
 
+	public final void addInputPrimaryModel(Resource dataset, Model inputPrimaryModel) {
+		this.cachedInputPrimaryModelUnionByDataset.remove(dataset);
+		this.inputPrimaryModelsByDataset.computeIfAbsent(dataset, d -> new HashSet<>()).add(inputPrimaryModel);
+	}
+
 	public final void addInputMetaModels(Resource dataset, Collection<Model> inputMetaModels) {
 		this.cachedInputMetaModelUnionByDataset.remove(dataset);
 		this.cachedMetaModelUnionByDataset.remove(dataset);
 		this.inputMetaModelsByDataset.computeIfAbsent(dataset, d -> new HashSet<>()).addAll(inputMetaModels);
-	}
-
-	public final void addInputPrimaryModels(Resource dataset, Model inputPrimaryModel) {
-		this.cachedInputPrimaryModelUnionByDataset.remove(dataset);
-		this.inputPrimaryModelsByDataset.computeIfAbsent(dataset, d -> new HashSet<>()).add(inputPrimaryModel);
 	}
 
 	public final void addInputPrimaryModels(Resource dataset, Collection<Model> inputPrimaryModels) {

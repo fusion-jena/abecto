@@ -81,7 +81,7 @@ public class UsePresentMappingProcessorTest {
 		processor.assignmentPaths = Arrays.asList("<http://example.org/sameAs>",
 				"<http://example.org/same>/<http://example.org/as>");
 		processor.addInputMetaModel(dataset, inputMetaModel);
-		processor.addInputPrimaryModels(dataset, inputPrimaryModel);
+		processor.addInputPrimaryModel(dataset, inputPrimaryModel);
 		processor.setOutputMetaModel(null, outputMetaModel);
 		processor.run();
 
