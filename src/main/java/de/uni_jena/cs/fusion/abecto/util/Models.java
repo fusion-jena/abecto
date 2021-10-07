@@ -23,6 +23,7 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
@@ -37,7 +38,6 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
-import org.apache.jena.util.iterator.ExtendedIterator;
 
 import com.google.common.collect.Streams;
 
@@ -123,7 +123,7 @@ public class Models {
 		return out.toByteArray();
 	}
 
-	public static <T> Optional<T> assertOneOptional(ExtendedIterator<T> iterator) throws ToManyElementsException {
+	public static <T> Optional<T> assertOneOptional(Iterator<T> iterator) throws ToManyElementsException {
 		if (iterator.hasNext()) {
 			T value = iterator.next();
 			if (iterator.hasNext()) {
@@ -135,7 +135,7 @@ public class Models {
 		}
 	}
 
-	public static <T> T assertOne(ExtendedIterator<T> iterator) throws ToManyElementsException, NoSuchElementException {
+	public static <T> T assertOne(Iterator<T> iterator) throws ToManyElementsException, NoSuchElementException {
 		if (iterator.hasNext()) {
 			T value = iterator.next();
 			if (iterator.hasNext()) {

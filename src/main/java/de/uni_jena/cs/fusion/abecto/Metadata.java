@@ -21,9 +21,11 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 import org.apache.jena.arq.querybuilder.AskBuilder;
+import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.query.QuerySolution;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
@@ -32,6 +34,7 @@ import org.apache.jena.vocabulary.OA;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 
+import de.uni_jena.cs.fusion.abecto.util.Models;
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 import de.uni_jena.cs.fusion.abecto.vocabulary.DQV;
 import de.uni_jena.cs.fusion.abecto.vocabulary.SdmxAttribute;
@@ -60,7 +63,9 @@ public class Metadata {
 		if (affectedVariableName != null) {
 			issue.addLiteral(AV.affectedVariableName, affectedVariableName);
 		}
-		issue.addProperty(AV.affectedValue, affectedValue);
+		if (affectedValue != null) {
+			issue.addProperty(AV.affectedValue, affectedValue);
+		}
 		issue.addLiteral(AV.issueType, issueType);
 		issue.addLiteral(RDFS.comment, comment);
 		Resource qualityAnnotation = outputAffectedDatasetMetaModel.createResource(DQV.QualityAnnotation);
@@ -138,6 +143,35 @@ public class Metadata {
 		for (Resource comparedToDataset : comparedToDatasets) {
 			qualityMeasurement.addProperty(AV.comparedToDataset, comparedToDataset);
 		}
+	}
+
+	private static final Var QUALITY_MEASUREMENT = Var.alloc("qualityMeasurement");
+	private static final Var VALUE = Var.alloc("value");
+	private static final Var UNIT = Var.alloc("unit");
+
+	public static Value getQualityMeasurement(Resource measure, Resource computedOnDataset,
+			@Nullable String affectedVariableName, Iterable<Resource> comparedToDatasets, Resource affectedAspect,
+			Model outputAffectedDatasetMetaModel) {
+
+		SelectBuilder builder = new SelectBuilder();
+		builder.addVar(VALUE);
+		builder.addVar(UNIT);
+		builder.addWhere(QUALITY_MEASUREMENT, RDF.type, AV.QualityMeasurement);
+		builder.addWhere(QUALITY_MEASUREMENT, DQV.isMeasurementOf, measure);
+		builder.addWhere(QUALITY_MEASUREMENT, DQV.value, VALUE);
+		builder.addWhere(QUALITY_MEASUREMENT, SdmxAttribute.unitMeasure, UNIT);
+		builder.addWhere(QUALITY_MEASUREMENT, AV.affectedAspect, affectedAspect);
+		if (affectedVariableName != null) {
+			builder.addWhere(QUALITY_MEASUREMENT, AV.affectedVariableName, affectedVariableName);
+		}
+		for (Resource comparedToDataset : comparedToDatasets) {
+			builder.addWhere(QUALITY_MEASUREMENT, AV.comparedToDataset, comparedToDataset);
+		}
+		QuerySolution solution = Models
+				.assertOne(QueryExecutionFactory.create(builder.build(), outputAffectedDatasetMetaModel).execSelect());
+
+		return new Value((Number) solution.getLiteral(VALUE.getVarName()).getValue(),
+				solution.getResource(UNIT.getVarName()));
 	}
 
 	private static final Var QUALITY_ANNOTATION = Var.alloc("qualityAnnotation");

@@ -15,191 +15,203 @@
  */
 package de.uni_jena.cs.fusion.abecto.processor;
 
+import static de.uni_jena.cs.fusion.abecto.Correspondences.addCorrespondence;
+import static de.uni_jena.cs.fusion.abecto.Metadata.getQualityMeasurement;
+import static de.uni_jena.cs.fusion.abecto.TestUtil.aspect;
+import static de.uni_jena.cs.fusion.abecto.TestUtil.containsIssue;
+import static de.uni_jena.cs.fusion.abecto.TestUtil.dataset;
+import static de.uni_jena.cs.fusion.abecto.TestUtil.object;
+import static de.uni_jena.cs.fusion.abecto.TestUtil.property;
+import static de.uni_jena.cs.fusion.abecto.TestUtil.subject;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
+
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryFactory;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.junit.jupiter.api.Test;
+
+import de.uni_jena.cs.fusion.abecto.Aspect;
+import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 
 public class CompletenessProcessorTest {
 
 	@Test
 	public void computeResultModel() throws Exception {
 		// TODO rewrite
+
+		Model inputPrimaryModel1 = ModelFactory.createDefaultModel()//
+				.add(subject(111), property(1), object(1))//
+				.add(subject(112), property(1), object(1))//
+				.add(subject(113), property(1), object(1))//
+				.add(subject(114), property(1), object(1))//
+				.add(subject(121), property(2), object(2))//
+				.add(subject(122), property(2), object(2))//
+				.add(subject(123), property(2), object(2))//
+				.add(subject(124), property(2), object(2));
+		Model inputPrimaryModel2 = ModelFactory.createDefaultModel()//
+				.add(subject(211), property(1), object(1))//
+				.add(subject(212), property(1), object(1))//
+				.add(subject(221), property(2), object(2))//
+				.add(subject(2211), property(2), object(2))//
+				.add(subject(222), property(2), object(2));
+		Model inputPrimaryModel3 = ModelFactory.createDefaultModel()//
+				.add(subject(315), property(1), object(1))//
+				.add(subject(325), property(2), object(2));
+
+		Model inputGeneralMetaModel = ModelFactory.createDefaultModel();
+		addCorrespondence(inputGeneralMetaModel, inputGeneralMetaModel, aspect(1), subject(111), subject(211));
+		addCorrespondence(inputGeneralMetaModel, inputGeneralMetaModel, aspect(1), subject(112), subject(212));
+		addCorrespondence(inputGeneralMetaModel, inputGeneralMetaModel, aspect(2), subject(121), subject(221));
+		addCorrespondence(inputGeneralMetaModel, inputGeneralMetaModel, aspect(2), subject(121), subject(2211));
+		addCorrespondence(inputGeneralMetaModel, inputGeneralMetaModel, aspect(2), subject(122), subject(222));
+		addCorrespondence(inputGeneralMetaModel, inputGeneralMetaModel, aspect(2), subject(221), subject(2211));
+
+		Query query1 = QueryFactory.create("SELECT ?key {?key <" + property(1) + "> <" + object(1) + ">}");
+		Query query2 = QueryFactory.create("SELECT ?key {?key <" + property(2) + "> <" + object(2) + ">}");
+
+		Aspect aspect1 = new Aspect(aspect(1), "key").setPattern(dataset(1), query1).setPattern(dataset(2), query1)
+				.setPattern(dataset(3), query1);
+		Aspect aspect2 = new Aspect(aspect(2), "key").setPattern(dataset(1), query2).setPattern(dataset(2), query2)
+				.setPattern(dataset(3), query2);
+
+		CompletenessProcessor processor = new CompletenessProcessor()
+				.addInputPrimaryModel(dataset(1), inputPrimaryModel1)
+				.addInputPrimaryModel(dataset(2), inputPrimaryModel2)
+				.addInputPrimaryModel(dataset(3), inputPrimaryModel3).addInputMetaModel(null, inputGeneralMetaModel)
+				.setOutputMetaModel(dataset(1), ModelFactory.createDefaultModel())
+				.setOutputMetaModel(dataset(2), ModelFactory.createDefaultModel())
+				.setOutputMetaModel(dataset(3), ModelFactory.createDefaultModel())
+				.setAspectMap(Map.of(aspect(1), aspect1, aspect(2), aspect2));
+		processor.aspects = Arrays.asList(aspect(1), aspect(2));
+		processor.run();
+		Model outputMetaModelDataset1 = processor.getOutputMetaModel(dataset(1));
+		Model outputMetaModelDataset2 = processor.getOutputMetaModel(dataset(2));
+		Model outputMetaModelDataset3 = processor.getOutputMetaModel(dataset(3));
+
+//		System.out.println("\n\n\n################ Dataset 1 #################\n\n\n");
+//		outputMetaModelDataset1.write(System.out, "TTL");
 //
-//		UUID ontologyId1 = UUID.randomUUID();
-//		UUID ontologyId2 = UUID.randomUUID();
-//		UUID ontologyId3 = UUID.randomUUID();
+//		System.out.println("\n\n\n################ Dataset 2 #################\n\n\n");
+//		outputMetaModelDataset2.write(System.out, "TTL");
 //
-//		String inputRdf1 = ""//
-//				+ "<http://example.org/111> <http://example.org/p1> <http://example.org/o1> ." //
-//				+ "<http://example.org/112> <http://example.org/p1> <http://example.org/o1> ." //
-//				+ "<http://example.org/113> <http://example.org/p1> <http://example.org/o1> ." //
-//				+ "<http://example.org/114> <http://example.org/p1> <http://example.org/o1> ." //
-//				+ "<http://example.org/121> <http://example.org/p2> <http://example.org/o2> ." //
-//				+ "<http://example.org/122> <http://example.org/p2> <http://example.org/o2> ." //
-//				+ "<http://example.org/123> <http://example.org/p2> <http://example.org/o2> ." //
-//				+ "<http://example.org/124> <http://example.org/p2> <http://example.org/o2> .";
-//		String inputRdf2 = ""//
-//				+ "<http://example.org/211> <http://example.org/p1> <http://example.org/o1> ." //
-//				+ "<http://example.org/212> <http://example.org/p1> <http://example.org/o1> ." //
-//				+ "<http://example.org/221> <http://example.org/p2> <http://example.org/o2> ." //
-//				+ "<http://example.org/2211> <http://example.org/p2> <http://example.org/o2> ." //
-//				+ "<http://example.org/222> <http://example.org/p2> <http://example.org/o2> .";
-//		String inputRdf3 = ""//
-//				+ "<http://example.org/315> <http://example.org/p1> <http://example.org/o1> ." //
-//				+ "<http://example.org/325> <http://example.org/p2> <http://example.org/o2> .";
-//		Model inputModel1 = Models.read(new ByteArrayInputStream(inputRdf1.getBytes()));
-//		Model inputModel2 = Models.read(new ByteArrayInputStream(inputRdf2.getBytes()));
-//		Model inputModel3 = Models.read(new ByteArrayInputStream(inputRdf3.getBytes()));
-//
-//		Model inputMetaModel = Models.getEmptyOntModel();
-//		SparqlEntityManager.insert(Arrays.asList(//
-//				of(111, 211), //
-//				of(112, 212), //
-//				of(121, 221), //
-//				of(121, 2211), //
-//				of(122, 222), //
-//				of(221, 2211)), inputMetaModel);
-//
-//		String category1 = "c1";
-//		String category2 = "c2";
-//		String pattern1 = "{?c1 <http://example.org/p1> <http://example.org/o1>}";
-//		String pattern2 = "{?c2 <http://example.org/p2> <http://example.org/o2>}";
-//		SparqlEntityManager.insert(Arrays.asList(//
-//				new Category(category1, pattern1, ontologyId1), //
-//				new Category(category1, pattern1, ontologyId2), //
-//				new Category(category1, pattern1, ontologyId3), //
-//				new Category(category2, pattern2, ontologyId1), //
-//				new Category(category2, pattern2, ontologyId2), //
-//				new Category(category2, pattern2, ontologyId3)), inputMetaModel);
-//
-//		CompletenessProcessor processor = new CompletenessProcessor();
-//		processor.addInputModelGroup(ontologyId1, Collections.singleton(inputModel1));
-//		processor.addInputModelGroup(ontologyId2, Collections.singleton(inputModel2));
-//		processor.addInputModelGroup(ontologyId3, Collections.singleton(inputModel3));
-//		processor.addMetaModels(Collections.singleton(inputMetaModel));
-//		processor.setParameters(new CompletenessProcessor.Parameter());
-//		Model outputModel = processor.call();
-//
-//		// check absolute coverage
-//		assertEquals(2L, absoluteCoverate(category1, ontologyId1, ontologyId2, outputModel).get());
-//		assertEquals(3L, absoluteCoverate(category2, ontologyId1, ontologyId2, outputModel).get());
-//		assertEquals(2L, absoluteCoverate(category1, ontologyId2, ontologyId1, outputModel).get());
-//		assertEquals(2L, absoluteCoverate(category2, ontologyId2, ontologyId1, outputModel).get());
-//
-//		assertEquals(0L, absoluteCoverate(category1, ontologyId1, ontologyId3, outputModel).get());
-//		assertEquals(0L, absoluteCoverate(category2, ontologyId1, ontologyId3, outputModel).get());
-//		assertEquals(0L, absoluteCoverate(category1, ontologyId3, ontologyId1, outputModel).get());
-//		assertEquals(0L, absoluteCoverate(category2, ontologyId3, ontologyId1, outputModel).get());
-//
-//		assertEquals(0L, absoluteCoverate(category1, ontologyId2, ontologyId3, outputModel).get());
-//		assertEquals(0L, absoluteCoverate(category2, ontologyId2, ontologyId3, outputModel).get());
-//		assertEquals(0L, absoluteCoverate(category1, ontologyId3, ontologyId2, outputModel).get());
-//		assertEquals(0L, absoluteCoverate(category2, ontologyId3, ontologyId2, outputModel).get());
-//
-//		assertEquals(12, SparqlEntityManager
-//				.select(new Measurement(null, null, "Coverage (absolute)", null, null, null, null, null), outputModel)
-//				.size());
-//
-//		// check relative coverage
-//		assertEquals(100L, relativeCoverate(category1, ontologyId1, ontologyId2, outputModel).get());
-//		assertEquals(100L, relativeCoverate(category2, ontologyId1, ontologyId2, outputModel).get());
-//		assertEquals(50L, relativeCoverate(category1, ontologyId2, ontologyId1, outputModel).get());
-//		assertEquals(50L, relativeCoverate(category2, ontologyId2, ontologyId1, outputModel).get());
-//
-//		assertEquals(0L, relativeCoverate(category1, ontologyId1, ontologyId3, outputModel).get());
-//		assertEquals(0L, relativeCoverate(category2, ontologyId1, ontologyId3, outputModel).get());
-//		assertEquals(0L, relativeCoverate(category1, ontologyId3, ontologyId1, outputModel).get());
-//		assertEquals(0L, relativeCoverate(category2, ontologyId3, ontologyId1, outputModel).get());
-//
-//		assertEquals(0L, relativeCoverate(category1, ontologyId2, ontologyId3, outputModel).get());
-//		assertEquals(0L, relativeCoverate(category2, ontologyId2, ontologyId3, outputModel).get());
-//		assertEquals(0L, relativeCoverate(category1, ontologyId3, ontologyId2, outputModel).get());
-//		assertEquals(0L, relativeCoverate(category2, ontologyId3, ontologyId2, outputModel).get());
-//
+//		System.out.println("\n\n\n################ Dataset 3 #################\n\n\n");
+//		outputMetaModelDataset3.write(System.out, "TTL");
+
+		// check absolute coverage
+		assertEquals(2, getQualityMeasurement(AV.absoluteCoverage, dataset(1), null, Collections.singleton(dataset(2)),
+				aspect(1), outputMetaModelDataset1).value);
+		assertEquals(2, getQualityMeasurement(AV.absoluteCoverage, dataset(1), null, Collections.singleton(dataset(2)),
+				aspect(2), outputMetaModelDataset1).value);
+		assertEquals(2, getQualityMeasurement(AV.absoluteCoverage, dataset(2), null, Collections.singleton(dataset(1)),
+				aspect(1), outputMetaModelDataset2).value);
+		assertEquals(2, getQualityMeasurement(AV.absoluteCoverage, dataset(2), null, Collections.singleton(dataset(1)),
+				aspect(2), outputMetaModelDataset2).value);
+
+		assertEquals(0, getQualityMeasurement(AV.absoluteCoverage, dataset(1), null, Collections.singleton(dataset(3)),
+				aspect(1), outputMetaModelDataset1).value);
+		assertEquals(0, getQualityMeasurement(AV.absoluteCoverage, dataset(1), null, Collections.singleton(dataset(3)),
+				aspect(2), outputMetaModelDataset1).value);
+		assertEquals(0, getQualityMeasurement(AV.absoluteCoverage, dataset(3), null, Collections.singleton(dataset(1)),
+				aspect(1), outputMetaModelDataset3).value);
+		assertEquals(0, getQualityMeasurement(AV.absoluteCoverage, dataset(3), null, Collections.singleton(dataset(1)),
+				aspect(2), outputMetaModelDataset3).value);
+
+		assertEquals(0, getQualityMeasurement(AV.absoluteCoverage, dataset(2), null, Collections.singleton(dataset(3)),
+				aspect(1), outputMetaModelDataset2).value);
+		assertEquals(0, getQualityMeasurement(AV.absoluteCoverage, dataset(2), null, Collections.singleton(dataset(3)),
+				aspect(2), outputMetaModelDataset2).value);
+		assertEquals(0, getQualityMeasurement(AV.absoluteCoverage, dataset(3), null, Collections.singleton(dataset(2)),
+				aspect(1), outputMetaModelDataset3).value);
+		assertEquals(0, getQualityMeasurement(AV.absoluteCoverage, dataset(3), null, Collections.singleton(dataset(2)),
+				aspect(2), outputMetaModelDataset3).value);
+
+//		assertEquals(12,
+//				SparqlEntityManager
+//						.select(new Measurement(null, null, "Coverage (absolute)", null, null, null, null, null),
+//								outputGeneralMetaModel)
+//						.size());
+
+		// check relative coverage
+		assertEquals(1d, getQualityMeasurement(AV.relativeCoverage, dataset(1), null, Collections.singleton(dataset(2)),
+				aspect(1), outputMetaModelDataset1).value.doubleValue());
+		assertEquals(1d, getQualityMeasurement(AV.relativeCoverage, dataset(1), null, Collections.singleton(dataset(2)),
+				aspect(2), outputMetaModelDataset1).value.doubleValue());
+		assertEquals(0.5, getQualityMeasurement(AV.relativeCoverage, dataset(2), null,
+				Collections.singleton(dataset(1)), aspect(1), outputMetaModelDataset2).value.doubleValue());
+		assertEquals(0.5, getQualityMeasurement(AV.relativeCoverage, dataset(2), null,
+				Collections.singleton(dataset(1)), aspect(2), outputMetaModelDataset2).value.doubleValue());
+
+		assertEquals(0, getQualityMeasurement(AV.relativeCoverage, dataset(1), null, Collections.singleton(dataset(3)),
+				aspect(1), outputMetaModelDataset1).value);
+		assertEquals(0, getQualityMeasurement(AV.relativeCoverage, dataset(1), null, Collections.singleton(dataset(3)),
+				aspect(2), outputMetaModelDataset1).value);
+		assertEquals(0, getQualityMeasurement(AV.relativeCoverage, dataset(3), null, Collections.singleton(dataset(1)),
+				aspect(1), outputMetaModelDataset3).value);
+		assertEquals(0, getQualityMeasurement(AV.relativeCoverage, dataset(3), null, Collections.singleton(dataset(1)),
+				aspect(2), outputMetaModelDataset3).value);
+
+		assertEquals(0, getQualityMeasurement(AV.relativeCoverage, dataset(2), null, Collections.singleton(dataset(3)),
+				aspect(1), outputMetaModelDataset2).value);
+		assertEquals(0, getQualityMeasurement(AV.relativeCoverage, dataset(2), null, Collections.singleton(dataset(3)),
+				aspect(2), outputMetaModelDataset2).value);
+		assertEquals(0, getQualityMeasurement(AV.relativeCoverage, dataset(3), null, Collections.singleton(dataset(2)),
+				aspect(1), outputMetaModelDataset3).value);
+		assertEquals(0, getQualityMeasurement(AV.relativeCoverage, dataset(3), null, Collections.singleton(dataset(2)),
+				aspect(2), outputMetaModelDataset3).value);
+
 //		assertEquals(12,
 //				SparqlEntityManager
 //						.select(new Measurement(null, null, "Coverage (relative in %)", null, null, null, null, null),
-//								outputModel)
+//								outputGeneralMetaModel)
 //						.size());
-//
-//		// check omissions
-//		assertTrue(omission(category1, ontologyId1, ontologyId2, 113, outputModel).isPresent());
-//		assertTrue(omission(category1, ontologyId1, ontologyId2, 114, outputModel).isPresent());
-//		assertTrue(omission(category2, ontologyId1, ontologyId2, 123, outputModel).isPresent());
-//		assertTrue(omission(category2, ontologyId1, ontologyId2, 124, outputModel).isPresent());
-//
-//		assertTrue(omission(category1, ontologyId1, ontologyId3, 111, outputModel).isPresent());
-//		assertTrue(omission(category1, ontologyId1, ontologyId3, 112, outputModel).isPresent());
-//		assertTrue(omission(category1, ontologyId1, ontologyId3, 113, outputModel).isPresent());
-//		assertTrue(omission(category1, ontologyId1, ontologyId3, 114, outputModel).isPresent());
-//		assertTrue(omission(category1, ontologyId3, ontologyId1, 315, outputModel).isPresent());
-//		assertTrue(omission(category2, ontologyId1, ontologyId3, 121, outputModel).isPresent());
-//		assertTrue(omission(category2, ontologyId1, ontologyId3, 122, outputModel).isPresent());
-//		assertTrue(omission(category2, ontologyId1, ontologyId3, 123, outputModel).isPresent());
-//		assertTrue(omission(category2, ontologyId1, ontologyId3, 124, outputModel).isPresent());
-//		assertTrue(omission(category2, ontologyId3, ontologyId1, 325, outputModel).isPresent());
-//
-//		assertTrue(omission(category1, ontologyId2, ontologyId3, 211, outputModel).isPresent());
-//		assertTrue(omission(category1, ontologyId2, ontologyId3, 212, outputModel).isPresent());
-//		assertTrue(omission(category1, ontologyId3, ontologyId2, 315, outputModel).isPresent());
-//		assertTrue(omission(category2, ontologyId2, ontologyId3, 221, outputModel).isPresent());
-//		assertTrue(omission(category2, ontologyId2, ontologyId3, 2211, outputModel).isPresent());
-//		assertTrue(omission(category2, ontologyId2, ontologyId3, 222, outputModel).isPresent());
-//		assertTrue(omission(category2, ontologyId3, ontologyId2, 325, outputModel).isPresent());
-//
-//		assertEquals(21, SparqlEntityManager.select(new Omission(null, null, null, null, null), outputModel).size());
-//
-//		// check duplicates
-//		assertTrue(duplicate(ontologyId2, 221, outputModel).isPresent());
-//		assertTrue(duplicate(ontologyId2, 2211, outputModel).isPresent());
-//
-//		assertEquals(2, SparqlEntityManager.select(new Issue(), outputModel).size());
-//
-//		// TODO check completeness
-//		
-//		// TODO check parameter use
-	}
 
-//	private static Optional<Long> absoluteCoverate(String categoryName, UUID ontologyId1, UUID ontologyId2, Model model)
-//			throws IllegalStateException, NullPointerException, ReflectiveOperationException {
-//		Optional<Measurement> o = SparqlEntityManager.selectOne(
-//				new Measurement(null, ontologyId1, "Coverage (absolute)", null, Optional.of("of category"),
-//						Optional.of(categoryName), Optional.of("in ontology"), Optional.of(ontologyId2.toString())),
-//				model);
-//		if (o.isPresent()) {
-//			return Optional.of(o.get().value);
-//		} else {
-//			return Optional.empty();
-//		}
-//	}
+		// check omissions
+//		assertTrue(omission(aspect(1), dataset(1), dataset(2), 113, outputGeneralMetaModel).isPresent());
+//		assertTrue(omission(aspect(1), dataset(1), dataset(2), 114, outputGeneralMetaModel).isPresent());
+//		assertTrue(omission(aspect(2), dataset(1), dataset(2), 123, outputGeneralMetaModel).isPresent());
+//		assertTrue(omission(aspect(2), dataset(1), dataset(2), 124, outputGeneralMetaModel).isPresent());
 //
-//	private static Optional<Long> relativeCoverate(String categoryName, UUID ontologyId1, UUID ontologyId2, Model model)
-//			throws IllegalStateException, NullPointerException, ReflectiveOperationException {
-//		Optional<Measurement> o = SparqlEntityManager.selectOne(
-//				new Measurement(null, ontologyId1, "Coverage (relative in %)", null, Optional.of("of category"),
-//						Optional.of(categoryName), Optional.of("in ontology"), Optional.of(ontologyId2.toString())),
-//				model);
-//		if (o.isPresent()) {
-//			return Optional.of(o.get().value);
-//		} else {
-//			return Optional.empty();
-//		}
-//	}
+//		assertTrue(omission(aspect(1), dataset(1), dataset(3), 111, outputGeneralMetaModel).isPresent());
+//		assertTrue(omission(aspect(1), dataset(1), dataset(3), 112, outputGeneralMetaModel).isPresent());
+//		assertTrue(omission(aspect(1), dataset(1), dataset(3), 113, outputGeneralMetaModel).isPresent());
+//		assertTrue(omission(aspect(1), dataset(1), dataset(3), 114, outputGeneralMetaModel).isPresent());
+//		assertTrue(omission(aspect(1), dataset(3), dataset(1), 315, outputGeneralMetaModel).isPresent());
+//		assertTrue(omission(aspect(2), dataset(1), dataset(3), 121, outputGeneralMetaModel).isPresent());
+//		assertTrue(omission(aspect(2), dataset(1), dataset(3), 122, outputGeneralMetaModel).isPresent());
+//		assertTrue(omission(aspect(2), dataset(1), dataset(3), 123, outputGeneralMetaModel).isPresent());
+//		assertTrue(omission(aspect(2), dataset(1), dataset(3), 124, outputGeneralMetaModel).isPresent());
+//		assertTrue(omission(aspect(2), dataset(3), dataset(1), 325, outputGeneralMetaModel).isPresent());
 //
-//	private static Optional<Omission> omission(String categoryName, UUID ontologyId1, UUID ontologyId2, int resourceId,
-//			Model model) throws IllegalStateException, NullPointerException, ReflectiveOperationException {
-//		return SparqlEntityManager.selectOne(new Omission(null, categoryName, ontologyId2,
-//				ResourceFactory.createResource("http://example.org/" + resourceId), ontologyId1), model);
-//	}
-//
-//	private static Optional<Issue> duplicate(UUID ontologyId1, int resourceId, Model model)
-//			throws IllegalStateException, NullPointerException, ReflectiveOperationException {
-//		return SparqlEntityManager.selectOne(new Issue(null, ontologyId1,
-//				ResourceFactory.createResource("http://example.org/" + resourceId), "Duplicated Resource", null),
-//				model);
-//	}
-//
-//	private static Mapping of(int resourceId1, int resourceId2) {
-//		return Mapping.of(ResourceFactory.createResource("http://example.org/" + resourceId1),
-//				ResourceFactory.createResource("http://example.org/" + resourceId2));
-//	}
+//		assertTrue(omission(aspect(1), dataset(2), dataset(3), 211, outputGeneralMetaModel).isPresent());
+//		assertTrue(omission(aspect(1), dataset(2), dataset(3), 212, outputGeneralMetaModel).isPresent());
+//		assertTrue(omission(aspect(1), dataset(3), dataset(2), 315, outputGeneralMetaModel).isPresent());
+//		assertTrue(omission(aspect(2), dataset(2), dataset(3), 221, outputGeneralMetaModel).isPresent());
+//		assertTrue(omission(aspect(2), dataset(2), dataset(3), 2211, outputGeneralMetaModel).isPresent());
+//		assertTrue(omission(aspect(2), dataset(2), dataset(3), 222, outputGeneralMetaModel).isPresent());
+//		assertTrue(omission(aspect(2), dataset(3), dataset(2), 325, outputGeneralMetaModel).isPresent());
+
+//		assertEquals(21,
+//				SparqlEntityManager.select(new Omission(null, null, null, null, null), outputGeneralMetaModel).size());
+
+		// check duplicates
+		assertTrue(containsIssue(subject(221), null, null, aspect(2), "Duplicated Resource",
+				"of <" + subject(2211) + ">", outputMetaModelDataset2));
+		assertTrue(containsIssue(subject(2211), null, null, aspect(2), "Duplicated Resource",
+				"of <" + subject(221) + ">", outputMetaModelDataset2));
+
+//		assertEquals(2, SparqlEntityManager.select(new Issue(), outputGeneralMetaModel).size());
+
+		// TODO check completeness
+
+		// TODO check parameter use
+		
+		// TODO check divide zero handling
+	}
 
 }
