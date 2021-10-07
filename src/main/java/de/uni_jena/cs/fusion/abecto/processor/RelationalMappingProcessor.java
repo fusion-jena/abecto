@@ -50,7 +50,7 @@ public class RelationalMappingProcessor extends MappingProcessor<RelationalMappi
 				.forEach(referringResources -> {
 					Collection<Resource> referredResources = new ArrayList<>();
 					for (Resource referringResource : referringResources) {
-						for (Resource dataset : this.getInputDatasets()) {
+						for (Resource dataset : this.getDatasets()) {
 							Optional<Map<String, Set<RDFNode>>> referringResourceValues = Aspect.getResource(
 									referringAspect, dataset, referringResource,
 									this.getInputPrimaryModelUnion(dataset));

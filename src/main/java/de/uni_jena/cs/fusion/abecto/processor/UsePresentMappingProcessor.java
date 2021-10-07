@@ -75,7 +75,7 @@ public class UsePresentMappingProcessor extends Processor<UsePresentMappingProce
 				Model metaModel = this.getMetaModelUnion(null);
 				Model outputMetaModel = this.getOutputMetaModel(null);
 				// execute query for each dataset
-				for (Resource dataset : this.getInputDatasets()) {
+				for (Resource dataset : this.getDatasets()) {
 					Model inputPrimaryModel = this.getInputPrimaryModelUnion(dataset);
 
 					// get aspects resource

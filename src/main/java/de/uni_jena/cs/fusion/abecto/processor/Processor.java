@@ -34,6 +34,7 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
+import de.uni_jena.cs.fusion.abecto.Vocabularies;
 import de.uni_jena.cs.fusion.abecto.util.Models;
 import de.uni_jena.cs.fusion.abecto.util.ToManyElementsException;
 
@@ -56,16 +57,17 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 	private Optional<Model> outputPrimaryModel = Optional.empty();
 	private Map<Resource, Aspect> aspects = Collections.emptyMap();
 
+	private Map<Resource, Model> cachedInputMetaModelUnionByDataset = new HashMap<>();
+
+	private Map<Resource, Model> cachedInputPrimaryModelUnionByDataset = new HashMap<>();
+
+	private Map<Resource, Model> cachedMetaModelUnionByDataset = new HashMap<>();
+
 	public final P addInputMetaModel(Resource dataset, Model inputMetaModel) {
 		this.cachedInputMetaModelUnionByDataset.remove(dataset);
 		this.cachedMetaModelUnionByDataset.remove(dataset);
 		this.inputMetaModelsByDataset.computeIfAbsent(dataset, d -> new HashSet<>()).add(inputMetaModel);
-		return self();
-	}
-
-	public final P addInputPrimaryModel(Resource dataset, Model inputPrimaryModel) {
-		this.cachedInputPrimaryModelUnionByDataset.remove(dataset);
-		this.inputPrimaryModelsByDataset.computeIfAbsent(dataset, d -> new HashSet<>()).add(inputPrimaryModel);
+		this.initOutputMetaModel(dataset);
 		return self();
 	}
 
@@ -73,12 +75,21 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 		this.cachedInputMetaModelUnionByDataset.remove(dataset);
 		this.cachedMetaModelUnionByDataset.remove(dataset);
 		this.inputMetaModelsByDataset.computeIfAbsent(dataset, d -> new HashSet<>()).addAll(inputMetaModels);
+		this.initOutputMetaModel(dataset);
+		return self();
+	}
+
+	public final P addInputPrimaryModel(Resource dataset, Model inputPrimaryModel) {
+		this.cachedInputPrimaryModelUnionByDataset.remove(dataset);
+		this.inputPrimaryModelsByDataset.computeIfAbsent(dataset, d -> new HashSet<>()).add(inputPrimaryModel);
+		this.initOutputMetaModel(dataset);
 		return self();
 	}
 
 	public final P addInputPrimaryModels(Resource dataset, Collection<Model> inputPrimaryModels) {
 		this.cachedInputPrimaryModelUnionByDataset.remove(dataset);
 		this.inputPrimaryModelsByDataset.computeIfAbsent(dataset, d -> new HashSet<>()).addAll(inputPrimaryModels);
+		this.initOutputMetaModel(dataset);
 		return self();
 	}
 
@@ -102,10 +113,11 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 		return this.associatedDataset;
 	}
 
-	public final Set<Resource> getInputDatasets() {
+	public final Set<Resource> getDatasets() {
 		Set<Resource> inputDatasets = new HashSet<>();
 		inputDatasets.addAll(this.inputMetaModelsByDataset.keySet());
 		inputDatasets.addAll(this.inputPrimaryModelsByDataset.keySet());
+		this.associatedDataset.ifPresent(inputDatasets::add);
 		inputDatasets.remove(null);
 		return inputDatasets;
 	}
@@ -114,14 +126,10 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 		return Models.union(this.inputMetaModelsByDataset.values().stream().flatMap(Collection::stream));
 	}
 
-	private Map<Resource, Model> cachedInputMetaModelUnionByDataset = new HashMap<>();
-
 	public final Model getInputMetaModelUnion(Resource dataset) {
 		return cachedInputMetaModelUnionByDataset.computeIfAbsent(dataset,
 				d -> Models.union(this.inputMetaModelsByDataset.get(dataset)));
 	}
-
-	private Map<Resource, Model> cachedInputPrimaryModelUnionByDataset = new HashMap<>();
 
 	public final Model getInputPrimaryModelUnion(Resource dataset) {
 		return cachedInputPrimaryModelUnionByDataset.computeIfAbsent(dataset,
@@ -131,8 +139,6 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 	public Model getMetaModelUnion() {
 		return Models.union(this.getInputMetaModelUnion(), this.getOutputMetaModelUnion());
 	}
-
-	private Map<Resource, Model> cachedMetaModelUnionByDataset = new HashMap<>();
 
 	/**
 	 * Returns a union of the input meta models and the result meta model of a
@@ -167,40 +173,6 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 	}
 
 	/**
-	 * Returns the parameter values for a given key asserting a given type.
-	 * 
-	 * @param <T>         type of the returned value
-	 * @param key         key of the parameter
-	 * @param resultClass class object of the type of the returned values
-	 * @return values of the parameter
-	 * @throws ClassCastException   if the parameter values do not match the
-	 *                              requested type
-	 * @throws NullPointerException if the parameter has not been set
-	 */
-	@SuppressWarnings("unchecked")
-	public final <T> List<T> getParameterValues(String key, Class<T> resultClass)
-			throws ClassCastException, NullPointerException {
-		return (List<T>) Objects.requireNonNull(this.parameter.get(key));
-	}
-
-	/**
-	 * Returns the parameter values for a given key asserting a given type, if
-	 * present, otherwise returns {@code other}.
-	 * 
-	 * @param <T>   type of the returned value
-	 * @param key   key of the parameter
-	 * @param other values to be returned, if the parameter has not been set
-	 * @return values of the parameter
-	 * @throws ClassCastException if the parameter values do not match the requested
-	 *                            type
-	 */
-	@SuppressWarnings("unchecked")
-	public final <T> List<T> getParameterValues(String key, @Nonnull List<T> other)
-			throws ClassCastException, NullPointerException {
-		return (List<T>) Objects.requireNonNull(this.parameter.getOrDefault(key, (List<Object>) other));
-	}
-
-	/**
 	 * Returns the parameter value for a given key asserting a given type.
 	 * 
 	 * @param <T>         type of the returned value
@@ -215,6 +187,32 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 	@SuppressWarnings("unchecked")
 	public final <T> T getParameterValue(String key, Class<T> resultClass)
 			throws ClassCastException, NullPointerException {
+		List<T> values = (List<T>) Objects.requireNonNull(this.parameter.get(key));
+		switch (values.size()) {
+		case 0:
+			throw new NullPointerException();
+		case 1:
+			return values.get(0);
+		default:
+			throw new ToManyElementsException();
+		}
+	}
+
+	/**
+	 * Returns the parameter value for a given key asserting a given type, if
+	 * present, otherwise returns {@code other}.
+	 * 
+	 * @param <T>   type of the returned value
+	 * @param key   key of the parameter
+	 * @param other value to be returned, if the parameter has not been set
+	 * @return value of the parameter
+	 * @throws ClassCastException      if the parameter value does not match the
+	 *                                 requested type
+	 * @throws ToManyElementsException if the parameter has more than one value
+	 */
+	@SuppressWarnings("unchecked")
+	public final <T> T getParameterValue(String key, @Nonnull T other) throws ClassCastException, NullPointerException {
+		Objects.requireNonNull(other);
 		List<T> values = (List<T>) Objects.requireNonNull(this.parameter.get(key));
 		switch (values.size()) {
 		case 0:
@@ -252,29 +250,37 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 	}
 
 	/**
-	 * Returns the parameter value for a given key asserting a given type, if
+	 * Returns the parameter values for a given key asserting a given type.
+	 * 
+	 * @param <T>         type of the returned value
+	 * @param key         key of the parameter
+	 * @param resultClass class object of the type of the returned values
+	 * @return values of the parameter
+	 * @throws ClassCastException   if the parameter values do not match the
+	 *                              requested type
+	 * @throws NullPointerException if the parameter has not been set
+	 */
+	@SuppressWarnings("unchecked")
+	public final <T> List<T> getParameterValues(String key, Class<T> resultClass)
+			throws ClassCastException, NullPointerException {
+		return (List<T>) Objects.requireNonNull(this.parameter.get(key));
+	}
+
+	/**
+	 * Returns the parameter values for a given key asserting a given type, if
 	 * present, otherwise returns {@code other}.
 	 * 
 	 * @param <T>   type of the returned value
 	 * @param key   key of the parameter
-	 * @param other value to be returned, if the parameter has not been set
-	 * @return value of the parameter
-	 * @throws ClassCastException      if the parameter value does not match the
-	 *                                 requested type
-	 * @throws ToManyElementsException if the parameter has more than one value
+	 * @param other values to be returned, if the parameter has not been set
+	 * @return values of the parameter
+	 * @throws ClassCastException if the parameter values do not match the requested
+	 *                            type
 	 */
 	@SuppressWarnings("unchecked")
-	public final <T> T getParameterValue(String key, @Nonnull T other) throws ClassCastException, NullPointerException {
-		Objects.requireNonNull(other);
-		List<T> values = (List<T>) Objects.requireNonNull(this.parameter.get(key));
-		switch (values.size()) {
-		case 0:
-			throw new NullPointerException();
-		case 1:
-			return values.get(0);
-		default:
-			throw new ToManyElementsException();
-		}
+	public final <T> List<T> getParameterValues(String key, @Nonnull List<T> other)
+			throws ClassCastException, NullPointerException {
+		return (List<T>) Objects.requireNonNull(this.parameter.getOrDefault(key, (List<Object>) other));
 	}
 
 	public Model getPrimaryModelUnion() {
@@ -282,6 +288,13 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 				this.inputPrimaryModelsByDataset.get(
 						this.associatedDataset.orElseThrow(() -> new IllegalStateException("No associated dataset."))),
 				this.getOutputPrimaryModel().orElseThrow(() -> new IllegalStateException("No output primary model .")));
+	}
+
+	private final P initOutputMetaModel(@Nullable Resource dataset) {
+		this.cachedMetaModelUnionByDataset.remove(dataset);
+		this.outputMetaModelsByDataset.computeIfAbsent(dataset,
+				k -> ModelFactory.createDefaultModel().withDefaultMappings(Vocabularies.getDefaultPrefixMapping()));
+		return self();
 	}
 
 	public void removeEmptyModels() {
@@ -295,26 +308,9 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 		}
 	}
 
-	public P setAspectMap(Map<Resource, Aspect> aspects) {
-		this.aspects = aspects;
-		return self();
-	}
-
-	public final P setOutputMetaModel(@Nullable Resource dataset, Model outputMetaModel) {
+	protected final P replaceOutputMetaModel(@Nullable Resource dataset, Model outputMetaModel) {
 		this.cachedMetaModelUnionByDataset.remove(dataset);
 		this.outputMetaModelsByDataset.put(dataset, outputMetaModel);
-		return self();
-	}
-
-	/**
-	 * Sets the associated dataset of the processor, which is the dataset the output
-	 * primary model will belong to.
-	 * 
-	 * @param dataset
-	 */
-	public final P setAssociatedDataset(Resource dataset) {
-		this.associatedDataset = Optional.of(dataset);
-		this.outputPrimaryModel = Optional.of(ModelFactory.createDefaultModel());
 		return self();
 	}
 
@@ -327,11 +323,36 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 	 * @param outputPrimaryModel the model that replaces the current output primary
 	 *                           model
 	 */
-	public final P replaceOutputPrimaryModel(Model outputPrimaryModel) {
+	protected final P replaceOutputPrimaryModel(Model outputPrimaryModel) {
 		if (this.associatedDataset.isEmpty()) {
 			throw new IllegalStateException("Operation only permited, if step is associated with a dataset.");
 		}
 		this.outputPrimaryModel = Optional.of(outputPrimaryModel);
+		return self();
+	}
+
+	@SuppressWarnings("unchecked")
+	private P self() {
+		return (P) this;
+	}
+
+	public P setAspectMap(Map<Resource, Aspect> aspects) {
+		this.aspects = aspects;
+		this.initOutputMetaModel(null); // assert to be called once
+		return self();
+	}
+
+	/**
+	 * Sets the associated dataset of the processor, which is the dataset the output
+	 * primary model will belong to.
+	 * 
+	 * @param dataset
+	 */
+	public final P setAssociatedDataset(Resource dataset) {
+		this.associatedDataset = Optional.of(dataset);
+		this.outputPrimaryModel = Optional.of(ModelFactory.createDefaultModel());
+		this.initOutputMetaModel(dataset);
+		this.initOutputMetaModel(null); // assert to be called once
 		return self();
 	}
 
@@ -344,10 +365,5 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 	public final P setParameterValues(String key, List<Object> value) {
 		this.parameter.put(key, value);
 		return self();
-	}
-
-	@SuppressWarnings("unchecked")
-	private P self() {
-		return (P) this;
 	}
 }

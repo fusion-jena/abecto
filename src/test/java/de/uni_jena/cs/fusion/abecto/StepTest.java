@@ -211,11 +211,11 @@ public class StepTest {
 		assertModelContains(graphs, step4Execution, AV.MetaDataGraph, null, STEP_NUMBER, 4);
 		assertModelContains(graphs, step5Execution, AV.MetaDataGraph, null, STEP_NUMBER, 5);
 
-		assertModelContains(graphs, step1Execution, AV.MetaDataGraph, dataset1, META_IN_EMPTY);
+		assertModelContains(graphs, step1Execution, AV.MetaDataGraph, dataset1, META_IN_EMPTY, 1);
 		assertModelContains(graphs, step2Execution, AV.MetaDataGraph, dataset1, META_IN_EMPTY, 0);
 		assertModelContains(graphs, step5Execution, AV.MetaDataGraph, dataset1, META_IN_EMPTY, 0);
 
-		assertModelContains(graphs, step3Execution, AV.MetaDataGraph, dataset2, META_IN_EMPTY);
+		assertModelContains(graphs, step3Execution, AV.MetaDataGraph, dataset2, META_IN_EMPTY, 1);
 		assertModelContains(graphs, step4Execution, AV.MetaDataGraph, dataset2, META_IN_EMPTY, 0);
 		assertModelContains(graphs, step5Execution, AV.MetaDataGraph, dataset2, META_IN_EMPTY, 0);
 
@@ -226,11 +226,11 @@ public class StepTest {
 		assertModelContains(graphs, step4Execution, AV.MetaDataGraph, null, META_IN_EMPTY, 0);
 		assertModelContains(graphs, step5Execution, AV.MetaDataGraph, null, META_IN_EMPTY, 0);
 
-		assertModelContains(graphs, step1Execution, AV.MetaDataGraph, dataset1, PRIMARY_IN_EMPTY);
+		assertModelContains(graphs, step1Execution, AV.MetaDataGraph, dataset1, PRIMARY_IN_EMPTY, 1);
 		assertModelContains(graphs, step2Execution, AV.MetaDataGraph, dataset1, PRIMARY_IN_EMPTY, 0);
 		assertModelContains(graphs, step5Execution, AV.MetaDataGraph, dataset1, PRIMARY_IN_EMPTY, 0);
 
-		assertModelContains(graphs, step3Execution, AV.MetaDataGraph, dataset2, PRIMARY_IN_EMPTY);
+		assertModelContains(graphs, step3Execution, AV.MetaDataGraph, dataset2, PRIMARY_IN_EMPTY, 1);
 		assertModelContains(graphs, step4Execution, AV.MetaDataGraph, dataset2, PRIMARY_IN_EMPTY, 0);
 		assertModelContains(graphs, step5Execution, AV.MetaDataGraph, dataset2, PRIMARY_IN_EMPTY, 0);
 	}
@@ -284,7 +284,7 @@ public class StepTest {
 				this.getOutputMetaModel(dataset).addLiteral(dataset, STEP_NUMBER, this.integerParameter);
 			}
 
-			for (Resource dataset : this.getInputDatasets()) {
+			for (Resource dataset : this.getDatasets()) {
 				Model inMeta = this.getInputMetaModelUnion(dataset);
 				Model inPrimary = this.getInputPrimaryModelUnion(dataset);
 				Model out = this.getOutputMetaModel(dataset);

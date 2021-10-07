@@ -70,8 +70,6 @@ public class UsePresentMappingProcessorTest {
 		Correspondences.addCorrespondence(inputMetaModel, inputMetaModel, aspectIri, c1, c2);
 		Correspondences.addIncorrespondence(inputMetaModel, inputMetaModel, aspectIri, d1, d2);
 
-		Model outputMetaModel = ModelFactory.createDefaultModel();
-
 		Aspect aspect = new Aspect(aspectIri, "key");
 		aspect.setPattern(dataset, QueryFactory.create("SELECT ?key WHERE {?key a <" + type.getURI() + ">}"));
 
@@ -82,8 +80,9 @@ public class UsePresentMappingProcessorTest {
 				"<http://example.org/same>/<http://example.org/as>");
 		processor.addInputMetaModel(dataset, inputMetaModel);
 		processor.addInputPrimaryModel(dataset, inputPrimaryModel);
-		processor.setOutputMetaModel(null, outputMetaModel);
 		processor.run();
+
+		Model outputMetaModel = processor.getOutputMetaModel(null);
 
 		assertTrue(Correspondences.allCorrespondend(outputMetaModel, a1, a2));
 		assertTrue(Correspondences.allCorrespondend(outputMetaModel, b1, b2));

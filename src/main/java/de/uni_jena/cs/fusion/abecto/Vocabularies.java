@@ -15,6 +15,12 @@
  */
 package de.uni_jena.cs.fusion.abecto;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.shared.impl.PrefixMappingImpl;
 import org.apache.jena.sparql.core.Prologue;
 import org.apache.jena.vocabulary.OA;
 import org.apache.jena.vocabulary.OWL2;
@@ -32,22 +38,36 @@ import de.uni_jena.cs.fusion.abecto.vocabulary.SCHEMA;
 import de.uni_jena.cs.fusion.abecto.vocabulary.SdmxAttribute;
 
 public class Vocabularies {
+	private final static Map<String, String> DEFAULT_PREFIX_MAP = new HashMap<>();
+	private final static PrefixMapping DEFAULT_PREFIX_MAPPING = new PrefixMappingImpl();
 	private final static Prologue DEFAULT_PROLOGUE = new Prologue();
 
 	static {
-		DEFAULT_PROLOGUE.setPrefix("av", AV.getURI());
-		DEFAULT_PROLOGUE.setPrefix("dqv", DQV.getURI());
-		DEFAULT_PROLOGUE.setPrefix("oa", OA.getURI());
-		DEFAULT_PROLOGUE.setPrefix("om", OM.getURI());
-		DEFAULT_PROLOGUE.setPrefix("owl", OWL2.getURI());
-		DEFAULT_PROLOGUE.setPrefix("pplan", PPlan.getURI());
-		DEFAULT_PROLOGUE.setPrefix("prov", PROV.getURI());
-		DEFAULT_PROLOGUE.setPrefix("rdf", RDF.getURI());
-		DEFAULT_PROLOGUE.setPrefix("rdfs", RDFS.getURI());
-		DEFAULT_PROLOGUE.setPrefix("schema", SCHEMA.getURI());
-		DEFAULT_PROLOGUE.setPrefix("sdmx-attribute", SdmxAttribute.getURI());
-		DEFAULT_PROLOGUE.setPrefix("skos", SKOS.getURI());
-		DEFAULT_PROLOGUE.setPrefix("xsd", XSD.getURI());
+		DEFAULT_PREFIX_MAP.put("av", AV.getURI());
+		DEFAULT_PREFIX_MAP.put("dqv", DQV.getURI());
+		DEFAULT_PREFIX_MAP.put("oa", OA.getURI());
+		DEFAULT_PREFIX_MAP.put("om", OM.getURI());
+		DEFAULT_PREFIX_MAP.put("owl", OWL2.getURI());
+		DEFAULT_PREFIX_MAP.put("pplan", PPlan.getURI());
+		DEFAULT_PREFIX_MAP.put("prov", PROV.getURI());
+		DEFAULT_PREFIX_MAP.put("rdf", RDF.getURI());
+		DEFAULT_PREFIX_MAP.put("rdfs", RDFS.getURI());
+		DEFAULT_PREFIX_MAP.put("schema", SCHEMA.getURI());
+		DEFAULT_PREFIX_MAP.put("sdmx-attribute", SdmxAttribute.getURI());
+		DEFAULT_PREFIX_MAP.put("skos", SKOS.getURI());
+		DEFAULT_PREFIX_MAP.put("xsd", XSD.getURI());
+
+		DEFAULT_PREFIX_MAPPING.setNsPrefixes(DEFAULT_PREFIX_MAP);
+		DEFAULT_PREFIX_MAPPING.lock();
+		DEFAULT_PROLOGUE.setPrefixMapping(DEFAULT_PREFIX_MAPPING);
+	}
+
+	public static Map<String, String> getDefaultPrefixMap() {
+		return Collections.unmodifiableMap(DEFAULT_PREFIX_MAP);
+	}
+
+	public static PrefixMapping getDefaultPrefixMapping() {
+		return DEFAULT_PREFIX_MAPPING;
 	}
 
 	public static Prologue getDefaultPrologue() {

@@ -84,9 +84,6 @@ public class CompletenessProcessorTest {
 				.addInputPrimaryModel(dataset(1), inputPrimaryModel1)
 				.addInputPrimaryModel(dataset(2), inputPrimaryModel2)
 				.addInputPrimaryModel(dataset(3), inputPrimaryModel3).addInputMetaModel(null, inputGeneralMetaModel)
-				.setOutputMetaModel(dataset(1), ModelFactory.createDefaultModel())
-				.setOutputMetaModel(dataset(2), ModelFactory.createDefaultModel())
-				.setOutputMetaModel(dataset(3), ModelFactory.createDefaultModel())
 				.setAspectMap(Map.of(aspect(1), aspect1, aspect(2), aspect2));
 		processor.aspects = Arrays.asList(aspect(1), aspect(2));
 		processor.run();

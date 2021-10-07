@@ -79,8 +79,8 @@ public abstract class MappingProcessor<P extends Processor<P>> extends Processor
 
 	@Override
 	public void run() {
-		for (Resource dataset1 : this.getInputDatasets()) {
-			for (Resource dataset2 : this.getInputDatasets()) {
+		for (Resource dataset1 : this.getDatasets()) {
+			for (Resource dataset2 : this.getDatasets()) {
 				if (dataset1.getURI().compareTo(dataset2.getURI()) > 0) { // do not do work twice
 					this.mapDatasets(dataset1, dataset2);
 				}

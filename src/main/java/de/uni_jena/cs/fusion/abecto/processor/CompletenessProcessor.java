@@ -70,14 +70,14 @@ public class CompletenessProcessor extends Processor<CompletenessProcessor> {
 
 			// get resources by dataset and aspect
 			Map<Resource, Set<Resource>> resourcesByDataset = new HashMap<>();
-			for (Resource dataset : this.getInputDatasets()) {
+			for (Resource dataset : this.getDatasets()) {
 				resourcesByDataset.put(dataset,
 						Aspect.getResourceKeys(aspect, dataset, this.getInputPrimaryModelUnion(dataset)));
 			}
 
 			// prepare measurements
-			for (Resource dataset : this.getInputDatasets()) {
-				for (Resource datasetComparedTo : this.getInputDatasets()) {
+			for (Resource dataset : this.getDatasets()) {
+				for (Resource datasetComparedTo : this.getDatasets()) {
 					absoluteCoverage.computeIfAbsent(dataset, x -> new HashMap<>()).put(datasetComparedTo, 0);
 				}
 			}
@@ -87,7 +87,7 @@ public class CompletenessProcessor extends Processor<CompletenessProcessor> {
 					.forEach(correspondingResources -> {
 						Map<Resource, Set<Resource>> occurrencesByDataset = new HashMap<>();
 						// count resources of the dataset in the correspondence set
-						for (Resource dataset : this.getInputDatasets()) {
+						for (Resource dataset : this.getDatasets()) {
 							Set<Resource> resourcesOfDataset = resourcesByDataset.get(dataset);
 							Set<Resource> occurrencesOfDataset = occurrencesByDataset.computeIfAbsent(dataset,
 									r -> new HashSet<>());
@@ -97,7 +97,7 @@ public class CompletenessProcessor extends Processor<CompletenessProcessor> {
 								}
 							}
 						}
-						for (Resource dataset : this.getInputDatasets()) {
+						for (Resource dataset : this.getDatasets()) {
 							int occurrences = occurrencesByDataset.containsKey(dataset)
 									? occurrencesByDataset.get(dataset).size()
 									: 0;
@@ -106,7 +106,7 @@ public class CompletenessProcessor extends Processor<CompletenessProcessor> {
 								omissions.merge(dataset, 1, Integer::sum);
 
 								// report resource omission
-								for (Resource datasetComparedTo : this.getInputDatasets()) {
+								for (Resource datasetComparedTo : this.getDatasets()) {
 									for (Resource resourceComparedTo : occurrencesByDataset.get(dataset)) {
 										Metadata.addResourceOmission(dataset, datasetComparedTo, resourceComparedTo,
 												aspect.getIri(), this.getOutputMetaModel(dataset));
@@ -114,7 +114,7 @@ public class CompletenessProcessor extends Processor<CompletenessProcessor> {
 								}
 							}
 							if (occurrences > 0) {
-								for (Resource datasetComparedTo : this.getInputDatasets()) {
+								for (Resource datasetComparedTo : this.getDatasets()) {
 									if (!occurrencesByDataset.get(datasetComparedTo).isEmpty()) {
 										if (dataset.getURI().compareTo(datasetComparedTo.getURI()) > 0) {
 											// only once per pair
@@ -148,14 +148,14 @@ public class CompletenessProcessor extends Processor<CompletenessProcessor> {
 					});
 
 			// calculate resource count
-			for (Resource dataset : this.getInputDatasets()) {
+			for (Resource dataset : this.getDatasets()) {
 				count.put(dataset, resourcesByDataset.get(dataset).size() - duplicates.getOrDefault(dataset, 0));
 			}
 
 			// calculate population size
 			BigDecimal populationSize = BigDecimal.ZERO;
-			for (Resource dataset : this.getInputDatasets()) {
-				for (Resource datasetComparedTo : this.getInputDatasets()) {
+			for (Resource dataset : this.getDatasets()) {
+				for (Resource datasetComparedTo : this.getDatasets()) {
 					if (dataset.getURI().compareTo(datasetComparedTo.getURI()) > 0) {
 						populationSize = populationSize.add(BigDecimal.valueOf(count.get(dataset))
 								.multiply(BigDecimal.valueOf(count.get(dataset))));
@@ -166,7 +166,7 @@ public class CompletenessProcessor extends Processor<CompletenessProcessor> {
 					RoundingMode.HALF_UP);
 
 			// calculate measurements
-			for (Resource dataset : this.getInputDatasets()) {
+			for (Resource dataset : this.getDatasets()) {
 
 				// calculate completeness
 				completeness.put(dataset,
@@ -174,7 +174,7 @@ public class CompletenessProcessor extends Processor<CompletenessProcessor> {
 
 				// calculate relative coverage
 				relativeCoverage.put(dataset, new HashMap<>());
-				for (Resource datasetComparedTo : this.getInputDatasets()) {
+				for (Resource datasetComparedTo : this.getDatasets()) {
 					if (!dataset.equals(datasetComparedTo)) {
 						int countComparedTo = count.get(datasetComparedTo);
 						int overlap = absoluteCoverage.get(dataset).get(datasetComparedTo);
@@ -185,18 +185,18 @@ public class CompletenessProcessor extends Processor<CompletenessProcessor> {
 			}
 
 			// store measures
-			for (Resource dataset : this.getInputDatasets()) {
+			for (Resource dataset : this.getDatasets()) {
 				// store count
 				Metadata.addQualityMeasurement(AV.count, count.get(dataset), OM.one, dataset, aspect.getIri(),
 						this.getOutputMetaModel(dataset));
 
 				// store completeness
-				Collection<Resource> otherDatasets = this.getInputDatasets();
+				Collection<Resource> otherDatasets = this.getDatasets();
 				otherDatasets.remove(dataset);
 				Metadata.addQualityMeasurement(AV.markAndRecapture, completeness.get(dataset), OM.one, dataset,
 						otherDatasets, aspect.getIri(), this.getOutputMetaModel(dataset));
 
-				for (Resource datasetComparedTo : this.getInputDatasets()) {
+				for (Resource datasetComparedTo : this.getDatasets()) {
 					if (!dataset.equals(datasetComparedTo)) {
 						Metadata.addQualityMeasurement(AV.relativeCoverage,
 								relativeCoverage.get(dataset).get(datasetComparedTo), OM.one, dataset,
