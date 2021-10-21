@@ -54,7 +54,8 @@ public class AV {
 	public static final Property key = ResourceFactory.createProperty(namespace, "key");
 	public static final Property keyVariableName = ResourceFactory.createProperty(namespace, "keyVariableName");
 	// TODO markAndRecapture might become renamed
-	public static final Resource markAndRecapture = ResourceFactory.createResource(namespace + "markAndRecapture");
+	public static final Resource marCompletenessThomas08 = ResourceFactory
+			.createResource(namespace + "marCompletenessThomas08");
 	public static final Resource MetaDataGraph = ResourceFactory.createResource(namespace + "MetaDataGraph");
 	public static final Property ofAspect = ResourceFactory.createProperty(namespace, "ofAspect");
 	public static final Resource Parameter = ResourceFactory.createResource(namespace + "Parameter");
