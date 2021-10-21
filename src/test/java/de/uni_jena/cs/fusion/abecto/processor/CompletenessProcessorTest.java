@@ -101,16 +101,6 @@ public class CompletenessProcessorTest {
 		Model outputMetaModelDataset2 = processor.getOutputMetaModel(dataset(2));
 		Model outputMetaModelDataset3 = processor.getOutputMetaModel(dataset(3));
 
-		// TODO remove
-		System.out.println("\n\n\n################ Dataset 1 #################\n\n\n");
-		outputMetaModelDataset1.write(System.out, "TTL");
-//
-//		System.out.println("\n\n\n################ Dataset 2 #################\n\n\n");
-//		outputMetaModelDataset2.write(System.out, "TTL");
-//
-//		System.out.println("\n\n\n################ Dataset 3 #################\n\n\n");
-//		outputMetaModelDataset3.write(System.out, "TTL");
-
 		// check absolute coverage
 		assertEquals(2, getQualityMeasurement(AV.absoluteCoverage, dataset(1), null, Collections.singleton(dataset(2)),
 				aspect(1), outputMetaModelDataset1).value);
