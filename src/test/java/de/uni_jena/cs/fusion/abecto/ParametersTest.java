@@ -163,8 +163,8 @@ public class ParametersTest {
 		// required: no value
 		{
 			RequiredProcessor processor = new RequiredProcessor();
-			assertThrows(NoSuchElementException.class,
-					() -> Parameters.setParameters(processor, Collections.singletonMap("parameter", Collections.emptyList())));
+			assertThrows(NoSuchElementException.class, () -> Parameters.setParameters(processor,
+					Collections.singletonMap("parameter", Collections.emptyList())));
 		}
 		// required: one value
 		{
@@ -205,7 +205,7 @@ public class ParametersTest {
 		}
 	}
 
-	private static class EmptyCollectionProcessor extends Processor {
+	private static class EmptyCollectionProcessor extends Processor<EmptyCollectionProcessor> {
 		@Parameter
 		public Collection<Temporal> parameter = new ArrayList<>();
 		@SuppressWarnings("unused")
@@ -217,7 +217,7 @@ public class ParametersTest {
 		}
 	}
 
-	private static class UninitializedCollectionProcessor extends Processor {
+	private static class UninitializedCollectionProcessor extends Processor<UninitializedCollectionProcessor> {
 		@Parameter
 		public Collection<Temporal> parameter;
 		@SuppressWarnings("unused")
@@ -229,7 +229,7 @@ public class ParametersTest {
 		}
 	}
 
-	private static class DefaultCollectionProcessor extends Processor {
+	private static class DefaultCollectionProcessor extends Processor<DefaultCollectionProcessor> {
 		@Parameter
 		public Collection<Temporal> parameter = new ArrayList<>(Collections.singletonList(defaultValue));
 		@SuppressWarnings("unused")
@@ -241,7 +241,7 @@ public class ParametersTest {
 		}
 	}
 
-	private static class OptionalProcessor extends Processor {
+	private static class OptionalProcessor extends Processor<OptionalProcessor> {
 		@Parameter
 		public Optional<Temporal> parameter;
 		@SuppressWarnings("unused")
@@ -253,7 +253,7 @@ public class ParametersTest {
 		}
 	}
 
-	private static class RequiredProcessor extends Processor {
+	private static class RequiredProcessor extends Processor<RequiredProcessor> {
 		@Parameter
 		public Temporal parameter;
 		@SuppressWarnings("unused")
@@ -265,7 +265,7 @@ public class ParametersTest {
 		}
 	}
 
-	private static class DefaultProcessor extends Processor {
+	private static class DefaultProcessor extends Processor<DefaultProcessor> {
 		@Parameter
 		public Temporal parameter = defaultValue;
 		@SuppressWarnings("unused")
