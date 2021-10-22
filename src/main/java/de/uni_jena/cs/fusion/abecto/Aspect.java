@@ -121,7 +121,8 @@ public class Aspect {
 
 	/**
 	 * Returns an index of all resources of a given {@link Aspect} and a given
-	 * dataset by its variables and by the variable values.
+	 * dataset by its variables and by the variable values. {@code null} values will
+	 * be ignored.
 	 * 
 	 * @param aspect        the aspect describing the resources to index
 	 * @param dataset       the dataset to index the resources for
@@ -137,8 +138,9 @@ public class Aspect {
 
 	/**
 	 * Returns an index of all resources of a given {@link Aspect} and a given
-	 * dataset by its variables and by the variable values. The variable values will
-	 * be modified by the provided {@link Function} {@code modifier}.
+	 * dataset by its variables and by the variable values. {@code null} values will
+	 * be ignored. The variable values will be modified by the provided
+	 * {@link Function} {@code modifier}.
 	 * <p>
 	 * For example, the {@code modifier} could be used to convert all characters of
 	 * String variable values to lowercase characters.
@@ -170,8 +172,10 @@ public class Aspect {
 			QuerySolution result = results.next();
 			Resource keyValue = result.getResource(aspect.getKeyVariableName());
 			for (String variable : variables) {
-				index.get(variable).computeIfAbsent(modifier.apply(result.get(variable)), k -> new HashSet<>())
-						.add(keyValue);
+				if (result.contains(variable)) {
+					index.get(variable).computeIfAbsent(modifier.apply(result.get(variable)), k -> new HashSet<>())
+							.add(keyValue);
+				}
 			}
 		}
 		return index;

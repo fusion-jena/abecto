@@ -48,25 +48,14 @@ public class JaroWinklerMappingProcessor extends MappingProcessor<JaroWinklerMap
 	public void mapDatasets(Resource dataset1, Resource dataset2) {
 
 		// get parameters
-		double threshold = this.threshold;
 		Aspect aspect = this.getAspects().get(this.aspect);
 
 		// make index case insensitive, if requested
 		Function<RDFNode, String> modifier;
 		if (this.caseSensitive) {
-			modifier = new Function<>() {
-				@Override
-				public String apply(RDFNode t) {
-					return t.asLiteral().getString();
-				}
-			};
+			modifier = t -> t != null ? t.asLiteral().getString() : null;
 		} else {
-			modifier = new Function<>() {
-				@Override
-				public String apply(RDFNode t) {
-					return t.asLiteral().getString().toLowerCase();
-				}
-			};
+			modifier = t -> t != null ? t.asLiteral().getString().toLowerCase() : null;
 		}
 
 		// get resource indices
@@ -82,8 +71,8 @@ public class JaroWinklerMappingProcessor extends MappingProcessor<JaroWinklerMap
 				Map<String, Set<Resource>> values1 = valuesByVariable1.get(variable);
 				Map<String, Set<Resource>> values2 = valuesByVariable2.get(variable);
 
-				JaroWinklerSimilarity<String> matcher1 = JaroWinklerSimilarity.with(values1.keySet(), threshold);
-				JaroWinklerSimilarity<String> matcher2 = JaroWinklerSimilarity.with(values2.keySet(), threshold);
+				JaroWinklerSimilarity<String> matcher1 = JaroWinklerSimilarity.with(values1.keySet(), this.threshold);
+				JaroWinklerSimilarity<String> matcher2 = JaroWinklerSimilarity.with(values2.keySet(), this.threshold);
 
 				// match from first to second
 				Map<String, Collection<String>> matches1 = new HashMap<>();

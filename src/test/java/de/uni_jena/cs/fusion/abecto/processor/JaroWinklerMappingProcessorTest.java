@@ -15,9 +15,28 @@
  */
 package de.uni_jena.cs.fusion.abecto.processor;
 
+import static de.uni_jena.cs.fusion.abecto.TestUtil.aspect;
+import static de.uni_jena.cs.fusion.abecto.TestUtil.dataset;
+import static de.uni_jena.cs.fusion.abecto.TestUtil.resource;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.Collections;
+import java.util.Map;
+
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryFactory;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.sys.JenaSystem;
+import org.apache.jena.vocabulary.OWL;
+import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.vocabulary.RDFS;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+
+import de.uni_jena.cs.fusion.abecto.Aspect;
+import de.uni_jena.cs.fusion.abecto.Correspondences;
 
 public class JaroWinklerMappingProcessorTest {
 	@BeforeAll
@@ -26,333 +45,177 @@ public class JaroWinklerMappingProcessorTest {
 		JenaSystem.init();
 	}
 
-	@Test
-	public void testComputeMapping() throws Exception {
-		// TODO rewrite
-//		UUID ontologyId1 = UUID.randomUUID();
-//		UUID ontologyId2 = UUID.randomUUID();
-//		Model model1 = Models.read(new ByteArrayInputStream(("" + //
-//				"@base <http://example.org/> .\r\n" + //
-//				"@prefix : <http://example.org/> .\r\n" + //
-//				"@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\r\n" + //
-//				"\r\n" + //
-//				":entity1 rdfs:label \"abcdabcdabcdabcdabcd\" .\r\n" + //
-//				":entity2 rdfs:label \"efghefghefghefghefgh\" .\r\n" + //
-//				":entity3 rdfs:label \"ijklijklijklijklijkl\" .").getBytes()));
-//		Model model2 = Models.read(new ByteArrayInputStream(("" + //
-//				"@base <http://example.com/> .\r\n" + //
-//				"@prefix : <http://example.com/> .\r\n" + //
-//				"@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\r\n" + //
-//				"\r\n" + //
-//				":entity1 rdfs:label \"abcdabcdabcdabcdabcd\" .\r\n" + //
-//				":entity2 rdfs:label \"efghefghefghefghabcd\" .\r\n" + //
-//				":entity3 rdfs:label \"mnopmnopmnopmnopmnop\" .").getBytes()));
-//		Model metaModel = Models.getEmptyOntModel();
-//		SparqlEntityManager.insert(
-//				new Category("entity", "{?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .}", ontologyId1),
-//				metaModel);
-//		SparqlEntityManager.insert(
-//				new Category("entity", "{?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .}", ontologyId2),
-//				metaModel);
-//		SparqlEntityManager.insert(
-//				new Category("other", "{?other <http://www.w3.org/2000/01/rdf-schema#label> ?label .}", ontologyId1),
-//				metaModel);
-//		SparqlEntityManager.insert(
-//				new Category("other", "{?other <http://www.w3.org/2000/01/rdf-schema#label> ?label .}", ontologyId2),
-//				metaModel);
-//		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor();
-//		JaroWinklerMappingProcessor.Parameter parameter = new JaroWinklerMappingProcessor.Parameter();
-//		parameter.caseSensitive = false;
-//		parameter.threshold = 0.90D;
-//		parameter.category = "entity";
-//		parameter.variables = Collections.singleton("label");
-//		processor.setParameters(parameter);
-//		processor.addMetaModels(Collections.singleton(metaModel));
-//		Collection<Mapping> mappings = processor.computeMapping(model1, model2, ontologyId1, ontologyId2);
-//		assertEquals(2, mappings.size());
-//		assertTrue(mappings.contains(Mapping.of(ResourceFactory.createResource("http://example.org/entity1"),
-//				ResourceFactory.createResource("http://example.com/entity1"))));
-//		assertTrue(mappings.contains(Mapping.of(ResourceFactory.createResource("http://example.org/entity2"),
-//				ResourceFactory.createResource("http://example.com/entity2"))));
-	}
+	Query pattern = QueryFactory.create("SELECT ?key ?label WHERE {?key <" + RDFS.label + "> ?label .}");
+	Aspect aspect1 = new Aspect(aspect(1), "key").setPattern(dataset(1), pattern).setPattern(dataset(2), pattern);
+	Aspect aspect2 = new Aspect(aspect(2), "key").setPattern(dataset(1), pattern).setPattern(dataset(2), pattern);
 
 	@Test
-	public void testComputeResultModel() throws Exception {
-		// TODO rewrite
-//		UUID ontologyId1 = UUID.randomUUID();
-//		UUID ontologyId2 = UUID.randomUUID();
-//		Model model1 = Models.read(new ByteArrayInputStream(("" + //
-//				"@base <http://example.org/> .\r\n" + //
-//				"@prefix : <http://example.org/> .\r\n" + //
-//				"@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\r\n" + //
-//				"\r\n" + //
-//				":entity1 rdfs:label \"abcdabcdabcdabcdabcd\" .\r\n" + //
-//				":entity2 rdfs:label \"efghefghefghefghefgh\" .\r\n" + //
-//				":entity3 rdfs:label \"ijklijklijklijklijkl\" .").getBytes()));
-//		Model model2 = Models.read(new ByteArrayInputStream(("" + //
-//				"@base <http://example.com/> .\r\n" + //
-//				"@prefix : <http://example.com/> .\r\n" + //
-//				"@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\r\n" + //
-//				"\r\n" + //
-//				":entity1 rdfs:label \"abcdabcdabcdabcdabcd\" .\r\n" + //
-//				":entity2 rdfs:label \"efghefghefghefghabcd\" .\r\n" + //
-//				":entity3 rdfs:label \"mnopmnopmnopmnopmnop\" .").getBytes()));
-//		Model metaModel = Models.getEmptyOntModel();
-//		SparqlEntityManager.insert(
-//				new Category("entity", "{?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .}", ontologyId1),
-//				metaModel);
-//		SparqlEntityManager.insert(
-//				new Category("entity", "{?entity <http://www.w3.org/2000/01/rdf-schema#label> ?label .}", ontologyId2),
-//				metaModel);
-//		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor();
-//		JaroWinklerMappingProcessor.Parameter parameter = new JaroWinklerMappingProcessor.Parameter();
-//		parameter.caseSensitive = false;
-//		parameter.threshold = 0.90D;
-//		parameter.category = "entity";
-//		parameter.variables = Collections.singleton("label");
-//		processor.setParameters(parameter);
-//		processor.addInputModelGroups(
-//				Map.of(ontologyId1, Collections.singleton(model1), ontologyId2, Collections.singleton(model2)));
-//		processor.addMetaModels(Collections.singleton(metaModel));
-//		processor.computeResultModel();
-//		Model result = processor.getResultModel();
-//		Collection<Mapping> positiveMappings = Metadata.getPositiveMappings(result);
-//		Collection<Mapping> negativeMappings = Metadata.getNegativeMappings(result);
-//		assertEquals(2, positiveMappings.size());
-//		assertTrue(positiveMappings.contains(Mapping.of(ResourceFactory.createResource("http://example.org/entity1"),
-//				ResourceFactory.createResource("http://example.com/entity1"))));
-//		assertTrue(positiveMappings.contains(Mapping.of(ResourceFactory.createResource("http://example.org/entity2"),
-//				ResourceFactory.createResource("http://example.com/entity2"))));
-//		assertTrue(negativeMappings.isEmpty());
+	public void useSelectedAspect() throws Exception {
+		Model model1 = ModelFactory.createDefaultModel()//
+				.add(resource("entity1"), RDFS.label, "abcdabcdabcdabcdabcd")
+				.add(resource("entity2"), RDFS.label, "efghefghefghefghefgh")
+				.add(resource("entity3"), RDFS.label, "ijklijklijklijklijkl");
+		Model model2 = ModelFactory.createDefaultModel()//
+				.add(resource("entity4"), RDFS.label, "abcdabcdabcdabcdabcd")
+				.add(resource("entity5"), RDFS.label, "efghefghefghefghabcd")
+				.add(resource("entity6"), RDFS.label, "mnopmnopmnopmnopmnop");
+		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor()
+				.addInputPrimaryModel(dataset(1), model1).addInputPrimaryModel(dataset(2), model2)
+				.setAspectMap(Map.of(aspect(1), aspect1, aspect(2), aspect2));
+		processor.caseSensitive = false;
+		processor.threshold = 0.90D;
+		processor.aspect = aspect(1);
+		processor.variables = Collections.singleton("label");
+		processor.run();
+		Model getOutputMetaModel = processor.getOutputMetaModel(null);
+		assertTrue(Correspondences.allCorrespondend(getOutputMetaModel, resource("entity1"), resource("entity4")));
+		assertTrue(Correspondences.allCorrespondend(getOutputMetaModel, resource("entity2"), resource("entity5")));
+		assertEquals(2, Correspondences.getCorrespondenceSets(getOutputMetaModel, aspect(1)).count());
+		assertEquals(0, Correspondences.getCorrespondenceSets(getOutputMetaModel, aspect(2)).count());
 	}
 
 	@Test
 	public void handelOptionalValue() throws Exception {
-		// TODO rewrite
-//		UUID ontologyId1 = UUID.randomUUID();
-//		UUID ontologyId2 = UUID.randomUUID();
-//		Model model1 = Models.read(new ByteArrayInputStream((""//
-//				+ "@base <http://example.org/> .\n"//
-//				+ "@prefix : <http://example.org/> .\n"//
-//				+ ":entity1 :type  :Thing  .\n"//
-//				+ ":entity2 :type  :Thing  ;\n"//
-//				+ "         :label \"def\" .").getBytes()));
-//		Model model2 = Models.read(new ByteArrayInputStream((""//
-//				+ "@base <http://example.org/> .\n"//
-//				+ "@prefix : <http://example.org/> .\n"//
-//				+ ":entity3 :type  :Thing  ;\n"//
-//				+ "         :label \"abc\" .\n"//
-//				+ ":entity4 :type  :Thing  .").getBytes()));
-//		Model metaModel = Models.getEmptyOntModel();
-//		SparqlEntityManager.insert(new Category("entity", "{"//
-//				+ "?entity <http://example.org/type> <http://example.org/Thing> ."//
-//				+ "OPTIONAL {?entity <http://example.org/label> ?label}"//
-//				+ "}"//
-//				, ontologyId1), metaModel);
-//		SparqlEntityManager.insert(new Category("entity", "{"//
-//				+ "?entity <http://example.org/type> <http://example.org/Thing> ."//
-//				+ "OPTIONAL {?entity <http://example.org/label> ?label}"//
-//				+ "}"//
-//				, ontologyId2), metaModel);
-//		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor();
-//		JaroWinklerMappingProcessor.Parameter parameter = new JaroWinklerMappingProcessor.Parameter();
-//		parameter.caseSensitive = false;
-//		parameter.threshold = 0.90D;
-//		parameter.category = "entity";
-//		parameter.variables = Collections.singleton("label");
-//		processor.setParameters(parameter);
-//		processor.addInputModelGroups(
-//				Map.of(ontologyId1, Collections.singleton(model1), ontologyId2, Collections.singleton(model2)));
-//		processor.addMetaModels(Collections.singleton(metaModel));
-//		processor.computeResultModel();
-//		Model result = processor.getResultModel();
-//		Collection<Mapping> positiveMappings = Metadata.getPositiveMappings(result);
-//		Collection<Mapping> negativeMappings = Metadata.getNegativeMappings(result);
-//		assertTrue(positiveMappings.isEmpty());
-//		assertTrue(negativeMappings.isEmpty());
+		Model model1 = ModelFactory.createDefaultModel()//
+				.add(resource("entity1"), RDF.type, OWL.Thing)//
+				.add(resource("entity2"), RDF.type, OWL.Thing)//
+				.add(resource("entity2"), RDFS.label, "def");
+		Model model2 = ModelFactory.createDefaultModel()//
+				.add(resource("entity3"), RDF.type, OWL.Thing)//
+				.add(resource("entity3"), RDFS.label, "abc")//
+				.add(resource("entity4"), RDF.type, OWL.Thing);
+
+		Query pattern = QueryFactory.create(""//
+				+ "SELECT ?key ?label WHERE {"//
+				+ "  ?key <" + RDF.type + "> <" + OWL.Thing + "> ."//
+				+ "  OPTIONAL {?key <" + RDFS.label + "> ?label}"//
+				+ "}");
+		Aspect aspect1 = new Aspect(aspect(1), "key").setPattern(dataset(1), pattern).setPattern(dataset(2), pattern);
+		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor()
+				.addInputPrimaryModel(dataset(1), model1).addInputPrimaryModel(dataset(2), model2)
+				.setAspectMap(Map.of(aspect(1), aspect1));
+		processor.caseSensitive = false;
+		processor.threshold = 0.90D;
+		processor.aspect = aspect(1);
+		processor.variables = Collections.singleton("label");
+		processor.run();
+		Model getOutputMetaModel = processor.getOutputMetaModel(null);
+		assertEquals(0, Correspondences.getCorrespondenceSets(getOutputMetaModel, aspect(1)).count());
 	}
 
 	@Test
 	public void handelEmptyModels() throws Exception {
-		// TODO rewrite
-//		UUID ontologyId1 = UUID.randomUUID();
-//		UUID ontologyId2 = UUID.randomUUID();
-//		Model model = Models.read(new ByteArrayInputStream((""//
-//				+ "@base <http://example.org/> .\n"//
-//				+ "@prefix : <http://example.org/> .\n"//
-//				+ ":entity1 :label \"abc\"  .\n"//
-//				+ ":entity2 :label \"def\" .").getBytes()));
-//		Model modelEmpty = Models.getEmptyOntModel();
-//		Model metaModel = Models.getEmptyOntModel();
-//		SparqlEntityManager.insert(new Category("entity", "{?entity <http://example.org/label> ?label .}", ontologyId1),
-//				metaModel);
-//		SparqlEntityManager.insert(new Category("entity", "{?entity <http://example.org/label> ?label .}", ontologyId2),
-//				metaModel);
-//		JaroWinklerMappingProcessor processor;
-//		JaroWinklerMappingProcessor.Parameter parameter = new JaroWinklerMappingProcessor.Parameter();
-//		parameter.caseSensitive = false;
-//		parameter.threshold = 0.90D;
-//		parameter.category = "entity";
-//		parameter.variables = Collections.singleton("label");
-//
-//		// direction 1
-//		processor = new JaroWinklerMappingProcessor();
-//		processor.setParameters(parameter);
-//		processor.addInputModelGroups(
-//				Map.of(ontologyId1, Collections.singleton(modelEmpty), ontologyId2, Collections.singleton(model)));
-//		processor.addMetaModels(Collections.singleton(metaModel));
-//		processor.computeResultModel();
-//
-//		// direction 2
-//		processor = new JaroWinklerMappingProcessor();
-//		processor.setParameters(parameter);
-//		processor.addInputModelGroups(
-//				Map.of(ontologyId2, Collections.singleton(model), ontologyId1, Collections.singleton(modelEmpty)));
-//		processor.addMetaModels(Collections.singleton(metaModel));
-//		processor.computeResultModel();
+		Model model1 = ModelFactory.createDefaultModel()//
+				.add(resource("entity1"), RDFS.label, "abc").add(resource("entity2"), RDFS.label, "def");
+		Model model2 = ModelFactory.createDefaultModel();
+
+		// direction 1
+		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor()
+				.addInputPrimaryModel(dataset(1), model1).addInputPrimaryModel(dataset(2), model2)
+				.setAspectMap(Map.of(aspect(1), aspect1));
+		processor.caseSensitive = false;
+		processor.threshold = 0.90D;
+		processor.aspect = aspect(1);
+		processor.variables = Collections.singleton("label");
+		processor.run();
+		Model getOutputMetaModel = processor.getOutputMetaModel(null);
+		assertEquals(0, Correspondences.getCorrespondenceSets(getOutputMetaModel, aspect(1)).count());
+
+		// direction 2
+		processor = new JaroWinklerMappingProcessor().addInputPrimaryModel(dataset(1), model2)
+				.addInputPrimaryModel(dataset(2), model1).setAspectMap(Map.of(aspect(1), aspect1));
+		processor.caseSensitive = false;
+		processor.threshold = 0.90D;
+		processor.aspect = aspect(1);
+		processor.variables = Collections.singleton("label");
+		processor.run();
+		getOutputMetaModel = processor.getOutputMetaModel(null);
+		assertEquals(0, Correspondences.getCorrespondenceSets(getOutputMetaModel, aspect(1)).count());
 	}
 
 	@Test
 	public void handleZeroMappings() throws Exception {
-		// TODO rewrite
-//		UUID ontologyId1 = UUID.randomUUID();
-//		UUID ontologyId2 = UUID.randomUUID();
-//		Model model1 = Models.read(new ByteArrayInputStream((""//
-//				+ "@prefix : <http://example.org/> .\n"//
-//				+ ":entity1 :label \"abc\" .").getBytes()));
-//		Model model2 = Models.read(new ByteArrayInputStream((""//
-//				+ "@prefix : <http://example.org/> .\n"//
-//				+ ":entity2 :label \"def\" .").getBytes()));
-//		Model metaModel = Models.getEmptyOntModel();
-//		SparqlEntityManager.insert(new Category("entity", "{?entity <http://example.org/label> ?label .}", ontologyId1),
-//				metaModel);
-//		SparqlEntityManager.insert(new Category("entity", "{?entity <http://example.org/label> ?label .}", ontologyId2),
-//				metaModel);
-//		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor();
-//		JaroWinklerMappingProcessor.Parameter parameter = new JaroWinklerMappingProcessor.Parameter();
-//		parameter.caseSensitive = false;
-//		parameter.threshold = 0.90D;
-//		parameter.category = "entity";
-//		parameter.variables = Collections.singleton("label");
-//		processor.setParameters(parameter);
-//		processor.addInputModelGroups(
-//				Map.of(ontologyId1, Collections.singleton(model1), ontologyId2, Collections.singleton(model2)));
-//		processor.addMetaModels(Collections.singleton(metaModel));
-//		processor.computeResultModel();
+		Model model1 = ModelFactory.createDefaultModel()//
+				.add(resource("entity1"), RDFS.label, "def");
+		Model model2 = ModelFactory.createDefaultModel()//
+				.add(resource("entity2"), RDFS.label, "abc");
+		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor()
+				.addInputPrimaryModel(dataset(1), model1).addInputPrimaryModel(dataset(2), model2)
+				.setAspectMap(Map.of(aspect(1), aspect1));
+		processor.caseSensitive = false;
+		processor.threshold = 0.90D;
+		processor.aspect = aspect(1);
+		processor.variables = Collections.singleton("label");
+		processor.run();
+		Model getOutputMetaModel = processor.getOutputMetaModel(null);
+		assertEquals(0, Correspondences.getCorrespondenceSets(getOutputMetaModel, aspect(1)).count());
 	}
 
 	@Test
 	public void commutativ() throws Exception {
-		// TODO rewrite
-//		UUID ontologyId1 = UUID.randomUUID();
-//		UUID ontologyId2 = UUID.randomUUID();
-//		Model model1 = Models.read(new ByteArrayInputStream((""//
-//				+ "@prefix : <http://example.org/> .\n"//
-//				+ ":entity1 :label \"aaaaaaaaaaa\"  .\n"//
-//				+ ":entity2 :label \"aaaaaaaaaab\" .").getBytes()));
-//		Model model2 = Models.read(new ByteArrayInputStream((""//
-//				+ "@prefix : <http://example.org/> .\n"//
-//				+ ":entity3 :label \"aaaaaaaaaaa\" .\n"//
-//				+ ":entity4 :label \"ccccccccccc\" .").getBytes()));
-//		Model metaModel = Models.getEmptyOntModel();
-//		SparqlEntityManager.insert(new Category("entity", "{"//
-//				+ "?entity <http://example.org/label> ?label"//
-//				+ "}"//
-//				, ontologyId1), metaModel);
-//		SparqlEntityManager.insert(new Category("entity", "{"//
-//				+ "?entity <http://example.org/label> ?label"//
-//				+ "}"//
-//				, ontologyId2), metaModel);
-//
-//		JaroWinklerMappingProcessor.Parameter parameter = new JaroWinklerMappingProcessor.Parameter();
-//		parameter.caseSensitive = false;
-//		parameter.threshold = 0.90D;
-//		parameter.category = "entity";
-//		parameter.variables = Collections.singleton("label");
-//
-//		// direction 1
-//		{
-//			JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor();
-//			processor.setParameters(parameter);
-//			processor.addInputModelGroups(
-//					Map.of(ontologyId1, Collections.singleton(model1), ontologyId2, Collections.singleton(model2)));
-//			processor.addMetaModels(Collections.singleton(metaModel));
-//			processor.computeResultModel();
-//			Model result = processor.getResultModel();
-//
-//			Collection<Mapping> positiveMappings = Metadata.getPositiveMappings(result);
-//			assertEquals(1, positiveMappings.size());
-//			assertTrue(
-//					positiveMappings.contains(Mapping.of(ResourceFactory.createResource("http://example.org/entity1"),
-//							ResourceFactory.createResource("http://example.org/entity3"))));
-//			assertTrue(Metadata.getNegativeMappings(result).isEmpty());
-//		}
-//		// direction 2
-//		{
-//			JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor();
-//			processor.setParameters(parameter);
-//			processor.addInputModelGroups(
-//					Map.of(ontologyId1, Collections.singleton(model2), ontologyId2, Collections.singleton(model1)));
-//			processor.addMetaModels(Collections.singleton(metaModel));
-//			processor.computeResultModel();
-//			Model result = processor.getResultModel();
-//
-//			Collection<Mapping> positiveMappings = Metadata.getPositiveMappings(result);
-//			assertEquals(1, positiveMappings.size());
-//			assertTrue(
-//					positiveMappings.contains(Mapping.of(ResourceFactory.createResource("http://example.org/entity1"),
-//							ResourceFactory.createResource("http://example.org/entity3"))));
-//			assertTrue(Metadata.getNegativeMappings(result).isEmpty());
-//		}
+		Model model1 = ModelFactory.createDefaultModel()//
+				.add(resource("entity1"), RDFS.label, "aaaaaaaaaaa")
+				.add(resource("entity2"), RDFS.label, "aaaaaaaaaab");
+		Model model2 = ModelFactory.createDefaultModel()//
+				.add(resource("entity3"), RDFS.label, "aaaaaaaaaaa")
+				.add(resource("entity4"), RDFS.label, "ccccccccccc");
+
+		// direction 1
+		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor()
+				.addInputPrimaryModel(dataset(1), model1).addInputPrimaryModel(dataset(2), model2)
+				.setAspectMap(Map.of(aspect(1), aspect1));
+		processor.caseSensitive = false;
+		processor.threshold = 0.90D;
+		processor.aspect = aspect(1);
+		processor.variables = Collections.singleton("label");
+		processor.run();
+		Model getOutputMetaModel = processor.getOutputMetaModel(null);
+		assertTrue(Correspondences.allCorrespondend(getOutputMetaModel, resource("entity1"), resource("entity3")));
+		assertEquals(1, Correspondences.getCorrespondenceSets(getOutputMetaModel, aspect(1)).count());
+
+		// direction 2
+		processor = new JaroWinklerMappingProcessor().addInputPrimaryModel(dataset(1), model2)
+				.addInputPrimaryModel(dataset(2), model1).setAspectMap(Map.of(aspect(1), aspect1));
+		processor.caseSensitive = false;
+		processor.threshold = 0.90D;
+		processor.aspect = aspect(1);
+		processor.variables = Collections.singleton("label");
+		processor.run();
+		getOutputMetaModel = processor.getOutputMetaModel(null);
+		assertTrue(Correspondences.allCorrespondend(getOutputMetaModel, resource("entity1"), resource("entity3")));
+		assertEquals(1, Correspondences.getCorrespondenceSets(getOutputMetaModel, aspect(1)).count());
+
 	}
 
 	@Test
 	public void caseSensitivity() throws Exception {
-		// TODO rewrite
-//		UUID ontologyId1 = UUID.randomUUID();
-//		UUID ontologyId2 = UUID.randomUUID();
-//		Model model1 = Models.read(new ByteArrayInputStream((""//
-//				+ "@prefix : <http://example.org/> .\n"//
-//				+ ":entity1 :label \"abc\" .").getBytes()));
-//		Model model2 = Models.read(new ByteArrayInputStream((""//
-//				+ "@prefix : <http://example.org/> .\n"//
-//				+ ":entity2 :label \"ABC\" .").getBytes()));
-//		Model metaModel = Models.getEmptyOntModel();
-//		SparqlEntityManager.insert(new Category("entity", "{?entity <http://example.org/label> ?label .}", ontologyId1),
-//				metaModel);
-//		SparqlEntityManager.insert(new Category("entity", "{?entity <http://example.org/label> ?label .}", ontologyId2),
-//				metaModel);
-//		JaroWinklerMappingProcessor.Parameter parameter = new JaroWinklerMappingProcessor.Parameter();
-//		parameter.threshold = 0.90D;
-//		parameter.category = "entity";
-//		parameter.variables = Collections.singleton("label");
-//
-//		// case-insensitive
-//		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor();
-//		processor.setParameters(parameter);
-//		parameter.caseSensitive = false;
-//		processor.addInputModelGroups(
-//				Map.of(ontologyId1, Collections.singleton(model1), ontologyId2, Collections.singleton(model2)));
-//		processor.addMetaModels(Collections.singleton(metaModel));
-//		processor.computeResultModel();
-//		Model result = processor.getResultModel();
-//
-//		Collection<Mapping> positiveMappings = Metadata.getPositiveMappings(result);
-//		assertEquals(1, positiveMappings.size());
-//		assertTrue(positiveMappings.contains(Mapping.of(ResourceFactory.createResource("http://example.org/entity1"),
-//				ResourceFactory.createResource("http://example.org/entity2"))));
-//
-//		// case-sensitive
-//		processor = new JaroWinklerMappingProcessor();
-//		processor.setParameters(parameter);
-//		parameter.caseSensitive = true;
-//		processor.addInputModelGroups(
-//				Map.of(ontologyId1, Collections.singleton(model1), ontologyId2, Collections.singleton(model2)));
-//		processor.addMetaModels(Collections.singleton(metaModel));
-//		processor.computeResultModel();
-//		result = processor.getResultModel();
-//
-//		positiveMappings = Metadata.getPositiveMappings(result);
-//		assertTrue(positiveMappings.isEmpty());
+		Model model1 = ModelFactory.createDefaultModel()//
+				.add(resource("entity1"), RDFS.label, "abc");
+		Model model2 = ModelFactory.createDefaultModel()//
+				.add(resource("entity2"), RDFS.label, "ABC");
+
+		// case-insensitive
+		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor()
+				.addInputPrimaryModel(dataset(1), model1).addInputPrimaryModel(dataset(2), model2)
+				.setAspectMap(Map.of(aspect(1), aspect1));
+		processor.caseSensitive = false;
+		processor.threshold = 0.90D;
+		processor.aspect = aspect(1);
+		processor.variables = Collections.singleton("label");
+		processor.run();
+		Model getOutputMetaModel = processor.getOutputMetaModel(null);
+		assertTrue(Correspondences.allCorrespondend(getOutputMetaModel, resource("entity1"), resource("entity2")));
+		assertEquals(1, Correspondences.getCorrespondenceSets(getOutputMetaModel, aspect(1)).count());
+
+		// case-sensitive
+		processor = new JaroWinklerMappingProcessor().addInputPrimaryModel(dataset(1), model1)
+				.addInputPrimaryModel(dataset(2), model2).setAspectMap(Map.of(aspect(1), aspect1));
+		processor.caseSensitive = true;
+		processor.threshold = 0.90D;
+		processor.aspect = aspect(1);
+		processor.variables = Collections.singleton("label");
+		processor.run();
+		getOutputMetaModel = processor.getOutputMetaModel(null);
+		assertEquals(0, Correspondences.getCorrespondenceSets(getOutputMetaModel, aspect(1)).count());
 	}
 }

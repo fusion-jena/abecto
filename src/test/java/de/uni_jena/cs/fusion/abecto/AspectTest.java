@@ -267,7 +267,7 @@ public class AspectTest {
 			}
 		}
 
-		// without modifier
+		// with modifier
 
 		Map<String, Map<Integer, Set<Resource>>> index2 = Aspect.getResourceIndex(aspect, dataset,
 				Collections.singleton("value"), primaryDataModel, l -> (l.asLiteral().getInt() % 2));
