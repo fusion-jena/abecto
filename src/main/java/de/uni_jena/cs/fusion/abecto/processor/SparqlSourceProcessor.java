@@ -32,8 +32,10 @@ import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
@@ -58,20 +60,22 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 	public Integer chunkSize = 500;
 	/**
 	 * SELECT query to retrieve a list of the relevant resources. All variables will
-	 * be taken into account. None IRI value will be ignored. ORDER BY, LIMIT and
+	 * be taken into account. None IRI values will be ignored. ORDER BY, LIMIT and
 	 * OFFSET might become overwritten.
 	 */
 	@Parameter
-	public Optional<Query> query;
+	public Optional<Query> query = Optional.empty();
 	/** List of the relevant resources. */
 	@Parameter
-	public Collection<Resource> list;
+	public Collection<Resource> list = new ArrayList<>();
 	/**
-	 * Number of iterations to load associated resources, which share a statement as
-	 * an object with a retrieved resource as a subject. Default: 0
+	 * Maximum distance of loaded associated resources. Associated resources share a
+	 * statement as an object with a retrieved resource as a subject, in case of any
+	 * property, and vice versa, in case of followed inverse properties (see
+	 * {@link #followInverse}). Default: 0
 	 */
 	@Parameter
-	public Integer associatedLoadIterations = 0;
+	public Integer maxDistance = 0;
 	/**
 	 * Properties that represent a hierarchy. Resources associated to a loaded
 	 * resource by a hierarchy property will be loaded unlimited, but will not cause
@@ -87,14 +91,14 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 	 * associated resource.
 	 */
 	@Parameter
-	public Collection<Node> followInverse;
-	
+	public Collection<Node> followInverse = new ArrayList<>();
+
 	// TODO add parameter to {@code followInverseUnlimited}
 
 	@Override
 	public void run() {
 		extract(this.getOutputPrimaryModel().get(), this.service, this.query, this.list, this.followInverse,
-				this.followUnlimited, this.associatedLoadIterations, this.chunkSize);
+				this.followUnlimited, this.maxDistance, this.chunkSize);
 	}
 
 	private static ElementData valuesClause(Var var, Iterable<Node> values) {
@@ -114,10 +118,8 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 		return group;
 	}
 
-	private static void loadInto(String service, Collection<Resource> resourcesToLoad,
-			Iterable<Node> inverseAssociationProperties, Model resultModel, int chunkSize) {
-		// initialization
-
+	private static void loadResources(String service, Collection<Resource> resourcesToLoad,
+			Iterable<Node> followInverse, Model resultModel, int chunkSize) {
 		// prepare queries
 		/*
 		 * This requires some complicated use of {@link Element}s, as both APIs, {@link
@@ -130,7 +132,7 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 		Query constructQuery = new Query();
 		constructQuery.setQueryConstructType();
 		constructQuery.setConstructTemplate(new Template(pattern));
-		ElementData inverseAssiciationPropertiesValuesClause = valuesClause(p, inverseAssociationProperties);
+		ElementData followInverseValuesClause = valuesClause(p, followInverse);
 
 		// initialize chunk
 		List<Node> currentChunck = new ArrayList<Node>(chunkSize);
@@ -147,10 +149,10 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 
 				QueryExecutionFactory.sparqlService(service, constructQuery).execConstruct(resultModel);
 
-				if (inverseAssociationProperties.iterator().hasNext()) {
+				if (followInverse.iterator().hasNext()) {
 					// add resource list as subject
-					constructQuery.setQueryPattern(
-							group(triple, inverseAssiciationPropertiesValuesClause, valuesClause(o, currentChunck)));
+					constructQuery
+							.setQueryPattern(group(triple, followInverseValuesClause, valuesClause(o, currentChunck)));
 
 					QueryExecutionFactory.sparqlService(service, constructQuery).execConstruct(resultModel);
 				}
@@ -162,8 +164,7 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 	}
 
 	private static Model extract(Model resultModel, String service, Optional<Query> query, Collection<Resource> list,
-			Collection<Node> inverseAssociationProperties, Collection<Property> hierarchyProperties,
-			int associatedLoadIterations, int chunkSize) {
+			Collection<Node> followInverse, Collection<Property> followUnlimited, int maxDistance, int chunkSize) {
 
 		// TODO provide single HTTP client for all requests
 
@@ -189,53 +190,54 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 		// get list of relevant resources using parameter `list`
 		resourcesToLoad.addAll(list);
 
-		// get descriptions of relevant and associated resources
-		for (int associatedLoadIteration = 0; associatedLoadIteration <= associatedLoadIterations; associatedLoadIteration++) {
-			// load resources in chunks of size `chunkSize`
-			loadInto(service, resourcesToLoad, inverseAssociationProperties, resultModel, chunkSize);
+		// get descriptions of relevant resources and determine associated resources to
+		// load next
+		for (int distance = 0; distance <= maxDistance; distance++) {
+			// load resources in chunks
+			loadResources(service, resourcesToLoad, followInverse, resultModel, chunkSize);
 
 			// remember loaded resources
 			resourcesLoaded.addAll(resourcesToLoad);
 			resourcesToLoad.clear();
 
-			if ( /* there is a next iteration */ associatedLoadIteration < associatedLoadIterations) {
+			if ( /* there is a next iteration */ distance < maxDistance) {
 				// get associated resources to load in next iteration
-				resultModel.listSubjects().filterKeep(o -> o.isURIResource()).filterDrop(resourcesLoaded::contains)
+				resultModel.listSubjects().filterKeep(RDFNode::isURIResource).filterDrop(resourcesLoaded::contains)
 						.forEachRemaining(resourcesToLoad::add);
-				resultModel.listObjects().filterKeep(o -> o.isURIResource()).filterDrop(resourcesLoaded::contains)
-						.mapWith(o -> o.asResource()).forEachRemaining(resourcesToLoad::add);
+				resultModel.listObjects().filterKeep(RDFNode::isURIResource).filterDrop(resourcesLoaded::contains)
+						.mapWith(RDFNode::asResource).forEachRemaining(resourcesToLoad::add);
 			}
 		}
 
 		// get descriptions of upper hierarchy resources (transitively) associated to
 		// earlier loaded resources by at least one of the `hierarchyProperties`
 		do {
-			// load resources in chunks of size `chunkSize`
-			loadInto(service, resourcesToLoad, inverseAssociationProperties, resultModel, chunkSize);
+			// load resources in chunks
+			loadResources(service, resourcesToLoad, followInverse, resultModel, chunkSize);
 
 			// remember loaded resources
 			resourcesLoaded.addAll(resourcesToLoad);
 			resourcesToLoad.clear();
 
 			// get new resources associated by a hierarchyProperty to load in next iteration
-			for (Property hierarchyProperty : hierarchyProperties) {
-				resultModel.listObjectsOfProperty(hierarchyProperty).filterKeep(o -> o.isURIResource())
-						.filterDrop(resourcesLoaded::contains).mapWith(o -> o.asResource())
+			for (Property hierarchyProperty : followUnlimited) {
+				resultModel.listObjectsOfProperty(hierarchyProperty).filterKeep(RDFNode::isURIResource)
+						.filterDrop(resourcesLoaded::contains).mapWith(RDFNode::asResource)
 						.forEachRemaining(resourcesToLoad::add);
 			}
 		} while (!resourcesToLoad.isEmpty());
 
 		// get descriptions of properties used to describe loaded resources
 		do {
-			// load resources in chunks of size `chunkSize`
-			loadInto(service, resourcesToLoad, inverseAssociationProperties, resultModel, chunkSize);
+			// load resources in chunks
+			loadResources(service, resourcesToLoad, followInverse, resultModel, chunkSize);
 
 			// remember loaded resources
 			resourcesLoaded.addAll(resourcesToLoad);
 			resourcesToLoad.clear();
 
 			// get new properties used to describe loaded resources
-			resultModel.listStatements().mapWith(s -> s.getPredicate()).filterDrop(resourcesLoaded::contains)
+			resultModel.listStatements().mapWith(Statement::getPredicate).filterDrop(resourcesLoaded::contains)
 					.forEachRemaining(resourcesToLoad::add);
 		} while (!resourcesToLoad.isEmpty());
 
