@@ -20,13 +20,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.apache.jena.rdf.model.Model;
@@ -36,7 +33,6 @@ import org.apache.jena.rdf.model.Resource;
 import de.uni_jena.cs.fusion.abecto.Aspect;
 import de.uni_jena.cs.fusion.abecto.Vocabularies;
 import de.uni_jena.cs.fusion.abecto.util.Models;
-import de.uni_jena.cs.fusion.abecto.util.ToManyElementsException;
 
 /**
  * Provides an abstraction of step processors that generate new primary data or
@@ -45,7 +41,6 @@ import de.uni_jena.cs.fusion.abecto.util.ToManyElementsException;
  */
 public abstract class Processor<P extends Processor<P>> implements Runnable {
 
-	private Map<String, List<Object>> parameter = new HashMap<>();
 	private Map<Resource, Collection<Model>> inputMetaModelsByDataset = new HashMap<>();
 	private Map<Resource, Collection<Model>> inputPrimaryModelsByDataset = new HashMap<>();
 	private Map<Resource, Model> outputMetaModelsByDataset = new HashMap<>();
@@ -172,117 +167,6 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 		return this.outputPrimaryModel;
 	}
 
-	/**
-	 * Returns the parameter value for a given key asserting a given type.
-	 * 
-	 * @param <T>         type of the returned value
-	 * @param key         key of the parameter
-	 * @param resultClass class object of the type of the returned value
-	 * @return value of the parameter
-	 * @throws ClassCastException      if the parameter value does not match the
-	 *                                 requested type
-	 * @throws NullPointerException    if the parameter has not been set
-	 * @throws ToManyElementsException if the parameter has more than one value
-	 */
-	@SuppressWarnings("unchecked")
-	public final <T> T getParameterValue(String key, Class<T> resultClass)
-			throws ClassCastException, NullPointerException {
-		List<T> values = (List<T>) Objects.requireNonNull(this.parameter.get(key));
-		switch (values.size()) {
-		case 0:
-			throw new NullPointerException();
-		case 1:
-			return values.get(0);
-		default:
-			throw new ToManyElementsException();
-		}
-	}
-
-	/**
-	 * Returns the parameter value for a given key asserting a given type, if
-	 * present, otherwise returns {@code other}.
-	 * 
-	 * @param <T>   type of the returned value
-	 * @param key   key of the parameter
-	 * @param other value to be returned, if the parameter has not been set
-	 * @return value of the parameter
-	 * @throws ClassCastException      if the parameter value does not match the
-	 *                                 requested type
-	 * @throws ToManyElementsException if the parameter has more than one value
-	 */
-	@SuppressWarnings("unchecked")
-	public final <T> T getParameterValue(String key, @Nonnull T other) throws ClassCastException, NullPointerException {
-		Objects.requireNonNull(other);
-		List<T> values = (List<T>) Objects.requireNonNull(this.parameter.get(key));
-		switch (values.size()) {
-		case 0:
-			throw new NullPointerException();
-		case 1:
-			return values.get(0);
-		default:
-			throw new ToManyElementsException();
-		}
-	}
-
-	/**
-	 * Returns the parameter value for a given key asserting a given type.
-	 * 
-	 * @param <T>         type of the returned value
-	 * @param key         key of the parameter
-	 * @param resultClass class object of the type of the returned value
-	 * @return value of the parameter
-	 * @throws ClassCastException      if the parameter value does not match the
-	 *                                 requested type
-	 * @throws ToManyElementsException if the parameter has more than one value
-	 */
-	@SuppressWarnings("unchecked")
-	public final <T> Optional<T> getParameterValueOptional(String key, Class<T> resultClass)
-			throws ClassCastException, NullPointerException {
-		List<T> values = (List<T>) Objects.requireNonNull(this.parameter.get(key));
-		switch (values.size()) {
-		case 0:
-			return Optional.empty();
-		case 1:
-			return Optional.of(values.get(0));
-		default:
-			throw new ToManyElementsException();
-		}
-	}
-
-	/**
-	 * Returns the parameter values for a given key asserting a given type.
-	 * 
-	 * @param <T>         type of the returned value
-	 * @param key         key of the parameter
-	 * @param resultClass class object of the type of the returned values
-	 * @return values of the parameter
-	 * @throws ClassCastException   if the parameter values do not match the
-	 *                              requested type
-	 * @throws NullPointerException if the parameter has not been set
-	 */
-	@SuppressWarnings("unchecked")
-	public final <T> List<T> getParameterValues(String key, Class<T> resultClass)
-			throws ClassCastException, NullPointerException {
-		return (List<T>) Objects.requireNonNull(this.parameter.get(key));
-	}
-
-	/**
-	 * Returns the parameter values for a given key asserting a given type, if
-	 * present, otherwise returns {@code other}.
-	 * 
-	 * @param <T>   type of the returned value
-	 * @param key   key of the parameter
-	 * @param other values to be returned, if the parameter has not been set
-	 * @return values of the parameter
-	 * @throws ClassCastException if the parameter values do not match the requested
-	 *                            type
-	 */
-	@SuppressWarnings("unchecked")
-	public final <T> List<T> getParameterValues(String key, @Nonnull List<T> other)
-			throws ClassCastException, NullPointerException {
-		return (List<T>) Objects.requireNonNull(this.parameter.getOrDefault(key, (List<Object>) other));
-	}
-
 	public Model getPrimaryModelUnion() {
 		return Models.union(
 				this.inputPrimaryModelsByDataset.get(
@@ -356,14 +240,4 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 		return self();
 	}
 
-	/**
-	 * Sets the parameter value for a given key.
-	 * 
-	 * @param key   key of the parameter
-	 * @param value value of the parameter
-	 */
-	public final P setParameterValues(String key, List<Object> value) {
-		this.parameter.put(key, value);
-		return self();
-	}
 }
