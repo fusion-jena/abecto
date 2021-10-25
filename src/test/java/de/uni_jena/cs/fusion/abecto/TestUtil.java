@@ -19,6 +19,7 @@ import javax.annotation.Nullable;
 
 import org.apache.jena.arq.querybuilder.AskBuilder;
 import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
@@ -29,6 +30,7 @@ import org.apache.jena.vocabulary.OA;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 
+import de.uni_jena.cs.fusion.abecto.util.Models;
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 import de.uni_jena.cs.fusion.abecto.vocabulary.DQV;
 
@@ -61,6 +63,28 @@ public class TestUtil {
 
 	public static Resource resource(String local) {
 		return ResourceFactory.createResource(namespace + local);
+	}
+
+	public static boolean containsDeviation(Resource affectedResource, String affectedVariableName,
+			RDFNode affectedValue, Resource comparedToDataset, Resource comparedToResource, RDFNode comparedToValue,
+			Resource affectedAspect, Model outputAffectedDatasetMetaModel) {
+
+		Var deviation = Var.alloc("deviation");
+		Var qualityAnnotation = Var.alloc("qualityAnnotation");
+
+		AskBuilder builder = new AskBuilder();
+		builder.addWhere(deviation, RDF.type, AV.Deviation);
+		builder.addWhere(deviation, AV.affectedAspect, affectedAspect);
+		builder.addWhere(deviation, AV.affectedVariableName, affectedVariableName);
+		builder.addWhere(deviation, AV.affectedValue, affectedValue);
+		builder.addWhere(deviation, AV.comparedToDataset, comparedToDataset);
+		builder.addWhere(deviation, AV.comparedToResource, comparedToResource);
+		builder.addWhere(deviation, AV.comparedToValue, comparedToValue);
+		builder.addWhere(qualityAnnotation, RDF.type, DQV.QualityAnnotation);
+		builder.addWhere(qualityAnnotation, OA.hasTarget, affectedResource);
+		builder.addWhere(qualityAnnotation, OA.hasBody, deviation);
+
+		return QueryExecutionFactory.create(builder.build(), outputAffectedDatasetMetaModel).execAsk();
 	}
 
 	public static boolean containsIssue(Resource affectedResource, @Nullable String affectedVariableName,
@@ -106,6 +130,15 @@ public class TestUtil {
 		builder.addWhere(qualityAnnotation, OA.hasBody, resourceOmission);
 
 		return QueryExecutionFactory.create(builder.build(), outputAffectedDatasetMetaModel).execAsk();
+	}
+
+	public static boolean ask(Model model, String query) {
+		return QueryExecutionFactory.create(QueryFactory.create(query), model).execAsk();
+	}
+
+	public static int selectOneInt(Model model, String query, String varName) {
+		return Models.assertOne(QueryExecutionFactory.create(QueryFactory.create(query), model).execSelect())
+				.getLiteral(varName).getInt();
 	}
 
 }

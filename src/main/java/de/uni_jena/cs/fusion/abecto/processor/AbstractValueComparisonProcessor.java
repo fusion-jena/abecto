@@ -60,8 +60,8 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 												// avoid comparing the representation of one resource in one dataset
 												// with itself
 												Optional<Map<String, Set<RDFNode>>> values2 = Aspect.getResource(aspect,
-														dataset1, correspondingResource1,
-														this.getInputPrimaryModelUnion(dataset1));
+														dataset2, correspondingResource2,
+														this.getInputPrimaryModelUnion(dataset2));
 												if (values2.isPresent()) {
 													for (String variable : this.variables) {
 														this.compareVariableValues(variable, dataset1,
