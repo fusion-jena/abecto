@@ -149,13 +149,13 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 		if (values1.isEmpty()) {
 			// report missing values
 			for (RDFNode value2 : values2) {
-				Metadata.addValuesOmission(correspondingResource1.asResource(), variable, dataset1,
+				Metadata.addValuesOmission(correspondingResource1.asResource(), variable, dataset2,
 						correspondingResource2.asResource(), value2, this.aspect, this.getOutputMetaModel(dataset1));
 			}
 		} else if (values2.isEmpty()) {
 			// report missing values
 			for (RDFNode value1 : values1) {
-				Metadata.addValuesOmission(correspondingResource2.asResource(), variable, dataset2,
+				Metadata.addValuesOmission(correspondingResource2.asResource(), variable, dataset1,
 						correspondingResource1.asResource(), value1, this.aspect, this.getOutputMetaModel(dataset2));
 			}
 		} else {

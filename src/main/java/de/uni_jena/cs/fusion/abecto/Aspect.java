@@ -110,7 +110,10 @@ public class Aspect {
 			while (results.hasNext()) {
 				QuerySolution result = results.next();
 				for (Entry<String, Set<RDFNode>> entry : values.entrySet()) {
-					entry.getValue().add(result.get(entry.getKey()));
+					RDFNode value = result.get(entry.getKey());
+					if (value != null) {
+						entry.getValue().add(value);
+					}
 				}
 			}
 			return Optional.of(values);

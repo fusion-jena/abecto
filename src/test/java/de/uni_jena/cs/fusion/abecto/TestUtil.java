@@ -141,4 +141,25 @@ public class TestUtil {
 				.getLiteral(varName).getInt();
 	}
 
+	public static boolean containsValuesOmission(Resource affectedResource, String affectedVariableName,
+			Resource comparedToDataset, Resource comparedToResource, RDFNode comparedToValue, Resource affectedAspect,
+			Model outputAffectedDatasetMetaModel) {
+
+		Var valueOmission = Var.alloc("resourceOmission");
+		Var qualityAnnotation = Var.alloc("qualityAnnotation");
+
+		AskBuilder builder = new AskBuilder();
+		builder.addWhere(valueOmission, RDF.type, AV.ValueOmission);
+		builder.addWhere(valueOmission, AV.affectedAspect, affectedAspect);
+		builder.addWhere(valueOmission, AV.affectedVariableName, affectedVariableName);
+		builder.addWhere(valueOmission, AV.comparedToDataset, comparedToDataset);
+		builder.addWhere(valueOmission, AV.comparedToResource, comparedToResource);
+		builder.addWhere(valueOmission, AV.comparedToValue, comparedToValue);
+		builder.addWhere(qualityAnnotation, RDF.type, DQV.QualityAnnotation);
+		builder.addWhere(qualityAnnotation, OA.hasTarget, affectedResource);
+		builder.addWhere(qualityAnnotation, OA.hasBody, valueOmission);
+
+		return QueryExecutionFactory.create(builder.build(), outputAffectedDatasetMetaModel).execAsk();
+	}
+
 }
