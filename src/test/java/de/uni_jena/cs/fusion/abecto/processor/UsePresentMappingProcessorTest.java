@@ -19,7 +19,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
-import java.util.Collections;
 
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
@@ -74,7 +73,7 @@ public class UsePresentMappingProcessorTest {
 		aspect.setPattern(dataset, QueryFactory.create("SELECT ?key WHERE {?key a <" + type.getURI() + ">}"));
 
 		UsePresentMappingProcessor processor = new UsePresentMappingProcessor();
-		processor.setAspectMap(Collections.singletonMap(aspectIri, aspect));
+		processor.addAspects(aspect);
 		processor.aspect = aspectIri;
 		processor.assignmentPaths = Arrays.asList("<http://example.org/sameAs>",
 				"<http://example.org/same>/<http://example.org/as>");

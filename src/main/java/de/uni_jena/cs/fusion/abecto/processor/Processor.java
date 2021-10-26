@@ -50,7 +50,7 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 	 * during processing using {@link #replaceOutputPrimaryModel(Model)}.
 	 */
 	private Optional<Model> outputPrimaryModel = Optional.empty();
-	private Map<Resource, Aspect> aspects = Collections.emptyMap();
+	private Map<Resource, Aspect> aspects = new HashMap<>();
 
 	private Map<Resource, Model> cachedInputMetaModelUnionByDataset = new HashMap<>();
 
@@ -220,8 +220,10 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 		return (P) this;
 	}
 
-	public P setAspectMap(Map<Resource, Aspect> aspects) {
-		this.aspects = aspects;
+	public P addAspects(Aspect... aspects) {
+		for (Aspect aspect : aspects) {
+			this.aspects.put(aspect.getIri(), aspect);
+		}
 		this.initOutputMetaModel(null); // assert to be called once
 		return self();
 	}

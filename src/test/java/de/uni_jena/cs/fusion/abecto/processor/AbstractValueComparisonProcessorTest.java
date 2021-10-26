@@ -29,7 +29,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Map;
 
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
@@ -62,7 +61,7 @@ public abstract class AbstractValueComparisonProcessorTest {
 	Model[] compare(Model model1, Model model2) throws Exception {
 		Processor<?> processor = getInstance(Collections.singletonList("value"), aspect(1))
 				.addInputPrimaryModel(dataset(1), model1).addInputPrimaryModel(dataset(2), model2)
-				.addInputMetaModels(null, Collections.singleton(mappingModel)).setAspectMap(Map.of(aspect(1), aspect1));
+				.addInputMetaModels(null, Collections.singleton(mappingModel)).addAspects(aspect1);
 		processor.run();
 		return new Model[] { processor.getOutputMetaModel(dataset(1)), processor.getOutputMetaModel(dataset(2)) };
 	}

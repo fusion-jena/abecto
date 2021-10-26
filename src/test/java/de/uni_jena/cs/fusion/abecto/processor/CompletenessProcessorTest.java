@@ -30,7 +30,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Map;
 import java.util.NoSuchElementException;
 
 import org.apache.jena.query.Query;
@@ -94,7 +93,7 @@ public class CompletenessProcessorTest {
 				.addInputPrimaryModel(dataset(1), inputPrimaryModel1)
 				.addInputPrimaryModel(dataset(2), inputPrimaryModel2)
 				.addInputPrimaryModel(dataset(3), inputPrimaryModel3).addInputMetaModel(null, inputGeneralMetaModel)
-				.setAspectMap(Map.of(aspect(1), aspect1, aspect(2), aspect2, aspect(3), aspect3));
+				.addAspects(aspect1, aspect2, aspect3);
 		processor.aspects = Arrays.asList(aspect(1), aspect(2), aspect(3));
 		processor.run();
 		Model outputMetaModelDataset1 = processor.getOutputMetaModel(dataset(1));

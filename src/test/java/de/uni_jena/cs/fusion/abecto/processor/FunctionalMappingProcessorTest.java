@@ -22,8 +22,6 @@ import static de.uni_jena.cs.fusion.abecto.TestUtil.property;
 import static de.uni_jena.cs.fusion.abecto.TestUtil.resource;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.Map;
-
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Literal;
@@ -109,7 +107,7 @@ class FunctionalMappingProcessorTest {
 		// run processor
 		FunctionalMappingProcessor processor = new FunctionalMappingProcessor().addInputPrimaryModel(dataset(1), model1)
 				.addInputPrimaryModel(dataset(2), model2).addInputMetaModel(null, mappingModel)
-				.setAspectMap(Map.of(aspect(1), referringAspect, aspect(2), referredAspect));
+				.addAspects(referringAspect, referredAspect);
 		processor.referringAspect = aspect(1);
 		processor.referredAspect = aspect(2);
 		processor.referringVariable = "value";

@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Map;
 import java.util.Objects;
 
 import org.apache.jena.query.Dataset;
@@ -61,7 +60,7 @@ public class StepTest {
 		String stepIriNotProcessorSubclass = "http://example.org/stepNotProcessorSubclass";
 		Integer expectedParameterValue = 123;
 		Resource aspectResource = ResourceFactory.createResource("http://example.org/aspect");
-		Map<Resource, Aspect> aspectsMap = Map.of(aspectResource, new Aspect(aspectResource, "key"));
+		Aspect aspect = new Aspect(aspectResource, "key");
 
 		Resource parameter = defaultModel.createResource(AV.Parameter).addLiteral(AV.key, "integerParameter")
 				.addLiteral(RDF.value, expectedParameterValue);
@@ -84,18 +83,18 @@ public class StepTest {
 		dataset.setDefaultModel(defaultModel);
 		@SuppressWarnings("unused")
 		Step step = new Step(dataset, dataset.getDefaultModel(), ResourceFactory.createResource(stepIri),
-				Collections.emptyList(), aspectsMap);
+				Collections.emptyList(), aspect);
 
 		assertThrows(IllegalArgumentException.class, () -> new Step(dataset, dataset.getDefaultModel(),
-				ResourceFactory.createResource(stepIriNotJavaScheme), Collections.emptyList(), aspectsMap));
+				ResourceFactory.createResource(stepIriNotJavaScheme), Collections.emptyList(), aspect));
 		assertThrows(IllegalArgumentException.class, () -> new Step(dataset, dataset.getDefaultModel(),
-				ResourceFactory.createResource(stepIriNotProcessorSubclass), Collections.emptyList(), aspectsMap));
+				ResourceFactory.createResource(stepIriNotProcessorSubclass), Collections.emptyList(), aspect));
 
 		// check processor parameter set
 		assertEquals(expectedParameterValue, TestProcessor.instance.integerParameter);
 
 		// check processor aspects set
-		assertEquals(aspectsMap, TestProcessor.instance.getAspects());
+		assertEquals(aspect, TestProcessor.instance.getAspects().get(aspectResource));
 	}
 
 	@Test
@@ -111,7 +110,7 @@ public class StepTest {
 		String step5Iri = "http://example.org/stepAll";
 
 		Resource aspectResource = ResourceFactory.createResource("http://example.org/aspect");
-		Map<Resource, Aspect> aspectsMap = Map.of(aspectResource, new Aspect(aspectResource, "key"));
+		Aspect aspect = new Aspect(aspectResource, "key");
 		Model configurationModel = ModelFactory.createDefaultModel();
 		Dataset graphs = DatasetFactory.createGeneral();
 		graphs.setDefaultModel(configurationModel);
@@ -154,19 +153,19 @@ public class StepTest {
 						.addLiteral(AV.key, "integerParameter").addLiteral(RDF.value, 5));
 
 		Step step1 = new Step(graphs, graphs.getDefaultModel(), configurationModel.createResource(step1Iri),
-				Collections.emptyList(), aspectsMap);
+				Collections.emptyList(), aspect);
 		step1.run();
 		Step step2 = new Step(graphs, graphs.getDefaultModel(), configurationModel.createResource(step2Iri),
-				Collections.singletonList(step1), aspectsMap);
+				Collections.singletonList(step1), aspect);
 		step2.run();
 		Step step3 = new Step(graphs, graphs.getDefaultModel(), configurationModel.createResource(step3Iri),
-				Collections.emptyList(), aspectsMap);
+				Collections.emptyList(), aspect);
 		step3.run();
 		Step step4 = new Step(graphs, graphs.getDefaultModel(), configurationModel.createResource(step4Iri),
-				Collections.singletonList(step3), aspectsMap);
+				Collections.singletonList(step3), aspect);
 		step4.run();
 		Step step5 = new Step(graphs, graphs.getDefaultModel(), configurationModel.createResource(step5Iri),
-				Arrays.asList(step1, step2, step3, step4), aspectsMap);
+				Arrays.asList(step1, step2, step3, step4), aspect);
 		step5.run();
 
 		Resource step1Execution = configurationModel

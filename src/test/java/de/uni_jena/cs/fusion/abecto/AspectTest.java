@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -144,20 +145,23 @@ public class AspectTest {
 		Query pattern4 = QueryFactory.create("SELECT ?key ?value WHERE {?key <http://example.org/property4> ?value .}");
 		aspectPattern4Resource.addLiteral(AV.definingQuery, pattern4);
 
-		Map<Resource, Aspect> aspects = Aspect.getAspects(configurationModel);
-		Aspect aspect1 = aspects.get(aspect1Resource);
-		Aspect aspect2 = aspects.get(aspect2Resource);
-
-		assertEquals(aspect1Resource, aspect1.getIri());
-		assertEquals(aspect2Resource, aspect2.getIri());
-		assertEquals("key", aspect1.getKeyVariableName());
-		assertEquals("key", aspect2.getKeyVariableName());
-		assertEquals(Var.alloc("key"), aspect1.getKeyVariable());
-		assertEquals(Var.alloc("key"), aspect2.getKeyVariable());
-		assertEquals(pattern1, aspect1.getPattern(dataset1));
-		assertEquals(pattern2, aspect1.getPattern(dataset2));
-		assertEquals(pattern3, aspect2.getPattern(dataset1));
-		assertEquals(pattern4, aspect2.getPattern(dataset2));
+		Collection<Aspect> aspects = Aspect.getAspects(configurationModel);
+		aspects.stream().anyMatch(aspect -> aspect1Resource.equals(aspect.getIri()));
+		aspects.stream().anyMatch(aspect -> aspect2Resource.equals(aspect.getIri()));
+		for (Aspect aspect : aspects) {
+			if (aspect1Resource.equals(aspect.getIri())) {
+				assertEquals("key", aspect.getKeyVariableName());
+				assertEquals(Var.alloc("key"), aspect.getKeyVariable());
+				assertEquals(pattern1, aspect.getPattern(dataset1));
+				assertEquals(pattern2, aspect.getPattern(dataset2));
+			}
+			if (aspect2Resource.equals(aspect.getIri())) {
+				assertEquals("key", aspect.getKeyVariableName());
+				assertEquals(Var.alloc("key"), aspect.getKeyVariable());
+				assertEquals(pattern3, aspect.getPattern(dataset1));
+				assertEquals(pattern4, aspect.getPattern(dataset2));
+			}
+		}
 	}
 
 	@Test

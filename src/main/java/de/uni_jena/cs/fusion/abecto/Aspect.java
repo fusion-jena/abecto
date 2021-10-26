@@ -17,6 +17,8 @@ package de.uni_jena.cs.fusion.abecto;
 
 import static de.uni_jena.cs.fusion.abecto.util.Models.assertOne;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -84,14 +86,14 @@ public class Aspect {
 	 * 
 	 * @param configurationModel the configuration {@link Model} containing the
 	 *                           aspect definitions
-	 * @return the {@link Aspect Aspects} by IRI
+	 * @return the {@link Aspect Aspects}
 	 */
-	public static Map<Resource, Aspect> getAspects(Model configurationModel) {
-		// init aspcet map
-		Map<Resource, Aspect> aspects = new HashMap<>();
+	public static Collection<Aspect> getAspects(Model configurationModel) {
+		// init aspect list
+		Collection<Aspect> aspects = new ArrayList<>();
 		// get aspects
 		configurationModel.listResourcesWithProperty(RDF.type, AV.Aspect)
-				.forEach(aspect -> aspects.put(aspect, getAspect(configurationModel, aspect)));
+				.mapWith(aspect -> getAspect(configurationModel, aspect)).forEach(aspects::add);
 		return aspects;
 	}
 

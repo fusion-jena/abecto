@@ -22,7 +22,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collections;
-import java.util.Map;
 
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
@@ -61,7 +60,7 @@ public class JaroWinklerMappingProcessorTest {
 				.add(resource("entity6"), RDFS.label, "mnopmnopmnopmnopmnop");
 		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor()
 				.addInputPrimaryModel(dataset(1), model1).addInputPrimaryModel(dataset(2), model2)
-				.setAspectMap(Map.of(aspect(1), aspect1, aspect(2), aspect2));
+				.addAspects(aspect1, aspect2);
 		processor.caseSensitive = false;
 		processor.threshold = 0.90D;
 		processor.aspect = aspect(1);
@@ -92,8 +91,7 @@ public class JaroWinklerMappingProcessorTest {
 				+ "}");
 		Aspect aspect1 = new Aspect(aspect(1), "key").setPattern(dataset(1), pattern).setPattern(dataset(2), pattern);
 		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor()
-				.addInputPrimaryModel(dataset(1), model1).addInputPrimaryModel(dataset(2), model2)
-				.setAspectMap(Map.of(aspect(1), aspect1));
+				.addInputPrimaryModel(dataset(1), model1).addInputPrimaryModel(dataset(2), model2).addAspects(aspect1);
 		processor.caseSensitive = false;
 		processor.threshold = 0.90D;
 		processor.aspect = aspect(1);
@@ -111,8 +109,7 @@ public class JaroWinklerMappingProcessorTest {
 
 		// direction 1
 		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor()
-				.addInputPrimaryModel(dataset(1), model1).addInputPrimaryModel(dataset(2), model2)
-				.setAspectMap(Map.of(aspect(1), aspect1));
+				.addInputPrimaryModel(dataset(1), model1).addInputPrimaryModel(dataset(2), model2).addAspects(aspect1);
 		processor.caseSensitive = false;
 		processor.threshold = 0.90D;
 		processor.aspect = aspect(1);
@@ -123,7 +120,7 @@ public class JaroWinklerMappingProcessorTest {
 
 		// direction 2
 		processor = new JaroWinklerMappingProcessor().addInputPrimaryModel(dataset(1), model2)
-				.addInputPrimaryModel(dataset(2), model1).setAspectMap(Map.of(aspect(1), aspect1));
+				.addInputPrimaryModel(dataset(2), model1).addAspects(aspect1);
 		processor.caseSensitive = false;
 		processor.threshold = 0.90D;
 		processor.aspect = aspect(1);
@@ -140,8 +137,7 @@ public class JaroWinklerMappingProcessorTest {
 		Model model2 = ModelFactory.createDefaultModel()//
 				.add(resource("entity2"), RDFS.label, "abc");
 		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor()
-				.addInputPrimaryModel(dataset(1), model1).addInputPrimaryModel(dataset(2), model2)
-				.setAspectMap(Map.of(aspect(1), aspect1));
+				.addInputPrimaryModel(dataset(1), model1).addInputPrimaryModel(dataset(2), model2).addAspects(aspect1);
 		processor.caseSensitive = false;
 		processor.threshold = 0.90D;
 		processor.aspect = aspect(1);
@@ -162,8 +158,7 @@ public class JaroWinklerMappingProcessorTest {
 
 		// direction 1
 		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor()
-				.addInputPrimaryModel(dataset(1), model1).addInputPrimaryModel(dataset(2), model2)
-				.setAspectMap(Map.of(aspect(1), aspect1));
+				.addInputPrimaryModel(dataset(1), model1).addInputPrimaryModel(dataset(2), model2).addAspects(aspect1);
 		processor.caseSensitive = false;
 		processor.threshold = 0.90D;
 		processor.aspect = aspect(1);
@@ -175,7 +170,7 @@ public class JaroWinklerMappingProcessorTest {
 
 		// direction 2
 		processor = new JaroWinklerMappingProcessor().addInputPrimaryModel(dataset(1), model2)
-				.addInputPrimaryModel(dataset(2), model1).setAspectMap(Map.of(aspect(1), aspect1));
+				.addInputPrimaryModel(dataset(2), model1).addAspects(aspect1);
 		processor.caseSensitive = false;
 		processor.threshold = 0.90D;
 		processor.aspect = aspect(1);
@@ -196,8 +191,7 @@ public class JaroWinklerMappingProcessorTest {
 
 		// case-insensitive
 		JaroWinklerMappingProcessor processor = new JaroWinklerMappingProcessor()
-				.addInputPrimaryModel(dataset(1), model1).addInputPrimaryModel(dataset(2), model2)
-				.setAspectMap(Map.of(aspect(1), aspect1));
+				.addInputPrimaryModel(dataset(1), model1).addInputPrimaryModel(dataset(2), model2).addAspects(aspect1);
 		processor.caseSensitive = false;
 		processor.threshold = 0.90D;
 		processor.aspect = aspect(1);
@@ -209,7 +203,7 @@ public class JaroWinklerMappingProcessorTest {
 
 		// case-sensitive
 		processor = new JaroWinklerMappingProcessor().addInputPrimaryModel(dataset(1), model1)
-				.addInputPrimaryModel(dataset(2), model2).setAspectMap(Map.of(aspect(1), aspect1));
+				.addInputPrimaryModel(dataset(2), model2).addAspects(aspect1);
 		processor.caseSensitive = true;
 		processor.threshold = 0.90D;
 		processor.aspect = aspect(1);

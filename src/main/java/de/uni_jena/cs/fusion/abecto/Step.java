@@ -64,7 +64,7 @@ public class Step implements Runnable {
 	 * @param stepIri            the IRI of this step in the {@code dataset}
 	 * @param inputSteps         the objects of the input {@link Step} of this
 	 *                           {@link Step}
-	 * @param aspectMap          the {@link Aspect Aspect} instances for the ABECTO
+	 * @param aspects            the {@link Aspect Aspect} instances for the ABECTO
 	 *                           execution plan.
 	 * 
 	 * 
@@ -77,8 +77,7 @@ public class Step implements Runnable {
 	 */
 	@SuppressWarnings("unchecked")
 	public Step(Dataset dataset, Model configurationModel, Resource stepIri, Collection<Step> inputSteps,
-			Map<Resource, Aspect> aspectMap)
-			throws IllegalArgumentException, ClassCastException, ReflectiveOperationException {
+			Aspect... aspects) throws IllegalArgumentException, ClassCastException, ReflectiveOperationException {
 		this.dataset = dataset;
 		this.configurationModel = configurationModel;
 		this.stepIri = stepIri;
@@ -113,7 +112,7 @@ public class Step implements Runnable {
 		Parameters.setParameters(processor, parameters);
 
 		// set aspects
-		processor.setAspectMap(aspectMap);
+		processor.addAspects(aspects);
 	}
 
 	/**
