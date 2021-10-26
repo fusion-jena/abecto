@@ -26,9 +26,19 @@ import org.apache.jena.rdf.model.Resource;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
 import de.uni_jena.cs.fusion.abecto.Correspondences;
+import de.uni_jena.cs.fusion.abecto.Metadata;
 import de.uni_jena.cs.fusion.abecto.Parameter;
 
-public class RelationalMappingProcessor extends MappingProcessor<RelationalMappingProcessor> {
+/**
+ * Provides mappings based on functional (n:1 or 1:1) variables between aspect.
+ * <p>
+ * <strong>Example:</strong> If resource R1 of dataset D1 and aspect A1 refers
+ * with variable V1 to resource R2 of dataset D1 and aspect A2, and resource R3
+ * of dataset D2 and aspect A1 refers with variable V1 to resource R4 of dataset
+ * D2 and aspect A2, and R1 corresponds to R3, then R2 corresponds to R4.
+ *
+ */
+public class FunctionalMappingProcessor extends MappingProcessor<FunctionalMappingProcessor> {
 
 	@Parameter
 	public Resource referringAspect;
@@ -60,7 +70,10 @@ public class RelationalMappingProcessor extends MappingProcessor<RelationalMappi
 									if (referredResource.isResource()) {
 										referredResources.add(referredResource.asResource());
 									} else {
-										// TODO report issue
+										// report invalid value
+										Metadata.addIssue(referringResource, referringVariable, referredResource,
+												referringAspect.getIri(), "Invalid Value", "Should be a resource.",
+												this.getOutputMetaModel(dataset));
 									}
 								}
 							}
