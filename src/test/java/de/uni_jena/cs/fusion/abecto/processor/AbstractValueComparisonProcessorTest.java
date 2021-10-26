@@ -51,7 +51,6 @@ public abstract class AbstractValueComparisonProcessorTest {
 	Model mappingModel = ModelFactory.createDefaultModel();
 	{
 		addMapping(subject(1), subject(2));
-
 	}
 
 	public void addMapping(Resource... resources) {

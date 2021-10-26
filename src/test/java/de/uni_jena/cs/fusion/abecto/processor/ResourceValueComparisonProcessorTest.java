@@ -15,92 +15,68 @@
  */
 package de.uni_jena.cs.fusion.abecto.processor;
 
+import static de.uni_jena.cs.fusion.abecto.TestUtil.resource;
+
+import java.util.Arrays;
+import java.util.Collection;
+
+import org.apache.jena.datatypes.xsd.XSDDatatype;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.sys.JenaSystem;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class ResourceDeviationProcessorTest {
+class ResourceValueComparisonProcessorTest extends AbstractValueComparisonProcessorTest {
+	@BeforeAll
+	public static void initJena() {
+		JenaSystem.init();
+
+	}
+
+	@BeforeEach
+	public void initMapping() {
+		for (int i = 0; i < 10; i++) {
+			this.addMapping(resource(i + 10), resource(i + 20));
+		}
+	}
+
+	@Override
+	public Processor<?> getInstance(Collection<String> variables, Resource aspect) {
+		ResourceValueComparisonProcessor processor = new ResourceValueComparisonProcessor();
+		processor.variables = variables;
+		processor.aspect = aspect;
+		return processor;
+	}
 
 	@Test
 	void computeResultModel() throws Exception {
-		// TODO rewrite
-//		// preparation
-//		Model model1 = Models.read(new ByteArrayInputStream((""//
-//				+ "@prefix  : <http://example.org/1/>                .\n"//
-//				+ "@prefix  xsd: <http://www.w3.org/2001/XMLSchema#> .\n"
-//
-//				+ ":right   :other   :wrong                          .\n"//
-//				+ ":right   :self    :right                          .\n"//
-//
-//				+ ":wrong   :other   :right                          .\n"//
-//				+ ":wrong   :self    :wrong                          .\n"//
-//
-//				+ ":type    :other   :right                          .\n"//
-//				+ ":type    :self    true                            .\n"//
-//
-//				+ ":missing :other   :right                          .\n"//
-//		).getBytes()));
-//		Model model2 = Models.read(new ByteArrayInputStream((""//
-//				+ "@prefix  : <http://example.org/2/>                .\n"//
-//				+ "@prefix  xsd: <http://www.w3.org/2001/XMLSchema#> .\n"
-//
-//				+ ":right   :other   :wrong                          .\n"//
-//				+ ":right   :self    :right                          .\n"//
-//
-//				+ ":wrong   :other   :wrong                          .\n"//
-//				+ ":wrong   :self    :right                          .\n"//
-//
-//				+ ":type    :other   true                            .\n"//
-//				+ ":type    :self    :type                           .\n"//
-//
-//				+ ":missing :self    :missing                        .\n"//
-//		).getBytes()));
-//		Model metaModel = Models.getEmptyOntModel();
-//		UUID id1 = UUID.randomUUID();
-//		UUID id2 = UUID.randomUUID();
-//		SparqlEntityManager.insert(Arrays.asList(//
-//				new Category("entity", "{"//
-//						+ "?entity <http://example.org/1/other> ?other ."//
-//						+ "?entity <http://example.org/1/self>  ?self  ."//
-//						+ "}"//
-//						, id1),
-//				new Category("entity", "{"//
-//						+ "?entity <http://example.org/2/other> ?other ."//
-//						+ "?entity <http://example.org/2/self>  ?self  ."//
-//						+ "}"//
-//						, id2)),
-//				metaModel);
-//		SparqlEntityManager.insert(Arrays.asList(//
-//				Mapping.of(ResourceFactory.createResource("http://example.org/1/right"),
-//						ResourceFactory.createResource("http://example.org/2/right")),
-//				Mapping.of(ResourceFactory.createResource("http://example.org/1/wrong"),
-//						ResourceFactory.createResource("http://example.org/2/wrong")),
-//				Mapping.of(ResourceFactory.createResource("http://example.org/1/missing"),
-//						ResourceFactory.createResource("http://example.org/2/missing"))),
-//				metaModel);
-//
-//		// result test
-//		ResourceValueComparisonProcessor processor = new ResourceValueComparisonProcessor();
-//		ResourceValueComparisonProcessor.Parameter parameter = new ResourceValueComparisonProcessor.Parameter();
-//		parameter.variables = Collections.singletonMap("entity", Arrays.asList("other", "self"));
-//		processor.setParameters(parameter);
-//		processor.addInputModelGroups(Map.of(id1, Collections.singleton(model1), id2, Collections.singleton(model2)));
-//		processor.addMetaModels(Collections.singleton(metaModel));
-//		processor.call();
-//
-//		Collection<Deviation> deviations = SparqlEntityManager
-//				.select(new Deviation(null, null, null, null, null, id1, id2, null, null), processor.getResultModel());
-//		assertEquals(2, deviations.size());
-//		Resource resource1 = ResourceFactory.createResource("http://example.org/1/wrong");
-//		Resource resource2 = ResourceFactory.createResource("http://example.org/2/wrong");
-//		assertTrue(deviations.contains(new Deviation(null, "entity", "other", resource1, resource2, id1, id2,
-//				"<http://example.org/1/right>", "<http://example.org/2/wrong>")));
-//		assertTrue(deviations.contains(new Deviation(null, "entity", "self", resource1, resource2, id1, id2,
-//				"<http://example.org/1/wrong>", "<http://example.org/2/right>")));
-//
-//		Collection<Issue> issues = SparqlEntityManager.select(new Issue(), processor.getResultModel());
-//		resource1 = ResourceFactory.createResource("http://example.org/1/type");
-//		resource2 = ResourceFactory.createResource("http://example.org/2/type");
-//		assertEquals(2, issues.size());
-//		assertTrue(issues.contains(Issue.unexpectedValueType(id1, resource1, "self", "resource")));
-//		assertTrue(issues.contains(Issue.unexpectedValueType(id2, resource2, "other", "resource")));
+
+		assertSame(resource(10), resource(20));
+
+		assertDeviation(resource(10), resource(21));
+
+		assertUnexpectedValueType(resource(10), ResourceFactory.createTypedLiteral("value1", null),
+				"Should be a resource.");
+		assertUnexpectedValueType(resource(10), ResourceFactory.createTypedLiteral("true", XSDDatatype.XSDboolean),
+				"Should be a resource.");
+		assertUnexpectedValueType(resource(10), ResourceFactory.createTypedLiteral("-4", XSDDatatype.XSDinteger),
+				"Should be a resource.");
+		assertUnexpectedValueType(resource(10), ResourceFactory.createTypedLiteral("-4.0", XSDDatatype.XSDdecimal),
+				"Should be a resource.");
+		assertUnexpectedValueType(resource(10), ResourceFactory.createTypedLiteral("3.2E9", XSDDatatype.XSDfloat),
+				"Should be a resource.");
+		assertUnexpectedValueType(resource(10), ResourceFactory.createTypedLiteral("3.2E9", XSDDatatype.XSDdouble),
+				"Should be a resource.");
+
+		assertMissing(Arrays.asList(resource(11)), Arrays.asList(), Arrays.asList(), Arrays.asList(resource(11)));
+		assertMissing(Arrays.asList(resource(11), resource(12)), Arrays.asList(), Arrays.asList(),
+				Arrays.asList(resource(11), resource(12)));
+		assertMissing(Arrays.asList(resource(11), resource(12)), Arrays.asList(resource(21)), Arrays.asList(),
+				Arrays.asList(resource(12)));
+
+		assertDeviation(Arrays.asList(resource(11), resource(12)), Arrays.asList(resource(21), resource(23)),
+				Arrays.asList(resource(11)), Arrays.asList(resource(21)));
 	}
 }

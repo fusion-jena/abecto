@@ -34,7 +34,7 @@ public class ResourceValueComparisonProcessor extends AbstractValueComparisonPro
 
 	@Override
 	public String invalidValueComment() {
-		return "Should not be a literal.";
+		return "Should be a resource.";
 	}
 
 	@Override
