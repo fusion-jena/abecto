@@ -19,13 +19,20 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import org.apache.jena.query.Dataset;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import de.uni_jena.cs.fusion.abecto.Abecto;
 
 public class Datasets {
+
+	final static Logger log = LoggerFactory.getLogger(Abecto.class);
 
 	/**
 	 * The maximum size of array to allocate.
@@ -48,15 +55,20 @@ public class Datasets {
 		in.mark(MAX_BUFFER_SIZE);
 		// try each known language
 		InputStream unclosableIn = new UncloseableInputStream(in);
+		LinkedHashMap<Lang, Throwable> throwables = new LinkedHashMap<>();
 		for (Lang lang : supportedLanguages) {
 			try {
 				RDFDataMgr.read(dataset, unclosableIn, lang);
 				in.close();
 				return;
 			} catch (Throwable t) {
+				throwables.put(lang, t);
 				in.reset();
 				continue;
 			}
+		}
+		for (Lang lang : throwables.keySet()) {
+			log.error(String.format("Failed to parse %s:", lang.getName()), throwables.get(lang));
 		}
 		throw new IllegalArgumentException("Unknown RDF language.");
 	}
