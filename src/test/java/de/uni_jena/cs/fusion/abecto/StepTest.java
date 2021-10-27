@@ -20,7 +20,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.Collections;
@@ -35,6 +37,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.apache.jena.vocabulary.RDF;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.opentest4j.AssertionFailedError;
 
@@ -49,6 +52,12 @@ public class StepTest {
 	public static final Property PRIMARY_IN_EMPTY = ResourceFactory.createProperty("http://example.org/primaryInEmpty");
 	public static final Resource ALL_DATASETS = ResourceFactory.createResource("http://example.org/allDataset");
 	public static final Property STEP_NUMBER = ResourceFactory.createProperty("http://example.org/stepNumber");
+	private static File relativeBasePath;
+
+	@BeforeAll
+	public static void setRelativeBasePath() throws IOException {
+		relativeBasePath = Files.createTempDirectory(null).toFile();
+	}
 
 	@Test
 	public void constructor()
@@ -82,13 +91,15 @@ public class StepTest {
 		Dataset dataset = DatasetFactory.createGeneral();
 		dataset.setDefaultModel(defaultModel);
 		@SuppressWarnings("unused")
-		Step step = new Step(dataset, dataset.getDefaultModel(), ResourceFactory.createResource(stepIri),
-				Collections.emptyList(), aspect);
+		Step step = new Step(relativeBasePath, dataset, dataset.getDefaultModel(),
+				ResourceFactory.createResource(stepIri), Collections.emptyList(), aspect);
 
-		assertThrows(IllegalArgumentException.class, () -> new Step(dataset, dataset.getDefaultModel(),
-				ResourceFactory.createResource(stepIriNotJavaScheme), Collections.emptyList(), aspect));
-		assertThrows(IllegalArgumentException.class, () -> new Step(dataset, dataset.getDefaultModel(),
-				ResourceFactory.createResource(stepIriNotProcessorSubclass), Collections.emptyList(), aspect));
+		assertThrows(IllegalArgumentException.class,
+				() -> new Step(relativeBasePath, dataset, dataset.getDefaultModel(),
+						ResourceFactory.createResource(stepIriNotJavaScheme), Collections.emptyList(), aspect));
+		assertThrows(IllegalArgumentException.class,
+				() -> new Step(relativeBasePath, dataset, dataset.getDefaultModel(),
+						ResourceFactory.createResource(stepIriNotProcessorSubclass), Collections.emptyList(), aspect));
 
 		// check processor parameter set
 		assertEquals(expectedParameterValue, TestProcessor.instance.integerParameter);
@@ -152,20 +163,20 @@ public class StepTest {
 				.addProperty(AV.hasParameter, configurationModel.createResource(AV.Parameter)
 						.addLiteral(AV.key, "integerParameter").addLiteral(RDF.value, 5));
 
-		Step step1 = new Step(graphs, graphs.getDefaultModel(), configurationModel.createResource(step1Iri),
-				Collections.emptyList(), aspect);
+		Step step1 = new Step(relativeBasePath, graphs, graphs.getDefaultModel(),
+				configurationModel.createResource(step1Iri), Collections.emptyList(), aspect);
 		step1.run();
-		Step step2 = new Step(graphs, graphs.getDefaultModel(), configurationModel.createResource(step2Iri),
-				Collections.singletonList(step1), aspect);
+		Step step2 = new Step(relativeBasePath, graphs, graphs.getDefaultModel(),
+				configurationModel.createResource(step2Iri), Collections.singletonList(step1), aspect);
 		step2.run();
-		Step step3 = new Step(graphs, graphs.getDefaultModel(), configurationModel.createResource(step3Iri),
-				Collections.emptyList(), aspect);
+		Step step3 = new Step(relativeBasePath, graphs, graphs.getDefaultModel(),
+				configurationModel.createResource(step3Iri), Collections.emptyList(), aspect);
 		step3.run();
-		Step step4 = new Step(graphs, graphs.getDefaultModel(), configurationModel.createResource(step4Iri),
-				Collections.singletonList(step3), aspect);
+		Step step4 = new Step(relativeBasePath, graphs, graphs.getDefaultModel(),
+				configurationModel.createResource(step4Iri), Collections.singletonList(step3), aspect);
 		step4.run();
-		Step step5 = new Step(graphs, graphs.getDefaultModel(), configurationModel.createResource(step5Iri),
-				Arrays.asList(step1, step2, step3, step4), aspect);
+		Step step5 = new Step(relativeBasePath, graphs, graphs.getDefaultModel(),
+				configurationModel.createResource(step5Iri), Arrays.asList(step1, step2, step3, step4), aspect);
 		step5.run();
 
 		Resource step1Execution = configurationModel

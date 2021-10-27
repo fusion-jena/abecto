@@ -15,6 +15,7 @@
  */
 package de.uni_jena.cs.fusion.abecto;
 
+import java.io.File;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -28,6 +29,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.NodeIterator;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.shared.Lock;
 import org.apache.jena.vocabulary.RDF;
 
@@ -76,8 +78,9 @@ public class Step implements Runnable {
 	 *                                      class could not be instantiated
 	 */
 	@SuppressWarnings("unchecked")
-	public Step(Dataset dataset, Model configurationModel, Resource stepIri, Collection<Step> inputSteps,
-			Aspect... aspects) throws IllegalArgumentException, ClassCastException, ReflectiveOperationException {
+	public Step(File relativeBasePath, Dataset dataset, Model configurationModel, Resource stepIri,
+			Collection<Step> inputSteps, Aspect... aspects)
+			throws IllegalArgumentException, ClassCastException, ReflectiveOperationException {
 		this.dataset = dataset;
 		this.configurationModel = configurationModel;
 		this.stepIri = stepIri;
@@ -106,13 +109,18 @@ public class Step implements Runnable {
 			Resource parameter = parameterIterator.next().asResource();
 			String key = parameter.getRequiredProperty(AV.key).getString();
 			List<Object> values = new ArrayList<>();
-			parameter.listProperties(RDF.value).forEach(stmt -> values.add(stmt.getObject().asLiteral().getValue()));
+			parameter.listProperties(RDF.value).mapWith(Statement::getObject)
+					.mapWith(o -> o.isLiteral() ? o.asLiteral().getValue() : o.asResource())
+					.forEach(v -> values.add(v));
 			parameters.put(key, values);
 		}
 		Parameters.setParameters(processor, parameters);
 
 		// set aspects
 		processor.addAspects(aspects);
+
+		// set relative base path
+		processor.setRelativeBasePath(relativeBasePath);
 	}
 
 	/**

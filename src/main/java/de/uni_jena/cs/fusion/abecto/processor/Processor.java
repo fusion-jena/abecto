@@ -15,6 +15,7 @@
  */
 package de.uni_jena.cs.fusion.abecto.processor;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -57,6 +58,8 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 	private Map<Resource, Model> cachedInputPrimaryModelUnionByDataset = new HashMap<>();
 
 	private Map<Resource, Model> cachedMetaModelUnionByDataset = new HashMap<>();
+	
+	private File relativeBasePath;
 
 	public final P addInputMetaModel(Resource dataset, Model inputMetaModel) {
 		this.cachedInputMetaModelUnionByDataset.remove(dataset);
@@ -240,6 +243,14 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 		this.initOutputMetaModel(dataset);
 		this.initOutputMetaModel(null); // assert to be called once
 		return self();
+	}
+
+	public File getRelativeBasePath() {
+		return relativeBasePath;
+	}
+
+	public void setRelativeBasePath(File relativeBasePath) {
+		this.relativeBasePath = relativeBasePath;
 	}
 
 }

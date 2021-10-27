@@ -26,7 +26,6 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
@@ -68,7 +67,7 @@ public class Abecto implements Callable<Integer> {
 
 	@Option(names = { "-p",
 			"--plan" }, paramLabel = "PLAN-IRI", description = "IRI of the plan to process. Required, if the configuration contains multiple plans.")
-	Optional<String> planIri;
+	String planIri;
 
 	@Parameters(index = "0", paramLabel = "CONFIGURATION-FILE", description = "RDF File containing the execution plan configuration.")
 	File configurationFile;
@@ -76,68 +75,71 @@ public class Abecto implements Callable<Integer> {
 	@Parameters(index = "1", paramLabel = "RESULT-FILE", description = "RDF File for the execution results.")
 	File outputFile;
 
-	private Dataset dataset;
-	private Model configurationModel;
-
 	@Override
 	public Integer call() {
 		try {
-			initApacheJena();
-
-			// read configuration
-			dataset = DatasetFactory.createGeneral();
-
-			Datasets.read(dataset, new FileInputStream(configurationFile));
-
-			// get configuration model
-			configurationModel = dataset.getDefaultModel();
-
-			// get plan to process
-			Resource plan = Plans.getPlan(configurationModel, planIri.orElse(null));
-
-			// TODO add transitive correspondences into inputMetaModels
-
-			// get aspects
-			Aspect[] aspects = Aspect.getAspects(configurationModel).toArray(l -> new Aspect[l]);
-
-			// get steps and predecessors
-			Map<Resource, Set<Resource>> predecessors = Plans.getStepPredecessors(configurationModel, plan);
-
-			// get execution order
-			List<Resource> stepOrder = new ArrayList<>(predecessors.keySet());
-			// sort by number of (transitive) dependencies to ensure
-			Collections.sort(stepOrder,
-					(x, y) -> Integer.compare(predecessors.get(x).size(), predecessors.get(y).size()));
-
-			// setup and run pipeline
-			Executor executor = Executors.newCachedThreadPool();
-			Map<Resource, Step> steps = new HashMap<>();
-			Map<Resource, CompletableFuture<?>> stepFutures = new HashMap<>();
-			for (Resource stepIri : stepOrder) {
-				// setup step
-				Collection<Step> inputSteps = predecessors.get(stepIri).stream().map(steps::get)
-						.collect(Collectors.toList());
-				Step step = new Step(dataset, configurationModel, stepIri, inputSteps, aspects);
-				steps.put(stepIri, step);
-				// schedule step
-				CompletableFuture<?>[] inputFutures = predecessors.get(stepIri).stream().map(stepFutures::get)
-						.toArray(i -> new CompletableFuture<?>[i]);
-				CompletableFuture<?> stepFuture = CompletableFuture.allOf(inputFutures).thenRunAsync(step, executor);
-				stepFutures.put(stepIri, stepFuture);
-			}
-
-			// expect completion of all steps
-			CompletableFuture.allOf(stepFutures.values().toArray(new CompletableFuture[0])).join();
-
-			// write results
-			outputFile.createNewFile();
-			RDFDataMgr.write(new FileOutputStream(outputFile), dataset, Lang.TRIG);
+			executePlan(configurationFile, planIri, outputFile);
 		} catch (Throwable e) {
 			log.error(e.getMessage(), e);
 			return 2;
 		}
 
 		return 0;
+	}
+
+	public static void executePlan(File configurationFile, String planIri, File outputFile) throws Throwable {
+		initApacheJena();
+
+		// derive relative base path
+		File relativeBasePath = configurationFile.getParentFile();
+
+		// read configuration
+		Dataset dataset = DatasetFactory.createGeneral();
+
+		Datasets.read(dataset, new FileInputStream(configurationFile));
+
+		// get configuration model
+		Model configurationModel = dataset.getDefaultModel();
+
+		// get plan to process
+		Resource plan = Plans.getPlan(configurationModel, planIri);
+
+		// TODO add transitive correspondences into inputMetaModels
+
+		// get aspects
+		Aspect[] aspects = Aspect.getAspects(configurationModel).toArray(l -> new Aspect[l]);
+
+		// get steps and predecessors
+		Map<Resource, Set<Resource>> predecessors = Plans.getStepPredecessors(configurationModel, plan);
+
+		// get execution order
+		List<Resource> stepOrder = new ArrayList<>(predecessors.keySet());
+		// sort by number of (transitive) dependencies to ensure
+		Collections.sort(stepOrder, (x, y) -> Integer.compare(predecessors.get(x).size(), predecessors.get(y).size()));
+
+		// setup and run pipeline
+		Executor executor = Executors.newCachedThreadPool();
+		Map<Resource, Step> steps = new HashMap<>();
+		Map<Resource, CompletableFuture<?>> stepFutures = new HashMap<>();
+		for (Resource stepIri : stepOrder) {
+			// setup step
+			Collection<Step> inputSteps = predecessors.get(stepIri).stream().map(steps::get)
+					.collect(Collectors.toList());
+			Step step = new Step(relativeBasePath, dataset, configurationModel, stepIri, inputSteps, aspects);
+			steps.put(stepIri, step);
+			// schedule step
+			CompletableFuture<?>[] inputFutures = predecessors.get(stepIri).stream().map(stepFutures::get)
+					.toArray(i -> new CompletableFuture<?>[i]);
+			CompletableFuture<?> stepFuture = CompletableFuture.allOf(inputFutures).thenRunAsync(step, executor);
+			stepFutures.put(stepIri, stepFuture);
+		}
+
+		// expect completion of all steps
+		CompletableFuture.allOf(stepFutures.values().toArray(new CompletableFuture[0])).join();
+
+		// write results
+//		outputFile.createNewFile();
+		RDFDataMgr.write(new FileOutputStream(outputFile), dataset, Lang.TRIG);
 	}
 
 	public static void initApacheJena() {
