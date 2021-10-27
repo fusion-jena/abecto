@@ -1,0 +1,25 @@
+BASE         <http://example.org/c/>
+PREFIX :     <http://example.org/c/>
+PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
+PREFIX owl:  <http://www.w3.org/2002/07/owl#>
+
+<http://example.org/c/> rdf:type owl:Ontology ;
+                        owl:versionInfo "2.1" .
+
+:P001 rdf:type   :Person ;
+        rdfs:label "Alice" ;
+        :pnr       "12345"^^xsd:integer .
+
+:P002 rdf:type   :Person ;
+        rdfs:label "Charlie" ;
+        :pnr       "45678"^^xsd:integer .
+
+:P003 rdf:type   :Person ;
+        rdfs:label "Dave" ;
+        :pnr       "98765"^^xsd:integer .
+
+:P004 rdf:type   :Person ;
+        rdfs:label "Williams" ;
+        :pnr       "10000"^^xsd:integer .

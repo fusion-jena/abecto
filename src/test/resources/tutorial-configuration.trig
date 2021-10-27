@@ -1,0 +1,117 @@
+@prefix av: <http://w3id.org/abecto-vocabulary#> .
+@prefix p-plan: <http://purl.org/net/p-plan#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix abecto: <java:de.uni_jena.cs.fusion.abecto.processor.> .
+
+_:plan a p-plan:Plan ; # TODO use av:Plan
+    .
+
+_:source1file1 a av:Step ;
+    p-plan:isStepOfPlan _:plan ;
+    av:processorClass abecto:RdfFileSourceProcessor ;
+    av:hasParameter [av:key "path" ; rdf:value "tutorial-source1part1.ttl" ] ;
+    av:associatedDataset _:dataset1 ;
+    .
+
+_:source1file2 a av:Step ;
+    p-plan:isStepOfPlan _:plan ;
+    av:processorClass abecto:RdfFileSourceProcessor ;
+    av:hasParameter [av:key "path" ; rdf:value "tutorial-source1part2.ttl" ] ;
+    av:associatedDataset _:dataset1 ;
+    .
+
+_:source2file1 a av:Step ;
+    p-plan:isStepOfPlan _:plan ;
+    av:processorClass abecto:RdfFileSourceProcessor ;
+    av:hasParameter [av:key "path" ; rdf:value "tutorial-source2.ttl" ] ;
+    av:associatedDataset _:dataset2 ;
+    .
+
+_:source3file1 a av:Step ;
+    p-plan:isStepOfPlan _:plan ;
+    av:processorClass abecto:RdfFileSourceProcessor ;
+    av:hasParameter [av:key "path" ; rdf:value "tutorial-source3.ttl" ] ;
+    av:associatedDataset _:dataset3 ;
+    .
+
+_:aspectPerson a av:Aspect ;
+    av:keyVariableName "person" ;
+    .
+[]  a av:AspectPattern ;
+    av:ofAspect _:aspectPerson ;
+    av:associatedDataset _:dataset1 ;
+    av:definingQuery """
+        SELECT ?person ?label ?pnr ?boss
+        WHERE {
+            ?person <http://www.w3.org/2000/01/rdf-schema#label> ?label ;
+                <http://example.org/a/pnr> ?pnr ;
+                <http://example.org/a/boss>?boss .
+        }
+    """^^av:Sparql11SelectQuery ;
+    .
+[]  a av:AspectPattern ;
+    av:ofAspect _:aspectPerson ;
+    av:associatedDataset _:dataset2 ;
+    av:definingQuery """
+        SELECT ?person ?label ?boss
+        WHERE {
+            ?person <http://www.w3.org/2000/01/rdf-schema#label> ?label .
+            OPTIONAL { ?person <http://example.org/b/boss> ?boss }
+        }
+    """^^av:Sparql11SelectQuery ;
+    .
+[]  a av:AspectPattern ;
+    av:ofAspect _:aspectPerson ;
+    av:associatedDataset _:dataset3 ;
+    av:definingQuery """
+        SELECT ?person ?label ?pnr
+        WHERE {
+            ?person <http://www.w3.org/2000/01/rdf-schema#label> ?label ;
+                <http://example.org/c/pnr> ?pnr .
+        }
+    """^^av:Sparql11SelectQuery ;
+    .
+
+GRAPH _:manualMappings
+{
+    <http://example.org/b/william> av:correspondsNotToResource <http://example.org/c/P004> .
+    _:aspectPerson av:relevantResource <http://example.org/b/william>, <http://example.org/c/P004> .
+}
+
+_:jaroWinklerMapping a av:Step ;
+    p-plan:isStepOfPlan _:plan ;
+    av:processorClass abecto:JaroWinklerMappingProcessor ;
+    p-plan:isPrecededBy _:source1file1, _:source1file2, _:source2, _:source3 ;
+    av:inputMetaDataGraph _:manualMappings ;
+    av:hasParameter
+        [av:key "threshold" ; rdf:value 9e-1 ] ,
+        [av:key "caseSensitive" ; rdf:value false ] ,
+        [av:key "aspect" ; rdf:value _:aspectPerson ] ,
+        [av:key "variables" ; rdf:value "label" ] ;
+    .
+
+_:literalValueComparison a av:Step ;
+    p-plan:isStepOfPlan _:plan ;
+    av:processorClass abecto:LiteralValueComparisonProcessor ;
+    p-plan:isPrecededBy _:jaroWinklerMapping ;
+    av:hasParameter
+        [av:key "aspect" ; rdf:value _:aspectPerson ] ,
+        [av:key "variables" ; rdf:value "label", "pnr" ] ;
+    .
+
+_:resourceValueComparison a av:Step ;
+    p-plan:isStepOfPlan _:plan ;
+    av:processorClass abecto:ResourceValueComparisonProcessor ;
+    p-plan:isPrecededBy _:jaroWinklerMapping ;
+    av:hasParameter
+        [av:key "aspect" ; rdf:value _:aspectPerson ] ,
+        [av:key "variables" ; rdf:value "boss" ] ;
+    .
+
+_:completeness a av:Step ;
+    p-plan:isStepOfPlan _:plan ;
+    av:processorClass abecto:CompletenessProcessor ;
+    p-plan:isPrecededBy _:jaroWinklerMapping ;
+    av:hasParameter
+        [av:key "aspect" ; rdf:value _:aspectPerson ] ;
+    .

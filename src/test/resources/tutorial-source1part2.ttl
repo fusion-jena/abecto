@@ -1,0 +1,11 @@
+BASE         <http://example.org/a/>
+PREFIX :     <http://example.org/a/>
+PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
+
+:bill rdf:type   :Person ;
+        rdfs:label "Bill" ;
+        :pnr       "67890"^^xsd:integer ;
+        :boss      :alice .
+
