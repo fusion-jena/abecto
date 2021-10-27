@@ -15,7 +15,6 @@
  */
 package de.uni_jena.cs.fusion.abecto;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -56,7 +55,8 @@ public class Plans {
 		}
 	}
 
-	static Map<Resource, Set<Resource>> getStepPredecessors(Model configurationModel, Resource plan) {
+	static Map<Resource, Set<Resource>> getStepPredecessors(Model configurationModel, Resource plan)
+			throws NoSuchElementException {
 		// init predecessor map
 		Map<Resource, Set<Resource>> stepPredecessors = new HashMap<>();
 		// get steps and predecessors
@@ -69,7 +69,11 @@ public class Plans {
 			while (!queue.isEmpty()) {
 				Resource predecessor = queue.poll();
 				stepPredecessors.get(step).add(predecessor);
-				queue.addAll(stepPredecessors.getOrDefault(predecessor, Collections.emptySet()));
+				if (stepPredecessors.containsKey(predecessor)) {
+					queue.addAll(stepPredecessors.get(predecessor));
+				} else {
+					throw new NoSuchElementException(String.format("Prodecessor %s not defined.", predecessor));
+				}
 			}
 		}
 		return stepPredecessors;

@@ -33,9 +33,11 @@ public class Parameters {
 			throws ReflectiveOperationException, NoSuchElementException, ToManyElementsException,
 			IllegalArgumentException {
 
+		ArrayList<String> unusedParameters = new ArrayList<>(parameters.keySet());
 		for (Field field : processor.getClass().getFields()) {
 			if (field.isAnnotationPresent(Parameter.class)) {
 				List<?> values = parameters.get(field.getName());
+				unusedParameters.remove(field.getName());
 				if (Collection.class.isAssignableFrom(field.getType())) {
 					Collection parameter = Collection.class.cast(field.get(processor));
 					// parameter collection not initialized
@@ -73,6 +75,10 @@ public class Parameters {
 					}
 				}
 			}
+		}
+		if (!unusedParameters.isEmpty()) {
+			throw new IllegalArgumentException(String.format("Unexpected parameters for %s: %s.",
+					processor.getClass().getSimpleName(), String.join(", ", unusedParameters)));
 		}
 	}
 }
