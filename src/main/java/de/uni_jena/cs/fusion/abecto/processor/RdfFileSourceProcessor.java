@@ -29,7 +29,7 @@ public class RdfFileSourceProcessor extends Processor<RdfFileSourceProcessor> {
 	 * Relative path from the configuration file to the RDF file.
 	 */
 	@Parameter
-	String path;
+	public String path;
 
 	@Override
 	public void run() {
