@@ -15,6 +15,7 @@
  */
 package de.uni_jena.cs.fusion.abecto;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -68,7 +69,7 @@ public class Plans {
 			while (!queue.isEmpty()) {
 				Resource predecessor = queue.poll();
 				stepPredecessors.get(step).add(predecessor);
-				queue.addAll(stepPredecessors.get(predecessor));
+				queue.addAll(stepPredecessors.getOrDefault(predecessor, Collections.emptySet()));
 			}
 		}
 		return stepPredecessors;
