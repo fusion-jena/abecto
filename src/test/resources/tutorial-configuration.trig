@@ -72,7 +72,8 @@ _:aspectPerson a av:Aspect ;
     """^^av:Sparql11SelectQuery ;
     .
 
-GRAPH _:manualMappings
+#  TODO remove workaround for https://issues.apache.org/jira/browse/JENA-2169
+GRAPH <urn:tmp:manualMappings> # _:manualMappings
 {
     <http://example.org/b/william> av:correspondsNotToResource <http://example.org/c/P004> .
     _:aspectPerson av:relevantResource <http://example.org/b/william>, <http://example.org/c/P004> .
@@ -81,8 +82,9 @@ GRAPH _:manualMappings
 _:jaroWinklerMapping a av:Step ;
     p-plan:isStepOfPlan _:plan ;
     av:processorClass abecto:JaroWinklerMappingProcessor ;
-    p-plan:isPrecededBy _:source1file1, _:source1file2, _:source2, _:source3 ;
-    av:inputMetaDataGraph _:manualMappings ;
+    p-plan:isPrecededBy _:source1file1, _:source1file2, _:source2file1, _:source3file1 ;
+    #  TODO remove workaround for https://issues.apache.org/jira/browse/JENA-2169
+    av:inputMetaDataGraph <urn:tmp:manualMappings> ;
     av:hasParameter
         [av:key "threshold" ; rdf:value 9e-1 ] ,
         [av:key "caseSensitive" ; rdf:value false ] ,
@@ -113,5 +115,5 @@ _:completeness a av:Step ;
     av:processorClass abecto:CompletenessProcessor ;
     p-plan:isPrecededBy _:jaroWinklerMapping ;
     av:hasParameter
-        [av:key "aspect" ; rdf:value _:aspectPerson ] ;
+        [av:key "aspects" ; rdf:value _:aspectPerson ] ;
     .
