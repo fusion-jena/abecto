@@ -148,6 +148,7 @@ public class Step implements Runnable {
 			}
 			configurationModel.listObjectsOfProperty(stepIri, AV.inputMetaDataGraph).mapWith(RDFNode::asResource)
 					.forEach(inputMetaModelIri -> {
+						// TODO remove workaround for https://issues.apache.org/jira/browse/JENA-2169
 						processor.addInputMetaModel(null, dataset.getNamedModel(inputMetaModelIri.getURI()));
 						inputModelIris.add(inputMetaModelIri);
 					});
