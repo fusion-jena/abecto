@@ -32,7 +32,7 @@ public abstract class MappingProcessor<P extends Processor<P>> extends Processor
 	 * 
 	 * @param resource1 first resource to check
 	 * @param resource2 second resource to check
-	 * @param aspect1    aspect affected by the (in)correspondence
+	 * @param aspect1   aspect affected by the (in)correspondence
 	 * @return
 	 */
 	public final boolean correspondentOrIncorrespondent(Resource resource1, Resource resource2) {
@@ -81,7 +81,8 @@ public abstract class MappingProcessor<P extends Processor<P>> extends Processor
 	public void run() {
 		for (Resource dataset1 : this.getDatasets()) {
 			for (Resource dataset2 : this.getDatasets()) {
-				if (dataset1.getURI().compareTo(dataset2.getURI()) > 0) { // do not do work twice
+				// do not use Resource#getURI() as it might be null for blank nodes
+				if (dataset1.hashCode() < dataset2.hashCode()) { // do not do work twice
 					this.mapDatasets(dataset1, dataset2);
 				}
 			}

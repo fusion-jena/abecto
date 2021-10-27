@@ -119,7 +119,8 @@ public class CompletenessProcessor extends Processor<CompletenessProcessor> {
 							if (occurrences > 0) {
 								for (Resource datasetComparedTo : this.getDatasets()) {
 									if (!occurrencesByDataset.get(datasetComparedTo).isEmpty()) {
-										if (dataset.getURI().compareTo(datasetComparedTo.getURI()) > 0) {
+										// do not use Resource#getURI() as it might be null for blank nodes
+										if (dataset.hashCode() < datasetComparedTo.hashCode()) {
 											// only once per pair
 
 											// count covered resources of the compared dataset (both directions)
@@ -180,7 +181,8 @@ public class CompletenessProcessor extends Processor<CompletenessProcessor> {
 			if (totalPairwiseOverlap.get() != 0) {
 				for (Resource dataset : this.getDatasets()) {
 					for (Resource datasetComparedTo : this.getDatasets()) {
-						if (dataset.getURI().compareTo(datasetComparedTo.getURI()) > 0) {
+						// do not use Resource#getURI() as it might be null for blank nodes
+						if (dataset.hashCode() < datasetComparedTo.hashCode()) {
 							populationSize = populationSize.add(BigDecimal.valueOf(count.get(dataset))
 									.multiply(BigDecimal.valueOf(count.get(datasetComparedTo))));
 						}
