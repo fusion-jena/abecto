@@ -1,25 +1,25 @@
 [![DOI](https://zenodo.org/badge/261377020.svg)](https://zenodo.org/badge/latestdoi/261377020)
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/zenodo/10.5281/zenodo.3786194/?filepath=abecto-tutorial.ipynb)
 
 # ABECTO
 
 ABECTO is an ABox Evaluation and Comparison Tool for Ontologies.
 
-## Execution
+## Usage
 
-To use ABECTO, first checkout and compile the project:
+To use ABECTO, first checkout the project and compile ABECTO using Maven:
 ```
-git clone https://github.com/fusion-jena/abecto.git
-mvn -f abecto -B -Dmaven.test.skip=true install
+mvn -B -Dmaven.test.skip=true package
 ```
-Then run the ABECTO background service:
+This will create a stand alone .jar file at [target/abecto.jar](target).
+To see available options for execution, run:
 ```
-java -jar abecto/target/abecto.jar
+java -jar target/abecto.jar --help
 ```
-Or use the tutorial notebook to learn the use of ABECTO. You can [run the tutorial online with Binder](https://mybinder.org/v2/zenodo/10.5281/zenodo.3786194/?filepath=abecto-tutorial.ipynb) or in your local Jupyter instance using:
+For example, to execute the tutorial configuration, run:
 ```
-jupyter notebook abecto/abecto-tutorial.ipynb
+java -jar target/abecto.jar src/test/resources/tutorial-configuration.trig result.trig
 ```
+The execution of ABECTO is configured in a configuration file, which is a RDF dataset file ([TriG](https://www.w3.org/TR/trig/), [N-Quads](https://www.w3.org/TR/n-quads/), …), using the ABECTO Vocabulary. For an example see the [tutorial configuration](src/test/resources/tutorial-configuration.trig). Further build in processors can be found in [src/main/java/de/uni_jena/cs/fusion/abecto/processor/](src/main/java/de/uni_jena/cs/fusion/abecto/processor/).
 
 ## License
 
