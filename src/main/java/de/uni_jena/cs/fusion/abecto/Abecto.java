@@ -151,14 +151,18 @@ public class Abecto implements Callable<Integer> {
 
 	static class ManifestVersionProvider implements IVersionProvider {
 		public String[] getVersion() throws Exception {
-			Enumeration<URL> x = Abecto.class.getClassLoader().getResources("");
-			while (x.hasMoreElements()) {
-				System.out.println(x.nextElement());
+			Enumeration<URL> resources = ManifestVersionProvider.class.getClassLoader()
+					.getResources("META-INF/MANIFEST.MF");
+			while (resources.hasMoreElements()) {
+				Manifest manifest = new Manifest(resources.nextElement().openStream());
+				String title = (String) manifest.getMainAttributes().get(new Attributes.Name("Implementation-Title"));
+				if ("ABECTO".equals(title)) {
+					String version = (String) manifest.getMainAttributes()
+							.get(new Attributes.Name("Implementation-Version"));
+					return new String[] { title + " " + version };
+				}
 			}
-
-			Manifest manifest = new Manifest(Abecto.class.getClassLoader().getResourceAsStream("META-INF/MANIFEST.MF"));
-			return new String[] {
-					(String) manifest.getMainAttributes().get(new Attributes.Name("Implementation-Version")) };
+			return new String[0];
 		}
 	}
 }
