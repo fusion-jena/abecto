@@ -38,6 +38,8 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.riot.RDFParser;
+import org.apache.jena.riot.system.ErrorHandlerFactory;
 
 import com.google.common.collect.Streams;
 
@@ -69,7 +71,8 @@ public class Models {
 		InputStream unclosableIn = new UncloseableInputStream(in);
 		for (Lang lang : supportedLanguages) {
 			try {
-				RDFDataMgr.read(model, unclosableIn, lang);
+				RDFParser.source(unclosableIn).lang(lang).errorHandler(ErrorHandlerFactory.errorHandlerNoLogging)
+						.parse(model);
 				in.close();
 				return model;
 			} catch (Throwable t) {
@@ -83,7 +86,7 @@ public class Models {
 	public static Model read(Model model, URL url) throws IllegalArgumentException, IOException {
 		try {
 			// using the content type or file extension for language detection
-			RDFDataMgr.read(model, url.toString());
+			RDFParser.source(url.getPath()).errorHandler(ErrorHandlerFactory.errorHandlerNoLogging).parse(model);
 			return model;
 		} catch (Exception e) {
 			// try again using brute force language detection

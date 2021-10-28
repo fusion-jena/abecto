@@ -21,7 +21,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Collections;
 import java.util.Optional;
 
+import org.apache.jena.atlas.logging.LogCtl;
+import org.apache.jena.fuseki.Fuseki;
 import org.apache.jena.fuseki.main.FusekiServer;
+import org.apache.jena.fuseki.system.FusekiLogging;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -121,6 +124,13 @@ public class SparqlSourceProcessorTest {
 					NodeFactory.createLiteral("label")));
 		}
 
+		// disable fuseki logging
+		FusekiLogging.setLogging();
+		LogCtl.setLevel(Fuseki.serverLogName, "OFF");
+		LogCtl.setLevel(Fuseki.actionLogName, "OFF");
+		LogCtl.setLevel(Fuseki.requestLogName, "OFF");
+		LogCtl.setLevel(Fuseki.adminLogName, "OFF");
+		LogCtl.setLevel("org.eclipse.jetty", "OFF");
 		// run Fuseki server to provide SPARQL endpoint on HTTP with test data
 		// see: https://jena.apache.org/documentation/fuseki2/fuseki-embedded.html
 		FusekiServer fuseki = FusekiServer.create().port(0).add("/test", testData).build().start();

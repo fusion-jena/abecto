@@ -28,6 +28,8 @@ import java.net.URL;
 
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.ResourceFactory;
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.log.StdErrLog;
 import org.junit.jupiter.api.Test;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
@@ -42,6 +44,9 @@ public class ModelsTest {
 
 	@Test
 	public void readUrl() throws IllegalArgumentException, MalformedURLException, IOException {
+		StdErrLog logger = new StdErrLog();
+		logger.setLevel(StdErrLog.LEVEL_OFF);
+		Log.setLog(logger);
 		WireMockServer mock = new WireMockServer(options().dynamicPort());
 		mock.start();
 		int port = mock.port();
