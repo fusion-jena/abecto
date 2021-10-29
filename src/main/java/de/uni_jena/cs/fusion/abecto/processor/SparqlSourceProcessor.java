@@ -166,8 +166,6 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 	private static Model extract(Model resultModel, String service, Optional<Query> query, Collection<Resource> list,
 			Collection<Node> followInverse, Collection<Property> followUnlimited, int maxDistance, int chunkSize) {
 
-		// TODO provide single HTTP client for all requests
-
 		Set<Resource> resourcesLoaded = new HashSet<Resource>();
 		Set<Resource> resourcesToLoad = new HashSet<Resource>();
 
