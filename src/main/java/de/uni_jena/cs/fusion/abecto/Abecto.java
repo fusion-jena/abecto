@@ -66,13 +66,13 @@ public class Abecto implements Callable<Integer> {
 	}
 
 	@Option(names = { "-p",
-			"--plan" }, paramLabel = "PLAN-IRI", description = "IRI of the plan to process. Required, if the configuration contains multiple plans.")
+			"--plan" }, paramLabel = "plan-iri", description = "IRI of the plan to process. Required, if the configuration contains multiple plans.")
 	String planIri;
 
-	@Parameters(index = "0", paramLabel = "CONFIGURATION-FILE", description = "RDF File containing the execution plan configuration.")
+	@Parameters(index = "0", paramLabel = "configuration-file", description = "RDF dataset dile containing the execution plan configuration.")
 	File configurationFile;
 
-	@Parameters(index = "1", paramLabel = "RESULT-FILE", description = "RDF File for the execution results.")
+	@Parameters(index = "1", paramLabel = "result-file", description = "RDF dataset file for the execution results.")
 	File outputFile;
 
 	@Override
