@@ -5,14 +5,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
-* add **SparqlSourceProcessor**: Extracts an RDF document from a SPARQL endpoint.
+### Changed
+* **transform ABECTO from a webservice into a command line tool** with RDF dataset files as input and output
+* merge **CategoryCountProcessor** into **CompletenessProcessor**
+* rename **RelationalMappingProcessor** into **FunctionalMappingProcessor**
+* rename **LiteralDeviationProcessor** into **LiteralValueComparisonProcessor**
+* rename **ResourceDeviationProcessor** into **ResourceValueComparisonProcessor**
+* rename **categories** into **aspects**
+* rename **mappings** into **correspondences**
 
-## [v0.2.1] - 2020-12-03
+### Added
+* add **SparqlSourceProcessor**: Extracts RDF from a SPARQL endpoint.
+
+### Removed
+* remove **ManualMappingProcessor**: Predefined correspondences can be stated in the configuration directly.
+* remove **ManualCategoryProcessor**: Aspects can be stated in the configuration directly.
+* remove **TransitiveMappingProcessor**: Transitive correspondences are now added automatically
+* remove **Jupyter Notebook support** to control ABECTO
+
+## [0.2.1] - 2020-12-03
 
 ### Fixed
 * fix HTML output in Jupyter Notebooks: resolve misplaced `</div>`
 
-## [v0.2] - 2020-12-03
+## [0.2.0] - 2020-12-03
 
 ### Added
 * add **UrlSourceProcessor**: Loads an RDF document from a URL.
@@ -38,9 +54,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * fix HTML output in Jupyter Notebooks: add line-breaks to enable `git diff` for result
 
 ### Removed
-* removed **Mapping Review** in Jupyter Notebooks: replaced by simple *Mapping Report*
+* remove **Mapping Review** in Jupyter Notebooks: replaced by simple *Mapping Report*
 
-## [v0.1.1] - 2020-05-29
+## [0.1.1] - 2020-05-29
 
 ### Fixed
 * fix **LiteralDeviationProcessor**: support numerical value Infinite, correct mixed numeric type comparison, address precision issues of mixed number type comparison
@@ -49,7 +65,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * fix **ExecutionRestController#getData**: include transformation nodes data
 * fix **ManualCategoryProcessor**: allow empty parameters
 
-## [v0.1] - 2020-05-05
+## [0.1.0] - 2020-05-05
 
 ### Added
 * add **RdfFileSourceProcessor**: Loads an RDF document from the local file system.
@@ -62,3 +78,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * add **LiteralDeviationProcessor**: Detects deviations between the property values of mapped resources as defined in the categories.
 * add **ManualCategoryProcessor**: Enables users to manually define resource categories and their properties.
 * add **ResourceDeviationProcessor**: Detects deviations between the resource references of mapped resources as defined in the categories.
+
+[Unreleased]: https://github.com/fusion-jena/abecto/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/fusion-jena/abecto/compare/v0.2.0...v0.2.1
+[0.2.0]: https://github.com/fusion-jena/abecto/compare/v0.1.1...v0.2.0
+[0.1.1]: https://github.com/fusion-jena/abecto/compare/v0.1...v0.1.1
+[0.1.0]: https://github.com/fusion-jena/abecto/releases/tag/v0.1
