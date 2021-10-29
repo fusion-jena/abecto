@@ -32,20 +32,21 @@ import org.apache.jena.vocabulary.RDF;
 
 import de.uni_jena.cs.fusion.abecto.util.Models;
 import de.uni_jena.cs.fusion.abecto.util.ToManyElementsException;
+import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 import de.uni_jena.cs.fusion.abecto.vocabulary.PPlan;
 
 public class Plans {
 	static Resource getPlan(Model configurationModel, @Nullable String planIri) {
 		if (planIri != null) {
 			Resource plan = ResourceFactory.createResource(planIri);
-			if (!configurationModel.contains(plan, RDF.type, PPlan.Plan)) {
+			if (!configurationModel.contains(plan, RDF.type, AV.Plan)) {
 				throw new IllegalArgumentException(
 						String.format("Selected plan %s not contained in the configuration.", planIri));
 			}
 			return plan;
 		} else {
 			try {
-				return Models.assertOne(configurationModel.listSubjectsWithProperty(RDF.type, PPlan.Plan));
+				return Models.assertOne(configurationModel.listSubjectsWithProperty(RDF.type, AV.Plan));
 			} catch (NoSuchElementException e) {
 				throw new IllegalArgumentException(String.format("Configuration does not contain a plan."));
 			} catch (ToManyElementsException e) {

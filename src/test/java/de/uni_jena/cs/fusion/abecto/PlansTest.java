@@ -15,12 +15,14 @@
  */
 package de.uni_jena.cs.fusion.abecto;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Map;
 import java.util.Set;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -28,6 +30,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.junit.jupiter.api.Test;
 
+import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 import de.uni_jena.cs.fusion.abecto.vocabulary.PPlan;
 
 public class PlansTest {
@@ -46,7 +49,7 @@ public class PlansTest {
 			Plans.getPlan(configurationModel, plan1Iri);
 		});
 
-		configurationModel.createResource(plan1Iri, PPlan.Plan);
+		configurationModel.createResource(plan1Iri, AV.Plan);
 
 		assertEquals(plan1, Plans.getPlan(configurationModel, null));
 		assertEquals(plan1, Plans.getPlan(configurationModel, plan1Iri));
@@ -54,7 +57,7 @@ public class PlansTest {
 			Plans.getPlan(configurationModel, plan2Iri);
 		});
 
-		configurationModel.createResource(plan2Iri, PPlan.Plan);
+		configurationModel.createResource(plan2Iri, AV.Plan);
 
 		assertThrows(IllegalArgumentException.class, () -> {
 			Plans.getPlan(configurationModel, null);

@@ -3,7 +3,7 @@
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix abecto: <java:de.uni_jena.cs.fusion.abecto.processor.> .
 
-_:plan a p-plan:Plan ; # TODO use av:Plan
+_:plan a av:Plan ;
     .
 
 _:source1file1 a av:Step ;

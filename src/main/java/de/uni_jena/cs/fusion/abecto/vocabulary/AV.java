@@ -58,6 +58,7 @@ public class AV {
 	public static final Resource MetaDataGraph = ResourceFactory.createResource(namespace + "MetaDataGraph");
 	public static final Property ofAspect = ResourceFactory.createProperty(namespace, "ofAspect");
 	public static final Resource Parameter = ResourceFactory.createResource(namespace + "Parameter");
+	public final static Resource Plan = ResourceFactory.createResource(namespace + "Plan");
 	public static final Resource PrimaryDataGraph = ResourceFactory.createResource(namespace + "PrimaryDataGraph");
 	public static final Property processorClass = ResourceFactory.createProperty(namespace, "processorClass");
 	public static final Resource QualityAnnotationBody = ResourceFactory
