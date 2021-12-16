@@ -28,7 +28,8 @@ import java.util.Set;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QueryExecutionBuilder;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
@@ -97,8 +98,8 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 
 	@Override
 	public void run() {
-		extract(this.getOutputPrimaryModel().get(), this.service, this.query, this.list, this.followInverse,
-				this.followUnlimited, this.maxDistance, this.chunkSize);
+		extract(this.getOutputPrimaryModel().get(), QueryExecution.service(this.service), this.query, this.list,
+				this.followInverse, this.followUnlimited, this.maxDistance, this.chunkSize);
 	}
 
 	private static ElementData valuesClause(Var var, Iterable<Node> values) {
@@ -118,7 +119,7 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 		return group;
 	}
 
-	private static void loadResources(String service, Collection<Resource> resourcesToLoad,
+	private static void loadResources(QueryExecutionBuilder service, Collection<Resource> resourcesToLoad,
 			Iterable<Node> followInverse, Model resultModel, int chunkSize) {
 		// prepare queries
 		/*
@@ -147,14 +148,14 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 				// add resource list as subject
 				constructQuery.setQueryPattern(group(triple, valuesClause(s, currentChunck)));
 
-				QueryExecutionFactory.sparqlService(service, constructQuery).execConstruct(resultModel);
+				service.query(constructQuery).build().execConstruct(resultModel);
 
 				if (followInverse.iterator().hasNext()) {
 					// add resource list as subject
 					constructQuery
 							.setQueryPattern(group(triple, followInverseValuesClause, valuesClause(o, currentChunck)));
 
-					QueryExecutionFactory.sparqlService(service, constructQuery).execConstruct(resultModel);
+					service.query(constructQuery).build().execConstruct(resultModel);
 				}
 				// reset chunk
 				currentChunck.clear();
@@ -163,8 +164,9 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 
 	}
 
-	private static Model extract(Model resultModel, String service, Optional<Query> query, Collection<Resource> list,
-			Collection<Node> followInverse, Collection<Property> followUnlimited, int maxDistance, int chunkSize) {
+	private static Model extract(Model resultModel, QueryExecutionBuilder service, Optional<Query> query,
+			Collection<Resource> list, Collection<Node> followInverse, Collection<Property> followUnlimited,
+			int maxDistance, int chunkSize) {
 
 		Set<Resource> resourcesLoaded = new HashSet<Resource>();
 		Set<Resource> resourcesToLoad = new HashSet<Resource>();
@@ -172,7 +174,7 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 		// get list of relevant resources using parameter `query`
 		if (query.isPresent()) {
 			Query relevantResourceQuery = query.get();
-			ResultSet results = QueryExecutionFactory.sparqlService(service, relevantResourceQuery).execSelect();
+			ResultSet results = service.query(relevantResourceQuery).select();
 			while (results.hasNext()) {
 				Binding binding = results.nextBinding();
 				Iterator<Var> varIterator = binding.vars();
