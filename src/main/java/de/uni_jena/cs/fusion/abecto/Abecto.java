@@ -69,7 +69,7 @@ public class Abecto implements Callable<Integer> {
 			"--plan" }, paramLabel = "plan-iri", description = "IRI of the plan to process. Required, if the configuration contains multiple plans.")
 	String planIri;
 
-	@Parameters(index = "0", paramLabel = "configuration-file", description = "RDF dataset dile containing the execution plan configuration.")
+	@Parameters(index = "0", paramLabel = "configuration-file", description = "RDF dataset file containing the execution plan configuration.")
 	File configurationFile;
 
 	@Parameters(index = "1", paramLabel = "result-file", description = "RDF dataset file for the execution results.")
