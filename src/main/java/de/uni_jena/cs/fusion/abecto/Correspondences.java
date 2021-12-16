@@ -15,10 +15,9 @@
  */
 package de.uni_jena.cs.fusion.abecto;
 
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Stream;
 
 import org.apache.jena.arq.querybuilder.AskBuilder;
@@ -29,7 +28,10 @@ import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.reasoner.rulesys.FBRuleReasoner;
+import org.apache.jena.reasoner.rulesys.Rule;
 import org.apache.jena.sparql.core.TriplePath;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.path.PathFactory;
@@ -41,13 +43,25 @@ public class Correspondences {
 	private static final Var RESOURCE_1 = Var.alloc("resource1");
 	private static final Var RESOURCE_2 = Var.alloc("resource2");
 	private static final Var RESOURCE_3 = Var.alloc("resource3");
-	private static final Var RESOURCE_4 = Var.alloc("resource4");
-	private static final Var ASPECT = Var.alloc("aspect");
 	private static ExprFactory exprFactory = new ExprFactory();
 
-	private static Query CORRESPONDE_OR_NOT_QUERY = new AskBuilder()
-			.addWhere(RESOURCE_1, AV.correspondsToResource, RESOURCE_2)
-			.addUnion(new WhereBuilder().addWhere(RESOURCE_1, AV.correspondsNotToResource, RESOURCE_2)).build();
+	private final static List<Rule> correspondenceRules = Arrays.asList(
+			// corresponds inverse
+			Rule.parseRule("[ (?A " + AV.correspondsToResource + " ?B) "//
+					+ "-> (?B " + AV.correspondsToResource + " ?A) ]"),
+			// corresponds transitivity
+			Rule.parseRule("[ (?A " + AV.correspondsToResource + " ?B),(?B " + AV.correspondsToResource + " ?C) "//
+					+ "-> (?A " + AV.correspondsToResource + " ?C) ]"),
+			// correspondsNot inverse
+			Rule.parseRule("[ (?A " + AV.correspondsNotToResource + " ?B) "//
+					+ "-> (?B " + AV.correspondsNotToResource + " ?A) ]"),
+			// correspondsNot-corresponds chains
+			Rule.parseRule("[ (?A " + AV.correspondsNotToResource + " ?B),(?B " + AV.correspondsToResource + " ?C) "//
+					+ "-> (?A " + AV.correspondsNotToResource + " ?C) ]"));
+
+	private static Model getTransitiveCorrespondencesModel(Model correspondencesModel) {
+		return ModelFactory.createInfModel(new FBRuleReasoner(correspondenceRules), correspondencesModel);
+	}
 
 	/**
 	 * Checks if a correspondence or incorrespondence for two given resources in a
@@ -64,13 +78,10 @@ public class Correspondences {
 	 *         exists, otherwise {@code false}
 	 */
 	public static boolean correspondentOrIncorrespondent(Resource resource1, Resource resource2, Model inputModel) {
-		Query query = AskBuilder.rewrite(CORRESPONDE_OR_NOT_QUERY.cloneQuery(),
-				Map.of(RESOURCE_1, resource1.asNode(), RESOURCE_2, resource2.asNode()));
+		Query query = new AskBuilder().addWhere(resource1, AV.correspondsToResource, resource2)
+				.addUnion(new WhereBuilder().addWhere(resource1, AV.correspondsNotToResource, resource2)).build();
 		return resource1.equals(resource2) || QueryExecutionFactory.create(query, inputModel).execAsk();
 	}
-
-	private static Query CORRESPONDE_QUERY = new AskBuilder().addWhere(RESOURCE_1, AV.correspondsToResource, RESOURCE_2)
-			.build();
 
 	/**
 	 * Checks if a correspondence for two given resources in a given aspect exists.
@@ -83,8 +94,8 @@ public class Correspondences {
 	 *         {@code false}
 	 */
 	public static boolean correspond(Resource resource1, Resource resource2, Model inputModel) {
-		Query query = AskBuilder.rewrite(CORRESPONDE_QUERY.cloneQuery(),
-				Map.of(RESOURCE_1, resource1.asNode(), RESOURCE_2, resource2.asNode()));
+		inputModel = getTransitiveCorrespondencesModel(inputModel);
+		Query query = new AskBuilder().addWhere(resource1, AV.correspondsToResource, resource2).build();
 		return resource1.equals(resource2) || QueryExecutionFactory.create(query, inputModel).execAsk();
 	}
 
@@ -100,9 +111,9 @@ public class Correspondences {
 		if (resources.length < 2) {
 			return true;
 		}
+		inputModel = getTransitiveCorrespondencesModel(inputModel);
 		Query query = new AskBuilder()//
 				// TODO replace workaround when a better solution exists
-				// NOTE: addWhereValueVar() does not cross-join / add multiple VALUES clauses
 				.addSubQuery(new SelectBuilder().addVar(RESOURCE_1).addWhereValueVar(RESOURCE_1, (Object[]) resources))
 				.addSubQuery(new SelectBuilder().addVar(RESOURCE_2).addWhereValueVar(RESOURCE_2, (Object[]) resources))
 				.addFilter(exprFactory.ne(RESOURCE_1, RESOURCE_2))
@@ -124,13 +135,12 @@ public class Correspondences {
 		if (resources.length < 2) {
 			return false;
 		}
+		inputModel = getTransitiveCorrespondencesModel(inputModel);
 		Query query = new AskBuilder()//
 				// TODO replace workaround when a better solution exists
+				// NOTE: addWhereValueVar() does not cross-join / add multiple VALUES clauses
 				.addSubQuery(new SelectBuilder().addVar(RESOURCE_1).addWhereValueVar(RESOURCE_1, (Object[]) resources))
 				.addSubQuery(new SelectBuilder().addVar(RESOURCE_2).addWhereValueVar(RESOURCE_2, (Object[]) resources))
-				// NOTE: this does not cross-join the values / add multiple VALUES clauses
-				// .addWhereValueVar(RESOURCE_1, (Object[]) resources)//
-				// .addWhereValueVar(RESOURCE_2, (Object[]) resources)//
 				.addFilter(exprFactory.ne(RESOURCE_1, RESOURCE_2))
 				.addWhere(RESOURCE_1, AV.correspondsNotToResource, RESOURCE_2).build();
 		return QueryExecutionFactory.create(query, inputModel).execAsk();
@@ -153,10 +163,9 @@ public class Correspondences {
 	}
 
 	/**
-	 * Add correspondences of several resources belonging to a certain aspect and
-	 * new their transitive correspondence. If all correspondences are already known
-	 * or any correspondence contradict an existing incorrespondence, all
-	 * correspondences will be discard silently.
+	 * Add correspondences of several resources belonging to a certain aspect. If
+	 * all correspondences are already known or any correspondence contradict an
+	 * existing incorrespondence, all correspondences will be discard silently.
 	 * 
 	 * @param resources   the corresponding resources
 	 * @param aspect      aspect the corresponding resources belong to
@@ -169,47 +178,19 @@ public class Correspondences {
 		}
 		if (!anyIncorrespondend(inputModel, resources) && !allCorrespondend(inputModel, resources)) {
 			Query query = new ConstructBuilder()//
-					.addConstruct(aspect.asNode(), AV.relevantResource, RESOURCE_3)//
-					.addConstruct(aspect.asNode(), AV.relevantResource, RESOURCE_4)//
-					.addConstruct(RESOURCE_3, AV.correspondsToResource, RESOURCE_4)//
-					.addConstruct(RESOURCE_4, AV.correspondsToResource, RESOURCE_3)//
-					// TODO replace workaround when a better solution exists
-					// NOTE: addWhereValueVar() does not cross-join / add multiple VALUES clauses
-					.addSubQuery(
-							new SelectBuilder().addVar(RESOURCE_1).addWhereValueVar(RESOURCE_1, (Object[]) resources))
-					.addSubQuery(
-							new SelectBuilder().addVar(RESOURCE_2).addWhereValueVar(RESOURCE_2, (Object[]) resources))
-					.addWhere(new TriplePath(RESOURCE_1,
-							PathFactory.pathZeroOrOne(PathFactory.pathLink(AV.correspondsToResource.asNode())),
-							RESOURCE_3))
-					.addWhere(new TriplePath(RESOURCE_2,
-							PathFactory.pathZeroOrOne(PathFactory.pathLink(AV.correspondsToResource.asNode())),
-							RESOURCE_4))
-					.addFilter(exprFactory
-							.notexists(new WhereBuilder().addWhere(RESOURCE_3, AV.correspondsToResource, RESOURCE_4)))
-					.addFilter(exprFactory.ne(RESOURCE_3, RESOURCE_4)).build();
+					.addConstruct(aspect, AV.relevantResource, resources[0])//
+					.addConstruct(aspect, AV.relevantResource, RESOURCE_2)//
+					.addConstruct(resources[0], AV.correspondsToResource, RESOURCE_2)//
+					.addWhereValueVar(RESOURCE_2, (Object[]) Arrays.copyOfRange(resources, 1, resources.length))
+					.build();
 			QueryExecutionFactory.create(query, inputModel).execConstruct(outputModel);
 		}
 	}
 
-	private static Query ADD_INCORRESPONDENCE_QUERY = new ConstructBuilder()
-			.addConstruct(ASPECT, AV.relevantResource, RESOURCE_1)//
-			.addConstruct(ASPECT, AV.relevantResource, RESOURCE_2)//
-			.addConstruct(RESOURCE_3, AV.correspondsNotToResource, RESOURCE_4)//
-			.addConstruct(RESOURCE_4, AV.correspondsNotToResource, RESOURCE_3)//
-			.addWhere(new TriplePath(RESOURCE_1,
-					PathFactory.pathZeroOrOne(PathFactory.pathLink(AV.correspondsToResource.asNode())), RESOURCE_3))
-			.addWhere(new TriplePath(RESOURCE_2,
-					PathFactory.pathZeroOrOne(PathFactory.pathLink(AV.correspondsToResource.asNode())), RESOURCE_4))
-			.addFilter(exprFactory
-					.notexists(new WhereBuilder().addWhere(RESOURCE_3, AV.correspondsNotToResource, RESOURCE_4)))
-			.build();
-
 	/**
-	 * Adds an incorrespondence of two resources affecting a certain aspect and
-	 * thereby transitive implied incorrespondence. If the incorrespondence is
-	 * already known or contradicts an existing correspondence, the correspondence
-	 * will be discard silently.
+	 * Adds an incorrespondence of two resources affecting a certain aspect. If the
+	 * incorrespondence is already known or contradicts an existing correspondence,
+	 * the correspondence will be discard silently.
 	 * 
 	 * @param inputModel  model containing already known (in)correspondences
 	 * @param outputModel model to write new incorrespondences
@@ -220,21 +201,14 @@ public class Correspondences {
 	public static void addIncorrespondence(Model inputModel, Model outputModel, Resource aspect, Resource resource1,
 			Resource resource2) {
 		if (!correspondentOrIncorrespondent(resource1, resource2, inputModel)) {
-			Query query = ConstructBuilder.rewrite(ConstructBuilder.clone(ADD_INCORRESPONDENCE_QUERY),
-					Map.of(ASPECT, aspect.asNode(), RESOURCE_1, resource1.asNode(), RESOURCE_2, resource2.asNode()));
+			Query query = new ConstructBuilder()//
+					.addConstruct(aspect, AV.relevantResource, resource1)//
+					.addConstruct(aspect, AV.relevantResource, resource2)//
+					.addConstruct(resource1, AV.correspondsNotToResource, resource2)//
+					.build();
 			QueryExecutionFactory.create(query, inputModel).execConstruct(outputModel);
 		}
 	}
-
-	private static Query GET_CORRESPONDENCE_SETS_QUERY = new SelectBuilder().addVar(RESOURCE_1).addVar(RESOURCE_2)
-			.addWhere(ASPECT, AV.relevantResource, RESOURCE_1)//
-			.addWhere(ASPECT, AV.relevantResource, RESOURCE_2)//
-			.addWhere(new TriplePath(RESOURCE_1,
-					PathFactory.pathZeroOrOne(PathFactory.pathLink(AV.correspondsToResource.asNode())), RESOURCE_2))
-			.addFilter(
-					exprFactory.notexists(new WhereBuilder().addWhere(RESOURCE_1, AV.correspondsToResource, RESOURCE_3)
-							.addFilter(exprFactory.gt(exprFactory.str(RESOURCE_1), exprFactory.str(RESOURCE_3)))))
-			.addOrderBy(RESOURCE_1).build();
 
 	/**
 	 * Returns {@link List Lists} of {@link Resource Resources} that belong to a
@@ -247,29 +221,17 @@ public class Correspondences {
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static Stream<List<Resource>> getCorrespondenceSets(Model inputModel, Resource aspect) {
-		Query query = SelectBuilder.rewrite(GET_CORRESPONDENCE_SETS_QUERY.cloneQuery(),
-				Collections.singletonMap(ASPECT, aspect.asNode()));
+		inputModel = getTransitiveCorrespondencesModel(inputModel);
+		Query query = new SelectBuilder().addVar(RESOURCE_1).addVar(RESOURCE_2)
+				.addWhere(aspect, AV.relevantResource, RESOURCE_1)//
+				.addWhere(aspect, AV.relevantResource, RESOURCE_2)//
+				.addWhere(new TriplePath(RESOURCE_1,
+						PathFactory.pathZeroOrOne(PathFactory.pathLink(AV.correspondsToResource.asNode())), RESOURCE_2))
+				.addFilter(exprFactory
+						.notexists(new WhereBuilder().addWhere(RESOURCE_1, AV.correspondsToResource, RESOURCE_3)
+								.addFilter(exprFactory.gt(exprFactory.str(RESOURCE_1), exprFactory.str(RESOURCE_3)))))
+				.addOrderBy(RESOURCE_1).build();
 		return Queries.getStreamOfResultsGroupedBy(inputModel, query, RESOURCE_1.getName())
 				.map(m -> (List<Resource>) (List) m.get(RESOURCE_2.getName()));
-	}
-
-	/**
-	 * Returns {@link Resource Resources} that belong to a given aspect and
-	 * correspond to at least on given {@link Resource}.
-	 * 
-	 * @param inputModel the source of the correspondence data
-	 * @param aspect     the aspect all returned {@link Resource Resources} must
-	 *                   belong to
-	 * @param resources  the {@link Resource Resources} to at least one of which the
-	 *                   returned {@link Resource Resources} corresponds
-	 * @return the corresponding {@link Resource Resources}
-	 */
-	public static Stream<Resource> getCorrespondingResources(Model inputModel, Resource aspect, Resource... resources) {
-		Query query = new SelectBuilder().setDistinct(true).addVar(RESOURCE_2)
-				.addWhere(RESOURCE_1, AV.correspondsToResource, RESOURCE_2)
-				.addWhere(aspect, AV.relevantResource, RESOURCE_2)//
-				.addValueVar(RESOURCE_1, (Object[]) resources)//
-				.build();
-		return Queries.getStreamOfFirstResultColumnAsResource(inputModel, query);
 	}
 }

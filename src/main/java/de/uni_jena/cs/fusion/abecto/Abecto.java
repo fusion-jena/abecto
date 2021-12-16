@@ -104,8 +104,6 @@ public class Abecto implements Callable<Integer> {
 		// get plan to process
 		Resource plan = Plans.getPlan(configurationModel, planIri);
 
-		// TODO add transitive correspondences into inputMetaModels
-
 		// get aspects
 		Aspect[] aspects = Aspect.getAspects(configurationModel).toArray(l -> new Aspect[l]);
 

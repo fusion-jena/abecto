@@ -236,15 +236,6 @@ public class CorrespondencesTest {
 		assertTrue(Correspondences.allCorrespondend(outputModel, resource1, resource2, resource3));
 		outputModel.removeAll();
 
-		// assert statements not inserted again
-		Correspondences.addCorrespondence(inputModel, inputModel, aspect1, resource1, resource2);
-		Correspondences.addCorrespondence(inputModel, outputModel, aspect1, resource1, resource2, resource3);
-		assertFalse(Correspondences.allCorrespondend(outputModel, resource1, resource2, resource3));
-		assertTrue(Correspondences.allCorrespondend(outputModel, resource1, resource3));
-		assertTrue(Correspondences.allCorrespondend(outputModel, resource2, resource3));
-		inputModel.removeAll();
-		outputModel.removeAll();
-
 		// assert nothing insert if all exist
 		Correspondences.addCorrespondence(inputModel, inputModel, aspect1, resource1, resource2, resource3);
 		Correspondences.addCorrespondence(inputModel, outputModel, aspect1, resource1, resource2, resource3);
@@ -256,6 +247,46 @@ public class CorrespondencesTest {
 		inputModel.add(resource2, AV.correspondsNotToResource, resource1);
 		Correspondences.addCorrespondence(inputModel, outputModel, aspect1, resource1, resource2, resource3);
 		assertTrue(outputModel.isEmpty());
+		inputModel.removeAll();
+	}
+
+	@Test
+	public void inferences() {
+		Model inputModel = ModelFactory.createDefaultModel();
+
+		// assert correspondence inverse statement inference
+		Correspondences.addCorrespondence(inputModel, inputModel, aspect1, resource1, resource2);
+		assertTrue(Correspondences.allCorrespondend(inputModel, resource2, resource1));
+		inputModel.removeAll();
+
+		// assert correspondence transitive statement inference (insert order 1)
+		Correspondences.addCorrespondence(inputModel, inputModel, aspect1, resource1, resource2);
+		Correspondences.addCorrespondence(inputModel, inputModel, aspect1, resource2, resource3);
+		assertTrue(Correspondences.allCorrespondend(inputModel, resource1, resource3));
+		inputModel.removeAll();
+
+		// assert correspondence transitive statement inference (insert order 2)
+		Correspondences.addCorrespondence(inputModel, inputModel, aspect1, resource2, resource3);
+		Correspondences.addCorrespondence(inputModel, inputModel, aspect1, resource1, resource2);
+		assertTrue(Correspondences.allCorrespondend(inputModel, resource1, resource3));
+		inputModel.removeAll();
+
+		// assert incorrespondence inverse statement inference
+		Correspondences.addIncorrespondence(inputModel, inputModel, aspect1, resource1, resource2);
+		assertTrue(Correspondences.anyIncorrespondend(inputModel, resource2, resource1));
+		inputModel.removeAll();
+
+		// assert incorrespondence-correspondence chain inference (insert order 1)
+		Correspondences.addCorrespondence(inputModel, inputModel, aspect1, resource1, resource2);
+		Correspondences.addIncorrespondence(inputModel, inputModel, aspect1, resource2, resource3);
+		assertTrue(Correspondences.anyIncorrespondend(inputModel, resource1, resource3));
+		inputModel.removeAll();
+
+		// assert incorrespondence-correspondence chain inference (insert order 2)
+		Correspondences.addIncorrespondence(inputModel, inputModel, aspect1, resource2, resource3);
+		Correspondences.addCorrespondence(inputModel, inputModel, aspect1, resource1, resource2);
+		assertTrue(Correspondences.anyIncorrespondend(inputModel, resource1, resource3));
+		inputModel.removeAll();
 	}
 
 	@Test
@@ -306,39 +337,5 @@ public class CorrespondencesTest {
 				fail("Resource \"" + resourceBase + min + "\" found as first resource in set.");
 			}
 		}
-
 	}
-
-	@Test
-	public void getCorrespondingResources() {
-		Model inputModel = ModelFactory.createDefaultModel();
-
-		Correspondences.addCorrespondence(inputModel, inputModel, aspect1, resource1, resource2, resource3);
-		Correspondences.addCorrespondence(inputModel, inputModel, aspect1, resource4, resource5);
-		Correspondences.addCorrespondence(inputModel, inputModel, aspect2, resource6, resource7);
-
-		assertArrayEquals(new Resource[] { resource2, resource3 },
-				Correspondences.getCorrespondingResources(inputModel, aspect1, resource1)
-						.sorted((a, b) -> a.getURI().compareTo(b.getURI())).toArray(l -> new Resource[l]));
-		assertArrayEquals(new Resource[] { resource1, resource3 },
-				Correspondences.getCorrespondingResources(inputModel, aspect1, resource2)
-						.sorted((a, b) -> a.getURI().compareTo(b.getURI())).toArray(l -> new Resource[l]));
-		assertArrayEquals(new Resource[] { resource1, resource2 },
-				Correspondences.getCorrespondingResources(inputModel, aspect1, resource3)
-						.sorted((a, b) -> a.getURI().compareTo(b.getURI())).toArray(l -> new Resource[l]));
-
-		assertArrayEquals(new Resource[] { resource5 },
-				Correspondences.getCorrespondingResources(inputModel, aspect1, resource4)
-						.sorted((a, b) -> a.getURI().compareTo(b.getURI())).toArray(l -> new Resource[l]));
-		assertArrayEquals(new Resource[] { resource4 },
-				Correspondences.getCorrespondingResources(inputModel, aspect1, resource5)
-						.sorted((a, b) -> a.getURI().compareTo(b.getURI())).toArray(l -> new Resource[l]));
-
-		assertArrayEquals(new Resource[] {}, Correspondences.getCorrespondingResources(inputModel, aspect1, resource6)
-				.sorted((a, b) -> a.getURI().compareTo(b.getURI())).toArray(l -> new Resource[l]));
-		assertArrayEquals(new Resource[] {}, Correspondences.getCorrespondingResources(inputModel, aspect1, resource7)
-				.sorted((a, b) -> a.getURI().compareTo(b.getURI())).toArray(l -> new Resource[l]));
-
-	}
-
 }
