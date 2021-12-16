@@ -22,7 +22,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
@@ -148,8 +147,7 @@ public class Step implements Runnable {
 			}
 			configurationModel.listObjectsOfProperty(stepIri, AV.inputMetaDataGraph).mapWith(RDFNode::asResource)
 					.forEach(inputMetaModelIri -> {
-						// TODO remove workaround for https://issues.apache.org/jira/browse/JENA-2169
-						processor.addInputMetaModel(null, dataset.getNamedModel(inputMetaModelIri.getURI()));
+						processor.addInputMetaModel(null, dataset.getNamedModel(inputMetaModelIri));
 						inputModelIris.add(inputMetaModelIri);
 					});
 			for (Resource inputModelIri : inputModelIris) {
@@ -177,34 +175,28 @@ public class Step implements Runnable {
 			processor.getAssociatedDataset().ifPresent(datasetIri -> {
 				Model outputModel = processor.getOutputMetaModel(datasetIri);
 				if (!outputModel.isEmpty()) {
-					// TODO remove workaround for https://issues.apache.org/jira/browse/JENA-2169
-					Resource outputModelIri = configurationModel.createResource("uuid:" + UUID.randomUUID(),
-							AV.PrimaryDataGraph);
+					Resource outputModelIri = configurationModel.createResource(AV.PrimaryDataGraph);
 					outputModelIri.addProperty(PROV.wasGeneratedBy, stepExecutionIri);
 					outputModelIri.addProperty(AV.associatedDataset, datasetIri);
-					dataset.addNamedModel(outputModelIri.getURI(), outputModel);
+					dataset.addNamedModel(outputModelIri, outputModel);
 				}
 			});
 			// set metadata for output meta model of input dataset
 			for (Resource datasetIri : processor.getDatasets()) {
 				Model outputModel = processor.getOutputMetaModel(datasetIri);
 				if (!outputModel.isEmpty()) {
-					// TODO remove workaround for https://issues.apache.org/jira/browse/JENA-2169
-					Resource outputModelIri = configurationModel.createResource("uuid:" + UUID.randomUUID(),
-							AV.MetaDataGraph);
+					Resource outputModelIri = configurationModel.createResource(AV.MetaDataGraph);
 					outputModelIri.addProperty(PROV.wasGeneratedBy, stepExecutionIri);
 					outputModelIri.addProperty(DQV.computedOn, datasetIri);
-					dataset.addNamedModel(outputModelIri.getURI(), outputModel);
+					dataset.addNamedModel(outputModelIri, outputModel);
 				}
 			}
 			// set metadata for general meta model
 			Model outputModel = processor.getOutputMetaModel(null);
 			if (!outputModel.isEmpty()) {
-				// TODO remove workaround for https://issues.apache.org/jira/browse/JENA-2169
-				Resource outputModelIri = configurationModel.createResource("uuid:" + UUID.randomUUID(),
-						AV.MetaDataGraph);
+				Resource outputModelIri = configurationModel.createResource(AV.MetaDataGraph);
 				outputModelIri.addProperty(PROV.wasGeneratedBy, stepExecutionIri);
-				dataset.addNamedModel(outputModelIri.getURI(), outputModel);
+				dataset.addNamedModel(outputModelIri, outputModel);
 			}
 
 			// remove empty output models from processor

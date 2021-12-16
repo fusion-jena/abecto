@@ -266,7 +266,7 @@ public class StepTest {
 			iterator = iterator.filterKeep(r -> r.hasProperty(
 					AV.MetaDataGraph.equals(outputModelType) ? DQV.computedOn : AV.associatedDataset, dataset));
 		}
-		Model outputMetaModel = graphs.getNamedModel(iterator.next().getURI());
+		Model outputMetaModel = graphs.getNamedModel(iterator.next());
 
 		int[] actualValues = outputMetaModel
 				.listObjectsOfProperty(Objects.requireNonNullElse(dataset, ALL_DATASETS), property).toList().stream()
