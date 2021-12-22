@@ -35,7 +35,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
-import de.uni_jena.cs.fusion.abecto.Correspondences;
 
 public class JaroWinklerMappingProcessorTest {
 	@BeforeAll
@@ -66,11 +65,10 @@ public class JaroWinklerMappingProcessorTest {
 		processor.aspect = aspect(1);
 		processor.variables = Collections.singleton("label");
 		processor.run();
-		Model getOutputMetaModel = processor.getOutputMetaModel(null);
-		assertTrue(Correspondences.allCorrespondend(getOutputMetaModel, resource("entity1"), resource("entity4")));
-		assertTrue(Correspondences.allCorrespondend(getOutputMetaModel, resource("entity2"), resource("entity5")));
-		assertEquals(2, Correspondences.getCorrespondenceSets(getOutputMetaModel, aspect(1)).count());
-		assertEquals(0, Correspondences.getCorrespondenceSets(getOutputMetaModel, aspect(2)).count());
+		assertTrue(processor.allCorrespondend(resource("entity1"), resource("entity4")));
+		assertTrue(processor.allCorrespondend(resource("entity2"), resource("entity5")));
+		assertEquals(2, processor.getCorrespondenceSets(aspect(1)).count());
+		assertEquals(0, processor.getCorrespondenceSets(aspect(2)).count());
 	}
 
 	@Test
@@ -97,8 +95,7 @@ public class JaroWinklerMappingProcessorTest {
 		processor.aspect = aspect(1);
 		processor.variables = Collections.singleton("label");
 		processor.run();
-		Model getOutputMetaModel = processor.getOutputMetaModel(null);
-		assertEquals(0, Correspondences.getCorrespondenceSets(getOutputMetaModel, aspect(1)).count());
+		assertEquals(0, processor.getCorrespondenceSets(aspect(1)).count());
 	}
 
 	@Test
@@ -115,8 +112,7 @@ public class JaroWinklerMappingProcessorTest {
 		processor.aspect = aspect(1);
 		processor.variables = Collections.singleton("label");
 		processor.run();
-		Model getOutputMetaModel = processor.getOutputMetaModel(null);
-		assertEquals(0, Correspondences.getCorrespondenceSets(getOutputMetaModel, aspect(1)).count());
+		assertEquals(0, processor.getCorrespondenceSets(aspect(1)).count());
 
 		// direction 2
 		processor = new JaroWinklerMappingProcessor().addInputPrimaryModel(dataset(1), model2)
@@ -126,8 +122,7 @@ public class JaroWinklerMappingProcessorTest {
 		processor.aspect = aspect(1);
 		processor.variables = Collections.singleton("label");
 		processor.run();
-		getOutputMetaModel = processor.getOutputMetaModel(null);
-		assertEquals(0, Correspondences.getCorrespondenceSets(getOutputMetaModel, aspect(1)).count());
+		assertEquals(0, processor.getCorrespondenceSets(aspect(1)).count());
 	}
 
 	@Test
@@ -143,8 +138,7 @@ public class JaroWinklerMappingProcessorTest {
 		processor.aspect = aspect(1);
 		processor.variables = Collections.singleton("label");
 		processor.run();
-		Model getOutputMetaModel = processor.getOutputMetaModel(null);
-		assertEquals(0, Correspondences.getCorrespondenceSets(getOutputMetaModel, aspect(1)).count());
+		assertEquals(0, processor.getCorrespondenceSets(aspect(1)).count());
 	}
 
 	@Test
@@ -164,9 +158,8 @@ public class JaroWinklerMappingProcessorTest {
 		processor.aspect = aspect(1);
 		processor.variables = Collections.singleton("label");
 		processor.run();
-		Model getOutputMetaModel = processor.getOutputMetaModel(null);
-		assertTrue(Correspondences.allCorrespondend(getOutputMetaModel, resource("entity1"), resource("entity3")));
-		assertEquals(1, Correspondences.getCorrespondenceSets(getOutputMetaModel, aspect(1)).count());
+		assertTrue(processor.allCorrespondend(resource("entity1"), resource("entity3")));
+		assertEquals(1, processor.getCorrespondenceSets(aspect(1)).count());
 
 		// direction 2
 		processor = new JaroWinklerMappingProcessor().addInputPrimaryModel(dataset(1), model2)
@@ -176,9 +169,8 @@ public class JaroWinklerMappingProcessorTest {
 		processor.aspect = aspect(1);
 		processor.variables = Collections.singleton("label");
 		processor.run();
-		getOutputMetaModel = processor.getOutputMetaModel(null);
-		assertTrue(Correspondences.allCorrespondend(getOutputMetaModel, resource("entity1"), resource("entity3")));
-		assertEquals(1, Correspondences.getCorrespondenceSets(getOutputMetaModel, aspect(1)).count());
+		assertTrue(processor.allCorrespondend(resource("entity1"), resource("entity3")));
+		assertEquals(1, processor.getCorrespondenceSets(aspect(1)).count());
 
 	}
 
@@ -197,9 +189,8 @@ public class JaroWinklerMappingProcessorTest {
 		processor.aspect = aspect(1);
 		processor.variables = Collections.singleton("label");
 		processor.run();
-		Model getOutputMetaModel = processor.getOutputMetaModel(null);
-		assertTrue(Correspondences.allCorrespondend(getOutputMetaModel, resource("entity1"), resource("entity2")));
-		assertEquals(1, Correspondences.getCorrespondenceSets(getOutputMetaModel, aspect(1)).count());
+		assertTrue(processor.allCorrespondend(resource("entity1"), resource("entity2")));
+		assertEquals(1, processor.getCorrespondenceSets(aspect(1)).count());
 
 		// case-sensitive
 		processor = new JaroWinklerMappingProcessor().addInputPrimaryModel(dataset(1), model1)
@@ -209,7 +200,6 @@ public class JaroWinklerMappingProcessorTest {
 		processor.aspect = aspect(1);
 		processor.variables = Collections.singleton("label");
 		processor.run();
-		getOutputMetaModel = processor.getOutputMetaModel(null);
-		assertEquals(0, Correspondences.getCorrespondenceSets(getOutputMetaModel, aspect(1)).count());
+		assertEquals(0, processor.getCorrespondenceSets(aspect(1)).count());
 	}
 }

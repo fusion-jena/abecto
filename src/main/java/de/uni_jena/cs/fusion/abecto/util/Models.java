@@ -31,6 +31,7 @@ import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 
+import org.apache.jena.graph.compose.MultiUnion;
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.ontology.OntModelSpec;
 import org.apache.jena.rdf.model.Model;
@@ -40,8 +41,6 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.RDFParser;
 import org.apache.jena.riot.system.ErrorHandlerFactory;
-
-import com.google.common.collect.Streams;
 
 /**
  * Provides a couple of handy methods to easy work with {@link Model}s.
@@ -94,22 +93,36 @@ public class Models {
 		}
 	}
 
-	public static OntModel union(Stream<Model> models) {
-		OntModel union = getEmptyOntModel();
-		models.filter(Objects::nonNull).forEach(union::addSubModel);
-		return union;
-	}
-
-	public static OntModel union(@Nullable Collection<Model> modelCollection, Model... modelArray) {
-		Stream<Model> stream = Arrays.stream(modelArray);
-		if (modelCollection != null) {
-			stream = Streams.concat(stream, modelCollection.stream());
+	public static Model union(Model baseModel, Stream<Model> models) {
+		MultiUnion unionGraph = new MultiUnion();
+		if (baseModel != null) {
+			unionGraph.addGraph(baseModel.getGraph());
+			unionGraph.setBaseGraph(baseModel.getGraph());
 		}
-		return union(stream);
+		models.filter(Objects::nonNull).map(Model::getGraph).forEach(unionGraph::addGraph);
+		return ModelFactory.createModelForGraph(unionGraph);
 	}
 
-	public static OntModel union(Model... models) {
-		return union(Arrays.stream(models));
+	public static Model union(Stream<Model> models) {
+		return union(null, models);
+	}
+
+	public static Model union(@Nullable Collection<Model> modelCollection) {
+		return union(null, modelCollection);
+	}
+
+	public static Model union(Model baseModel, @Nullable Collection<Model> modelCollection) {
+		Stream<Model> stream;
+		if (modelCollection != null) {
+			stream = modelCollection.stream();
+		} else {
+			stream = Stream.empty();
+		}
+		return union(baseModel, stream);
+	}
+
+	public static Model union(Model baseModel, Model... models) {
+		return union(baseModel, Arrays.stream(models));
 	}
 
 	public static void write(OutputStream out, Model model, Lang lang) throws IOException {

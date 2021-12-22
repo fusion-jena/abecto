@@ -27,7 +27,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.jena.rdf.model.Resource;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
-import de.uni_jena.cs.fusion.abecto.Correspondences;
 import de.uni_jena.cs.fusion.abecto.Metadata;
 import de.uni_jena.cs.fusion.abecto.Parameter;
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
@@ -86,75 +85,74 @@ public class CompletenessProcessor extends Processor<CompletenessProcessor> {
 			}
 
 			// process correspondence sets of aspect
-			Correspondences.getCorrespondenceSets(this.getMetaModelUnion(null), aspectIri)
-					.forEach(correspondingResources -> {
-						Map<Resource, Set<Resource>> occurrencesByDataset = new HashMap<>();
-						// count resources of the dataset in the correspondence set
-						for (Resource dataset : this.getDatasets()) {
-							Set<Resource> uncoveredResourcesOfDataset = uncoveredResourcesByDataset.get(dataset);
-							Set<Resource> occurrencesOfDataset = occurrencesByDataset.computeIfAbsent(dataset,
-									r -> new HashSet<>());
-							for (Resource correspondingResource : correspondingResources) {
-								if (uncoveredResourcesOfDataset.contains(correspondingResource)) {
-									occurrencesOfDataset.add(correspondingResource);
+			getCorrespondenceSets(aspectIri).forEach(correspondingResources -> {
+				Map<Resource, Set<Resource>> occurrencesByDataset = new HashMap<>();
+				// count resources of the dataset in the correspondence set
+				for (Resource dataset : this.getDatasets()) {
+					Set<Resource> uncoveredResourcesOfDataset = uncoveredResourcesByDataset.get(dataset);
+					Set<Resource> occurrencesOfDataset = occurrencesByDataset.computeIfAbsent(dataset,
+							r -> new HashSet<>());
+					for (Resource correspondingResource : correspondingResources) {
+						if (uncoveredResourcesOfDataset.contains(correspondingResource)) {
+							occurrencesOfDataset.add(correspondingResource);
+						}
+					}
+				}
+				for (Resource dataset : this.getDatasets()) {
+					int occurrences = occurrencesByDataset.containsKey(dataset)
+							? occurrencesByDataset.get(dataset).size()
+							: 0;
+					if (occurrences == 0) {
+						// count correspondence sets the dataset is not participating in
+						omissions.merge(dataset, 1, Integer::sum);
+
+						// report resource omission for resources in correspondence sets
+						for (Resource datasetComparedTo : this.getDatasets()) {
+							for (Resource resourceComparedTo : occurrencesByDataset.get(datasetComparedTo)) {
+								Metadata.addResourceOmission(dataset, datasetComparedTo, resourceComparedTo,
+										aspect.getIri(), this.getOutputMetaModel(dataset));
+							}
+						}
+					}
+					if (occurrences > 0) {
+						for (Resource datasetComparedTo : this.getDatasets()) {
+							if (!occurrencesByDataset.get(datasetComparedTo).isEmpty()) {
+								// do not use Resource#getURI() as it might be null for blank nodes
+								if (dataset.hashCode() < datasetComparedTo.hashCode()) {
+									// only once per pair
+
+									// count covered resources of the compared dataset (both directions)
+									absoluteCoverage.get(dataset).merge(datasetComparedTo, 1, Integer::sum);
+									absoluteCoverage.get(datasetComparedTo).merge(dataset, 1, Integer::sum);
+
+									// count total pairwise overlap
+									totalPairwiseOverlap.incrementAndGet();
 								}
 							}
 						}
-						for (Resource dataset : this.getDatasets()) {
-							int occurrences = occurrencesByDataset.containsKey(dataset)
-									? occurrencesByDataset.get(dataset).size()
-									: 0;
-							if (occurrences == 0) {
-								// count correspondence sets the dataset is not participating in
-								omissions.merge(dataset, 1, Integer::sum);
+						if (occurrences > 1) {
+							// count duplicates, excluding the one to stay
+							duplicates.merge(dataset, occurrences - 1, Integer::sum);
 
-								// report resource omission for resources in correspondence sets
-								for (Resource datasetComparedTo : this.getDatasets()) {
-									for (Resource resourceComparedTo : occurrencesByDataset.get(datasetComparedTo)) {
-										Metadata.addResourceOmission(dataset, datasetComparedTo, resourceComparedTo,
-												aspect.getIri(), this.getOutputMetaModel(dataset));
+							for (Resource duplicateResource1 : occurrencesByDataset.get(dataset)) {
+								for (Resource duplicateResource2 : occurrencesByDataset.get(dataset)) {
+									if (!duplicateResource1.equals(duplicateResource2)) {
+										Metadata.addIssue(duplicateResource1, null, null, aspectIri,
+												"Duplicated Resource", "of <" + duplicateResource2 + ">",
+												this.getOutputMetaModel(dataset));
 									}
 								}
 							}
-							if (occurrences > 0) {
-								for (Resource datasetComparedTo : this.getDatasets()) {
-									if (!occurrencesByDataset.get(datasetComparedTo).isEmpty()) {
-										// do not use Resource#getURI() as it might be null for blank nodes
-										if (dataset.hashCode() < datasetComparedTo.hashCode()) {
-											// only once per pair
 
-											// count covered resources of the compared dataset (both directions)
-											absoluteCoverage.get(dataset).merge(datasetComparedTo, 1, Integer::sum);
-											absoluteCoverage.get(datasetComparedTo).merge(dataset, 1, Integer::sum);
-
-											// count total pairwise overlap
-											totalPairwiseOverlap.incrementAndGet();
-										}
-									}
-								}
-								if (occurrences > 1) {
-									// count duplicates, excluding the one to stay
-									duplicates.merge(dataset, occurrences - 1, Integer::sum);
-
-									for (Resource duplicateResource1 : occurrencesByDataset.get(dataset)) {
-										for (Resource duplicateResource2 : occurrencesByDataset.get(dataset)) {
-											if (!duplicateResource1.equals(duplicateResource2)) {
-												Metadata.addIssue(duplicateResource1, null, null, aspectIri,
-														"Duplicated Resource", "of <" + duplicateResource2 + ">",
-														this.getOutputMetaModel(dataset));
-											}
-										}
-									}
-
-								}
-							}
 						}
+					}
+				}
 
-						// remove covered resources
-						for (Resource dataset : this.getDatasets()) {
-							uncoveredResourcesByDataset.get(dataset).removeAll(correspondingResources);
-						}
-					});
+				// remove covered resources
+				for (Resource dataset : this.getDatasets()) {
+					uncoveredResourcesByDataset.get(dataset).removeAll(correspondingResources);
+				}
+			});
 
 			// report resource omissions for resources not in correspondence sets
 			for (Resource datasetComparedTo : this.getDatasets()) {

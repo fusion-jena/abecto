@@ -26,7 +26,6 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
-import de.uni_jena.cs.fusion.abecto.Correspondences;
 import de.uni_jena.cs.fusion.abecto.Metadata;
 import de.uni_jena.cs.fusion.abecto.Parameter;
 
@@ -42,37 +41,30 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 	@Override
 	public final void run() {
 		Aspect aspect = this.getAspects().get(this.aspect);
-		Correspondences.getCorrespondenceSets(this.getInputMetaModelUnion(null), aspect.getIri())
-				.forEach(correspondingResources -> {
-					for (Resource correspondingResource1 : correspondingResources) {
-						for (Resource dataset1 : this.getDatasets()) {
-							Optional<Map<String, Set<RDFNode>>> values1 = Aspect.getResource(aspect, dataset1,
-									correspondingResource1, this.getInputPrimaryModelUnion(dataset1));
-							if (values1.isPresent()) {
-								for (Resource correspondingResource2 : correspondingResources) {
-									if (correspondingResource1.getURI()
-											.compareTo(correspondingResource2.getURI()) >= 0) {
-										// avoid doing work twice, but enable comparing representations of one resource
-										// in different datasets
-										for (Resource dataset2 : this.getDatasets()) {
-											if (!correspondingResource1.equals(correspondingResource2)
-													|| !dataset1.equals(dataset2)) {
-												// avoid comparing the representation of one resource in one dataset
-												// with itself
-												Optional<Map<String, Set<RDFNode>>> values2 = Aspect.getResource(aspect,
+		getCorrespondenceSets(aspect.getIri()).forEach(correspondingResources -> {
+			for (Resource correspondingResource1 : correspondingResources) {
+				for (Resource dataset1 : this.getDatasets()) {
+					Optional<Map<String, Set<RDFNode>>> values1 = Aspect.getResource(aspect, dataset1,
+							correspondingResource1, this.getInputPrimaryModelUnion(dataset1));
+					if (values1.isPresent()) {
+						for (Resource correspondingResource2 : correspondingResources) {
+							if (correspondingResource1.getURI().compareTo(correspondingResource2.getURI()) >= 0) {
+								// avoid doing work twice, but enable comparing representations of one resource
+								// in different datasets
+								for (Resource dataset2 : this.getDatasets()) {
+									if (!correspondingResource1.equals(correspondingResource2)
+											|| !dataset1.equals(dataset2)) {
+										// avoid comparing the representation of one resource in one dataset
+										// with itself
+										Optional<Map<String, Set<RDFNode>>> values2 = Aspect.getResource(aspect,
+												dataset2, correspondingResource2,
+												this.getInputPrimaryModelUnion(dataset2));
+										if (values2.isPresent()) {
+											for (String variable : this.variables) {
+												this.compareVariableValues(variable, dataset1, correspondingResource1,
+														values1.get().getOrDefault(variable, Collections.emptySet()),
 														dataset2, correspondingResource2,
-														this.getInputPrimaryModelUnion(dataset2));
-												if (values2.isPresent()) {
-													for (String variable : this.variables) {
-														this.compareVariableValues(variable, dataset1,
-																correspondingResource1,
-																values1.get().getOrDefault(variable,
-																		Collections.emptySet()),
-																dataset2, correspondingResource2,
-																values2.get().getOrDefault(variable,
-																		Collections.emptySet()));
-													}
-												}
+														values2.get().getOrDefault(variable, Collections.emptySet()));
 											}
 										}
 									}
@@ -80,7 +72,9 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 							}
 						}
 					}
-				});
+				}
+			}
+		});
 	}
 
 	/**

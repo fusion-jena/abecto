@@ -32,7 +32,6 @@ import org.apache.jena.rdf.model.ResourceFactory;
 import org.junit.jupiter.api.Test;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
-import de.uni_jena.cs.fusion.abecto.Correspondences;
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 
 public class UsePresentMappingProcessorTest {
@@ -66,8 +65,12 @@ public class UsePresentMappingProcessorTest {
 				.add(d1, sameAs, d2).add(e1, sameAs, issueLiteral);
 
 		Model inputMetaModel = ModelFactory.createDefaultModel();
-		Correspondences.addCorrespondence(inputMetaModel, inputMetaModel, aspectIri, c1, c2);
-		Correspondences.addIncorrespondence(inputMetaModel, inputMetaModel, aspectIri, d1, d2);
+		inputMetaModel.add(c1, AV.affectedAspect, aspectIri);
+		inputMetaModel.add(c2, AV.affectedAspect, aspectIri);
+		inputMetaModel.add(d1, AV.affectedAspect, aspectIri);
+		inputMetaModel.add(d2, AV.affectedAspect, aspectIri);
+		inputMetaModel.add(c1, AV.correspondsToResource, c2);
+		inputMetaModel.add(d1, AV.correspondsNotToResource, d2);
 
 		Aspect aspect = new Aspect(aspectIri, "key");
 		aspect.setPattern(dataset, QueryFactory.create("SELECT ?key WHERE {?key a <" + type.getURI() + ">}"));
@@ -77,17 +80,16 @@ public class UsePresentMappingProcessorTest {
 		processor.aspect = aspectIri;
 		processor.assignmentPaths = Arrays.asList("<http://example.org/sameAs>",
 				"<http://example.org/same>/<http://example.org/as>");
-		processor.addInputMetaModel(dataset, inputMetaModel);
+		processor.addInputMetaModel(null, inputMetaModel);
 		processor.addInputPrimaryModel(dataset, inputPrimaryModel);
 		processor.run();
 
+		assertTrue(processor.allCorrespondend(a1, a2));
+		assertTrue(processor.allCorrespondend(b1, b2));
+		assertTrue(processor.allCorrespondend(c1, c2));
+		assertFalse(processor.allCorrespondend(d1, d2));
+
 		Model outputMetaModel = processor.getOutputMetaModel(null);
-
-		assertTrue(Correspondences.allCorrespondend(outputMetaModel, a1, a2));
-		assertTrue(Correspondences.allCorrespondend(outputMetaModel, b1, b2));
-		assertFalse(Correspondences.allCorrespondend(outputMetaModel, c1, c2));
-		assertFalse(Correspondences.allCorrespondend(outputMetaModel, d1, d2));
-
 		// assert issue present
 		Query query = QueryFactory.create(""//
 				+ "ASK WHERE {"//

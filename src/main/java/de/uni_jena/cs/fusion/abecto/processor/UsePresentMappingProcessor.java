@@ -38,7 +38,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
-import de.uni_jena.cs.fusion.abecto.Correspondences;
 import de.uni_jena.cs.fusion.abecto.Metadata;
 import de.uni_jena.cs.fusion.abecto.Parameter;
 import de.uni_jena.cs.fusion.abecto.Vocabularies;
@@ -72,7 +71,6 @@ public class UsePresentMappingProcessor extends Processor<UsePresentMappingProce
 				block.addTriple(new TriplePath(subject, assignmentPath, object));
 				query.setQueryPattern(block);
 
-				Model metaModel = this.getMetaModelUnion(null);
 				Model outputMetaModel = this.getOutputMetaModel(null);
 				// execute query for each dataset
 				for (Resource dataset : this.getDatasets()) {
@@ -88,8 +86,7 @@ public class UsePresentMappingProcessor extends Processor<UsePresentMappingProce
 						RDFNode node2 = solution.get("o");
 						if (node1.isResource() && aspectResources.contains(node1.asResource())) {
 							try {
-								Correspondences.addCorrespondence(metaModel, outputMetaModel, this.aspect,
-										node1.asResource(), node2.asResource());
+								addCorrespondence(this.aspect, node1.asResource(), node2.asResource());
 							} catch (ResourceRequiredException e) {
 								Metadata.addIssue(node1.asResource(), null, node2, this.aspect, "Invalid Value",
 										String.format(
@@ -99,8 +96,7 @@ public class UsePresentMappingProcessor extends Processor<UsePresentMappingProce
 							}
 						} else if (node2.isResource() && aspectResources.contains(node2.asResource())) {
 							try {
-								Correspondences.addCorrespondence(metaModel, outputMetaModel, this.aspect,
-										node1.asResource(), node2.asResource());
+								addCorrespondence(this.aspect, node1.asResource(), node2.asResource());
 							} catch (ResourceRequiredException e) {
 								Metadata.addIssue(node2.asResource(), null, node1, this.aspect, "Invalid Value",
 										String.format(

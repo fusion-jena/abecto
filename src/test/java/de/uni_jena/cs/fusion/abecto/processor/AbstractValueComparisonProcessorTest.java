@@ -27,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -39,7 +40,6 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.RDF;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
-import de.uni_jena.cs.fusion.abecto.Correspondences;
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 
 public abstract class AbstractValueComparisonProcessorTest {
@@ -53,7 +53,11 @@ public abstract class AbstractValueComparisonProcessorTest {
 	}
 
 	public void addMapping(Resource... resources) {
-		Correspondences.addCorrespondence(mappingModel, mappingModel, aspect(1), resources);
+		mappingModel.add(aspect(1), AV.relevantResource, resources[0]);
+		for (Resource resource : Arrays.copyOfRange(resources, 1, resources.length)) {
+			mappingModel.add(aspect(1), AV.relevantResource, resource);
+			mappingModel.add(resources[0], AV.correspondsToResource, resource);
+		}
 	}
 
 	public abstract Processor<?> getInstance(Collection<String> variables, Resource aspect);
@@ -61,7 +65,7 @@ public abstract class AbstractValueComparisonProcessorTest {
 	Model[] compare(Model model1, Model model2) throws Exception {
 		Processor<?> processor = getInstance(Collections.singletonList("value"), aspect(1))
 				.addInputPrimaryModel(dataset(1), model1).addInputPrimaryModel(dataset(2), model2)
-				.addInputMetaModels(null, Collections.singleton(mappingModel)).addAspects(aspect1);
+				.addInputMetaModel(null, mappingModel).addAspects(aspect1);
 		processor.run();
 		return new Model[] { processor.getOutputMetaModel(dataset(1)), processor.getOutputMetaModel(dataset(2)) };
 	}

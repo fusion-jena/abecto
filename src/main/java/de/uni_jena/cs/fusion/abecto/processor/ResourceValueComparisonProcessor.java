@@ -15,14 +15,10 @@
  */
 package de.uni_jena.cs.fusion.abecto.processor;
 
-import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 
-import de.uni_jena.cs.fusion.abecto.Correspondences;
-
-public class ResourceValueComparisonProcessor extends AbstractValueComparisonProcessor<ResourceValueComparisonProcessor> {
-
-	private Model mappingModel;
+public class ResourceValueComparisonProcessor
+		extends AbstractValueComparisonProcessor<ResourceValueComparisonProcessor> {
 
 	@Override
 	public boolean isValidValue(RDFNode value) {
@@ -39,9 +35,6 @@ public class ResourceValueComparisonProcessor extends AbstractValueComparisonPro
 
 	@Override
 	public boolean equivalentValues(RDFNode value1, RDFNode value2) {
-		if (this.mappingModel == null) {
-			this.mappingModel = this.getInputMetaModelUnion(null);
-		}
-		return Correspondences.correspond(value1.asResource(), value2.asResource(), this.mappingModel);
+		return correspond(value1.asResource(), value2.asResource());
 	}
 }

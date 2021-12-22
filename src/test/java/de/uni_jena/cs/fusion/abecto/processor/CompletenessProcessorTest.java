@@ -15,7 +15,6 @@
  */
 package de.uni_jena.cs.fusion.abecto.processor;
 
-import static de.uni_jena.cs.fusion.abecto.Correspondences.addCorrespondence;
 import static de.uni_jena.cs.fusion.abecto.Metadata.getQualityMeasurement;
 import static de.uni_jena.cs.fusion.abecto.TestUtil.aspect;
 import static de.uni_jena.cs.fusion.abecto.TestUtil.containsIssue;
@@ -71,12 +70,24 @@ public class CompletenessProcessorTest {
 				.add(subject(333), property(3), object(3));
 
 		Model inputGeneralMetaModel = ModelFactory.createDefaultModel();
-		addCorrespondence(inputGeneralMetaModel, inputGeneralMetaModel, aspect(1), subject(111), subject(211));
-		addCorrespondence(inputGeneralMetaModel, inputGeneralMetaModel, aspect(1), subject(112), subject(212));
-		addCorrespondence(inputGeneralMetaModel, inputGeneralMetaModel, aspect(2), subject(121), subject(221));
-		addCorrespondence(inputGeneralMetaModel, inputGeneralMetaModel, aspect(2), subject(121), subject(2211));
-		addCorrespondence(inputGeneralMetaModel, inputGeneralMetaModel, aspect(2), subject(122), subject(222));
-		addCorrespondence(inputGeneralMetaModel, inputGeneralMetaModel, aspect(2), subject(221), subject(2211));
+		inputGeneralMetaModel.add(aspect(1), AV.relevantResource, subject(111));
+		inputGeneralMetaModel.add(aspect(1), AV.relevantResource, subject(211));
+		inputGeneralMetaModel.add(subject(111), AV.correspondsToResource, subject(211));
+		inputGeneralMetaModel.add(aspect(1), AV.relevantResource, subject(112));
+		inputGeneralMetaModel.add(aspect(1), AV.relevantResource, subject(212));
+		inputGeneralMetaModel.add(subject(112), AV.correspondsToResource, subject(212));
+		inputGeneralMetaModel.add(aspect(2), AV.relevantResource, subject(121));
+		inputGeneralMetaModel.add(aspect(2), AV.relevantResource, subject(221));
+		inputGeneralMetaModel.add(subject(121), AV.correspondsToResource, subject(221));
+		inputGeneralMetaModel.add(aspect(2), AV.relevantResource, subject(121));
+		inputGeneralMetaModel.add(aspect(2), AV.relevantResource, subject(2211));
+		inputGeneralMetaModel.add(subject(121), AV.correspondsToResource, subject(2211));
+		inputGeneralMetaModel.add(aspect(2), AV.relevantResource, subject(122));
+		inputGeneralMetaModel.add(aspect(2), AV.relevantResource, subject(222));
+		inputGeneralMetaModel.add(subject(122), AV.correspondsToResource, subject(222));
+		inputGeneralMetaModel.add(aspect(2), AV.relevantResource, subject(221));
+		inputGeneralMetaModel.add(aspect(2), AV.relevantResource, subject(2211));
+		inputGeneralMetaModel.add(subject(221), AV.correspondsToResource, subject(2211));
 
 		Query query1 = QueryFactory.create("SELECT ?key {?key <" + property(1) + "> <" + object(1) + ">}");
 		Query query2 = QueryFactory.create("SELECT ?key {?key <" + property(2) + "> <" + object(2) + ">}");

@@ -31,7 +31,7 @@ import org.apache.jena.rdf.model.ResourceFactory;
 import org.junit.jupiter.api.Test;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
-import de.uni_jena.cs.fusion.abecto.Correspondences;
+import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 
 class FunctionalMappingProcessorTest {
 
@@ -94,15 +94,33 @@ class FunctionalMappingProcessorTest {
 
 		// prepare mapping
 		Model mappingModel = ModelFactory.createDefaultModel();
-		Correspondences.addCorrespondence(mappingModel, mappingModel, aspect(1), resource(111), resource(211));
-		Correspondences.addCorrespondence(mappingModel, mappingModel, aspect(1), resource(121), resource(212));
-		Correspondences.addCorrespondence(mappingModel, mappingModel, aspect(1), resource(131), resource(213));
-		Correspondences.addCorrespondence(mappingModel, mappingModel, aspect(1), resource(112), resource(221));
-		Correspondences.addCorrespondence(mappingModel, mappingModel, aspect(1), resource(122), resource(222));
-		Correspondences.addCorrespondence(mappingModel, mappingModel, aspect(1), resource(132), resource(223));
-		Correspondences.addCorrespondence(mappingModel, mappingModel, aspect(1), resource(113), resource(231));
-		Correspondences.addCorrespondence(mappingModel, mappingModel, aspect(1), resource(123), resource(232));
-		Correspondences.addCorrespondence(mappingModel, mappingModel, aspect(1), resource(133), resource(233));
+		mappingModel.add(aspect(1), AV.relevantResource, resource(111));
+		mappingModel.add(aspect(1), AV.relevantResource, resource(211));
+		mappingModel.add(resource(111), AV.correspondsToResource, resource(211));
+		mappingModel.add(aspect(1), AV.relevantResource, resource(121));
+		mappingModel.add(aspect(1), AV.relevantResource, resource(212));
+		mappingModel.add(resource(121), AV.correspondsToResource, resource(212));
+		mappingModel.add(aspect(1), AV.relevantResource, resource(131));
+		mappingModel.add(aspect(1), AV.relevantResource, resource(213));
+		mappingModel.add(resource(131), AV.correspondsToResource, resource(213));
+		mappingModel.add(aspect(1), AV.relevantResource, resource(112));
+		mappingModel.add(aspect(1), AV.relevantResource, resource(221));
+		mappingModel.add(resource(112), AV.correspondsToResource, resource(221));
+		mappingModel.add(aspect(1), AV.relevantResource, resource(122));
+		mappingModel.add(aspect(1), AV.relevantResource, resource(222));
+		mappingModel.add(resource(122), AV.correspondsToResource, resource(222));
+		mappingModel.add(aspect(1), AV.relevantResource, resource(132));
+		mappingModel.add(aspect(1), AV.relevantResource, resource(223));
+		mappingModel.add(resource(132), AV.correspondsToResource, resource(223));
+		mappingModel.add(aspect(1), AV.relevantResource, resource(113));
+		mappingModel.add(aspect(1), AV.relevantResource, resource(231));
+		mappingModel.add(resource(113), AV.correspondsToResource, resource(231));
+		mappingModel.add(aspect(1), AV.relevantResource, resource(123));
+		mappingModel.add(aspect(1), AV.relevantResource, resource(232));
+		mappingModel.add(resource(123), AV.correspondsToResource, resource(232));
+		mappingModel.add(aspect(1), AV.relevantResource, resource(133));
+		mappingModel.add(aspect(1), AV.relevantResource, resource(233));
+		mappingModel.add(resource(133), AV.correspondsToResource, resource(233));
 
 		// run processor
 		FunctionalMappingProcessor processor = new FunctionalMappingProcessor().addInputPrimaryModel(dataset(1), model1)
@@ -114,14 +132,12 @@ class FunctionalMappingProcessorTest {
 		processor.run();
 
 		// check mappings
-		Model mappingResultModel = processor.getMetaModelUnion(null);
-		assertTrue(Correspondences.allCorrespondend(mappingResultModel, resource(141), resource(241)));
-		assertTrue(Correspondences.allCorrespondend(mappingResultModel, resource(151), resource(161), resource(243)));
-		assertTrue(Correspondences.allCorrespondend(mappingResultModel, resource(152), resource(162)));
-		assertTrue(Correspondences.allCorrespondend(mappingResultModel, resource(143), resource(251), resource(261)));
-		assertTrue(Correspondences.allCorrespondend(mappingResultModel, resource(252), resource(262)));
-		assertTrue(Correspondences.allCorrespondend(mappingResultModel, resource(153), resource(163), resource(253),
-				resource(263)));
+		assertTrue(processor.allCorrespondend(resource(141), resource(241)));
+		assertTrue(processor.allCorrespondend(resource(151), resource(161), resource(243)));
+		assertTrue(processor.allCorrespondend(resource(152), resource(162)));
+		assertTrue(processor.allCorrespondend(resource(143), resource(251), resource(261)));
+		assertTrue(processor.allCorrespondend(resource(252), resource(262)));
+		assertTrue(processor.allCorrespondend(resource(153), resource(163), resource(253), resource(263)));
 
 		// check issues
 		Model outputMetaModel1 = processor.getMetaModelUnion(dataset(1));

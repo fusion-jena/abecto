@@ -25,7 +25,6 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
-import de.uni_jena.cs.fusion.abecto.Correspondences;
 import de.uni_jena.cs.fusion.abecto.Metadata;
 import de.uni_jena.cs.fusion.abecto.Parameter;
 
@@ -55,32 +54,28 @@ public class FunctionalMappingProcessor extends MappingProcessor<FunctionalMappi
 	@Override
 	public void run() {
 		Aspect referringAspect = this.getAspects().get(this.referringAspect);
-		Aspect referredAspect = this.getAspects().get(this.referredAspect);
-		Correspondences.getCorrespondenceSets(this.getInputMetaModelUnion(null), referringAspect.getIri())
-				.forEach(referringResources -> {
-					Collection<Resource> referredResources = new ArrayList<>();
-					for (Resource referringResource : referringResources) {
-						for (Resource dataset : this.getDatasets()) {
-							Optional<Map<String, Set<RDFNode>>> referringResourceValues = Aspect.getResource(
-									referringAspect, dataset, referringResource,
-									this.getInputPrimaryModelUnion(dataset));
-							if (referringResourceValues.isPresent()
-									&& referringResourceValues.get().containsKey(referringVariable)) {
-								for (RDFNode referredResource : referringResourceValues.get().get(referringVariable)) {
-									if (referredResource.isResource()) {
-										referredResources.add(referredResource.asResource());
-									} else {
-										// report invalid value
-										Metadata.addIssue(referringResource, referringVariable, referredResource,
-												referringAspect.getIri(), "Invalid Value", "Should be a resource.",
-												this.getOutputMetaModel(dataset));
-									}
-								}
+		getCorrespondenceSets(referringAspect.getIri()).forEach(referringResources -> {
+			Collection<Resource> referredResources = new ArrayList<>();
+			for (Resource referringResource : referringResources) {
+				for (Resource dataset : this.getDatasets()) {
+					Optional<Map<String, Set<RDFNode>>> referringResourceValues = Aspect.getResource(referringAspect,
+							dataset, referringResource, this.getInputPrimaryModelUnion(dataset));
+					if (referringResourceValues.isPresent()
+							&& referringResourceValues.get().containsKey(referringVariable)) {
+						for (RDFNode referredResource : referringResourceValues.get().get(referringVariable)) {
+							if (referredResource.isResource()) {
+								referredResources.add(referredResource.asResource());
+							} else {
+								// report invalid value
+								Metadata.addIssue(referringResource, referringVariable, referredResource,
+										referringAspect.getIri(), "Invalid Value", "Should be a resource.",
+										this.getOutputMetaModel(dataset));
 							}
 						}
 					}
-					Correspondences.addCorrespondence(this.getMetaModelUnion(null), this.getOutputMetaModel(null),
-							referredAspect.getIri(), referredResources);
-				});
+				}
+			}
+			addCorrespondence(this.referredAspect, referredResources);
+		});
 	}
 }
