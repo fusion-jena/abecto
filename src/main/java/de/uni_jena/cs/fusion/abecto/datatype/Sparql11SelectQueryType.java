@@ -28,7 +28,7 @@ import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 public class Sparql11SelectQueryType extends BaseDatatype {
 
 	public Sparql11SelectQueryType() {
-		super(AV.Sparql11SelectQuery.getURI());
+		super(AV.SparqlSelectQuery.getURI());
 	}
 
 	@Override

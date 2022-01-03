@@ -72,7 +72,7 @@ public class StepTest {
 		Aspect aspect = new Aspect(aspectResource, "key");
 
 		Resource parameter = defaultModel.createResource(AV.Parameter).addLiteral(AV.key, "integerParameter")
-				.addLiteral(RDF.value, expectedParameterValue);
+				.addLiteral(AV.value, expectedParameterValue);
 
 		// provide valid step definition
 		defaultModel.createResource(stepIri, AV.Step)
@@ -135,33 +135,33 @@ public class StepTest {
 				.addProperty(AV.processorClass,
 						ResourceFactory.createResource("java:" + StepTest.TestProcessor.class.getName()))
 				.addProperty(AV.associatedDataset, dataset1).addProperty(AV.hasParameter, configurationModel
-						.createResource(AV.Parameter).addLiteral(AV.key, "integerParameter").addLiteral(RDF.value, 1));
+						.createResource(AV.Parameter).addLiteral(AV.key, "integerParameter").addLiteral(AV.value, 1));
 
 		configurationModel.createResource(step2Iri, AV.Step)
 				.addProperty(AV.processorClass,
 						ResourceFactory.createResource("java:" + StepTest.TestProcessor.class.getName()))
 				.addProperty(AV.associatedDataset, dataset1).addProperty(AV.hasParameter, configurationModel
-						.createResource(AV.Parameter).addLiteral(AV.key, "integerParameter").addLiteral(RDF.value, 2));
+						.createResource(AV.Parameter).addLiteral(AV.key, "integerParameter").addLiteral(AV.value, 2));
 
 		configurationModel.createResource(step3Iri, AV.Step)
 				.addProperty(AV.processorClass,
 						ResourceFactory.createResource("java:" + StepTest.TestProcessor.class.getName()))
 				.addProperty(AV.associatedDataset, dataset2)
 				.addProperty(AV.hasParameter, configurationModel.createResource(AV.Parameter)
-						.addLiteral(AV.key, "integerParameter").addLiteral(RDF.value, 3))
-				.addProperty(AV.inputMetaDataGraph, inputMetaDataModelIri);
+						.addLiteral(AV.key, "integerParameter").addLiteral(AV.value, 3))
+				.addProperty(AV.predefinedMetaDataGraph, inputMetaDataModelIri);
 
 		configurationModel.createResource(step4Iri, AV.Step)
 				.addProperty(AV.processorClass,
 						ResourceFactory.createResource("java:" + StepTest.TestProcessor.class.getName()))
 				.addProperty(AV.associatedDataset, dataset2).addProperty(AV.hasParameter, configurationModel
-						.createResource(AV.Parameter).addLiteral(AV.key, "integerParameter").addLiteral(RDF.value, 4));
+						.createResource(AV.Parameter).addLiteral(AV.key, "integerParameter").addLiteral(AV.value, 4));
 
 		configurationModel.createResource(step5Iri, AV.Step)
 				.addProperty(AV.processorClass,
 						ResourceFactory.createResource("java:" + StepTest.TestProcessor.class.getName()))
 				.addProperty(AV.hasParameter, configurationModel.createResource(AV.Parameter)
-						.addLiteral(AV.key, "integerParameter").addLiteral(RDF.value, 5));
+						.addLiteral(AV.key, "integerParameter").addLiteral(AV.value, 5));
 
 		Step step1 = new Step(relativeBasePath, graphs, graphs.getDefaultModel(),
 				configurationModel.createResource(step1Iri), Collections.emptyList(), aspect);

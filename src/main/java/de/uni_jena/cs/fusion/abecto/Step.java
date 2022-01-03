@@ -30,7 +30,6 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.shared.Lock;
-import org.apache.jena.vocabulary.RDF;
 
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
 import de.uni_jena.cs.fusion.abecto.util.Models;
@@ -108,7 +107,7 @@ public class Step implements Runnable {
 			Resource parameter = parameterIterator.next().asResource();
 			String key = parameter.getRequiredProperty(AV.key).getString();
 			List<Object> values = new ArrayList<>();
-			parameter.listProperties(RDF.value).mapWith(Statement::getObject)
+			parameter.listProperties(AV.value).mapWith(Statement::getObject)
 					.mapWith(o -> o.isLiteral() ? o.asLiteral().getValue() : o.asResource())
 					.forEach(v -> values.add(v));
 			parameters.put(key, values);
@@ -145,7 +144,7 @@ public class Step implements Runnable {
 				inputModelIris.addAll(inputStep.inputModelIris);
 				inputModelIris.addAll(inputStep.outputModelByIri.keySet());
 			}
-			configurationModel.listObjectsOfProperty(stepIri, AV.inputMetaDataGraph).mapWith(RDFNode::asResource)
+			configurationModel.listObjectsOfProperty(stepIri, AV.predefinedMetaDataGraph).mapWith(RDFNode::asResource)
 					.forEach(inputMetaModelIri -> {
 						processor.addInputMetaModel(null, dataset.getNamedModel(inputMetaModelIri));
 						inputModelIris.add(inputMetaModelIri);

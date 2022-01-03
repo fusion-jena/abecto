@@ -9,28 +9,28 @@ _:plan a av:Plan ;
 _:source1file1 a av:Step ;
     p-plan:isStepOfPlan _:plan ;
     av:processorClass abecto:RdfFileSourceProcessor ;
-    av:hasParameter [av:key "path" ; rdf:value "tutorial-source1part1.ttl" ] ;
+    av:hasParameter [av:key "path" ; av:value "tutorial-source1part1.ttl" ] ;
     av:associatedDataset _:dataset1 ;
     .
 
 _:source1file2 a av:Step ;
     p-plan:isStepOfPlan _:plan ;
     av:processorClass abecto:RdfFileSourceProcessor ;
-    av:hasParameter [av:key "path" ; rdf:value "tutorial-source1part2.ttl" ] ;
+    av:hasParameter [av:key "path" ; av:value "tutorial-source1part2.ttl" ] ;
     av:associatedDataset _:dataset1 ;
     .
 
 _:source2file1 a av:Step ;
     p-plan:isStepOfPlan _:plan ;
     av:processorClass abecto:RdfFileSourceProcessor ;
-    av:hasParameter [av:key "path" ; rdf:value "tutorial-source2.ttl" ] ;
+    av:hasParameter [av:key "path" ; av:value "tutorial-source2.ttl" ] ;
     av:associatedDataset _:dataset2 ;
     .
 
 _:source3file1 a av:Step ;
     p-plan:isStepOfPlan _:plan ;
     av:processorClass abecto:RdfFileSourceProcessor ;
-    av:hasParameter [av:key "path" ; rdf:value "tutorial-source3.ttl" ] ;
+    av:hasParameter [av:key "path" ; av:value "tutorial-source3.ttl" ] ;
     av:associatedDataset _:dataset3 ;
     .
 
@@ -47,7 +47,7 @@ _:aspectPerson a av:Aspect ;
                 <http://example.org/a/pnr> ?pnr ;
                 <http://example.org/a/boss>?boss .
         }
-    """^^av:Sparql11SelectQuery ;
+    """^^av:SparqlSelectQuery ;
     .
 []  a av:AspectPattern ;
     av:ofAspect _:aspectPerson ;
@@ -58,7 +58,7 @@ _:aspectPerson a av:Aspect ;
             ?person <http://www.w3.org/2000/01/rdf-schema#label> ?label .
             OPTIONAL { ?person <http://example.org/b/boss> ?boss }
         }
-    """^^av:Sparql11SelectQuery ;
+    """^^av:SparqlSelectQuery ;
     .
 []  a av:AspectPattern ;
     av:ofAspect _:aspectPerson ;
@@ -69,7 +69,7 @@ _:aspectPerson a av:Aspect ;
             ?person <http://www.w3.org/2000/01/rdf-schema#label> ?label ;
                 <http://example.org/c/pnr> ?pnr .
         }
-    """^^av:Sparql11SelectQuery ;
+    """^^av:SparqlSelectQuery ;
     .
 
 GRAPH _:manualMappings
@@ -82,12 +82,12 @@ _:jaroWinklerMapping a av:Step ;
     p-plan:isStepOfPlan _:plan ;
     av:processorClass abecto:JaroWinklerMappingProcessor ;
     p-plan:isPrecededBy _:source1file1, _:source1file2, _:source2file1, _:source3file1 ;
-    av:inputMetaDataGraph _:manualMappings ;
+    av:predefinedMetaDataGraph _:manualMappings ;
     av:hasParameter
-        [av:key "threshold" ; rdf:value 9e-1 ] ,
-        [av:key "caseSensitive" ; rdf:value false ] ,
-        [av:key "aspect" ; rdf:value _:aspectPerson ] ,
-        [av:key "variables" ; rdf:value "label" ] ;
+        [av:key "threshold" ; av:value 9e-1 ] ,
+        [av:key "caseSensitive" ; av:value false ] ,
+        [av:key "aspect" ; av:value _:aspectPerson ] ,
+        [av:key "variables" ; av:value "label" ] ;
     .
 
 _:literalValueComparison a av:Step ;
@@ -95,8 +95,8 @@ _:literalValueComparison a av:Step ;
     av:processorClass abecto:LiteralValueComparisonProcessor ;
     p-plan:isPrecededBy _:jaroWinklerMapping ;
     av:hasParameter
-        [av:key "aspect" ; rdf:value _:aspectPerson ] ,
-        [av:key "variables" ; rdf:value "label", "pnr" ] ;
+        [av:key "aspect" ; av:value _:aspectPerson ] ,
+        [av:key "variables" ; av:value "label", "pnr" ] ;
     .
 
 _:resourceValueComparison a av:Step ;
@@ -104,8 +104,8 @@ _:resourceValueComparison a av:Step ;
     av:processorClass abecto:ResourceValueComparisonProcessor ;
     p-plan:isPrecededBy _:jaroWinklerMapping ;
     av:hasParameter
-        [av:key "aspect" ; rdf:value _:aspectPerson ] ,
-        [av:key "variables" ; rdf:value "boss" ] ;
+        [av:key "aspect" ; av:value _:aspectPerson ] ,
+        [av:key "variables" ; av:value "boss" ] ;
     .
 
 _:completeness a av:Step ;
@@ -113,5 +113,5 @@ _:completeness a av:Step ;
     av:processorClass abecto:CompletenessProcessor ;
     p-plan:isPrecededBy _:jaroWinklerMapping ;
     av:hasParameter
-        [av:key "aspects" ; rdf:value _:aspectPerson ] ;
+        [av:key "aspects" ; av:value _:aspectPerson ] ;
     .
