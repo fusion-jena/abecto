@@ -27,7 +27,7 @@ public class AV {
 	/**
 	 * The namespace of the vocabulary as a string.
 	 */
-	public static final String namespace = "http://w3id.org/abecto-vocabulary#";
+	public static final String namespace = "http://w3id.org/abecto/vocabulary#";
 
 	public static final Resource absoluteCoverage = ResourceFactory.createResource(namespace + "absoluteCoverage");
 	public static final Property affectedAspect = ResourceFactory.createProperty(namespace, "affectedAspect");

@@ -1,4 +1,4 @@
-@prefix av: <http://w3id.org/abecto-vocabulary#> .
+@prefix av: <http://w3id.org/abecto/vocabulary#> .
 @prefix p-plan: <http://purl.org/net/p-plan#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix abecto: <java:de.uni_jena.cs.fusion.abecto.processor.> .
