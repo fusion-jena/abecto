@@ -146,6 +146,16 @@
 
 	<build>
 		<finalName>abecto</finalName>
+		<resources>
+			<resource>
+				<targetPath>META-INF</targetPath>
+				<filtering>false</filtering>
+				<directory>${basedir}</directory>
+				<includes>
+					<include>LICENSE</include>
+				</includes>
+			</resource>
+		</resources>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -185,29 +195,13 @@
 				</executions>
 			</plugin>
 			<plugin>
-				<artifactId>maven-shade-plugin</artifactId>
-				<version>3.2.4</version>
-				<configuration>
-					<transformers>
-						<!-- handle issue https://stackoverflow.com/q/53049346/3637482 -->
-						<transformer
-							implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-							<manifestEntries>
-								<Multi-Release>true</Multi-Release>
-							</manifestEntries>
-						</transformer>
-						<transformer
-							implementation="org.apache.maven.plugins.shade.resource.ApacheNoticeResourceTransformer" />
-						<!-- handle issue https://stackoverflow.com/a/65146372/3637482 -->
-						<transformer
-							implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
-					</transformers>
-				</configuration>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<version>2.6.2</version>
 				<executions>
 					<execution>
-						<phase>package</phase>
 						<goals>
-							<goal>shade</goal>
+							<goal>repackage</goal>
 						</goals>
 					</execution>
 				</executions>
