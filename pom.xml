@@ -91,29 +91,6 @@
 			</exclusions>
 		</dependency>
 		<dependency>
-			<groupId>com.github.galigator.openllet</groupId>
-			<artifactId>openllet-jena</artifactId>
-			<version>2.6.4</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.apache.jena</groupId>
-					<artifactId>jena-arq</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.apache.jena</groupId>
-					<artifactId>jena-core</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.apache.jena</groupId>
-					<artifactId>jena-base</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.slf4j</groupId>
-					<artifactId>slf4j-api</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
 			<groupId>de.uni_jena.cs.fusion</groupId>
 			<artifactId>similarity.jarowinkler</artifactId>
 			<version>1.0.1</version>
