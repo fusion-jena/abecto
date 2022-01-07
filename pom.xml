@@ -38,31 +38,35 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<apache.jena.version>4.3.2</apache.jena.version>
 		<junit.jupiter.version>5.5.1</junit.jupiter.version>
-		<fasterxml.jackson.version>2.12.5</fasterxml.jackson.version>
 	</properties>
 
 	<dependencies>
 		<dependency>
+			<!-- Apache 2.0 -->
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-slf4j18-impl</artifactId>
 			<version>2.17.1</version>
 		</dependency>
 		<dependency>
+			<!-- Apache 2.0 -->
 			<groupId>info.picocli</groupId>
 			<artifactId>picocli</artifactId>
 			<version>4.6.1</version>
 		</dependency>
 		<dependency>
+			<!-- Apache 2.0 -->
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
 			<version>30.1.1-jre</version>
 		</dependency>
 		<dependency>
+			<!-- Apache 2.0 -->
 			<groupId>org.apache.jena</groupId>
 			<artifactId>jena-querybuilder</artifactId>
 			<version>${apache.jena.version}</version>
 		</dependency>
 		<dependency>
+			<!-- Apache 2.0 -->
 			<groupId>org.apache.jena</groupId>
 			<artifactId>jena-arq</artifactId>
 			<version>${apache.jena.version}</version>
@@ -74,6 +78,7 @@
 			</exclusions>
 		</dependency>
 		<dependency>
+			<!-- Apache 2.0 -->
 			<groupId>org.apache.jena</groupId>
 			<artifactId>jena-fuseki-main</artifactId>
 			<version>${apache.jena.version}</version>
@@ -91,23 +96,27 @@
 			</exclusions>
 		</dependency>
 		<dependency>
+			<!-- Apache 2.0 -->
 			<groupId>de.uni_jena.cs.fusion</groupId>
 			<artifactId>similarity.jarowinkler</artifactId>
 			<version>1.0.1</version>
 		</dependency>
 		<dependency>
+			<!-- EPL 2.0 -->
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-api</artifactId>
 			<version>${junit.jupiter.version}</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
+			<!-- EPL 2.0 -->
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-engine</artifactId>
 			<version>${junit.jupiter.version}</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
+			<!-- Apache 2.0 -->
 			<groupId>com.github.tomakehurst</groupId>
 			<artifactId>wiremock-jre8</artifactId>
 			<version>2.31.0</version>
@@ -159,8 +168,6 @@
 					<excludes>
 						<exclude>LICENSE</exclude>
 						<exclude>pom.xml</exclude>
-						<exclude>.*/**</exclude>
-						<exclude>__*/**</exclude>
 					</excludes>
 				</configuration>
 				<executions>
