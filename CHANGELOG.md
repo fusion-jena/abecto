@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * remove **ManualCategoryProcessor**: Aspects can be stated in the configuration directly.
 * remove **TransitiveMappingProcessor**: Transitive correspondences are now added automatically
 * remove **Jupyter Notebook support** to control ABECTO
+* remove **OpenlletReasoningProcessor**: Enable publishing as packed binary version
 
 ## [0.2.1] - 2020-12-03
 
