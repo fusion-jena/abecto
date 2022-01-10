@@ -34,7 +34,7 @@ Inside the Docker images the ABECTO .jar file is located at `/opt/abecto.jar`, b
 
 Example configuration for use in CI pipeline on GitLab:
 ```yaml
-image: ghcr.io/fusion-jena/abecto:<version>
+image: ghcr.io/fusion-jena/abecto:latest
 
 abecto:
   stage: test
@@ -53,7 +53,7 @@ on: [push, pull_request, workflow_dispatch]
 jobs:
   compare:
     runs-on: ubuntu-latest
-    container: ghcr.io/fusion-jena/abecto:<version>
+    container: ghcr.io/fusion-jena/abecto:latest
     steps:
       - name: Checkout Project
         uses: actions/checkout@v2
@@ -65,8 +65,6 @@ jobs:
           name: Comparison Result RDF Dataset
           path: result.trig
 ```
-
-In both examples, `<version>` needs to get replaced with an actual release number.
 
 ## License
 
