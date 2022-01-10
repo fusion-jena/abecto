@@ -17,7 +17,7 @@ java -jar target/abecto.jar --help
 ```
 For example, to execute the tutorial configuration, run:
 ```
-java -jar target/abecto.jar src/test/resources/tutorial-configuration.trig result.trig
+java -jar target/abecto.jar --trig result.trig src/test/resources/tutorial-configuration.trig
 ```
 The execution of ABECTO is configured in a configuration file, which is a RDF dataset file ([TriG](https://www.w3.org/TR/trig/), [N-Quads](https://www.w3.org/TR/n-quads/), …), using the ABECTO Vocabulary. For an example see the [tutorial configuration](src/test/resources/tutorial-configuration.trig). Further build in processors can be found in [src/main/java/de/uni_jena/cs/fusion/abecto/processor/](src/main/java/de/uni_jena/cs/fusion/abecto/processor/).
 

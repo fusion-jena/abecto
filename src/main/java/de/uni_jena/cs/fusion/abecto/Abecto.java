@@ -69,16 +69,16 @@ public class Abecto implements Callable<Integer> {
 			"--plan" }, paramLabel = "plan-iri", description = "IRI of the plan to process. Required, if the configuration contains multiple plans.")
 	String planIri;
 
+	@Option(names = "--trig", paramLabel = "result-file", description = "RDF TRIG dataset file for the execution results.")
+	File trigOutputFile;
+
 	@Parameters(index = "0", paramLabel = "configuration-file", description = "RDF dataset file containing the execution plan configuration.")
 	File configurationFile;
-
-	@Parameters(index = "1", paramLabel = "result-file", description = "RDF dataset file for the execution results.")
-	File outputFile;
 
 	@Override
 	public Integer call() {
 		try {
-			executePlan(configurationFile, planIri, outputFile);
+			executePlan(configurationFile, planIri, trigOutputFile);
 		} catch (Throwable e) {
 			log.error(e.getMessage(), e);
 			return 2;
@@ -87,7 +87,12 @@ public class Abecto implements Callable<Integer> {
 		return 0;
 	}
 
-	public static void executePlan(File configurationFile, String planIri, File outputFile) throws Throwable {
+	public static void executePlan(File configurationFile, String planIri, File trigOutputFile) throws Throwable {
+
+		if (trigOutputFile == null) {
+			throw new IllegalArgumentException("No output file specified.");
+		}
+
 		initApacheJena();
 
 		// derive relative base path
@@ -136,8 +141,9 @@ public class Abecto implements Callable<Integer> {
 		CompletableFuture.allOf(stepFutures.values().toArray(new CompletableFuture[0])).join();
 
 		// write results
-//		outputFile.createNewFile();
-		RDFDataMgr.write(new FileOutputStream(outputFile), dataset, Lang.TRIG);
+		if (trigOutputFile != null) {
+			RDFDataMgr.write(new FileOutputStream(trigOutputFile), dataset, Lang.TRIG);
+		}
 	}
 
 	public static void initApacheJena() {
