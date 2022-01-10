@@ -66,7 +66,7 @@ jobs:
           path: result.trig
 ```
 
-In both examples, `<version>` needs to be get replaces with an actual release number.
+In both examples, `<version>` needs to get replaced with an actual release number.
 
 ## License
 
