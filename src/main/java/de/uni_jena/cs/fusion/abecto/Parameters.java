@@ -54,7 +54,7 @@ public class Parameters {
 				} else {
 					if (values != null && values.size() > 1) {
 						throw new ToManyElementsException(
-								String.format("More than one value for parameter \"%s\"", field.getName()));
+								String.format("More than one value for parameter \"%s\" of %s.", field.getName(), processor.getClass().getSimpleName()));
 					}
 					if (Optional.class.isAssignableFrom(field.getType())) {
 						if (values == null || values.isEmpty()) {
@@ -67,7 +67,7 @@ public class Parameters {
 						if ((values == null || values.isEmpty())) {
 							if (field.get(processor) == null) {
 								throw new NoSuchElementException(
-										String.format("Missing value for required parameter \"%s\"", field.getName()));
+										String.format("Missing value for required parameter \"%s\" of %s.", field.getName(), processor.getClass().getSimpleName()));
 							}
 						} else {
 							field.set(processor, values.get(0));
