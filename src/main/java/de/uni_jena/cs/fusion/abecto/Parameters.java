@@ -77,7 +77,7 @@ public class Parameters {
 			}
 		}
 		if (!unusedParameters.isEmpty()) {
-			throw new IllegalArgumentException(String.format("Unexpected parameters for %s: %s.",
+			throw new IllegalArgumentException(String.format("Unexpected parameters for %s: %s",
 					processor.getClass().getSimpleName(), String.join(", ", unusedParameters)));
 		}
 	}

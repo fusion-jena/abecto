@@ -25,9 +25,9 @@ import org.apache.jena.query.Syntax;
 
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 
-public class Sparql11SelectQueryType extends BaseDatatype {
+public class SparqlQueryType extends BaseDatatype {
 
-	public Sparql11SelectQueryType() {
+	public SparqlQueryType() {
 		super(AV.SparqlSelectQuery.getURI());
 	}
 
@@ -42,13 +42,9 @@ public class Sparql11SelectQueryType extends BaseDatatype {
 	@Override
 	public Query parse(String lexicalForm) throws DatatypeFormatException {
 		try {
-			Query query = QueryFactory.create(lexicalForm, Syntax.syntaxSPARQL_11);
-			if (!query.isSelectType()) {
-				throw new DatatypeFormatException("Not a SPARQL 1.1 Select query.");
-			}
-			return query;
+			return QueryFactory.create(lexicalForm, Syntax.syntaxSPARQL);
 		} catch (QueryException e) {
-			throw new DatatypeFormatException("Not a valid SPARQL 1.1 query.", e);
+			throw new DatatypeFormatException("Not a valid SPARQL query.", e);
 		}
 	}
 
