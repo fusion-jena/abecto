@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+* add **EquivalentValueMappingProcessor**: Provides correspondences based on equivalent values.
+
 ## [0.3.0] - 2022-01-10
 
 ### Changed
