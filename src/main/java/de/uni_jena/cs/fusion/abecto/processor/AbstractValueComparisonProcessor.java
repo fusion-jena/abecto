@@ -41,7 +41,7 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 	@Override
 	public final void run() {
 		Aspect aspect = this.getAspects().get(this.aspect);
-		getCorrespondenceSets(aspect.getIri()).forEach(correspondingResources -> {
+		getCorrespondenceGroups(aspect.getIri()).forEach(correspondingResources -> {
 			for (Resource correspondingResource1 : correspondingResources) {
 				for (Resource dataset1 : this.getDatasets()) {
 					Optional<Map<String, Set<RDFNode>>> values1 = Aspect.getResource(aspect, dataset1,

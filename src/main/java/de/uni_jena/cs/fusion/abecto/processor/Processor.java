@@ -39,6 +39,7 @@ import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.reasoner.rulesys.FBRuleReasoner;
 import org.apache.jena.reasoner.rulesys.Rule;
@@ -288,15 +289,14 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 	}
 
 	/**
-	 * Returns {@link List Lists} of {@link Resource Resources} that belong to a
-	 * given aspect and correspond to each other.
+	 * Returns groups of {@link Resource Resources} that belong to a given aspect
+	 * and correspond to each other.
 	 * 
-	 * @param aspect the aspect all returned {@link Resource Resources} must belong
-	 *               to
-	 * @return the {@link List Lists} of corresponding {@link Resource Resources}
+	 * @param aspect the aspect all returned {@link Resource Resources} belong to
+	 * @return the groups of corresponding {@link Resource Resources}
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public Stream<List<Resource>> getCorrespondenceSets(Resource aspect) {
+	public Stream<List<Resource>> getCorrespondenceGroups(Resource aspect) {
 		Model transitiveCorrespondencesModel = getTransitiveCorrespondencesModel();
 		Query query = new SelectBuilder().addVar(RESOURCE_1).addVar(RESOURCE_2)
 				.addWhere(aspect, AV.relevantResource, RESOURCE_1)//
@@ -309,6 +309,18 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 				.addOrderBy(RESOURCE_1).build();
 		return Queries.getStreamOfResultsGroupedBy(transitiveCorrespondencesModel, query, RESOURCE_1.getName())
 				.map(m -> (List<Resource>) (List) m.get(RESOURCE_2.getName()));
+	}
+
+	/**
+	 * Returns the group of corresponding {@link Resource Resources} that contains
+	 * the given {@link Resource}.
+	 * 
+	 * @param resource a resource that is contained by the group
+	 * @return the group of corresponding {@link Resource Resources}
+	 */
+	public List<Resource> getCorrespondenceGroup(Resource resource) {
+		return getTransitiveCorrespondencesModel().listObjectsOfProperty(resource, AV.correspondsToResource)
+				.mapWith(RDFNode::asResource).toList();
 	}
 
 	public final Set<Resource> getDatasets() {
@@ -328,10 +340,12 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 		return cachedInputMetaModelUnionByDataset.computeIfAbsent(dataset,
 				d -> Models.union(this.inputMetaModelsByDataset.get(dataset)));
 	}
+
 	public final Model getInputPrimaryModelUnion(Resource dataset) {
 		return cachedInputPrimaryModelUnionByDataset.computeIfAbsent(dataset,
 				d -> Models.union(this.inputPrimaryModelsByDataset.get(dataset)));
 	}
+
 	/**
 	 * Returns a union of the input meta models and the result meta model of a
 	 * dataset, or of the general meta models, if {@code dataset} is {@code null}.
@@ -344,6 +358,7 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 		return cachedMetaModelUnionByDataset.computeIfAbsent(dataset,
 				d -> Models.union(getOutputMetaModel(dataset), this.inputMetaModelsByDataset.get(dataset)));
 	}
+
 	/**
 	 * Returns the output meta model of a dataset, or the general output meta model,
 	 * if {@code dataset} is {@code null}. If not present, a new model will be

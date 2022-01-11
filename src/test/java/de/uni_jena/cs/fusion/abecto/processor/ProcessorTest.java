@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -328,12 +329,13 @@ public class ProcessorTest {
 	}
 
 	@Test
-	public void getCorrespondenceSets() {
+	public void getCorrespondenceGroups() {
 		processor.addCorrespondence(aspect1, resource1, resource2, resource3);
 		processor.addCorrespondence(aspect1, resource4, resource5);
 		processor.addCorrespondence(aspect2, resource6, resource7);
 
-		List<List<Resource>> correspondenceSets = processor.getCorrespondenceSets(aspect1).collect(Collectors.toList());
+		List<List<Resource>> correspondenceSets = processor.getCorrespondenceGroups(aspect1)
+				.collect(Collectors.toList());
 		assertEquals(2, correspondenceSets.size());
 		for (List<Resource> correspondenceSet : correspondenceSets) {
 			int min = correspondenceSet.stream()
@@ -349,5 +351,22 @@ public class ProcessorTest {
 				fail("Resource \"" + resourceBase + min + "\" found as first resource in set.");
 			}
 		}
+	}
+
+	@Test
+	public void getCorrespondenceGroup() {
+		processor.addCorrespondence(aspect1, resource1, resource2, resource3);
+		processor.addCorrespondence(aspect2, resource4, resource5);
+
+		assertEquals(new HashSet<>(processor.getCorrespondenceGroup(resource1)),
+				new HashSet<>(Arrays.asList(resource1, resource2, resource3)));
+		assertEquals(new HashSet<>(processor.getCorrespondenceGroup(resource2)),
+				new HashSet<>(Arrays.asList(resource1, resource2, resource3)));
+		assertEquals(new HashSet<>(processor.getCorrespondenceGroup(resource3)),
+				new HashSet<>(Arrays.asList(resource1, resource2, resource3)));
+		assertEquals(new HashSet<>(processor.getCorrespondenceGroup(resource4)),
+				new HashSet<>(Arrays.asList(resource4, resource5)));
+		assertEquals(new HashSet<>(processor.getCorrespondenceGroup(resource5)),
+				new HashSet<>(Arrays.asList(resource4, resource5)));
 	}
 }

@@ -29,7 +29,7 @@ import de.uni_jena.cs.fusion.abecto.Metadata;
 import de.uni_jena.cs.fusion.abecto.Parameter;
 
 /**
- * Provides mappings based on functional (n:1 or 1:1) variables between aspect.
+ * Provides correspondences based on functional (n:1 or 1:1) variables between aspect.
  * <p>
  * <strong>Example:</strong> If resource R1 of dataset D1 and aspect A1 refers
  * with variable V1 to resource R2 of dataset D1 and aspect A2, and resource R3
@@ -54,7 +54,7 @@ public class FunctionalMappingProcessor extends MappingProcessor<FunctionalMappi
 	@Override
 	public void run() {
 		Aspect referringAspect = this.getAspects().get(this.referringAspect);
-		getCorrespondenceSets(referringAspect.getIri()).forEach(referringResources -> {
+		getCorrespondenceGroups(referringAspect.getIri()).forEach(referringResources -> {
 			Collection<Resource> referredResources = new ArrayList<>();
 			for (Resource referringResource : referringResources) {
 				for (Resource dataset : this.getDatasets()) {

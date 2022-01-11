@@ -85,7 +85,7 @@ public class CompletenessProcessor extends Processor<CompletenessProcessor> {
 			}
 
 			// process correspondence sets of aspect
-			getCorrespondenceSets(aspectIri).forEach(correspondingResources -> {
+			getCorrespondenceGroups(aspectIri).forEach(correspondingResources -> {
 				Map<Resource, Set<Resource>> occurrencesByDataset = new HashMap<>();
 				// count resources of the dataset in the correspondence set
 				for (Resource dataset : this.getDatasets()) {
