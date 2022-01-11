@@ -17,8 +17,6 @@ package de.uni_jena.cs.fusion.abecto.processor;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.net.URL;
-
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
@@ -30,7 +28,7 @@ public class UrlSourceProcessorTest {
 		Resource dataset = ResourceFactory.createResource("http://example.org/dataset");
 		UrlSourceProcessor processor = new UrlSourceProcessor()//
 				.setAssociatedDataset(dataset);
-		processor.url = new URL("http://www.w3.org/1999/02/22-rdf-syntax-ns");
+		processor.url = ResourceFactory.createResource("http://www.w3.org/1999/02/22-rdf-syntax-ns");
 
 		processor.run();
 
