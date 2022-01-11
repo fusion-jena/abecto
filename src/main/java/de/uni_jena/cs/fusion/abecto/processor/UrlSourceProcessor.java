@@ -24,7 +24,7 @@ import de.uni_jena.cs.fusion.abecto.util.Models;
 public class UrlSourceProcessor extends Processor<UrlSourceProcessor> {
 
 	@Parameter
-	URL url;
+	public URL url;
 
 	@Override
 	public void run() {

@@ -20,6 +20,12 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import de.uni_jena.cs.fusion.abecto.processor.Processor;
+
+/**
+ * Annotation of {@link Processor} fields. Annotated fields must be public.
+ *
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface Parameter {
