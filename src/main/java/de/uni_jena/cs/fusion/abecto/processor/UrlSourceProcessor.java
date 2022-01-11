@@ -18,18 +18,20 @@ package de.uni_jena.cs.fusion.abecto.processor;
 import java.io.IOException;
 import java.net.URL;
 
+import org.apache.jena.rdf.model.Resource;
+
 import de.uni_jena.cs.fusion.abecto.Parameter;
 import de.uni_jena.cs.fusion.abecto.util.Models;
 
 public class UrlSourceProcessor extends Processor<UrlSourceProcessor> {
 
 	@Parameter
-	public URL url;
+	public Resource url;
 
 	@Override
 	public void run() {
 		try {
-			Models.read(this.getOutputPrimaryModel().get(), this.url);
+			Models.read(this.getOutputPrimaryModel().get(), new URL(this.url.getURI()));
 		} catch (IOException e) {
 			throw new RuntimeException("Failed to read RDF file from URL.", e);
 		}

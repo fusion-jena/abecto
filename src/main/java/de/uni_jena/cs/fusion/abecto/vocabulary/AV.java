@@ -67,7 +67,7 @@ public class AV {
 	public static final Resource relativeCoverage = ResourceFactory.createResource(namespace + "relativeCoverage");
 	public static final Property relevantResource = ResourceFactory.createProperty(namespace, "relevantResource");
 	public static final Resource ResourceOmission = ResourceFactory.createResource(namespace + "ResourceOmission");
-	public static final Resource SparqlSelectQuery = ResourceFactory.createResource(namespace + "SparqlSelectQuery");
+	public static final Resource SparqlQuery = ResourceFactory.createResource(namespace + "SparqlQuery");
 	public static final Resource Step = ResourceFactory.createResource(namespace + "Step");
 	public static final Resource StepExecution = ResourceFactory.createResource(namespace + "StepExecution");
 	public static final Resource ValueOmission = ResourceFactory.createResource(namespace + "ValueOmission");
