@@ -47,7 +47,7 @@ _:aspectPerson a av:Aspect ;
                 <http://example.org/a/pnr> ?pnr ;
                 <http://example.org/a/boss>?boss .
         }
-    """^^av:SparqlSelectQuery ;
+    """^^av:SparqlQuery ;
     .
 []  a av:AspectPattern ;
     av:ofAspect _:aspectPerson ;
@@ -58,7 +58,7 @@ _:aspectPerson a av:Aspect ;
             ?person <http://www.w3.org/2000/01/rdf-schema#label> ?label .
             OPTIONAL { ?person <http://example.org/b/boss> ?boss }
         }
-    """^^av:SparqlSelectQuery ;
+    """^^av:SparqlQuery ;
     .
 []  a av:AspectPattern ;
     av:ofAspect _:aspectPerson ;
@@ -69,7 +69,7 @@ _:aspectPerson a av:Aspect ;
             ?person <http://www.w3.org/2000/01/rdf-schema#label> ?label ;
                 <http://example.org/c/pnr> ?pnr .
         }
-    """^^av:SparqlSelectQuery ;
+    """^^av:SparqlQuery ;
     .
 
 GRAPH _:manualMappings
