@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 * add **EquivalentValueMappingProcessor**: Provides correspondences based on equivalent values.
 
+### Changed
+* rename cocabulary resource av:SparqlSelectQuery into av:SparqlQuery
+
+### Fixed
+* fix **UrlSourceProcessor**: parameter value can now be set
+
 ## [0.3.0] - 2022-01-10
 
 ### Changed
