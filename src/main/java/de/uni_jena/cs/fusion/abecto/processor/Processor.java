@@ -31,7 +31,6 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 import org.apache.jena.arq.querybuilder.AskBuilder;
-import org.apache.jena.arq.querybuilder.ConstructBuilder;
 import org.apache.jena.arq.querybuilder.ExprFactory;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
@@ -39,6 +38,7 @@ import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.reasoner.rulesys.FBRuleReasoner;
@@ -138,14 +138,11 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 		}
 		Model transitiveCorrespondencesModel = getTransitiveCorrespondencesModel();
 		if (!anyIncorrespondend(resources) && !allCorrespondend(resources)) {
-			Query query = new ConstructBuilder()//
-					.addConstruct(aspect, AV.relevantResource, resources[0])//
-					.addConstruct(aspect, AV.relevantResource, RESOURCE_2)//
-					.addConstruct(resources[0], AV.correspondsToResource, RESOURCE_2)//
-					.addWhereValueVar(RESOURCE_2, (Object[]) Arrays.copyOfRange(resources, 1, resources.length))
-					.build();
-			QueryExecutionFactory.create(query, transitiveCorrespondencesModel)
-					.execConstruct(transitiveCorrespondencesModel);
+			addIfAbsent(transitiveCorrespondencesModel, aspect, AV.relevantResource, resources[0]);
+			for (int i = 1; i < resources.length; i++) {
+				addIfAbsent(transitiveCorrespondencesModel, aspect, AV.relevantResource, resources[i]);
+				addIfAbsent(transitiveCorrespondencesModel, resources[0], AV.correspondsToResource, resources[i]);
+			}
 		}
 	}
 
@@ -161,16 +158,19 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 	 */
 	public void addIncorrespondence(Resource aspect, Resource resource, Resource... incorrespondentResources) {
 		Model transitiveCorrespondencesModel = getTransitiveCorrespondencesModel();
+		addIfAbsent(transitiveCorrespondencesModel, aspect, AV.relevantResource, resource);
 		for (Resource incorrespondentResource : incorrespondentResources) {
 			if (!correspondentOrIncorrespondent(resource, incorrespondentResource)) {
-				Query query = new ConstructBuilder()//
-						.addConstruct(aspect, AV.relevantResource, resource)//
-						.addConstruct(aspect, AV.relevantResource, incorrespondentResource)//
-						.addConstruct(resource, AV.correspondsNotToResource, incorrespondentResource)//
-						.build();
-				QueryExecutionFactory.create(query, transitiveCorrespondencesModel)
-						.execConstruct(transitiveCorrespondencesModel);
+				addIfAbsent(transitiveCorrespondencesModel, aspect, AV.relevantResource, incorrespondentResource);
+				addIfAbsent(transitiveCorrespondencesModel, resource, AV.correspondsNotToResource,
+						incorrespondentResource);
 			}
+		}
+	}
+
+	private static void addIfAbsent(Model model, Resource s, Property p, RDFNode o) {
+		if (!model.contains(s, p, o)) {
+			model.add(s, p, o);
 		}
 	}
 

@@ -46,6 +46,7 @@ public class ProcessorTest {
 	Resource resource7 = ResourceFactory.createResource(resourceBase + "7");
 	Resource aspect1 = ResourceFactory.createResource("http://example.org/aspect1");
 	Resource aspect2 = ResourceFactory.createResource("http://example.org/aspect2");
+	Resource aspectBlankNode = ResourceFactory.createResource();
 
 	private static class DummyProcessor extends Processor<DummyProcessor> {
 		@Override
@@ -270,6 +271,12 @@ public class ProcessorTest {
 		assertTrue(outputModel.isEmpty());
 		inputModel.removeAll();
 		outputModel.removeAll();
+
+		// assert identity preservation of aspect with blank node identifier
+		processor.addCorrespondence(aspectBlankNode, resource1, resource2);
+		assertEquals(aspectBlankNode, outputModel.listSubjectsWithProperty(AV.relevantResource, resource1).next());
+		inputModel.removeAll();
+		outputModel.removeAll();
 	}
 
 	@Test
@@ -316,16 +323,28 @@ public class ProcessorTest {
 		outputModel.removeAll();
 
 		// assert statements not inserted again
-		inputModel.add(resource1, AV.correspondsToResource, resource2);
+		inputModel.add(aspect1, AV.relevantResource, resource1);
+		inputModel.add(aspect1, AV.relevantResource, resource2);
+		inputModel.add(resource1, AV.correspondsNotToResource, resource2);
 		processor.addIncorrespondence(aspect1, resource1, resource2);
 		assertTrue(outputModel.isEmpty());
 		inputModel.removeAll();
 		outputModel.removeAll();
 
 		// assert contradictions not inserted
+		inputModel.add(aspect1, AV.relevantResource, resource1);
+		inputModel.add(aspect1, AV.relevantResource, resource2);
 		inputModel.add(resource1, AV.correspondsToResource, resource2);
 		processor.addIncorrespondence(aspect1, resource1, resource2);
 		assertTrue(outputModel.isEmpty());
+		inputModel.removeAll();
+		outputModel.removeAll();
+
+		// assert identity preservation of aspect with blank node identifier
+		processor.addIncorrespondence(aspectBlankNode, resource1, resource2);
+		assertEquals(aspectBlankNode, outputModel.listSubjectsWithProperty(AV.relevantResource, resource1).next());
+		inputModel.removeAll();
+		outputModel.removeAll();
 	}
 
 	@Test
