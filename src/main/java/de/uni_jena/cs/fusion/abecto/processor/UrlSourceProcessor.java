@@ -15,8 +15,7 @@
  */
 package de.uni_jena.cs.fusion.abecto.processor;
 
-import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 
 import org.apache.jena.rdf.model.Resource;
 
@@ -31,9 +30,9 @@ public class UrlSourceProcessor extends Processor<UrlSourceProcessor> {
 	@Override
 	public void run() {
 		try {
-			Models.read(this.getOutputPrimaryModel().get(), new URL(this.url.getURI()));
-		} catch (IOException e) {
-			throw new RuntimeException("Failed to read RDF file from URL.", e);
+			Models.read(this.getOutputPrimaryModel().get(), new URI(this.url.getURI()));
+		} catch (Throwable e) {
+			throw new RuntimeException(String.format("Failed to read RDF file from URL \"%s\".", this.url.getURI()), e);
 		}
 	}
 }

@@ -20,13 +20,17 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URL;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse.BodyHandlers;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
@@ -82,14 +86,25 @@ public class Models {
 		throw new IllegalArgumentException("Unknown RDF language.");
 	}
 
-	public static Model read(Model model, URL url) throws IllegalArgumentException, IOException {
+	public static Model read(Model model, URI uri) throws IllegalArgumentException, IOException, InterruptedException {
 		try {
 			// using the content type or file extension for language detection
-			RDFParser.source(url.getPath()).errorHandler(ErrorHandlerFactory.errorHandlerNoLogging).parse(model);
+			RDFParser.source(uri.getPath()).errorHandler(ErrorHandlerFactory.errorHandlerNoLogging).parse(model);
 			return model;
 		} catch (Exception e) {
 			// try again using brute force language detection
-			return read(model, url.openStream());
+
+			// create a client
+			var client = HttpClient.newHttpClient();
+
+			// create a request
+			var request = HttpRequest.newBuilder(uri)
+					.header("accept",
+							supportedLanguages.stream().map(Lang::getHeaderString).collect(Collectors.joining(", "))
+									+ ", */*;q=0.8")
+					.build();
+
+			return read(model, client.send(request, BodyHandlers.ofInputStream()).body());
 		}
 	}
 

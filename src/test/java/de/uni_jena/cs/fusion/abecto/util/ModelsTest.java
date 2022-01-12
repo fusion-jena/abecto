@@ -24,7 +24,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.ResourceFactory;
@@ -43,7 +44,8 @@ public class ModelsTest {
 	}
 
 	@Test
-	public void readUrl() throws IllegalArgumentException, MalformedURLException, IOException {
+	public void readUrl() throws IllegalArgumentException, MalformedURLException, IOException, InterruptedException,
+			URISyntaxException {
 		StdErrLog logger = new StdErrLog();
 		logger.setLevel(StdErrLog.LEVEL_OFF);
 		Log.setLog(logger);
@@ -55,13 +57,13 @@ public class ModelsTest {
 		mock.stubFor(get("/text/plain").willReturn(okForContentType("text/plain", content)));
 
 		// server provides proper content type
-		assertTrue(Models.read(ModelFactory.createDefaultModel(), new URL("http://localhost:" + port + "/text/turtle"))
+		assertTrue(Models.read(ModelFactory.createDefaultModel(), new URI("http://localhost:" + port + "/text/turtle"))
 				.contains(ResourceFactory.createResource("http://example.org/a"),
 						ResourceFactory.createProperty("http://example.org/b"),
 						ResourceFactory.createResource("http://example.org/c")));
 
 		// server not provides proper content type
-		assertTrue(Models.read(ModelFactory.createDefaultModel(), new URL("http://localhost:" + port + "/text/plain"))
+		assertTrue(Models.read(ModelFactory.createDefaultModel(), new URI("http://localhost:" + port + "/text/plain"))
 				.contains(ResourceFactory.createResource("http://example.org/a"),
 						ResourceFactory.createProperty("http://example.org/b"),
 						ResourceFactory.createResource("http://example.org/c")));

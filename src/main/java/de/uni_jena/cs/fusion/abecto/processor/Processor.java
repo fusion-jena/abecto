@@ -378,7 +378,7 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 
 	/**
 	 * Returns the primary data output model of this {@link Processor}. The model
-	 * can be replaces during processing using
+	 * can be replaced during processing using
 	 * {@link #replaceOutputPrimaryModel(Model)}.
 	 * 
 	 * @return the primary data output model
