@@ -5,14 +5,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [0.4.0] - 2022-01-12
+
 ### Added
 * add **EquivalentValueMappingProcessor**: Provides correspondences based on equivalent values.
 
 ### Changed
-* rename cocabulary resource av:SparqlSelectQuery into av:SparqlQuery
+* rename vocabulary resource av:SparqlSelectQuery into av:SparqlQuery
 
 ### Fixed
 * fix **UrlSourceProcessor**: parameter value can now be set
+* fix **UrlSourceProcessor**: uses accept headers to explicitly request RDF in case of Content Negotiation
+* fix output av:relevantResource statements in case of blank node aspects
 
 ## [0.3.0] - 2022-01-10
 
@@ -91,7 +95,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * add **ManualCategoryProcessor**: Enables users to manually define resource categories and their properties.
 * add **ResourceDeviationProcessor**: Detects deviations between the resource references of mapped resources as defined in the categories.
 
-[Unreleased]: https://github.com/fusion-jena/abecto/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/fusion-jena/abecto/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/fusion-jena/abecto/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/fusion-jena/abecto/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/fusion-jena/abecto/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/fusion-jena/abecto/compare/v0.1.1...v0.2.0
