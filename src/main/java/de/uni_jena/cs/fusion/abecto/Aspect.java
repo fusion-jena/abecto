@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -97,8 +98,18 @@ public class Aspect {
 		return aspects;
 	}
 
+	/**
+	 * 
+	 * @param aspect
+	 * @param dataset
+	 * @param keyValue
+	 * @param datasetModels
+	 * @return
+	 * 
+	 * @throws NullPointerException if no pattern is defined for the given dataset
+	 */
 	public static Optional<Map<String, Set<RDFNode>>> getResource(Aspect aspect, Resource dataset, Resource keyValue,
-			Model datasetModels) {
+			Model datasetModels) throws NullPointerException {
 		Query query = SelectBuilder.rewrite(aspect.getPattern(dataset).cloneQuery(),
 				Collections.singletonMap(aspect.getKeyVariable(), keyValue.asNode()));
 		ResultSet results = QueryExecutionFactory.create(query, datasetModels).execSelect();
@@ -135,9 +146,11 @@ public class Aspect {
 	 * @param datasetModels the (union of) {@link Model Model(s)} containing the
 	 *                      {@link Resource Resources} to index
 	 * @return
+	 * 
+	 * @throws NullPointerException if no pattern is defined for the given dataset
 	 */
 	public static Map<String, Map<RDFNode, Set<Resource>>> getResourceIndex(Aspect aspect, Resource dataset,
-			Iterable<String> variables, Model datasetModels) {
+			Iterable<String> variables, Model datasetModels) throws NullPointerException {
 		return getResourceIndex(aspect, dataset, variables, datasetModels, Functions.identity());
 	}
 
@@ -160,9 +173,12 @@ public class Aspect {
 	 * @param modifier      the {@link Function} to modify the variable values
 	 *                      before building up the index
 	 * @return
+	 * 
+	 * @throws NullPointerException if no pattern is defined for the given dataset
 	 */
 	public static <T> Map<String, Map<T, Set<Resource>>> getResourceIndex(Aspect aspect, Resource dataset,
-			Iterable<String> variables, Model datasetModels, Function<RDFNode, T> modifier) {
+			Iterable<String> variables, Model datasetModels, Function<RDFNode, T> modifier)
+			throws NullPointerException {
 		Map<String, Map<T, Set<Resource>>> index = new HashMap<>();
 
 		Query query = aspect.getPattern(dataset).cloneQuery();
@@ -197,8 +213,11 @@ public class Aspect {
 	 * @param datasetModels the (union of) {@link Model Model(s)} of the dataset
 	 *                      containing the {@link Resource Resources}
 	 * @return all resource keys of the given aspect in the given dataset
+	 * 
+	 * @throws NullPointerException if no pattern is defined for the given dataset
 	 */
-	public static Set<Resource> getResourceKeys(Aspect aspect, Resource dataset, Model datasetModels) {
+	public static Set<Resource> getResourceKeys(Aspect aspect, Resource dataset, Model datasetModels)
+			throws NullPointerException {
 		Set<Resource> resourceKeys = new HashSet<>();
 
 		Query query = aspect.getPattern(dataset).cloneQuery();
@@ -240,8 +259,17 @@ public class Aspect {
 		return keyVariableName;
 	}
 
-	public Query getPattern(Resource dataset) {
-		return patternByDataset.get(dataset);
+	/**
+	 * Returns the pattern for the given dataset.
+	 * 
+	 * @param dataset
+	 * @return the pattern for the given dataset
+	 * 
+	 * @throws NullPointerException if no pattern is defined for the given dataset
+	 */
+	public Query getPattern(Resource dataset) throws NullPointerException {
+		return Objects.requireNonNull(patternByDataset.get(dataset),
+				() -> String.format("Pattern of aspect %s and dataset %s not defined.", this.iri, dataset));
 	}
 
 	public Aspect setPattern(Resource dataset, Query pattern) {
