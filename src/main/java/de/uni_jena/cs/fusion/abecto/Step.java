@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
@@ -172,12 +173,12 @@ public class Step implements Runnable {
 			stepExecutionIri.addLiteral(PROV.endedAtTime, OffsetDateTime.now());
 			// set output primary model metadata, if applicable
 			processor.getAssociatedDataset().ifPresent(datasetIri -> {
-				Model outputModel = processor.getOutputMetaModel(datasetIri);
-				if (!outputModel.isEmpty()) {
+				Optional<Model> outputModel = processor.getOutputPrimaryModel();
+				if (outputModel.isPresent() && !outputModel.get().isEmpty()) {
 					Resource outputModelIri = configurationModel.createResource(AV.PrimaryDataGraph);
 					outputModelIri.addProperty(PROV.wasGeneratedBy, stepExecutionIri);
 					outputModelIri.addProperty(AV.associatedDataset, datasetIri);
-					dataset.addNamedModel(outputModelIri, outputModel);
+					dataset.addNamedModel(outputModelIri, outputModel.get());
 				}
 			});
 			// set metadata for output meta model of input dataset

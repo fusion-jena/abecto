@@ -21,11 +21,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.sparql.core.Var;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,8 +52,7 @@ public class EquivalentValueMappingProcessor extends MappingProcessor<Equivalent
 		// check if aspect patterns contain all variables
 		for (Resource dataset : new Resource[] { dataset1, dataset2 }) {
 			try {
-				Collection<String> patternVariables = aspect.getPattern(dataset).getValuesVariables().stream()
-						.map(Var::getName).collect(Collectors.toList());
+				Collection<String> patternVariables = aspect.getPattern(dataset).getResultVars();
 				if (!patternVariables.containsAll(variables)) {
 					ArrayList<String> missingVariables = new ArrayList<String>(variables);
 					missingVariables.removeAll(patternVariables);
