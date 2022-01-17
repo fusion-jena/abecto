@@ -53,7 +53,7 @@ import de.uni_jena.cs.fusion.abecto.Parameter;
 public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 	/** URL of the SPARQL endpoint to use. */
 	@Parameter
-	public String service;
+	public Resource service;
 	/**
 	 * Maximum number of resources to retrieve in one request. Default: 500
 	 */
@@ -98,8 +98,8 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 
 	@Override
 	public void run() {
-		extract(this.getOutputPrimaryModel().get(), QueryExecution.service(this.service), this.query, this.list,
-				this.followInverse, this.followUnlimited, this.maxDistance, this.chunkSize);
+		extract(this.getOutputPrimaryModel().get(), QueryExecution.service(this.service.getURI()), this.query,
+				this.list, this.followInverse, this.followUnlimited, this.maxDistance, this.chunkSize);
 	}
 
 	private static ElementData valuesClause(Var var, Iterable<Node> values) {
