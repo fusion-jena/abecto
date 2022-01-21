@@ -72,11 +72,13 @@ public class Aspect {
 
 		// add patterns
 		for (Resource aspectPatter : configurationModel.listResourcesWithProperty(AV.ofAspect, aspectIri).toList()) {
-			Resource dataset = assertOne(configurationModel.listObjectsOfProperty(aspectPatter, AV.associatedDataset))
-					.asResource();
-			Query pattern = (Query) assertOne(configurationModel.listObjectsOfProperty(aspectPatter, AV.definingQuery))
-					.asLiteral().getValue();
-			aspect.setPattern(dataset, pattern);
+			for (Resource dataset : configurationModel.listObjectsOfProperty(aspectPatter, AV.associatedDataset)
+					.mapWith(RDFNode::asResource).toList()) {
+				Query pattern = (Query) assertOne(
+						configurationModel.listObjectsOfProperty(aspectPatter, AV.definingQuery)).asLiteral()
+								.getValue();
+				aspect.setPattern(dataset, pattern);
+			}
 		}
 
 		return aspect;
