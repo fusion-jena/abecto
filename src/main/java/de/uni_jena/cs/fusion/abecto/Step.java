@@ -31,6 +31,8 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.shared.Lock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
 import de.uni_jena.cs.fusion.abecto.util.Models;
@@ -49,6 +51,7 @@ public class Step implements Runnable {
 	private final Collection<Step> inputSteps;
 	private final Collection<Resource> inputModelIris = new ArrayList<>();
 	private final Map<Resource, Model> outputModelByIri = new HashMap<>();
+	private final Logger logger;
 
 	/**
 	 * Creates an {@link Step} as defined in the configuration model of an ABECTO
@@ -120,6 +123,9 @@ public class Step implements Runnable {
 
 		// set relative base path
 		processor.setRelativeBasePath(relativeBasePath);
+
+		// set logger
+		this.logger = LoggerFactory.getLogger(processorClass);
 	}
 
 	/**
@@ -166,7 +172,9 @@ public class Step implements Runnable {
 			configurationModel.leaveCriticalSection();
 		}
 
+		logger.info(String.format("Execution of Step %s started.", stepIri));
 		processor.run();
+		logger.info(String.format("Execution of Step %s completed.", stepIri));
 
 		configurationModel.enterCriticalSection(Lock.WRITE);
 		try {

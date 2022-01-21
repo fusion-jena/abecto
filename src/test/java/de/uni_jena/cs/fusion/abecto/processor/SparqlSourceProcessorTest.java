@@ -124,8 +124,10 @@ public class SparqlSourceProcessorTest {
 					NodeFactory.createLiteral("label")));
 		}
 
+		// disable processor logging
+		java.util.logging.Logger.getLogger(SparqlSourceProcessor.class.getCanonicalName())
+				.setLevel(java.util.logging.Level.OFF);
 		// disable fuseki logging
-		FusekiLogging.setLogging();
 		LogCtl.setLevel(Fuseki.serverLogName, "OFF");
 		LogCtl.setLevel(Fuseki.actionLogName, "OFF");
 		LogCtl.setLevel(Fuseki.requestLogName, "OFF");

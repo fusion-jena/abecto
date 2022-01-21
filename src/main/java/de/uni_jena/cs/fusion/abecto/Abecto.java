@@ -58,6 +58,12 @@ import picocli.CommandLine.Parameters;
 @Command(description = "Compares and evaluates several RDF datasets.", name = "abecto", mixinStandardHelpOptions = true, versionProvider = Abecto.ManifestVersionProvider.class)
 public class Abecto implements Callable<Integer> {
 
+	static {
+		System.setProperty("java.util.logging.SimpleFormatter.format", "[%1$tF %1$tT] [%4$-7s] [%3$s] %5$s %6$s%n");
+		java.util.logging.Logger.getLogger("org.apache.jena.riot").setLevel(java.util.logging.Level.OFF);
+		java.util.logging.Logger.getLogger("").setLevel(java.util.logging.Level.ALL);
+	}
+
 	final static Logger log = LoggerFactory.getLogger(Abecto.class);
 
 	public static void main(String... args) throws Exception {
@@ -151,6 +157,9 @@ public class Abecto implements Callable<Integer> {
 		// register custom datatypes
 		TypeMapper.getInstance().registerDatatype(new XsdDateTimeStampType());
 		TypeMapper.getInstance().registerDatatype(new SparqlQueryType());
+
+		// TODO use caching HTTP client
+		// HttpEnv.setDftHttpClient(dftHttpClient);
 	}
 
 	static class ManifestVersionProvider implements IVersionProvider {

@@ -68,7 +68,8 @@ public class Datasets {
 			}
 		}
 		for (Lang lang : throwables.keySet()) {
-			log.error(String.format("Failed to parse %s:", lang.getName()), throwables.get(lang));
+			log.info(String.format("Failed to parse %s: %s", lang.getName(), throwables.get(lang).getMessage()
+					.replaceFirst("\n\\s+", " ").replaceAll("\n\\s+", ", ").replaceAll("\n", " ")));
 		}
 		throw new IllegalArgumentException("Unknown RDF language.");
 	}
