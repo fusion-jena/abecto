@@ -164,8 +164,7 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 				// create prefixes for namespaces to shorten queries
 				constructQuery.setPrefixMapping(shortPrefixMapping(currentChunck));
 
-				log.info(String.format("Fetching %d resources.", currentChunck.size()));
-				log.debug(String.format("Resources: %s", currentChunck));
+				log.debug(String.format("Fetching %d resources: %s", currentChunck.size(), currentChunck));
 				service.query(constructQuery).build().execConstruct(resultModel);
 
 				if (followInverse.iterator().hasNext()) {
