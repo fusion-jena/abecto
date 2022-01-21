@@ -5,6 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Fixed
+* fix **UrlSourceProcessor**:
+	* enable arbitrary query lengths (workaround for [JENA-2257](https://issues.apache.org/jira/browse/JENA-2257))
+	* fix expected datatypes of some parameters
+
+### Changed
+* improved logging library setup
+* changed **Step**: log processing start and completion
+* changed **Aspect**: enable use of one pattern for multiple datasets
+
 ## [0.4.0] - 2022-01-12
 
 ### Added
