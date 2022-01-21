@@ -24,15 +24,16 @@ import java.util.Optional;
 import org.apache.jena.atlas.logging.LogCtl;
 import org.apache.jena.fuseki.Fuseki;
 import org.apache.jena.fuseki.main.FusekiServer;
-import org.apache.jena.fuseki.system.FusekiLogging;
 import org.apache.jena.graph.Graph;
-import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.junit.jupiter.api.Test;
@@ -52,8 +53,8 @@ public class SparqlSourceProcessorTest {
 		Graph inputGraph = testData.asDatasetGraph().getDefaultGraph();
 		String namespace = "http://example.org/";
 
-		Node association = NodeFactory.createURI(namespace + "association");
-		Node inverseAssociation = NodeFactory.createURI(namespace + "inverseAssociation");
+		Resource association = ResourceFactory.createResource(namespace + "association");
+		Property inverseAssociation = ResourceFactory.createProperty(namespace + "inverseAssociation");
 		inputGraph.add(new Triple(//
 				NodeFactory.createURI(namespace + "association"), //
 				RDFS.label.asNode(), //
@@ -70,11 +71,11 @@ public class SparqlSourceProcessorTest {
 				NodeFactory.createURI(namespace + "class" + 0)));
 		inputGraph.add(new Triple(//
 				NodeFactory.createURI(namespace + "individual"), //
-				association, //
+				association.asNode(), //
 				NodeFactory.createURI(namespace + "association" + 1)));
 		inputGraph.add(new Triple(//
 				NodeFactory.createURI(namespace + "inverseAssociation" + 1), //
-				inverseAssociation, //
+				inverseAssociation.asNode(), //
 				NodeFactory.createURI(namespace + "individual")));
 
 		// hierarchy
@@ -99,7 +100,7 @@ public class SparqlSourceProcessorTest {
 
 			inputGraph.add(new Triple(//
 					NodeFactory.createURI(namespace + "class" + hierarchyDepth), //
-					association, //
+					association.asNode(), //
 					NodeFactory.createURI(namespace + "class" + hierarchyDepth + "Association" + 0)));
 		}
 
@@ -107,7 +108,7 @@ public class SparqlSourceProcessorTest {
 		for (int distance = 1; distance < maxMaxDistance + 1; distance++) {
 			inputGraph.add(new Triple(//
 					NodeFactory.createURI(namespace + "association" + distance), //
-					association, //
+					association.asNode(), //
 					NodeFactory.createURI(namespace + "association" + (distance + 1))));
 			inputGraph.add(new Triple(//
 					NodeFactory.createURI(namespace + "association" + distance), //
@@ -116,7 +117,7 @@ public class SparqlSourceProcessorTest {
 
 			inputGraph.add(new Triple(//
 					NodeFactory.createURI(namespace + "inverseAssociation" + (distance + 1)), //
-					inverseAssociation, //
+					inverseAssociation.asNode(), //
 					NodeFactory.createURI(namespace + "inverseAssociation" + distance)));
 			inputGraph.add(new Triple(//
 					NodeFactory.createURI(namespace + "inverseAssociation" + distance), //
@@ -140,7 +141,7 @@ public class SparqlSourceProcessorTest {
 		for (int maxDistance = 0; maxDistance < maxMaxDistance; maxDistance++) {
 			// run queries against test endpoint
 			SparqlSourceProcessor processor = new SparqlSourceProcessor();
-			processor.service = "http://localhost:" + fuseki.getPort() + "/test/sparql";
+			processor.service = ResourceFactory.createResource("http://localhost:" + fuseki.getPort() + "/test/sparql");
 			processor.query = Optional
 					.of(QueryFactory.create("SELECT ?item WHERE {?item a <" + namespace + "class0>.}"));
 			processor.followInverse = Collections.singletonList(inverseAssociation);
@@ -160,11 +161,11 @@ public class SparqlSourceProcessorTest {
 					NodeFactory.createURI(namespace + "class" + 0))));
 			assertTrue(outputModel.getGraph().contains(new Triple(//
 					NodeFactory.createURI(namespace + "individual"), //
-					association, //
+					association.asNode(), //
 					NodeFactory.createURI(namespace + "association" + 1))));
 			assertTrue(outputModel.getGraph().contains(new Triple(//
 					NodeFactory.createURI(namespace + "inverseAssociation" + 1), //
-					inverseAssociation, //
+					inverseAssociation.asNode(), //
 					NodeFactory.createURI(namespace + "individual"))));
 
 			// hierarchy
@@ -192,7 +193,7 @@ public class SparqlSourceProcessorTest {
 				assertTrue(maxDistance == 0 ^ // bridge the rdf:type property
 						outputModel.getGraph().contains(new Triple(//
 								NodeFactory.createURI(namespace + "class" + hierarchyDepth), //
-								association, //
+								association.asNode(), //
 								NodeFactory.createURI(namespace + "class" + hierarchyDepth + "Association" + 0))));
 			}
 
@@ -201,7 +202,7 @@ public class SparqlSourceProcessorTest {
 				assertTrue(distance > maxDistance ^ //
 						outputModel.getGraph().contains(new Triple(//
 								NodeFactory.createURI(namespace + "association" + distance), //
-								association, //
+								association.asNode(), //
 								NodeFactory.createURI(namespace + "association" + (distance + 1)))));
 				assertTrue(distance > maxDistance ^ //
 						outputModel.getGraph().contains(new Triple(//
@@ -212,7 +213,7 @@ public class SparqlSourceProcessorTest {
 				assertTrue(distance > maxDistance ^ //
 						outputModel.getGraph().contains(new Triple(//
 								NodeFactory.createURI(namespace + "inverseAssociation" + (distance + 1)), //
-								inverseAssociation, //
+								inverseAssociation.asNode(), //
 								NodeFactory.createURI(namespace + "inverseAssociation" + distance))));
 				assertTrue(distance > maxDistance ^ //
 						outputModel.getGraph().contains(new Triple(//

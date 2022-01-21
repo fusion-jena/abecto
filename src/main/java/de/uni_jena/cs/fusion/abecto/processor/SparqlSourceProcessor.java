@@ -24,6 +24,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -37,20 +38,27 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingFactory;
+import org.apache.jena.sparql.exec.http.QuerySendMode;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementData;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.Template;
 import org.apache.jena.vocabulary.RDFS;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.uni_jena.cs.fusion.abecto.Parameter;
 
 public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
+
+	final static Logger log = LoggerFactory.getLogger(SparqlSourceProcessor.class);
+
 	/** URL of the SPARQL endpoint to use. */
 	@Parameter
 	public Resource service;
@@ -84,7 +92,7 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 	 * Default: rdfs:subClassOf
 	 */
 	@Parameter
-	public Collection<Property> followUnlimited = new ArrayList<>(Arrays.asList(RDFS.subClassOf));
+	public Collection<Resource> followUnlimited = new ArrayList<>(Arrays.asList(RDFS.subClassOf));
 	/**
 	 * Properties to track in inverse direction to compile a list of associated
 	 * resources to load. That means that the subject of a statement whose property
@@ -92,21 +100,27 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 	 * associated resource.
 	 */
 	@Parameter
-	public Collection<Node> followInverse = new ArrayList<>();
+	public Collection<Resource> followInverse = new ArrayList<>();
 
 	// TODO add parameter to {@code followInverseUnlimited}
 
 	@Override
 	public void run() {
-		extract(this.getOutputPrimaryModel().get(), QueryExecution.service(this.service.getURI()), this.query,
-				this.list, this.followInverse, this.followUnlimited, this.maxDistance, this.chunkSize);
+		// TODO remove workaround for https://issues.apache.org/jira/browse/JENA-2257
+		extract(this.getOutputPrimaryModel().get(),
+				QueryExecution.service(this.service.getURI()).sendMode(QuerySendMode.asPost), this.query, this.list,
+				this.followInverse.stream().map(r -> ResourceFactory.createProperty(r.getURI()))
+						.collect(Collectors.toList()),
+				this.followUnlimited.stream().map(r -> ResourceFactory.createProperty(r.getURI()))
+						.collect(Collectors.toList()),
+				this.maxDistance, this.chunkSize);
 	}
 
-	private static ElementData valuesClause(Var var, Iterable<Node> values) {
+	private static ElementData valuesClause(Var var, Iterable<? extends Resource> values) {
 		ElementData elementData = new ElementData();
 		elementData.add(var);
-		for (Node node : values) {
-			elementData.add(BindingFactory.binding(var, node));
+		for (Resource value : values) {
+			elementData.add(BindingFactory.binding(var, value.asNode()));
 		}
 		return elementData;
 	}
@@ -119,8 +133,9 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 		return group;
 	}
 
-	private static void loadResources(QueryExecutionBuilder service, Collection<Resource> resourcesToLoad,
-			Iterable<Node> followInverse, Model resultModel, int chunkSize) {
+	private void loadResources(QueryExecutionBuilder service, Collection<Resource> resourcesToLoad,
+			Iterable<Property> followInverse, Model resultModel, int chunkSize) {
+
 		// prepare queries
 		/*
 		 * This requires some complicated use of {@link Element}s, as both APIs, {@link
@@ -136,18 +151,21 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 		ElementData followInverseValuesClause = valuesClause(p, followInverse);
 
 		// initialize chunk
-		List<Node> currentChunck = new ArrayList<Node>(chunkSize);
+		List<Resource> currentChunck = new ArrayList<Resource>(chunkSize);
 
 		Iterator<Resource> resourcesToLoadIterator = resourcesToLoad.iterator();
 		while (resourcesToLoadIterator.hasNext()) {
 			// add resource to query
-			currentChunck.add(resourcesToLoadIterator.next().asNode());
+			currentChunck.add(resourcesToLoadIterator.next());
 			if (currentChunck.size() == chunkSize || // chunk completed or
 					!resourcesToLoadIterator.hasNext()) { // last resource
 
-				// add resource list as subject
 				constructQuery.setQueryPattern(group(triple, valuesClause(s, currentChunck)));
+				// create prefixes for namespaces to shorten queries
+				constructQuery.setPrefixMapping(shortPrefixMapping(currentChunck));
 
+				log.info(String.format("Fetching %d resources.", currentChunck.size()));
+				log.debug(String.format("Resources: %s", currentChunck));
 				service.query(constructQuery).build().execConstruct(resultModel);
 
 				if (followInverse.iterator().hasNext()) {
@@ -161,11 +179,34 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 				currentChunck.clear();
 			}
 		}
-
 	}
 
-	private static Model extract(Model resultModel, QueryExecutionBuilder service, Optional<Query> query,
-			Collection<Resource> list, Collection<Node> followInverse, Collection<Property> followUnlimited,
+	private static String guessNamespace(Resource resource) {
+		String uri = resource.getURI();
+		int namespaceEndIndex = uri.endsWith("/") ? uri.lastIndexOf("/", uri.length() - 2) : uri.lastIndexOf("/");
+		return uri.substring(0, namespaceEndIndex + 1);
+	}
+
+	private static PrefixMapping shortPrefixMapping(Collection<Resource> resources) {
+		PrefixMapping prefixMapping = PrefixMapping.Factory.create();
+
+		resources.stream().map(SparqlSourceProcessor::guessNamespace).forEach(namespace -> {
+			if (prefixMapping.getNsURIPrefix(namespace) == null) {
+				int i = prefixMapping.numPrefixes();
+				String prefix = "";
+				if (i > 0) {
+					prefix = (char) ((i - 1) % 26 + 97)
+							+ (((i - 1) / 26 > 0) ? Integer.toString((i - 1) / 26 - 1, Character.MAX_RADIX) : "");
+				}
+				prefixMapping.setNsPrefix(prefix, namespace);
+			}
+		});
+
+		return prefixMapping;
+	}
+
+	private Model extract(Model resultModel, QueryExecutionBuilder service, Optional<Query> query,
+			Collection<Resource> list, Collection<Property> followInverse, Collection<Property> followUnlimited,
 			int maxDistance, int chunkSize) {
 
 		Set<Resource> resourcesLoaded = new HashSet<Resource>();
