@@ -25,12 +25,14 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.apache.jena.query.Dataset;
+import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.NodeIterator;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.shared.Lock;
+import org.apache.jena.vocabulary.RDFS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -172,9 +174,11 @@ public class Step implements Runnable {
 			configurationModel.leaveCriticalSection();
 		}
 
-		logger.info(String.format("Execution of Step %s started.", stepIri));
+		Optional<String> stepLabel = configurationModel.listObjectsOfProperty(stepIri, RDFS.label).nextOptional()
+				.map(RDFNode::asLiteral).map(Literal::getString);
+		logger.info(String.format("Execution of Step \"%s\" started.", stepLabel.orElse(stepIri.toString())));
 		processor.run();
-		logger.info(String.format("Execution of Step %s completed.", stepIri));
+		logger.info(String.format("Execution of Step \"%s\" completed.", stepLabel.orElse(stepIri.toString())));
 
 		configurationModel.enterCriticalSection(Lock.WRITE);
 		try {
