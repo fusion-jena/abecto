@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * fix **UrlSourceProcessor**:
 	* enable arbitrary query lengths (workaround for [JENA-2257](https://issues.apache.org/jira/browse/JENA-2257))
 	* fix expected datatypes of some parameters
+* fix **EquivalentValueMappingProcessor**: fix message format
 
 ### Changed
 * improved logging library setup

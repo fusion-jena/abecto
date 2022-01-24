@@ -56,12 +56,12 @@ public class EquivalentValueMappingProcessor extends MappingProcessor<Equivalent
 				if (!patternVariables.containsAll(variables)) {
 					ArrayList<String> missingVariables = new ArrayList<String>(variables);
 					missingVariables.removeAll(patternVariables);
-					log.warn("Missing variable(s) in pattern of aspect %s and dataset %s: %s", aspect, dataset,
+					log.warn("Missing variable(s) in pattern of aspect {} and dataset {}: {}", aspect, dataset,
 							missingVariables);
 					return;
 				}
 			} catch (NullPointerException e) {
-				log.warn("No pattern for aspect %s and dataset %s defined.", aspect, dataset);
+				log.warn("No pattern for aspect {} and dataset {} defined.", aspect, dataset);
 				return;
 			}
 		}
