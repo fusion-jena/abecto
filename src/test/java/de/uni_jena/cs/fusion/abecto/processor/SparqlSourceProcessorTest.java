@@ -18,7 +18,9 @@ package de.uni_jena.cs.fusion.abecto.processor;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.jena.atlas.logging.LogCtl;
@@ -77,6 +79,15 @@ public class SparqlSourceProcessorTest {
 				NodeFactory.createURI(namespace + "inverseAssociation" + 1), //
 				inverseAssociation.asNode(), //
 				NodeFactory.createURI(namespace + "individual")));
+		// literals with language
+		inputGraph.add(new Triple(//
+				NodeFactory.createURI(namespace + "individual"), //
+				RDFS.label.asNode(), //
+				NodeFactory.createLiteral("label", "en")));
+		inputGraph.add(new Triple(//
+				NodeFactory.createURI(namespace + "individual"), //
+				RDFS.label.asNode(), //
+				NodeFactory.createLiteral("label", "de")));
 
 		// hierarchy
 		for (int hierarchyDepth = 0; hierarchyDepth < maxHierarchyDepth; hierarchyDepth++) {
@@ -220,6 +231,64 @@ public class SparqlSourceProcessorTest {
 								NodeFactory.createURI(namespace + "inverseAssociation" + distance), //
 								RDFS.label.asNode(), //
 								NodeFactory.createLiteral("label"))));
+			}
+		}
+
+		List<List<String>> languageFilterConfigurations = Arrays.asList(//
+				Collections.emptyList(), //
+				Arrays.asList(""), //
+				Arrays.asList("en"), //
+				Arrays.asList("de"), //
+				Arrays.asList("", "en"), //
+				Arrays.asList("", "de"), //
+				Arrays.asList("en", "de"), //
+				Arrays.asList("", "en", "de"));
+		// check language parameter
+		for (List<String> languageFilterPatterns : languageFilterConfigurations) {
+			// run queries against test endpoint
+			SparqlSourceProcessor processor = new SparqlSourceProcessor();
+			processor.service = ResourceFactory.createResource("http://localhost:" + fuseki.getPort() + "/test/sparql");
+			processor.query = Optional
+					.of(QueryFactory.create("SELECT ?item WHERE {?item a <" + namespace + "class0>.}"));
+			processor.languageFilterPatterns = languageFilterPatterns;
+			processor.setAssociatedDataset(TestUtil.dataset(1));
+			processor.run();
+			Model outputModel = processor.getOutputPrimaryModel().get();
+
+			if (languageFilterPatterns.isEmpty() || languageFilterPatterns.contains("")) {
+				assertTrue(outputModel.getGraph().contains(new Triple(//
+						NodeFactory.createURI(namespace + "individual"), //
+						RDFS.label.asNode(), //
+						NodeFactory.createLiteral("label"))));
+			} else {
+				assertFalse(outputModel.getGraph().contains(new Triple(//
+						NodeFactory.createURI(namespace + "individual"), //
+						RDFS.label.asNode(), //
+						NodeFactory.createLiteral("label"))));
+			}
+
+			if (languageFilterPatterns.isEmpty() || languageFilterPatterns.contains("en")) {
+				assertTrue(outputModel.getGraph().contains(new Triple(//
+						NodeFactory.createURI(namespace + "individual"), //
+						RDFS.label.asNode(), //
+						NodeFactory.createLiteral("label","en"))));
+			} else {
+				assertFalse(outputModel.getGraph().contains(new Triple(//
+						NodeFactory.createURI(namespace + "individual"), //
+						RDFS.label.asNode(), //
+						NodeFactory.createLiteral("label","en"))));
+			}
+
+			if (languageFilterPatterns.isEmpty() || languageFilterPatterns.contains("de")) {
+				assertTrue(outputModel.getGraph().contains(new Triple(//
+						NodeFactory.createURI(namespace + "individual"), //
+						RDFS.label.asNode(), //
+						NodeFactory.createLiteral("label","de"))));
+			} else {
+				assertFalse(outputModel.getGraph().contains(new Triple(//
+						NodeFactory.createURI(namespace + "individual"), //
+						RDFS.label.asNode(), //
+						NodeFactory.createLiteral("label","de"))));
 			}
 		}
 

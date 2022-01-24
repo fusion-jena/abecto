@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+* add parameter languageFilterPatterns to **SparqlSourceProcessor**: enable filtering of loaded string literals by language
+
 ### Fixed
 * fix **UrlSourceProcessor**:
 	* enable arbitrary query lengths (workaround for [JENA-2257](https://issues.apache.org/jira/browse/JENA-2257))

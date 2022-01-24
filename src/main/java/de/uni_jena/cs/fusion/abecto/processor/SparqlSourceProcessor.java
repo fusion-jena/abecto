@@ -44,12 +44,25 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingFactory;
 import org.apache.jena.sparql.exec.http.QuerySendMode;
+import org.apache.jena.sparql.expr.E_Datatype;
+import org.apache.jena.sparql.expr.E_Lang;
+import org.apache.jena.sparql.expr.E_LangMatches;
+import org.apache.jena.sparql.expr.E_LogicalOr;
+import org.apache.jena.sparql.expr.E_NotOneOf;
+import org.apache.jena.sparql.expr.Expr;
+import org.apache.jena.sparql.expr.ExprList;
+import org.apache.jena.sparql.expr.ExprVar;
+import org.apache.jena.sparql.expr.NodeValue;
+import org.apache.jena.sparql.expr.nodevalue.NodeValueString;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementData;
+import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.Template;
+import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
+import org.apache.jena.vocabulary.XSD;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -102,6 +115,15 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 	@Parameter
 	public Collection<Resource> followInverse = new ArrayList<>();
 
+	/**
+	 * Language patterns to filter returned literals. If not empty, only string
+	 * literals will be loaded, that match at least on of these patterns. String
+	 * literals without language tag will match with "", all string literals with
+	 * language tag match with "*". Default: empty
+	 */
+	@Parameter
+	public Collection<String> languageFilterPatterns = new ArrayList<>();
+
 	// TODO add parameter to {@code followInverseUnlimited}
 
 	@Override
@@ -125,10 +147,31 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 		return elementData;
 	}
 
+	private final static Var s = Var.alloc("s"), p = Var.alloc("p"), o = Var.alloc("o");
+	private ElementFilter languageFilter;
+
+	private static ElementFilter languageFilter(Collection<String> languageFilterPatterns) {
+		if (!languageFilterPatterns.isEmpty()) {
+			ExprVar exprVar​ = new ExprVar(o);
+
+			Expr expr = new E_NotOneOf(new E_Datatype(exprVar​), new ExprList(Arrays
+					.asList(NodeValue.makeNode(RDF.langString.asNode()), NodeValue.makeNode(XSD.xstring.asNode()))));
+			for (String languageFilterPattern : languageFilterPatterns) {
+				expr = new E_LogicalOr(expr,
+						new E_LangMatches(new E_Lang(exprVar​), new NodeValueString(languageFilterPattern)));
+			}
+			return new ElementFilter(expr);
+		} else {
+			return null;
+		}
+	}
+
 	private static ElementGroup group(Element... elements) {
 		ElementGroup group = new ElementGroup();
 		for (Element element : elements) {
-			group.addElement(element);
+			if (element != null) {
+				group.addElement(element);
+			}
 		}
 		return group;
 	}
@@ -142,7 +185,6 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 		 * Query} and {@link org.apache.jena.arq.querybuilder.ConstructBuilder} do not
 		 * directly support multiple values clauses.
 		 */
-		Var s = Var.alloc("s"), p = Var.alloc("p"), o = Var.alloc("o");
 		BasicPattern pattern = BasicPattern.wrap(Collections.singletonList(new Triple(s, p, o)));
 		ElementTriplesBlock triple = new ElementTriplesBlock(pattern);
 		Query constructQuery = new Query();
@@ -160,7 +202,7 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 			if (currentChunck.size() == chunkSize || // chunk completed or
 					!resourcesToLoadIterator.hasNext()) { // last resource
 
-				constructQuery.setQueryPattern(group(triple, valuesClause(s, currentChunck)));
+				constructQuery.setQueryPattern(group(triple, valuesClause(s, currentChunck), languageFilter));
 				// create prefixes for namespaces to shorten queries
 				constructQuery.setPrefixMapping(shortPrefixMapping(currentChunck));
 
@@ -169,8 +211,8 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 
 				if (followInverse.iterator().hasNext()) {
 					// add resource list as subject
-					constructQuery
-							.setQueryPattern(group(triple, followInverseValuesClause, valuesClause(o, currentChunck)));
+					constructQuery.setQueryPattern(
+							group(triple, followInverseValuesClause, valuesClause(o, currentChunck), languageFilter));
 
 					service.query(constructQuery).build().execConstruct(resultModel);
 				}
@@ -207,6 +249,8 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 	private Model extract(Model resultModel, QueryExecutionBuilder service, Optional<Query> query,
 			Collection<Resource> list, Collection<Property> followInverse, Collection<Property> followUnlimited,
 			int maxDistance, int chunkSize) {
+
+		languageFilter = languageFilter(languageFilterPatterns);
 
 		Set<Resource> resourcesLoaded = new HashSet<Resource>();
 		Set<Resource> resourcesToLoad = new HashSet<Resource>();
