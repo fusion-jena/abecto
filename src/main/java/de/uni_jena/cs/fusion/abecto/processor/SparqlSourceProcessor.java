@@ -15,6 +15,12 @@
  */
 package de.uni_jena.cs.fusion.abecto.processor;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -44,9 +50,12 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingFactory;
 import org.apache.jena.sparql.exec.http.QuerySendMode;
+import org.apache.jena.sparql.expr.E_Bound;
 import org.apache.jena.sparql.expr.E_Datatype;
 import org.apache.jena.sparql.expr.E_Lang;
 import org.apache.jena.sparql.expr.E_LangMatches;
+import org.apache.jena.sparql.expr.E_LogicalAnd;
+import org.apache.jena.sparql.expr.E_LogicalNot;
 import org.apache.jena.sparql.expr.E_LogicalOr;
 import org.apache.jena.sparql.expr.E_NotOneOf;
 import org.apache.jena.sparql.expr.Expr;
@@ -150,19 +159,42 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 	private final static Var s = Var.alloc("s"), p = Var.alloc("p"), o = Var.alloc("o");
 	private ElementFilter languageFilter;
 
-	private static ElementFilter languageFilter(Collection<String> languageFilterPatterns) {
+	private void prepareLanguageFilter(Collection<String> languageFilterPatterns) {
 		if (!languageFilterPatterns.isEmpty()) {
 			ExprVar exprVar​ = new ExprVar(o);
 
 			Expr expr = new E_NotOneOf(new E_Datatype(exprVar​), new ExprList(Arrays
 					.asList(NodeValue.makeNode(RDF.langString.asNode()), NodeValue.makeNode(XSD.xstring.asNode()))));
+
+			if (isVirtuosoHotfix428Needed()) {
+				// hotfix for
+				// https://github.com/openlink/virtuoso-opensource/issues/428#issuecomment-1026825894
+				expr = new E_LogicalAnd(expr, new E_LogicalNot(new E_LogicalAnd(new E_Bound(new E_Lang(exprVar​)),
+						new E_LogicalNot(new E_Bound(new E_Datatype(exprVar​))))));
+			}
+
 			for (String languageFilterPattern : languageFilterPatterns) {
 				expr = new E_LogicalOr(expr,
 						new E_LangMatches(new E_Lang(exprVar​), new NodeValueString(languageFilterPattern)));
 			}
-			return new ElementFilter(expr);
+			this.languageFilter = new ElementFilter(expr);
 		} else {
-			return null;
+			this.languageFilter = null;
+		}
+	}
+
+	/**
+	 * Returns true, if a hotfix for
+	 * https://github.com/openlink/virtuoso-opensource/issues/428#issuecomment-1026825894
+	 * should be used
+	 */
+	private boolean isVirtuosoHotfix428Needed() {
+		try {
+			var request = HttpRequest.newBuilder(new URI(this.service.getURI())).build();
+			return HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.discarding()).headers()
+					.firstValue("Server").orElse("").contains("Virtuoso");
+		} catch (URISyntaxException | IOException | InterruptedException e) {
+			throw new RuntimeException(String.format("SPARQL Endpoint %s not accessable.", this.service), e);
 		}
 	}
 
@@ -250,7 +282,7 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 			Collection<Resource> list, Collection<Property> followInverse, Collection<Property> followUnlimited,
 			int maxDistance, int chunkSize) {
 
-		languageFilter = languageFilter(languageFilterPatterns);
+		prepareLanguageFilter(languageFilterPatterns);
 
 		Set<Resource> resourcesLoaded = new HashSet<Resource>();
 		Set<Resource> resourcesToLoad = new HashSet<Resource>();
