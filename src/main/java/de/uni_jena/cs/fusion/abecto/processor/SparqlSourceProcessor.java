@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -90,6 +91,14 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 	@Parameter
 	public Integer chunkSize = 500;
 	/**
+	 * Factor to reduce the {@link #chunkSize} after failed request to the source
+	 * SPARQL endpoint.
+	 * 
+	 * @see #maxRetries
+	 */
+	@Parameter
+	private Double chunkSizeDecreaseFactor = 0.8;
+	/**
 	 * SELECT query to retrieve a list of the relevant resources. All variables will
 	 * be taken into account. None IRI values will be ignored. ORDER BY, LIMIT and
 	 * OFFSET might become overwritten.
@@ -123,6 +132,14 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 	 */
 	@Parameter
 	public Collection<Resource> followInverse = new ArrayList<>();
+	/**
+	 * Total maximum number of retries of failed request to the source SPARQL
+	 * endpoint. Default: 5
+	 * 
+	 * @see #chunkSizeDecreaseFactor
+	 */
+	@Parameter
+	public Integer maxRetries = 5;
 
 	/**
 	 * Language patterns to filter returned literals. If not empty, only string
@@ -227,29 +244,46 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 		// initialize chunk
 		List<Resource> currentChunck = new ArrayList<Resource>(chunkSize);
 
-		Iterator<Resource> resourcesToLoadIterator = resourcesToLoad.iterator();
+		ListIterator<Resource> resourcesToLoadIterator = new ArrayList<>(resourcesToLoad).listIterator();
 		while (resourcesToLoadIterator.hasNext()) {
 			// add resource to query
 			currentChunck.add(resourcesToLoadIterator.next());
 			if (currentChunck.size() == chunkSize || // chunk completed or
 					!resourcesToLoadIterator.hasNext()) { // last resource
-
-				constructQuery.setQueryPattern(group(triple, valuesClause(s, currentChunck), languageFilter));
-				// create prefixes for namespaces to shorten queries
-				constructQuery.setPrefixMapping(shortPrefixMapping(currentChunck));
-
 				log.debug(String.format("Fetching %d resources: %s", currentChunck.size(), currentChunck));
-				service.query(constructQuery).build().execConstruct(resultModel);
+				try {
+					constructQuery.setQueryPattern(group(triple, valuesClause(s, currentChunck), languageFilter));
+					// create prefixes for namespaces to shorten queries
+					constructQuery.setPrefixMapping(shortPrefixMapping(currentChunck));
 
-				if (followInverse.iterator().hasNext()) {
-					// add resource list as subject
-					constructQuery.setQueryPattern(
-							group(triple, followInverseValuesClause, valuesClause(o, currentChunck), languageFilter));
-
+					log.debug("\n" + constructQuery.toString());
 					service.query(constructQuery).build().execConstruct(resultModel);
+
+					if (followInverse.iterator().hasNext()) {
+						// add resource list as subject
+						constructQuery.setQueryPattern(group(triple, followInverseValuesClause,
+								valuesClause(o, currentChunck)));
+
+						log.debug("\n" + constructQuery.toString());
+						service.query(constructQuery).build().execConstruct(resultModel);
+					}
+				} catch (Throwable e) {
+					if (this.maxRetries > 0) {
+						this.maxRetries--; // reduce left over retries
+						this.chunkSize = (int) (this.chunkSize * this.chunkSizeDecreaseFactor); // reduce chunk size
+						for (int i = 0; i < currentChunck.size(); i++) {
+							resourcesToLoadIterator.previous(); // redo resources of current chunk
+						}
+						log.warn(String.format(
+								"Request failed. Reduced chunk size to %d. Left retries: %s Failed query:\n%s",
+								this.chunkSize, this.maxRetries, constructQuery.toString()), e);
+					} else {
+						throw e;
+					}
+				} finally {
+					// reset chunk
+					currentChunck.clear();
 				}
-				// reset chunk
-				currentChunck.clear();
 			}
 		}
 	}
@@ -356,6 +390,9 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 			resultModel.listStatements().mapWith(Statement::getPredicate).filterDrop(resourcesLoaded::contains)
 					.forEachRemaining(resourcesToLoad::add);
 		} while (!resourcesToLoad.isEmpty());
+
+		log.info(String.format("About %d statements on %d resources loaded.", resultModel.size(),
+				resourcesLoaded.size()));
 
 		return resultModel;
 	}
