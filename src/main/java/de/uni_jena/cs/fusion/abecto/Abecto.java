@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.jar.Attributes;
@@ -126,29 +127,32 @@ public class Abecto implements Callable<Integer> {
 		// sort by number of (transitive) dependencies to ensure
 		Collections.sort(stepOrder, (x, y) -> Integer.compare(predecessors.get(x).size(), predecessors.get(y).size()));
 
-		// setup and run pipeline
-		Executor executor = Executors.newCachedThreadPool();
-		Map<Resource, Step> steps = new HashMap<>();
-		Map<Resource, CompletableFuture<?>> stepFutures = new HashMap<>();
-		for (Resource stepIri : stepOrder) {
-			// setup step
-			Collection<Step> inputSteps = predecessors.get(stepIri).stream().map(steps::get)
-					.collect(Collectors.toList());
-			Step step = new Step(relativeBasePath, dataset, configurationModel, stepIri, inputSteps, aspects);
-			steps.put(stepIri, step);
-			// schedule step
-			CompletableFuture<?>[] inputFutures = predecessors.get(stepIri).stream().map(stepFutures::get)
-					.toArray(i -> new CompletableFuture<?>[i]);
-			CompletableFuture<?> stepFuture = CompletableFuture.allOf(inputFutures).thenRunAsync(step, executor);
-			stepFutures.put(stepIri, stepFuture);
-		}
+		try {
+			// setup and run pipeline
+			Executor executor = Executors.newCachedThreadPool();
+			Map<Resource, Step> steps = new HashMap<>();
+			Map<Resource, CompletableFuture<?>> stepFutures = new HashMap<>();
+			for (Resource stepIri : stepOrder) {
+				// setup step
+				Collection<Step> inputSteps = predecessors.get(stepIri).stream().map(steps::get)
+						.collect(Collectors.toList());
+				Step step = new Step(relativeBasePath, dataset, configurationModel, stepIri, inputSteps, aspects);
+				steps.put(stepIri, step);
+				// schedule step
+				CompletableFuture<?>[] inputFutures = predecessors.get(stepIri).stream().map(stepFutures::get)
+						.toArray(i -> new CompletableFuture<?>[i]);
+				CompletableFuture<?> stepFuture = CompletableFuture.allOf(inputFutures).thenRunAsync(step, executor);
+				stepFutures.put(stepIri, stepFuture);
+			}
+			// expect completion of all steps
+			CompletableFuture.allOf(stepFutures.values().toArray(new CompletableFuture[0])).join();
 
-		// expect completion of all steps
-		CompletableFuture.allOf(stepFutures.values().toArray(new CompletableFuture[0])).join();
-
-		// write results
-		if (trigOutputFile != null) {
-			RDFDataMgr.write(new FileOutputStream(trigOutputFile), dataset, Lang.TRIG);
+			// write results
+			if (trigOutputFile != null) {
+				RDFDataMgr.write(new FileOutputStream(trigOutputFile), dataset, Lang.TRIG);
+			}
+		} catch (CompletionException e) {
+			log.error("Plan execution failed.", e.getCause());
 		}
 	}
 
