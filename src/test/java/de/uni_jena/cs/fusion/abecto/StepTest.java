@@ -122,9 +122,8 @@ public class StepTest {
 
 		Resource aspectResource = ResourceFactory.createResource("http://example.org/aspect");
 		Aspect aspect = new Aspect(aspectResource, "key");
-		Model configurationModel = ModelFactory.createDefaultModel();
 		Dataset graphs = DatasetFactory.createGeneral();
-		graphs.setDefaultModel(configurationModel);
+		Model configurationModel = graphs.getDefaultModel();
 
 		Model inputMetaDataModel = ModelFactory.createDefaultModel();
 		inputMetaDataModel.addLiteral(dataset2, STEP_NUMBER, 0);
