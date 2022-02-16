@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * fix **EquivalentValueMappingProcessor**: fix message format
 * fix **SparqlSourceProcessor**: fix language filter for Virtuoso SPARQL endpoints due to [non standard conform responses](https://github.com/openlink/virtuoso-opensource/issues/428#issuecomment-1026825894)
 * fix **UrlSourceProcessor**:
-	* enable arbitrary query lengths (workaround for [JENA-2257](https://issues.apache.org/jira/browse/JENA-2257))
+	* enable arbitrary query lengths by updating Apache Jena fixing [JENA-2257](https://issues.apache.org/jira/browse/JENA-2257)
 	* fix expected datatypes of some parameters
 
 ### Changed

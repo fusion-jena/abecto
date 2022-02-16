@@ -50,7 +50,6 @@ import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingFactory;
-import org.apache.jena.sparql.exec.http.QuerySendMode;
 import org.apache.jena.sparql.expr.E_Bound;
 import org.apache.jena.sparql.expr.E_Datatype;
 import org.apache.jena.sparql.expr.E_Lang;
@@ -154,9 +153,8 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 
 	@Override
 	public void run() {
-		// TODO remove workaround for https://issues.apache.org/jira/browse/JENA-2257
-		extract(this.getOutputPrimaryModel().get(),
-				QueryExecution.service(this.service.getURI()).sendMode(QuerySendMode.asPost), this.query, this.list,
+		extract(this.getOutputPrimaryModel().get(), QueryExecution.service(this.service.getURI()), this.query,
+				this.list,
 				this.followInverse.stream().map(r -> ResourceFactory.createProperty(r.getURI()))
 						.collect(Collectors.toList()),
 				this.followUnlimited.stream().map(r -> ResourceFactory.createProperty(r.getURI()))
@@ -261,8 +259,8 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 
 					if (followInverse.iterator().hasNext()) {
 						// add resource list as subject
-						constructQuery.setQueryPattern(group(triple, followInverseValuesClause,
-								valuesClause(o, currentChunck)));
+						constructQuery.setQueryPattern(
+								group(triple, followInverseValuesClause, valuesClause(o, currentChunck)));
 
 						log.debug("\n" + constructQuery.toString());
 						service.query(constructQuery).build().execConstruct(resultModel);
