@@ -15,12 +15,6 @@
  */
 package de.uni_jena.cs.fusion.abecto.processor;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -45,33 +39,16 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingFactory;
-import org.apache.jena.sparql.expr.E_Bound;
-import org.apache.jena.sparql.expr.E_Datatype;
-import org.apache.jena.sparql.expr.E_Lang;
-import org.apache.jena.sparql.expr.E_LangMatches;
-import org.apache.jena.sparql.expr.E_LogicalAnd;
-import org.apache.jena.sparql.expr.E_LogicalNot;
-import org.apache.jena.sparql.expr.E_LogicalOr;
-import org.apache.jena.sparql.expr.E_NotOneOf;
-import org.apache.jena.sparql.expr.Expr;
-import org.apache.jena.sparql.expr.ExprList;
-import org.apache.jena.sparql.expr.ExprVar;
-import org.apache.jena.sparql.expr.NodeValue;
-import org.apache.jena.sparql.expr.nodevalue.NodeValueString;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementData;
-import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.Template;
-import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
-import org.apache.jena.vocabulary.XSD;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -116,14 +93,6 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 	@Parameter
 	public Integer maxDistance = 0;
 	/**
-	 * Properties that represent a hierarchy. Resources associated to a loaded
-	 * resource by a hierarchy property will be loaded unlimited, but will not cause
-	 * retrieval of further resources not connected by a hierarchy property.
-	 * Default: rdfs:subClassOf
-	 */
-	@Parameter
-	public Collection<Resource> followUnlimited = new ArrayList<>(Arrays.asList(RDFS.subClassOf));
-	/**
 	 * Properties to track in inverse direction to compile a list of associated
 	 * resources to load. That means that the subject of a statement whose property
 	 * is in this list and whose object is a loaded resource will become a
@@ -132,24 +101,29 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 	@Parameter
 	public Collection<Resource> followInverse = new ArrayList<>();
 	/**
+	 * Properties that represent a hierarchy. Resources associated to a loaded
+	 * resource by a followUnlimited property will be loaded unlimited, but will not
+	 * cause retrieval of further resources not connected by a followUnlimited
+	 * property or a followInverseUnlimited property. Default: rdfs:subClassOf
+	 */
+	@Parameter
+	public Collection<Resource> followUnlimited = new ArrayList<>(Arrays.asList(RDFS.subClassOf));
+	/**
+	 * Properties that represent a hierarchy. Resources associated to a loaded
+	 * resource by the inverse of a followInverseUnlimited property will be loaded
+	 * unlimited, but will not cause retrieval of further resources not connected by
+	 * a followUnlimited property or a followInverseUnlimited property.
+	 */
+	@Parameter
+	public Collection<Resource> followInverseUnlimited = new ArrayList<>();
+	/**
 	 * Total maximum number of retries of failed request to the source SPARQL
-	 * endpoint. Default: 5
+	 * endpoint. Default: 32
 	 * 
 	 * @see #chunkSizeDecreaseFactor
 	 */
 	@Parameter
-	public Integer maxRetries = 5;
-
-	/**
-	 * Language patterns to filter returned literals. If not empty, only string
-	 * literals will be loaded, that match at least on of these patterns. String
-	 * literals without language tag will match with "", all string literals with
-	 * language tag match with "*". Default: empty
-	 */
-	@Parameter
-	public Collection<String> languageFilterPatterns = new ArrayList<>();
-
-	// TODO add parameter to {@code followInverseUnlimited}
+	public Integer maxRetries = 32;
 
 	@Override
 	public void run() {
@@ -159,61 +133,12 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 						.collect(Collectors.toList()),
 				this.followUnlimited.stream().map(r -> ResourceFactory.createProperty(r.getURI()))
 						.collect(Collectors.toList()),
+				this.followInverseUnlimited.stream().map(r -> ResourceFactory.createProperty(r.getURI()))
+						.collect(Collectors.toList()),
 				this.maxDistance, this.chunkSize);
 	}
 
-	private static ElementData valuesClause(Var var, Iterable<? extends Resource> values) {
-		ElementData elementData = new ElementData();
-		elementData.add(var);
-		for (Resource value : values) {
-			elementData.add(BindingFactory.binding(var, value.asNode()));
-		}
-		return elementData;
-	}
-
-	private final static Var s = Var.alloc("s"), p = Var.alloc("p"), o = Var.alloc("o");
-	private ElementFilter languageFilter;
-
-	private void prepareLanguageFilter(Collection<String> languageFilterPatterns) {
-		if (!languageFilterPatterns.isEmpty()) {
-			ExprVar exprVar​ = new ExprVar(o);
-
-			Expr expr = new E_NotOneOf(new E_Datatype(exprVar​), new ExprList(Arrays
-					.asList(NodeValue.makeNode(RDF.langString.asNode()), NodeValue.makeNode(XSD.xstring.asNode()))));
-
-			if (isVirtuosoHotfix428Needed()) {
-				// hotfix for
-				// https://github.com/openlink/virtuoso-opensource/issues/428#issuecomment-1026825894
-				expr = new E_LogicalAnd(expr, new E_LogicalNot(new E_LogicalAnd(new E_Bound(new E_Lang(exprVar​)),
-						new E_LogicalNot(new E_Bound(new E_Datatype(exprVar​))))));
-			}
-
-			for (String languageFilterPattern : languageFilterPatterns) {
-				expr = new E_LogicalOr(expr,
-						new E_LangMatches(new E_Lang(exprVar​), new NodeValueString(languageFilterPattern)));
-			}
-			this.languageFilter = new ElementFilter(expr);
-		} else {
-			this.languageFilter = null;
-		}
-	}
-
-	/**
-	 * Returns true, if a hotfix for
-	 * https://github.com/openlink/virtuoso-opensource/issues/428#issuecomment-1026825894
-	 * should be used
-	 */
-	private boolean isVirtuosoHotfix428Needed() {
-		try {
-			var request = HttpRequest.newBuilder(new URI(this.service.getURI())).build();
-			return HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.discarding()).headers()
-					.firstValue("Server").orElse("").contains("Virtuoso");
-		} catch (URISyntaxException | IOException | InterruptedException e) {
-			throw new RuntimeException(String.format("SPARQL Endpoint %s not accessable.", this.service), e);
-		}
-	}
-
-	private static ElementGroup group(Element... elements) {
+	private static ElementGroup createElementGroup(Element... elements) {
 		ElementGroup group = new ElementGroup();
 		for (Element element : elements) {
 			if (element != null) {
@@ -223,58 +148,98 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 		return group;
 	}
 
-	private void loadResources(QueryExecutionBuilder service, Collection<Resource> resourcesToLoad,
-			Iterable<Property> followInverse, Model resultModel, int chunkSize) {
+	private static Query createConstructQuery(Template template, Element pattern) {
+		Query query = new Query();
+		query.setQueryConstructType();
+		query.setConstructTemplate(template);
+		query.setQueryPattern(pattern);
+		return query;
+	}
 
-		// prepare queries
-		/*
-		 * This requires some complicated use of {@link Element}s, as both APIs, {@link
-		 * Query} and {@link org.apache.jena.arq.querybuilder.ConstructBuilder} do not
-		 * directly support multiple values clauses.
-		 */
-		BasicPattern pattern = BasicPattern.wrap(Collections.singletonList(new Triple(s, p, o)));
-		ElementTriplesBlock triple = new ElementTriplesBlock(pattern);
-		Query constructQuery = new Query();
-		constructQuery.setQueryConstructType();
-		constructQuery.setConstructTemplate(new Template(pattern));
-		ElementData followInverseValuesClause = valuesClause(p, followInverse);
+	private final static Var subjectVar = Var.alloc("s"), predicateVar = Var.alloc("p"), objectVar = Var.alloc("o"),
+			resourceToLoadVar = Var.alloc("l");
+	private final static List<Var> valueVars = Collections.singletonList(resourceToLoadVar);
 
-		// initialize chunk
-		List<Resource> currentChunck = new ArrayList<Resource>(chunkSize);
+	/**
+	 * 
+	 * <p>
+	 * <strong>Implementation Notes</strong> The method uses two separate CONSTRUCT
+	 * queries to load statements containing the resources as subject or as object:
+	 * <ul>
+	 * <li>DESCRIBE queries could not be used, as the returned set of statements
+	 * depends on the SPARQL endpoint implementation. Some implementations include
+	 * statements with the resource as object, some do not. Some implementations
+	 * include descriptions of used properties, some do not.
+	 * <li>Two separate queries were used due to terrible query performance for
+	 * combined queries.
+	 * <li>Use VALUES clause inside of WHERE clause, not outside, as this is
+	 * <a href="https://github.com/openlink/virtuoso-opensource/issues/921">not
+	 * supported by Virtuoso</a>.
+	 * </ul>
+	 * 
+	 * @param service
+	 * @param resourcesToLoad
+	 * @param resultModel
+	 * @param loadInverse
+	 * @param chunkSize
+	 */
+	private void loadResources(QueryExecutionBuilder service, Collection<Resource> resourcesToLoad, Model resultModel,
+			boolean loadInverse, int chunkSize) {
 
+		// initialize queries
+		Query[] queriesToExecute;
+		List<Binding> currentChunck = new ArrayList<Binding>(chunkSize);
+		ElementData values = new ElementData(valueVars, currentChunck);
+
+		BasicPattern pattern = BasicPattern
+				.wrap(Collections.singletonList(new Triple(resourceToLoadVar, predicateVar, objectVar)));
+		Query query = createConstructQuery(new Template(pattern),
+				createElementGroup(new ElementTriplesBlock(pattern), values));
+		if (loadInverse) {
+			BasicPattern patternInverse = BasicPattern
+					.wrap(Collections.singletonList(new Triple(subjectVar, predicateVar, resourceToLoadVar)));
+			Query queryInverse = createConstructQuery(new Template(patternInverse),
+					createElementGroup(new ElementTriplesBlock(patternInverse), values));
+
+			queriesToExecute = new Query[] { query, queryInverse };
+		} else {
+			queriesToExecute = new Query[] { query };
+		}
+
+		// prepare iteration
+		Query lastQuery = null;
 		ListIterator<Resource> resourcesToLoadIterator = new ArrayList<>(resourcesToLoad).listIterator();
 		while (resourcesToLoadIterator.hasNext()) {
-			// add resource to query
-			currentChunck.add(resourcesToLoadIterator.next());
-			if (currentChunck.size() == chunkSize || // chunk completed or
+
+			// add resource to current chunck
+			currentChunck.add(BindingFactory.binding(resourceToLoadVar, resourcesToLoadIterator.next().asNode()));
+
+			// execute chunk if necessary
+			if (currentChunck.size() == chunkSize || // chunk full or
 					!resourcesToLoadIterator.hasNext()) { // last resource
-				log.debug(String.format("Fetching %d resources: %s", currentChunck.size(), currentChunck));
 				try {
-					constructQuery.setQueryPattern(group(triple, valuesClause(s, currentChunck), languageFilter));
-					// create prefixes for namespaces to shorten queries
-					constructQuery.setPrefixMapping(shortPrefixMapping(currentChunck));
 
-					log.debug("\n" + constructQuery.toString());
-					service.query(constructQuery).build().execConstruct(resultModel);
-
-					if (followInverse.iterator().hasNext()) {
-						// add resource list as subject
-						constructQuery.setQueryPattern(
-								group(triple, followInverseValuesClause, valuesClause(o, currentChunck)));
-
-						log.debug("\n" + constructQuery.toString());
-						service.query(constructQuery).build().execConstruct(resultModel);
+					for (Query queryToExecute : queriesToExecute) {
+						// reuse prefixes returned by the service to shorten query
+						queryToExecute.setPrefixMapping(resultModel);
+						log.debug(String.format("Fetching %d resources: %s", currentChunck.size(), queryToExecute));
+						lastQuery = queryToExecute;
+						service.query(queryToExecute).build().execConstruct(resultModel);
 					}
+
 				} catch (Throwable e) {
 					if (this.maxRetries > 0) {
-						this.maxRetries--; // reduce left over retries
-						this.chunkSize = (int) (this.chunkSize * this.chunkSizeDecreaseFactor); // reduce chunk size
+						// reduce left over retries
+						this.maxRetries--;
+						// reduce chunk size
+						this.chunkSize = Math.max(1, (int) (this.chunkSize * this.chunkSizeDecreaseFactor));
 						for (int i = 0; i < currentChunck.size(); i++) {
-							resourcesToLoadIterator.previous(); // redo resources of current chunk
+							// redo resources of current chunk
+							resourcesToLoadIterator.previous();
 						}
-						log.warn(String.format(
-								"Request failed. Reduced chunk size to %d. Left retries: %s Failed query:\n%s",
-								this.chunkSize, this.maxRetries, constructQuery.toString()), e);
+						log.warn(String.format("Request failed:\n%s", lastQuery.toString()), e);
+						log.warn(String.format("Continue with reduced chunk size: %d Left retries: %s", this.chunkSize,
+								this.maxRetries));
 					} else {
 						throw e;
 					}
@@ -286,35 +251,9 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 		}
 	}
 
-	private static String guessNamespace(Resource resource) {
-		String uri = resource.getURI();
-		int namespaceEndIndex = uri.endsWith("/") ? uri.lastIndexOf("/", uri.length() - 2) : uri.lastIndexOf("/");
-		return uri.substring(0, namespaceEndIndex + 1);
-	}
-
-	private static PrefixMapping shortPrefixMapping(Collection<Resource> resources) {
-		PrefixMapping prefixMapping = PrefixMapping.Factory.create();
-
-		resources.stream().map(SparqlSourceProcessor::guessNamespace).forEach(namespace -> {
-			if (prefixMapping.getNsURIPrefix(namespace) == null) {
-				int i = prefixMapping.numPrefixes();
-				String prefix = "";
-				if (i > 0) {
-					prefix = (char) ((i - 1) % 26 + 97)
-							+ (((i - 1) / 26 > 0) ? Integer.toString((i - 1) / 26 - 1, Character.MAX_RADIX) : "");
-				}
-				prefixMapping.setNsPrefix(prefix, namespace);
-			}
-		});
-
-		return prefixMapping;
-	}
-
 	private Model extract(Model resultModel, QueryExecutionBuilder service, Optional<Query> query,
 			Collection<Resource> list, Collection<Property> followInverse, Collection<Property> followUnlimited,
-			int maxDistance, int chunkSize) {
-
-		prepareLanguageFilter(languageFilterPatterns);
+			Collection<Property> followInverseUnlimited, int maxDistance, int chunkSize) {
 
 		Set<Resource> resourcesLoaded = new HashSet<Resource>();
 		Set<Resource> resourcesToLoad = new HashSet<Resource>();
@@ -333,6 +272,8 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 					}
 				}
 			}
+			// use prefixes of given query to shorten generated queries
+			resultModel.setNsPrefixes(relevantResourceQuery.getPrefixMapping());
 		}
 
 		// get list of relevant resources using parameter `list`
@@ -342,7 +283,7 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 		// load next
 		for (int distance = 0; distance <= maxDistance; distance++) {
 			// load resources in chunks
-			loadResources(service, resourcesToLoad, followInverse, resultModel, chunkSize);
+			loadResources(service, resourcesToLoad, resultModel, true, chunkSize);
 
 			// remember loaded resources
 			resourcesLoaded.addAll(resourcesToLoad);
@@ -350,8 +291,10 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 
 			if ( /* there is a next iteration */ distance < maxDistance) {
 				// get associated resources to load in next iteration
-				resultModel.listSubjects().filterKeep(RDFNode::isURIResource).filterDrop(resourcesLoaded::contains)
-						.forEachRemaining(resourcesToLoad::add);
+				for (Property followInverseProperty : followInverse) {
+					resultModel.listSubjectsWithProperty(followInverseProperty).filterKeep(RDFNode::isURIResource)
+							.filterDrop(resourcesLoaded::contains).forEachRemaining(resourcesToLoad::add);
+				}
 				resultModel.listObjects().filterKeep(RDFNode::isURIResource).filterDrop(resourcesLoaded::contains)
 						.mapWith(RDFNode::asResource).forEachRemaining(resourcesToLoad::add);
 			}
@@ -361,24 +304,31 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 		// earlier loaded resources by at least one of the `hierarchyProperties`
 		do {
 			// load resources in chunks
-			loadResources(service, resourcesToLoad, followInverse, resultModel, chunkSize);
+			loadResources(service, resourcesToLoad, resultModel, true, chunkSize);
 
 			// remember loaded resources
 			resourcesLoaded.addAll(resourcesToLoad);
 			resourcesToLoad.clear();
 
-			// get new resources associated by a hierarchyProperty to load in next iteration
-			for (Property hierarchyProperty : followUnlimited) {
-				resultModel.listObjectsOfProperty(hierarchyProperty).filterKeep(RDFNode::isURIResource)
+			// get new resources associated by a followUnlimited or followInverseUnlimited
+			// property to load in next iteration
+			for (Property followUnlimitedProperty : followUnlimited) {
+				resultModel.listObjectsOfProperty(followUnlimitedProperty).filterKeep(RDFNode::isURIResource)
 						.filterDrop(resourcesLoaded::contains).mapWith(RDFNode::asResource)
 						.forEachRemaining(resourcesToLoad::add);
 			}
+			for (Property followInverseUnlimitedProperty : followInverseUnlimited) {
+				resultModel.listSubjectsWithProperty(followInverseUnlimitedProperty).filterKeep(RDFNode::isURIResource)
+						.filterDrop(resourcesLoaded::contains).mapWith(RDFNode::asResource)
+						.forEachRemaining(resourcesToLoad::add);
+			}
+
 		} while (!resourcesToLoad.isEmpty());
 
 		// get descriptions of properties used to describe loaded resources
 		do {
 			// load resources in chunks
-			loadResources(service, resourcesToLoad, followInverse, resultModel, chunkSize);
+			loadResources(service, resourcesToLoad, resultModel, false, chunkSize);
 
 			// remember loaded resources
 			resourcesLoaded.addAll(resourcesToLoad);

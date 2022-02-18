@@ -6,15 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 
 ### Added
-* add parameter `languageFilterPatterns` to **SparqlSourceProcessor**: enable filtering of loaded string literals by language
-* add retries on failures to **SparqlSourceProcessor** configurable with parameters `chunkSizeDecreaseFactor` and `maxRetries`
+* extend **SparqlSourceProcessor**: add retries on failures configurable with parameters `chunkSizeDecreaseFactor` and `maxRetries`
+* extend **SparqlSourceProcessor**: add parameter `followInverseUnlimited`
 
 ### Fixed
 * fix **EquivalentValueMappingProcessor**: fix message format
-* fix **SparqlSourceProcessor**: fix language filter for Virtuoso SPARQL endpoints due to [non standard conform responses](https://github.com/openlink/virtuoso-opensource/issues/428#issuecomment-1026825894)
-* fix **UrlSourceProcessor**:
-	* enable arbitrary query lengths by updating Apache Jena fixing [JENA-2257](https://issues.apache.org/jira/browse/JENA-2257)
-	* fix expected datatypes of some parameters
+* fix **SparqlSourceProcessor**: enable arbitrary query lengths by updating Apache Jena fixing [JENA-2257](https://issues.apache.org/jira/browse/JENA-2257)
+* fix **SparqlSourceProcessor**: fix expected datatypes of some parameters
+* fix **SparqlSourceProcessor**: increased compatibility to SPARQL endpoint implementations
 
 ### Changed
 * improved logging library setup
