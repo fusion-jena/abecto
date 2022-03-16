@@ -16,6 +16,8 @@
 package de.uni_jena.cs.fusion.abecto.processor;
 
 import static de.uni_jena.cs.fusion.abecto.TestUtil.resource;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -49,6 +51,61 @@ class LiteralValueComparisonProcessorTest extends AbstractValueComparisonProcess
 		processor.variables = variables;
 		processor.aspect = aspect;
 		return processor;
+	}
+
+	@Test
+	void useValue() {
+		LiteralValueComparisonProcessor processor = new LiteralValueComparisonProcessor();
+		String lex = "";
+
+		// empty
+		processor.languageFilterPatterns = Arrays.asList();
+		assertTrue(processor.useValue(ResourceFactory.createStringLiteral(lex)));
+		assertTrue(processor.useValue(ResourceFactory.createLangLiteral(lex, "")));
+		assertTrue(processor.useValue(ResourceFactory.createLangLiteral(lex, "en")));
+		assertTrue(processor.useValue(ResourceFactory.createLangLiteral(lex, "en-us")));
+		assertTrue(processor.useValue(ResourceFactory.createLangLiteral(lex, "de")));
+		assertTrue(processor.useValue(ResourceFactory.createLangLiteral(lex, "de-de")));
+		
+		// none
+		processor.languageFilterPatterns = Arrays.asList("");
+		assertTrue(processor.useValue(ResourceFactory.createStringLiteral(lex)));
+		assertFalse(processor.useValue(ResourceFactory.createLangLiteral(lex, "en")));
+		assertFalse(processor.useValue(ResourceFactory.createLangLiteral(lex, "en-us")));
+		assertFalse(processor.useValue(ResourceFactory.createLangLiteral(lex, "de")));
+		assertFalse(processor.useValue(ResourceFactory.createLangLiteral(lex, "de-de")));
+		
+		// any
+		processor.languageFilterPatterns = Arrays.asList("*");
+		assertFalse(processor.useValue(ResourceFactory.createStringLiteral(lex)));
+		assertTrue(processor.useValue(ResourceFactory.createLangLiteral(lex, "en")));
+		assertTrue(processor.useValue(ResourceFactory.createLangLiteral(lex, "en-us")));
+		assertTrue(processor.useValue(ResourceFactory.createLangLiteral(lex, "de")));
+		assertTrue(processor.useValue(ResourceFactory.createLangLiteral(lex, "de-de")));
+		
+		// en
+		processor.languageFilterPatterns = Arrays.asList("en");
+		assertFalse(processor.useValue(ResourceFactory.createStringLiteral(lex)));
+		assertTrue(processor.useValue(ResourceFactory.createLangLiteral(lex, "en")));
+		assertTrue(processor.useValue(ResourceFactory.createLangLiteral(lex, "en-us")));
+		assertFalse(processor.useValue(ResourceFactory.createLangLiteral(lex, "de")));
+		assertFalse(processor.useValue(ResourceFactory.createLangLiteral(lex, "de-de")));
+		
+		// en or de
+		processor.languageFilterPatterns = Arrays.asList("en","de");
+		assertFalse(processor.useValue(ResourceFactory.createStringLiteral(lex)));
+		assertTrue(processor.useValue(ResourceFactory.createLangLiteral(lex, "en")));
+		assertTrue(processor.useValue(ResourceFactory.createLangLiteral(lex, "en-us")));
+		assertTrue(processor.useValue(ResourceFactory.createLangLiteral(lex, "de")));
+		assertTrue(processor.useValue(ResourceFactory.createLangLiteral(lex, "de-de")));
+		
+		// en or none
+		processor.languageFilterPatterns = Arrays.asList("en","");
+		assertTrue(processor.useValue(ResourceFactory.createStringLiteral(lex)));
+		assertTrue(processor.useValue(ResourceFactory.createLangLiteral(lex, "en")));
+		assertTrue(processor.useValue(ResourceFactory.createLangLiteral(lex, "en-us")));
+		assertFalse(processor.useValue(ResourceFactory.createLangLiteral(lex, "de")));
+		assertFalse(processor.useValue(ResourceFactory.createLangLiteral(lex, "de-de")));
 	}
 
 	@Test

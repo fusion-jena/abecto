@@ -16,6 +16,8 @@
 package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collection;
 
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.xsd.impl.XSDBaseNumericType;
@@ -23,8 +25,31 @@ import org.apache.jena.datatypes.xsd.impl.XSDDouble;
 import org.apache.jena.datatypes.xsd.impl.XSDFloat;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.sparql.expr.nodevalue.NodeFunctions;
+
+import de.uni_jena.cs.fusion.abecto.Parameter;
 
 public class LiteralValueComparisonProcessor extends AbstractValueComparisonProcessor<LiteralValueComparisonProcessor> {
+
+	/**
+	 * Language patterns to filter compared literals. If not empty, only string
+	 * literals will be loaded, that match at least on of these patterns. String
+	 * literals without language tag will match with "", all string literals with
+	 * language tag match with "*". Default: empty
+	 */
+	@Parameter
+	public Collection<String> languageFilterPatterns = new ArrayList<>();
+
+	@Override
+	public boolean useValue(RDFNode value) {
+		if (languageFilterPatterns.isEmpty()) {
+			return true;
+		} else {
+			String langStr = value.asLiteral().getLanguage();
+			return languageFilterPatterns.stream()
+					.anyMatch(languageFilterPattern -> NodeFunctions.langMatches(langStr, languageFilterPattern));
+		}
+	}
 
 	@Override
 	public boolean isValidValue(RDFNode value) {
