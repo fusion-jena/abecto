@@ -17,8 +17,12 @@ package de.uni_jena.cs.fusion.abecto;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -26,6 +30,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
@@ -39,6 +44,8 @@ import java.util.stream.Collectors;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
+import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.riot.Lang;
@@ -50,6 +57,13 @@ import org.slf4j.LoggerFactory;
 import de.uni_jena.cs.fusion.abecto.datatype.SparqlQueryType;
 import de.uni_jena.cs.fusion.abecto.datatype.XsdDateTimeStampType;
 import de.uni_jena.cs.fusion.abecto.util.Datasets;
+import freemarker.core.ParseException;
+import freemarker.template.Configuration;
+import freemarker.template.MalformedTemplateNameException;
+import freemarker.template.Template;
+import freemarker.template.TemplateException;
+import freemarker.template.TemplateExceptionHandler;
+import freemarker.template.TemplateNotFoundException;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.IVersionProvider;
@@ -60,9 +74,13 @@ import picocli.CommandLine.Parameters;
 public class Abecto implements Callable<Integer> {
 
 	static {
+		// configure logging
 		System.setProperty("java.util.logging.SimpleFormatter.format", "[%1$tF %1$tT] [%4$-7s] [%3$s] %5$s %6$s%n");
 		java.util.logging.Logger.getLogger("org.apache.jena.riot").setLevel(java.util.logging.Level.OFF);
 		java.util.logging.Logger.getLogger("").setLevel(java.util.logging.Level.ALL);
+
+		// init Apache Jena
+		initApacheJena();
 	}
 
 	final static Logger log = LoggerFactory.getLogger(Abecto.class);
@@ -73,19 +91,58 @@ public class Abecto implements Callable<Integer> {
 	}
 
 	@Option(names = { "-p",
-			"--plan" }, paramLabel = "plan-iri", description = "IRI of the plan to process. Required, if the configuration contains multiple plans.")
+			"--plan" }, paramLabel = "Plan IRI", description = "IRI of the plan to process. Required, if the configuration contains multiple plans.")
 	String planIri;
 
-	@Option(names = "--trig", paramLabel = "result-file", description = "RDF TRIG dataset file for the execution results.")
+	@Option(names = "--trig", paramLabel = "TRIG Output File", description = "RDF TRIG dataset file for the execution results.")
 	File trigOutputFile;
 
-	@Parameters(index = "0", paramLabel = "configuration-file", description = "RDF dataset file containing the execution plan configuration.")
+	@Option(names = "--loadOnly", paramLabel = "Load Only", description = "If set, the plan will not get executed. This enables to export results without repeated plan execution.")
+	boolean loadOnly;
+
+	@Option(names = { "-E",
+			"--export" }, paramLabel = "Export Template and File", description = "Template and output file for an result export. Can be set multiple times.")
+	Map<String, File> exports;
+
+	@Parameters(index = "0", paramLabel = "Configuration File", description = "RDF dataset file containing the execution plan configuration.")
 	File configurationFile;
+
+	private Dataset dataset;
+	private File relativeBasePath;
+	private Configuration freemarker;
+	private final static String TEMPLATE_FOLDER = "/de/uni_jena/cs/fusion/abecto/export";
 
 	@Override
 	public Integer call() {
 		try {
-			executePlan(configurationFile, planIri, trigOutputFile);
+			loadDataset(configurationFile);
+
+			if (!loadOnly) {
+				executePlan(planIri);
+			}
+
+			// write results as TRIG
+			if (trigOutputFile != null) {
+				RDFDataMgr.write(new FileOutputStream(trigOutputFile), dataset, Lang.TRIG);
+			}
+
+			// export results
+			if (!exports.isEmpty()) {
+				// prepare freemarker configuration
+				freemarker = new Configuration(Configuration.VERSION_2_3_31);
+				freemarker.setClassForTemplateLoading(this.getClass(), TEMPLATE_FOLDER);
+				freemarker.setDefaultEncoding("UTF-8");
+				freemarker.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
+				freemarker.setLogTemplateExceptions(false);
+				freemarker.setWrapUncheckedExceptions(true);
+				freemarker.setFallbackOnNullLoopVariable(false);
+			}
+			for (Entry<String, File> export : exports.entrySet()) {
+				export(export.getKey(), export.getValue());
+			}
+		} catch (CompletionException e) {
+			log.error("Plan execution failed.", e.getCause());
+			return 2;
 		} catch (Throwable e) {
 			log.error(e.getMessage(), e);
 			return 2;
@@ -94,22 +151,40 @@ public class Abecto implements Callable<Integer> {
 		return 0;
 	}
 
-	public static void executePlan(File configurationFile, String planIri, File trigOutputFile) throws Throwable {
-
-		if (trigOutputFile == null) {
-			throw new IllegalArgumentException("No output file specified.");
-		}
-
-		initApacheJena();
+	public void loadDataset(File configurationFile)
+			throws IllegalArgumentException, FileNotFoundException, IOException {
 
 		// derive relative base path
-		File relativeBasePath = configurationFile.getParentFile();
+		this.relativeBasePath = configurationFile.getParentFile();
 
 		// read configuration
-		Dataset dataset = DatasetFactory.createGeneral();
+		this.dataset = DatasetFactory.createGeneral();
 
-		Datasets.read(dataset, new FileInputStream(configurationFile));
+		Datasets.read(this.dataset, new FileInputStream(configurationFile));
+	}
 
+	public void export(String exportType, File outputFile) throws TemplateNotFoundException,
+			MalformedTemplateNameException, ParseException, IOException, TemplateException {
+		Template template = freemarker.getTemplate(exportType + ".ftlh");
+		String queryStr = new String(
+				this.getClass().getResourceAsStream(TEMPLATE_FOLDER + "/" + exportType + ".rq").readAllBytes(),
+				StandardCharsets.UTF_8);
+		List<Map<String, String>> data = new ArrayList<>();
+		ResultSet results = QueryExecutionFactory.create(queryStr, dataset).execSelect();
+		results.forEachRemaining(binding -> {
+			Map<String, String> map = new HashMap<>();
+			data.add(map);
+			results.getResultVars().forEach(var -> {
+				if (binding.contains(var)) {
+					map.put(var, binding.get(var).toString());
+				}
+			});
+		});
+		template.process(Collections.singletonMap("data", data), new FileWriter(outputFile, StandardCharsets.UTF_8));
+	}
+
+	public void executePlan(String planIri)
+			throws IllegalArgumentException, ClassCastException, ReflectiveOperationException {
 		// get configuration model
 		Model configurationModel = dataset.getDefaultModel();
 
@@ -127,33 +202,24 @@ public class Abecto implements Callable<Integer> {
 		// sort by number of (transitive) dependencies to ensure
 		Collections.sort(stepOrder, (x, y) -> Integer.compare(predecessors.get(x).size(), predecessors.get(y).size()));
 
-		try {
-			// setup and run pipeline
-			Executor executor = Executors.newCachedThreadPool();
-			Map<Resource, Step> steps = new HashMap<>();
-			Map<Resource, CompletableFuture<?>> stepFutures = new HashMap<>();
-			for (Resource stepIri : stepOrder) {
-				// setup step
-				Collection<Step> inputSteps = predecessors.get(stepIri).stream().map(steps::get)
-						.collect(Collectors.toList());
-				Step step = new Step(relativeBasePath, dataset, configurationModel, stepIri, inputSteps, aspects);
-				steps.put(stepIri, step);
-				// schedule step
-				CompletableFuture<?>[] inputFutures = predecessors.get(stepIri).stream().map(stepFutures::get)
-						.toArray(i -> new CompletableFuture<?>[i]);
-				CompletableFuture<?> stepFuture = CompletableFuture.allOf(inputFutures).thenRunAsync(step, executor);
-				stepFutures.put(stepIri, stepFuture);
-			}
-			// expect completion of all steps
-			CompletableFuture.allOf(stepFutures.values().toArray(new CompletableFuture[0])).join();
-
-			// write results
-			if (trigOutputFile != null) {
-				RDFDataMgr.write(new FileOutputStream(trigOutputFile), dataset, Lang.TRIG);
-			}
-		} catch (CompletionException e) {
-			log.error("Plan execution failed.", e.getCause());
+		// setup and run pipeline
+		Executor executor = Executors.newCachedThreadPool();
+		Map<Resource, Step> steps = new HashMap<>();
+		Map<Resource, CompletableFuture<?>> stepFutures = new HashMap<>();
+		for (Resource stepIri : stepOrder) {
+			// setup step
+			Collection<Step> inputSteps = predecessors.get(stepIri).stream().map(steps::get)
+					.collect(Collectors.toList());
+			Step step = new Step(relativeBasePath, dataset, configurationModel, stepIri, inputSteps, aspects);
+			steps.put(stepIri, step);
+			// schedule step
+			CompletableFuture<?>[] inputFutures = predecessors.get(stepIri).stream().map(stepFutures::get)
+					.toArray(i -> new CompletableFuture<?>[i]);
+			CompletableFuture<?> stepFuture = CompletableFuture.allOf(inputFutures).thenRunAsync(step, executor);
+			stepFutures.put(stepIri, stepFuture);
 		}
+		// expect completion of all steps
+		CompletableFuture.allOf(stepFutures.values().toArray(new CompletableFuture[0])).join();
 	}
 
 	public static void initApacheJena() {

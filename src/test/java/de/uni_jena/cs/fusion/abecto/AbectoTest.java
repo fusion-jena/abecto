@@ -16,7 +16,6 @@
 package de.uni_jena.cs.fusion.abecto;
 
 import java.io.File;
-import java.nio.file.Files;
 
 import org.junit.jupiter.api.Test;
 
@@ -26,8 +25,9 @@ public class AbectoTest {
 	public void executePlan() throws Throwable {
 		File configurationFile = new File(
 				this.getClass().getResource("../../../../../tutorial-configuration.trig").toURI());
-		File outputFile = Files.createTempFile(null, null).toFile();
-		Abecto.executePlan(configurationFile, null, outputFile);
+		Abecto abecto = new Abecto();
+		abecto.loadDataset(configurationFile);
+		abecto.executePlan(null);
 		// TODO check output
 	}
 
