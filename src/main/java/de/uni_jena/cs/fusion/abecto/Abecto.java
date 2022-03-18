@@ -127,7 +127,7 @@ public class Abecto implements Callable<Integer> {
 			}
 
 			// export results
-			if (!exports.isEmpty()) {
+			if (exports != null) {
 				// prepare freemarker configuration
 				freemarker = new Configuration(Configuration.VERSION_2_3_31);
 				freemarker.setClassForTemplateLoading(this.getClass(), TEMPLATE_FOLDER);
@@ -136,9 +136,10 @@ public class Abecto implements Callable<Integer> {
 				freemarker.setLogTemplateExceptions(false);
 				freemarker.setWrapUncheckedExceptions(true);
 				freemarker.setFallbackOnNullLoopVariable(false);
-			}
-			for (Entry<String, File> export : exports.entrySet()) {
-				export(export.getKey(), export.getValue());
+				// apply export templates
+				for (Entry<String, File> export : exports.entrySet()) {
+					export(export.getKey(), export.getValue());
+				}
 			}
 		} catch (CompletionException e) {
 			log.error("Plan execution failed.", e.getCause());
