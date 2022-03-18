@@ -387,5 +387,7 @@ public class ProcessorTest {
 				new HashSet<>(Arrays.asList(resource4, resource5)));
 		assertEquals(new HashSet<>(processor.getCorrespondenceGroup(resource5)),
 				new HashSet<>(Arrays.asList(resource4, resource5)));
+		assertEquals(new HashSet<>(processor.getCorrespondenceGroup(resource6)),
+				new HashSet<>(Arrays.asList(resource6)));
 	}
 }

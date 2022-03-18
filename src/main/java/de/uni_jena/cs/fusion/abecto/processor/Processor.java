@@ -19,6 +19,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -313,14 +314,20 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 
 	/**
 	 * Returns the group of corresponding {@link Resource Resources} that contains
-	 * the given {@link Resource}.
+	 * the given {@link Resource}, including the given {@link Resource}.
 	 * 
 	 * @param resource a resource that is contained by the group
-	 * @return the group of corresponding {@link Resource Resources}
+	 * @return the group of corresponding {@link Resource Resources} containing at
+	 *         least the given {@link Resource}
 	 */
 	public List<Resource> getCorrespondenceGroup(Resource resource) {
-		return getTransitiveCorrespondencesModel().listObjectsOfProperty(resource, AV.correspondsToResource)
-				.mapWith(RDFNode::asResource).toList();
+		List<Resource> correspondenceGroup = getTransitiveCorrespondencesModel()
+				.listObjectsOfProperty(resource, AV.correspondsToResource).mapWith(RDFNode::asResource).toList();
+		if (correspondenceGroup.isEmpty()) {
+			return Collections.singletonList(resource);
+		} else {
+			return correspondenceGroup;
+		}
 	}
 
 	public final Set<Resource> getDatasets() {

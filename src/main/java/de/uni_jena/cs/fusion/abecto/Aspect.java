@@ -222,9 +222,28 @@ public class Aspect {
 			throws NullPointerException {
 		Set<Resource> resourceKeys = new HashSet<>();
 
-		Query query = aspect.getPattern(dataset).cloneQuery();
-		query.resetResultVars();
+		Query aspectQuery = aspect.getPattern(dataset);
+		// close query without result vars
+		Query query = new Query();
+		query.setQuerySelectType();
+		query.setPrefixMapping(aspectQuery.getPrefixMapping());
+		query.setBase(aspectQuery.getBase());
+		query.setQueryPattern(aspectQuery.getQueryPattern());
+		if (aspectQuery.getValuesData() != null) {
+			query.setValuesDataBlock(aspectQuery.getValuesVariables(), aspectQuery.getValuesData());
+		}
+		query.setLimit(aspectQuery.getLimit());
+		query.setOffset(aspectQuery.getOffset());
+		if (aspectQuery.getOrderBy() != null) {
+			aspectQuery.getOrderBy()
+					.forEach(sortCondition -> query.addOrderBy(sortCondition.expression, sortCondition.direction));
+		}
+		aspectQuery.getGroupBy().forEachVarExpr(query::addGroupBy);
+		aspectQuery.getHavingExprs().forEach(query::addHavingCondition);
+		// set var
 		query.addResultVar(aspect.getKeyVariable());
+		query.setDistinct(true);
+
 		ResultSet results = QueryExecutionFactory.create(query, datasetModels).execSelect();
 
 		String keyVariableName = aspect.getKeyVariableName();
