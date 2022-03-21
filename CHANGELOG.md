@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * extend **SparqlSourceProcessor**: add parameter `followInverseUnlimited`
 * extend **LiteralValueComparisonProcessor**: add parameter `languageFilterPatterns`
 * add result export engine
+* add result export template `deviations`
 * add result export template `resourceOmissions`
 
 ### Fixed
