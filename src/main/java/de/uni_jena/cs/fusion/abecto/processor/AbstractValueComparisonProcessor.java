@@ -108,16 +108,21 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 						while (valuesIterator2.hasNext()) {
 							RDFNode value2 = valuesIterator2.next();
 							if (this.isValidValue(value2)) {
-								if (!Metadata.isWrongValue(correspondingResource2, variable, value2, aspect,
-										this.getInputMetaModelUnion(dataset2))) {
-									if (this.equivalentValues(value1, value2)) {
-										// remove pair of equivalent values
-										valuesIterator1.remove();
+								if (this.useValue(value2)) {
+									if (!Metadata.isWrongValue(correspondingResource2, variable, value2, aspect,
+											this.getInputMetaModelUnion(dataset2))) {
+										if (this.equivalentValues(value1, value2)) {
+											// remove pair of equivalent values
+											valuesIterator1.remove();
+											valuesIterator2.remove();
+											continue value1loop;
+										}
+									} else {
+										// remove wrong value to avoid further processing
 										valuesIterator2.remove();
-										continue value1loop;
 									}
 								} else {
-									// remove wrong value to avoid further processing
+									// remove unused (filtered) value to avoid further processing
 									valuesIterator2.remove();
 								}
 							} else {
@@ -132,6 +137,9 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 						// remove wrong value to avoid further processing
 						valuesIterator1.remove();
 					}
+				} else {
+					// remove unused (filtered) value to avoid further processing
+					valuesIterator1.remove();
 				}
 			} else {
 				// report invalid value
