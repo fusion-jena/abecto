@@ -33,7 +33,7 @@ public class SparqlQueryType extends BaseDatatype {
 
 	@Override
 	public String unparse(Object value) {
-		if (value instanceof Query && ((Query) value).isSelectType()) {
+		if (value instanceof Query) {
 			return ((Query) value).toString();
 		}
 		throw new IllegalArgumentException(String.format("Value is not a %s.", Query.class.getCanonicalName()));
@@ -55,7 +55,7 @@ public class SparqlQueryType extends BaseDatatype {
 
 	@Override
 	public boolean isValidValue(Object valueForm) {
-		return valueForm instanceof Query && ((Query) valueForm).isSelectType();
+		return valueForm instanceof Query;
 	}
 
 	@Override

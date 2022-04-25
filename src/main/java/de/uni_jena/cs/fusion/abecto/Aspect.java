@@ -77,6 +77,11 @@ public class Aspect {
 				Query pattern = (Query) assertOne(
 						configurationModel.listObjectsOfProperty(aspectPatter, AV.definingQuery)).asLiteral()
 								.getValue();
+				if (!pattern.isSelectType()) {
+					throw new IllegalArgumentException(
+							String.format("Pattern of aspect %s and dataset %s is not a SPARQL Select Query.",
+									aspectIri.getURI(), dataset.getURI()));
+				}
 				aspect.setPattern(dataset, pattern);
 			}
 		}
