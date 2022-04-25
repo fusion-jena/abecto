@@ -15,9 +15,9 @@
  */
 package de.uni_jena.cs.fusion.abecto.processor;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -36,7 +36,7 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 	public Resource aspect;
 	/** Variables to process. */
 	@Parameter
-	public Collection<String> variables;
+	public List<String> variables;
 
 	@Override
 	public final void run() {

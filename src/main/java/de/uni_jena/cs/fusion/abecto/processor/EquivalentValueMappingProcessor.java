@@ -17,8 +17,8 @@ package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -43,7 +43,7 @@ public class EquivalentValueMappingProcessor extends MappingProcessor<Equivalent
 	@Parameter
 	public Resource aspect;
 	@Parameter
-	public Collection<String> variables;
+	public List<String> variables;
 
 	@Override
 	public void mapDatasets(Resource dataset1, Resource dataset2) {

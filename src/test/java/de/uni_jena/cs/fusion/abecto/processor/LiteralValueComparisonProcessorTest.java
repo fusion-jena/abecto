@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.List;
 
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.rdf.model.Literal;
@@ -46,7 +46,7 @@ class LiteralValueComparisonProcessorTest extends AbstractValueComparisonProcess
 	}
 
 	@Override
-	public Processor<?> getInstance(Collection<String> variables, Resource aspect) {
+	public Processor<?> getInstance(List<String> variables, Resource aspect) {
 		LiteralValueComparisonProcessor processor = new LiteralValueComparisonProcessor();
 		processor.variables = variables;
 		processor.aspect = aspect;

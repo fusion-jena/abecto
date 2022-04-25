@@ -30,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
@@ -60,7 +61,7 @@ public abstract class AbstractValueComparisonProcessorTest {
 		}
 	}
 
-	public abstract Processor<?> getInstance(Collection<String> variables, Resource aspect);
+	public abstract Processor<?> getInstance(List<String> variables, Resource aspect);
 
 	Model[] compare(Model model1, Model model2) throws Exception {
 		Processor<?> processor = getInstance(Collections.singletonList("value"), aspect(1))

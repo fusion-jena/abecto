@@ -18,7 +18,7 @@ package de.uni_jena.cs.fusion.abecto.processor;
 import static de.uni_jena.cs.fusion.abecto.TestUtil.resource;
 
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.List;
 
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.rdf.model.Resource;
@@ -43,7 +43,7 @@ class ResourceValueComparisonProcessorTest extends AbstractValueComparisonProces
 	}
 
 	@Override
-	public Processor<?> getInstance(Collection<String> variables, Resource aspect) {
+	public Processor<?> getInstance(List<String> variables, Resource aspect) {
 		ResourceValueComparisonProcessor processor = new ResourceValueComparisonProcessor();
 		processor.variables = variables;
 		processor.aspect = aspect;
