@@ -15,11 +15,11 @@
  */
 package de.uni_jena.cs.fusion.abecto.processor;
 
-import java.io.ByteArrayInputStream;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Set;
 
+import org.apache.jena.datatypes.DatatypeFormatException;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QuerySolution;
@@ -30,8 +30,6 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceRequiredException;
 import org.apache.jena.sparql.core.TriplePath;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.lang.sparql_11.ParseException;
-import org.apache.jena.sparql.lang.sparql_11.SPARQLParser11;
 import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.syntax.ElementPathBlock;
 import org.slf4j.Logger;
@@ -40,7 +38,7 @@ import org.slf4j.LoggerFactory;
 import de.uni_jena.cs.fusion.abecto.Aspect;
 import de.uni_jena.cs.fusion.abecto.Metadata;
 import de.uni_jena.cs.fusion.abecto.Parameter;
-import de.uni_jena.cs.fusion.abecto.Vocabularies;
+import de.uni_jena.cs.fusion.abecto.datatype.SparqlPropertyPathType;
 
 public class UsePresentMappingProcessor extends Processor<UsePresentMappingProcessor> {
 	final static Logger log = LoggerFactory.getLogger(UsePresentMappingProcessor.class);
@@ -56,9 +54,7 @@ public class UsePresentMappingProcessor extends Processor<UsePresentMappingProce
 		for (String unparsedAssignmentPath : this.assignmentPaths) {
 			try {
 				// get path
-				SPARQLParser11 parser = new SPARQLParser11(new ByteArrayInputStream(unparsedAssignmentPath.getBytes()));
-				parser.setPrologue(Vocabularies.getDefaultPrologue());
-				Path assignmentPath = parser.Path();
+				Path assignmentPath = new SparqlPropertyPathType().parse(unparsedAssignmentPath);
 
 				// create query
 				Query query = new Query();
@@ -108,7 +104,7 @@ public class UsePresentMappingProcessor extends Processor<UsePresentMappingProce
 						// else ignore
 					}
 				}
-			} catch (ParseException e) {
+			} catch (DatatypeFormatException e) {
 				throw new IllegalStateException("Failed to parse assignment path.", e);
 			}
 		}

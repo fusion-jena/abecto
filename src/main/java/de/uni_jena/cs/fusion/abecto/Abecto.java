@@ -54,6 +54,7 @@ import org.apache.jena.sys.JenaSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.uni_jena.cs.fusion.abecto.datatype.SparqlPropertyPathType;
 import de.uni_jena.cs.fusion.abecto.datatype.SparqlQueryType;
 import de.uni_jena.cs.fusion.abecto.datatype.XsdDateTimeStampType;
 import de.uni_jena.cs.fusion.abecto.util.Datasets;
@@ -195,6 +196,11 @@ public class Abecto implements Callable<Integer> {
 		// get aspects
 		Aspect[] aspects = Aspect.getAspects(configurationModel).toArray(l -> new Aspect[l]);
 
+		// write aspect variable paths into configuration model
+		for (Aspect aspect : aspects) {
+			aspect.determineVarPaths(configurationModel);
+		}
+
 		// get steps and predecessors
 		Map<Resource, Set<Resource>> predecessors = Plans.getStepPredecessors(configurationModel, plan);
 
@@ -228,6 +234,7 @@ public class Abecto implements Callable<Integer> {
 		// register custom datatypes
 		TypeMapper.getInstance().registerDatatype(new XsdDateTimeStampType());
 		TypeMapper.getInstance().registerDatatype(new SparqlQueryType());
+		TypeMapper.getInstance().registerDatatype(new SparqlPropertyPathType());
 
 		// TODO use caching HTTP client
 		// HttpEnv.setDftHttpClient(dftHttpClient);
