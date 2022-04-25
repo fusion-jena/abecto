@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
@@ -32,6 +33,9 @@ import java.util.Set;
 import java.util.function.Function;
 
 import org.apache.jena.arq.querybuilder.SelectBuilder;
+import org.apache.jena.datatypes.RDFDatatype;
+import org.apache.jena.datatypes.TypeMapper;
+import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QuerySolution;
@@ -39,10 +43,19 @@ import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.sparql.core.TriplePath;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.path.P_Inverse;
+import org.apache.jena.sparql.path.P_Seq;
+import org.apache.jena.sparql.path.Path;
+import org.apache.jena.sparql.syntax.ElementPathBlock;
+import org.apache.jena.sparql.syntax.ElementTriplesBlock;
+import org.apache.jena.sparql.syntax.ElementVisitorBase;
+import org.apache.jena.sparql.syntax.RecursiveElementVisitor;
 import org.apache.jena.vocabulary.RDF;
 
 import com.google.common.base.Functions;
+import com.google.common.collect.Lists;
 
 import de.uni_jena.cs.fusion.abecto.util.Models;
 import de.uni_jena.cs.fusion.abecto.util.ToManyElementsException;
@@ -334,5 +347,129 @@ public class Aspect {
 	public Aspect setPattern(Resource dataset, Query pattern) {
 		patternByDataset.put(dataset, pattern);
 		return this;
+	}
+
+	/**
+	 * Determines the property paths from the key variable of this {@link Aspect} to
+	 * other variables for all given dataset and adds them to the given
+	 * {@link Model}.
+	 * 
+	 * @param model the model to add the determined paths
+	 */
+	public void determineVarPaths(Model model) {
+		RDFDatatype sparqlPropertyPathType = TypeMapper.getInstance().getTypeByClass(Path.class);
+		for (Resource dataset : patternByDataset.keySet()) {
+			VarPathsExtractionVisitor visitor = new VarPathsExtractionVisitor();
+			Query query = this.getPattern(dataset);
+			query.getQueryPattern().visit(visitor);
+			// get (blank-)node of the relevant aspect pattern
+			Resource aspectPattern = model.listResourcesWithProperty(AV.associatedDataset, dataset)
+					.filterKeep(r -> r.hasProperty(AV.ofAspect, this.iri)).next();
+			for (Entry<String, Path> variablePath : visitor.getPaths(keyVariable).entrySet()) {
+				aspectPattern.addProperty(AV.hasVariablePath, model.createResource(AV.VariablePath)//
+						.addLiteral(AV.variableName, variablePath.getKey())//
+						.addProperty(AV.propertyPath, sparqlPropertyPathType.unparse(variablePath.getValue()),
+								sparqlPropertyPathType));
+			}
+		}
+	}
+
+	private static class VarPathsExtractionVisitor extends RecursiveElementVisitor {
+
+		public VarPathsExtractionVisitor() {
+			super(new ElementVisitorBase());
+		}
+
+		private Map<Node, Map<Node, LinkedList<Path>>> paths = new HashMap<>();
+
+		private void consumeTriplePath(TriplePath triplePath) {
+			Node subject = triplePath.getSubject();
+			Path path = triplePath.getPath();
+			Node object = triplePath.getObject();
+			if ((subject.isVariable() || subject.isBlank()) && (object.isVariable() || object.isBlank())
+					&& path != null) {
+				LinkedList<Path> pathList = pathSeq2List(path);
+				paths.computeIfAbsent(subject, k -> new HashMap<>()).put(object, pathList);
+				paths.computeIfAbsent(object, k -> new HashMap<>()).put(subject, inverse(pathList));
+			}
+		}
+
+		private void expandPaths() {
+			for (Node from : paths.keySet()) {
+				for (Node by : new ArrayList<>(paths.get(from).keySet())) { // avoid ConcurrentModificationException
+					for (Node to : paths.get(by).keySet()) {
+						boolean progress;
+						do {
+							progress = false;
+							if (!from.equals(to)) {
+								LinkedList<Path> direct = new LinkedList<Path>(paths.get(from).get(by));
+								direct.addAll(paths.get(by).get(to));
+								if (!paths.get(from).containsKey(to)
+										|| paths.get(from).get(to).size() > direct.size()) {
+									paths.get(from).put(to, direct);
+									paths.computeIfAbsent(to, k -> new HashMap<>()).put(from, inverse(direct));
+									progress = true;
+								}
+							}
+						} while (progress);
+					}
+				}
+			}
+		}
+
+		private LinkedList<Path> pathSeq2List(Path path) {
+			if (path instanceof P_Seq) {
+				LinkedList<Path> list = pathSeq2List(((P_Seq) path).getLeft());
+				list.addAll(pathSeq2List(((P_Seq) path).getRight()));
+				return list;
+			} else {
+				LinkedList<Path> list = new LinkedList<Path>();
+				list.add(path);
+				return list;
+			}
+		}
+
+		private Path list2PathSeq(LinkedList<Path> list) {
+			Path path = list.pollLast();
+			while (!list.isEmpty()) {
+				path = new P_Seq(list.pollLast(), path);
+			}
+			return path;
+		}
+
+		public Map<String, Path> getPaths(Var from) {
+			expandPaths();
+			Map<String, Path> pathsToTarget = new HashMap<>();
+			paths.get(from.asNode()).forEach((node, path) -> {
+				if (node.isVariable() && !Var.isBlankNodeVar(node)) {
+					pathsToTarget.put(node.getName(), list2PathSeq(path));
+				}
+			});
+			return pathsToTarget;
+		}
+
+		private LinkedList<Path> inverse(LinkedList<Path> path) {
+			path = new LinkedList<Path>(Lists.reverse(path));
+			for (int i = 0; i < path.size(); i++) {
+				Path element = path.get(i);
+				if (element instanceof P_Inverse) {
+					path.set(i, ((P_Inverse) element).getSubPath());
+				} else {
+					path.set(i, new P_Inverse(element));
+				}
+			}
+			return path;
+		}
+
+		@Override
+		public void startElement(ElementPathBlock el) {
+			el.getPattern().forEach(this::consumeTriplePath);
+		}
+
+		@Override
+		public void startElement(ElementTriplesBlock el) {
+			el.getPattern().forEach(triple -> this.consumeTriplePath(new TriplePath(triple)));
+		}
+
 	}
 }

@@ -48,6 +48,7 @@ public class AV {
 	public static final Property definingQuery = ResourceFactory.createProperty(namespace, "definingQuery");
 	public static final Resource Deviation = ResourceFactory.createResource(namespace + "Deviation");
 	public static final Property hasParameter = ResourceFactory.createProperty(namespace, "hasParameter");
+	public static final Property hasVariablePath = ResourceFactory.createProperty(namespace, "hasVariablePath");
 	public static final Resource Issue = ResourceFactory.createResource(namespace + "Issue");
 	public static final Property issueType = ResourceFactory.createProperty(namespace, "issueType");;
 	public static final Property key = ResourceFactory.createProperty(namespace, "key");
@@ -58,20 +59,25 @@ public class AV {
 	public static final Property ofAspect = ResourceFactory.createProperty(namespace, "ofAspect");
 	public static final Resource Parameter = ResourceFactory.createResource(namespace + "Parameter");
 	public final static Resource Plan = ResourceFactory.createResource(namespace + "Plan");
-	public static final Property predefinedMetaDataGraph = ResourceFactory.createProperty(namespace, "predefinedMetaDataGraph");
+	public static final Property predefinedMetaDataGraph = ResourceFactory.createProperty(namespace,
+			"predefinedMetaDataGraph");
 	public static final Resource PrimaryDataGraph = ResourceFactory.createResource(namespace + "PrimaryDataGraph");
 	public static final Property processorClass = ResourceFactory.createProperty(namespace, "processorClass");
+	public static final Property propertyPath = ResourceFactory.createProperty(namespace, "propertyPath");
 	public static final Resource QualityAnnotationBody = ResourceFactory
 			.createResource(namespace + "QualityAnnotationBody");
 	public static final Resource QualityMeasurement = ResourceFactory.createResource(namespace + "QualityMeasurement");
 	public static final Resource relativeCoverage = ResourceFactory.createResource(namespace + "relativeCoverage");
 	public static final Property relevantResource = ResourceFactory.createProperty(namespace, "relevantResource");
 	public static final Resource ResourceOmission = ResourceFactory.createResource(namespace + "ResourceOmission");
+	public static final Resource SparqlPropertyPath = ResourceFactory.createResource(namespace + "SparqlPropertyPath");
 	public static final Resource SparqlQuery = ResourceFactory.createResource(namespace + "SparqlQuery");
 	public static final Resource Step = ResourceFactory.createResource(namespace + "Step");
 	public static final Resource StepExecution = ResourceFactory.createResource(namespace + "StepExecution");
 	public static final Resource ValueOmission = ResourceFactory.createResource(namespace + "ValueOmission");
 	public static final Property value = ResourceFactory.createProperty(namespace, "value");
+	public static final Property variableName = ResourceFactory.createProperty(namespace, "variableName");
+	public static final Resource VariablePath = ResourceFactory.createResource(namespace + "VariablePath");
 	public static final Resource WrongValue = ResourceFactory.createResource(namespace + "WrongValue");
 
 	public static String getURI() {

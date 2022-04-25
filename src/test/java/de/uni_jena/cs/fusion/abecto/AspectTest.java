@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -322,5 +323,51 @@ public class AspectTest {
 		assertTrue(resources.contains(resource2));
 		assertTrue(resources.contains(resource3));
 		assertTrue(resources.contains(resource4));
+	}
+
+	@Test
+	public void getVarPaths() {
+		Resource dataset = ResourceFactory.createResource("http://example.org/dataset");
+		Resource aspectIri = ResourceFactory.createResource("http://example.org/aspect");
+		Aspect aspect = new Aspect(aspectIri, "key");
+		aspect.setPattern(dataset, QueryFactory.create(""//
+				+ "PREFIX ex: <http://example.org/>"//
+				+ "SELECT ?key ?value WHERE {"//
+				+ "?key ex:p0 ?v0 ."//
+				+ "?v0 ex:p1/ex:p2 ?v012 ."//
+				+ "?v012 ^ex:p3 ?v012i3 ."//
+				+ "?v012i3 ex:p4 [ ex:p5 ?v012i345 ; ^ex:p5 ?v012i34i5 ] ."//
+				+ "}"));
+
+		Model model = ModelFactory.createDefaultModel();
+		model.createResource(AV.AspectPattern).addProperty(AV.ofAspect, aspectIri).addProperty(AV.associatedDataset,
+				dataset);
+
+		aspect.determineVarPaths(model);
+
+		assertTrue(containsVarPath(model, aspectIri, dataset, "v0", "<http://example.org/p0>"));
+		assertTrue(containsVarPath(model, aspectIri, dataset, "v012",
+				"<http://example.org/p0>/(<http://example.org/p1>/<http://example.org/p2>)"));
+		assertTrue(containsVarPath(model, aspectIri, dataset, "v012i3",
+				"<http://example.org/p0>/(<http://example.org/p1>/(<http://example.org/p2>/^<http://example.org/p3>))"));
+		assertTrue(containsVarPath(model, aspectIri, dataset, "v012i345",
+				"<http://example.org/p0>/(<http://example.org/p1>/(<http://example.org/p2>/(^<http://example.org/p3>/(<http://example.org/p4>/<http://example.org/p5>))))"));
+		assertTrue(containsVarPath(model, aspectIri, dataset, "v012i34i5",
+				"<http://example.org/p0>/(<http://example.org/p1>/(<http://example.org/p2>/(^<http://example.org/p3>/(<http://example.org/p4>/^<http://example.org/p5>))))"));
+
+	}
+
+	private boolean containsVarPath(Model model, Resource aspectIri, Resource dataset, String variableName,
+			String propertyPath) {
+
+		return QueryExecutionFactory.create(""//
+				+ "ASK {["//
+				+ "<" + AV.ofAspect.getURI() + "> <" + aspectIri.getURI() + "> ;"//
+				+ "<" + AV.associatedDataset.getURI() + "> <" + dataset.getURI() + "> ;"//
+				+ "<" + AV.hasVariablePath.getURI() + "> ["//
+				+ "<" + AV.variableName.getURI() + "> \"" + variableName + "\" ;"//
+				+ "<" + AV.propertyPath.getURI() + "> \"" + propertyPath + "\"^^<" + AV.SparqlPropertyPath.getURI()
+				+ "> ;"//
+				+ "]]}", model).execAsk();
 	}
 }
