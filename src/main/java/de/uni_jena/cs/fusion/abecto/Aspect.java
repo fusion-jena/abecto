@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
@@ -45,6 +46,7 @@ import com.google.common.base.Functions;
 
 import de.uni_jena.cs.fusion.abecto.util.Models;
 import de.uni_jena.cs.fusion.abecto.util.ToManyElementsException;
+import de.uni_jena.cs.fusion.abecto.util.Values;
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 
 public class Aspect {
@@ -188,14 +190,11 @@ public class Aspect {
 			throws NullPointerException {
 		Map<String, Map<T, Set<Resource>>> index = new HashMap<>();
 
-		Query query = aspect.getPattern(dataset).cloneQuery();
-		query.resetResultVars();
-		query.addResultVar(aspect.getKeyVariable());
 		for (String variable : variables) {
-			query.addResultVar(variable);
 			index.put(variable, new HashMap<>());
 		}
-		ResultSet results = QueryExecutionFactory.create(query, datasetModels).execSelect();
+		// TODO remove not needed result vars from query
+		ResultSet results = QueryExecutionFactory.create(aspect.getPattern(dataset), datasetModels).execSelect();
 		while (results.hasNext()) {
 			QuerySolution result = results.next();
 			Resource keyValue = result.getResource(aspect.getKeyVariableName());
@@ -207,6 +206,40 @@ public class Aspect {
 			}
 		}
 		return index;
+	}
+
+	public static Map<Values, Set<Resource>> getResourceHashIndex(Aspect aspect, Resource dataset,
+			List<String> variables, Model datasetModels) {
+		Map<Values, Set<Resource>> index = new HashMap<>();
+
+		// TODO remove not needed result vars from query
+		ResultSet results = QueryExecutionFactory.create(aspect.getPattern(dataset), datasetModels).execSelect();
+		while (results.hasNext()) {
+			QuerySolution result = results.next();
+			Resource keyValue = result.getResource(aspect.getKeyVariableName());
+			Values valueArray = new Values(variables.stream().map(var -> result.get(var)).toArray(l -> new RDFNode[l]));
+			index.computeIfAbsent(valueArray, k -> new HashSet<>()).add(keyValue);
+		}
+		return index;
+	}
+
+	public static Map<Resource, Map<String, Set<RDFNode>>> getResources(Aspect aspect, Resource dataset,
+			List<String> variables, Model datasetModels) {
+		Map<Resource, Map<String, Set<RDFNode>>> resources = new HashMap<>();
+
+		// TODO remove not needed result vars from query
+		ResultSet results = QueryExecutionFactory.create(aspect.getPattern(dataset), datasetModels).execSelect();
+		while (results.hasNext()) {
+			QuerySolution result = results.next();
+			Resource keyValue = result.getResource(aspect.getKeyVariableName());
+			Map<String, Set<RDFNode>> resourceValues = resources.computeIfAbsent(keyValue, k -> new HashMap<>());
+			for (String variable : variables) {
+				if (result.contains(variable)) {
+					resourceValues.computeIfAbsent(variable, k -> new HashSet<>()).add(result.get(variable));
+				}
+			}
+		}
+		return resources;
 	}
 
 	/**

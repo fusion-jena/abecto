@@ -16,10 +16,10 @@
 package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 import org.apache.jena.rdf.model.RDFNode;
@@ -41,12 +41,14 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 	@Override
 	public final void run() {
 		Aspect aspect = this.getAspects().get(this.aspect);
+		Map<Resource, Map<Resource, Map<String, Set<RDFNode>>>> resourceByDataset = new HashMap<>();
+		this.getDatasets().forEach(dataset -> resourceByDataset.put(dataset,
+				Aspect.getResources(aspect, dataset, variables, this.getInputPrimaryModelUnion(dataset))));
 		getCorrespondenceGroups(aspect.getIri()).forEach(correspondingResources -> {
 			for (Resource correspondingResource1 : correspondingResources) {
 				for (Resource dataset1 : this.getDatasets()) {
-					Optional<Map<String, Set<RDFNode>>> values1 = Aspect.getResource(aspect, dataset1,
-							correspondingResource1, this.getInputPrimaryModelUnion(dataset1));
-					if (values1.isPresent()) {
+					Map<String, Set<RDFNode>> values1 = resourceByDataset.get(dataset1).get(correspondingResource1);
+					if (values1 != null) {
 						for (Resource correspondingResource2 : correspondingResources) {
 							if (correspondingResource1.getURI().compareTo(correspondingResource2.getURI()) >= 0) {
 								// avoid doing work twice, but enable comparing representations of one resource
@@ -56,15 +58,14 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 											|| !dataset1.equals(dataset2)) {
 										// avoid comparing the representation of one resource in one dataset
 										// with itself
-										Optional<Map<String, Set<RDFNode>>> values2 = Aspect.getResource(aspect,
-												dataset2, correspondingResource2,
-												this.getInputPrimaryModelUnion(dataset2));
-										if (values2.isPresent()) {
+										Map<String, Set<RDFNode>> values2 = resourceByDataset.get(dataset2)
+												.get(correspondingResource2);
+										if (values2 != null) {
 											for (String variable : this.variables) {
 												this.compareVariableValues(variable, dataset1, correspondingResource1,
-														values1.get().getOrDefault(variable, Collections.emptySet()),
+														values1.getOrDefault(variable, Collections.emptySet()),
 														dataset2, correspondingResource2,
-														values2.get().getOrDefault(variable, Collections.emptySet()));
+														values2.getOrDefault(variable, Collections.emptySet()));
 											}
 										}
 									}

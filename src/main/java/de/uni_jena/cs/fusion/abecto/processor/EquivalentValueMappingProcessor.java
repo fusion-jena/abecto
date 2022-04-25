@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.jena.rdf.model.RDFNode;
@@ -29,6 +30,7 @@ import org.slf4j.LoggerFactory;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
 import de.uni_jena.cs.fusion.abecto.Parameter;
+import de.uni_jena.cs.fusion.abecto.util.Values;
 
 /**
  * Provides correspondences based on equivalent values of resources in different
@@ -66,35 +68,42 @@ public class EquivalentValueMappingProcessor extends MappingProcessor<Equivalent
 			}
 		}
 
-		Map<String, Map<RDFNode, Set<Resource>>> resourceIndex2 = Aspect.getResourceIndex(aspect, dataset2, variables,
+		Map<Values, Set<Resource>> resourceIndex1 = Aspect.getResourceHashIndex(aspect, dataset1, variables,
+				this.getInputPrimaryModelUnion(dataset1));
+		Map<Values, Set<Resource>> resourceIndex2 = Aspect.getResourceHashIndex(aspect, dataset2, variables,
 				this.getInputPrimaryModelUnion(dataset2));
-		for (Resource resource1 : Aspect.getResourceKeys(aspect, dataset1, this.getInputPrimaryModelUnion(dataset1))) {
-			Map<String, Set<RDFNode>> resourceValues1 = Aspect
-					.getResource(aspect, dataset1, resource1, this.getInputPrimaryModelUnion(dataset1)).orElseThrow();
-			HashSet<Resource> correspondingResources = null;
-			for (String variable : variables) {
-				HashSet<Resource> variableCandidates = new HashSet<>();
-				for (RDFNode value : resourceValues1.get(variable)) {
-					if (value.isResource()) {
-						for (Resource valueResource : getCorrespondenceGroup(value.asResource())) {
-							variableCandidates.addAll(
-									resourceIndex2.get(variable).getOrDefault(valueResource, Collections.emptySet()));
+		for (Entry<Values, Set<Resource>> entry : resourceIndex1.entrySet()) {
+			Values values = entry.getKey();
+			Set<Resource> correspondingResources = entry.getValue();
+			Set<Values> oldCandidateValuesSet = new HashSet<>();
+			Set<Values> newCandidateValuesSet = new HashSet<>();
+			oldCandidateValuesSet.add(values);
+
+			// generate values for each permutation of corresponding resources
+			for (int i = 0; i < values.getValuesArray().length; i++) {
+				if (values.getValuesArray()[i] != null && values.getValuesArray()[i].isResource()) {
+					List<Resource> correspondingValues = getCorrespondenceGroup(
+							values.getValuesArray()[i].asResource());
+					for (Values oldCandidateValues : oldCandidateValuesSet) {
+						for (Resource correspondingValue : correspondingValues) {
+							RDFNode[] newCandidateValuesArray = oldCandidateValues.getValuesArray();
+							newCandidateValuesArray[i] = correspondingValue;
+							newCandidateValuesSet.add(new Values(newCandidateValuesArray));
 						}
-					} else {
-						variableCandidates
-								.addAll(resourceIndex2.get(variable).getOrDefault(value, Collections.emptySet()));
 					}
-				}
-				if (correspondingResources == null) {
-					correspondingResources = variableCandidates;
-				} else {
-					correspondingResources.retainAll(variableCandidates);
-				}
-				if (correspondingResources.isEmpty()) {
-					break;
+					oldCandidateValuesSet.addAll(newCandidateValuesSet);
+					newCandidateValuesSet.clear();
 				}
 			}
-			correspondingResources.add(resource1);
+
+			// search for all permutations in other dataset
+			for (Values candidateValues : oldCandidateValuesSet) {
+				if (resourceIndex2.containsKey(candidateValues)) {
+					correspondingResources.addAll(resourceIndex2.get(candidateValues));
+				}
+			}
+
+			// add found correspondences
 			addCorrespondence(this.aspect, correspondingResources);
 		}
 
