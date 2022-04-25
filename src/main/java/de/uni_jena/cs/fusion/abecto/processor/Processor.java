@@ -37,6 +37,7 @@ import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.rdf.model.InfModel;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
@@ -103,7 +104,7 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 
 	private File relativeBasePath;
 
-	private Model cachedTransitiveCorrespondencesModel;
+	private InfModel cachedTransitiveCorrespondencesModel;
 
 	public P addAspects(Aspect... aspects) {
 		for (Aspect aspect : aspects) {
@@ -405,12 +406,16 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 		return relativeBasePath;
 	}
 
-	private Model getTransitiveCorrespondencesModel() {
+	private InfModel getTransitiveCorrespondencesModel() {
 		if (this.cachedTransitiveCorrespondencesModel == null) {
 			this.cachedTransitiveCorrespondencesModel = ModelFactory
 					.createInfModel(new FBRuleReasoner(correspondenceRules), this.getMetaModelUnion(null));
 		}
 		return this.cachedTransitiveCorrespondencesModel;
+	}
+
+	public void persistTransitiveCorrespondences() {
+		this.getOutputMetaModel(null).add(this.getTransitiveCorrespondencesModel().getDeductionsModel());
 	}
 
 	public void removeEmptyModels() {

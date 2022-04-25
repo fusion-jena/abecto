@@ -37,5 +37,6 @@ public abstract class MappingProcessor<P extends Processor<P>> extends Processor
 				}
 			}
 		}
+		this.persistTransitiveCorrespondences();
 	}
 }
