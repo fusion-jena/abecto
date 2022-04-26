@@ -76,7 +76,7 @@ public class Abecto implements Callable<Integer> {
 
 	static {
 		// configure logging
-		System.setProperty("java.util.logging.SimpleFormatter.format", "[%1$tF %1$tT] [%4$-7s] [%3$s] %5$s %6$s%n");
+		System.setProperty("java.util.logging.SimpleFormatter.format", "[%1$tF %1$tT] %4$-7s [%3$s] %5$s %6$s%n");
 		java.util.logging.Logger.getLogger("org.apache.jena.riot").setLevel(java.util.logging.Level.OFF);
 		java.util.logging.Logger.getLogger("").setLevel(java.util.logging.Level.ALL);
 
@@ -105,8 +105,8 @@ public class Abecto implements Callable<Integer> {
 			"--export" }, paramLabel = "Export Template and File", description = "Template and output file for an result export. Can be set multiple times.")
 	Map<String, File> exports;
 
-	@Parameters(index = "0", paramLabel = "Configuration File", description = "RDF dataset file containing the execution plan configuration.")
-	File configurationFile;
+	@Parameters(index = "0", paramLabel = "Plan Dataset File", description = "RDF dataset file containing the plan configuration and optionally plan execution results (see --loadOnly).")
+	File planDatasetFile;
 
 	private Dataset dataset;
 	private File relativeBasePath;
@@ -116,15 +116,23 @@ public class Abecto implements Callable<Integer> {
 	@Override
 	public Integer call() {
 		try {
-			loadDataset(configurationFile);
+			log.info("Loading plan dataset file started.");
+			loadDataset(planDatasetFile);
+			log.info("Loading plan dataset file completed.");
 
 			if (!loadOnly) {
+				log.info("Plan execution started.");
 				executePlan(planIri);
+				log.info("Plan execution completed.");
+			} else {
+				log.info("Plan execution skipped.");
 			}
 
 			// write results as TRIG
-			if (trigOutputFile != null) {
+			if (trigOutputFile != null && !loadOnly) {
+				log.info("Writing plan execution results as TRIG file started.");
 				RDFDataMgr.write(new FileOutputStream(trigOutputFile), dataset, Lang.TRIG);
+				log.info("Writing plan execution results as TRIG file completed.");
 			}
 
 			// export results
@@ -139,7 +147,9 @@ public class Abecto implements Callable<Integer> {
 				freemarker.setFallbackOnNullLoopVariable(false);
 				// apply export templates
 				for (Entry<String, File> export : exports.entrySet()) {
+					log.info(String.format("Export with template \"%s\" started.", export.getKey()));
 					export(export.getKey(), export.getValue());
+					log.info(String.format("Export with template \"%s\" completed.", export.getKey()));
 				}
 			}
 		} catch (CompletionException e) {
