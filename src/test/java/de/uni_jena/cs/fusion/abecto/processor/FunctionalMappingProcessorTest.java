@@ -140,14 +140,14 @@ class FunctionalMappingProcessorTest {
 		assertTrue(processor.allCorrespondend(resource(153), resource(163), resource(253), resource(263)));
 
 		// check issues
-		Model outputMetaModel1 = processor.getMetaModelUnion(dataset(1));
+		Model outputMetaModel1 = processor.getOutputMetaModel(dataset(1));
 		assertTrue(containsIssue(resource(121), "value", someLiteral, aspect(1), "Invalid Value",
 				"Should be a resource.", outputMetaModel1));
 		assertTrue(containsIssue(resource(122), "value", someLiteral, aspect(1), "Invalid Value",
 				"Should be a resource.", outputMetaModel1));
 		assertTrue(containsIssue(resource(123), "value", someLiteral, aspect(1), "Invalid Value",
 				"Should be a resource.", outputMetaModel1));
-		Model outputMetaModel2 = processor.getMetaModelUnion(dataset(2));
+		Model outputMetaModel2 = processor.getOutputMetaModel(dataset(2));
 		assertTrue(containsIssue(resource(221), "value", someLiteral, aspect(1), "Invalid Value",
 				"Should be a resource.", outputMetaModel2));
 		assertTrue(containsIssue(resource(222), "value", someLiteral, aspect(1), "Invalid Value",

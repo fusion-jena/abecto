@@ -36,6 +36,7 @@ import org.apache.jena.vocabulary.RDFS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.uni_jena.cs.fusion.abecto.processor.MappingProcessor;
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
 import de.uni_jena.cs.fusion.abecto.util.Models;
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
@@ -155,7 +156,9 @@ public class Step implements Runnable {
 			}
 			configurationModel.listObjectsOfProperty(stepIri, AV.predefinedMetaDataGraph).mapWith(RDFNode::asResource)
 					.forEach(inputMetaModelIri -> {
-						processor.addInputMetaModel(null, dataset.getNamedModel(inputMetaModelIri));
+						Model inputMetaModel = dataset.getNamedModel(inputMetaModelIri);
+						inputMetaModel = MappingProcessor.inferTransitiveCorrespondences(inputMetaModel);
+						processor.addInputMetaModel(null, inputMetaModel);
 						inputModelIris.add(inputMetaModelIri);
 					});
 			for (Resource inputModelIri : inputModelIris) {

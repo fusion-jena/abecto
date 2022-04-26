@@ -40,7 +40,7 @@ import de.uni_jena.cs.fusion.abecto.Metadata;
 import de.uni_jena.cs.fusion.abecto.Parameter;
 import de.uni_jena.cs.fusion.abecto.datatype.SparqlPropertyPathType;
 
-public class UsePresentMappingProcessor extends Processor<UsePresentMappingProcessor> {
+public class UsePresentMappingProcessor extends MappingProcessor<UsePresentMappingProcessor> {
 	final static Logger log = LoggerFactory.getLogger(UsePresentMappingProcessor.class);
 
 	@Parameter
@@ -50,7 +50,10 @@ public class UsePresentMappingProcessor extends Processor<UsePresentMappingProce
 
 	@Override
 	public void run() {
-		Aspect aspect = Objects.requireNonNull(getAspects().get(this.aspect), "Unknown aspect.");
+
+		Model outputMetaModel = this.getOutputMetaModel(null);
+		Aspect aspectObject = Objects.requireNonNull(getAspects().get(this.aspect), "Unknown aspect.");
+
 		for (String unparsedAssignmentPath : this.assignmentPaths) {
 			try {
 				// get path
@@ -67,13 +70,12 @@ public class UsePresentMappingProcessor extends Processor<UsePresentMappingProce
 				block.addTriple(new TriplePath(subject, assignmentPath, object));
 				query.setQueryPattern(block);
 
-				Model outputMetaModel = this.getOutputMetaModel(null);
 				// execute query for each dataset
 				for (Resource dataset : this.getDatasets()) {
 					Model inputPrimaryModel = this.getInputPrimaryModelUnion(dataset);
 
 					// get aspects resource
-					Set<Resource> aspectResources = Aspect.getResourceKeys(aspect, dataset, inputPrimaryModel);
+					Set<Resource> aspectResources = Aspect.getResourceKeys(aspectObject, dataset, inputPrimaryModel);
 
 					ResultSet resultSet = QueryExecutionFactory.create(query, inputPrimaryModel).execSelect();
 					while (resultSet.hasNext()) {
@@ -107,6 +109,14 @@ public class UsePresentMappingProcessor extends Processor<UsePresentMappingProce
 			} catch (DatatypeFormatException e) {
 				throw new IllegalStateException("Failed to parse assignment path.", e);
 			}
+
 		}
+		this.persistTransitiveCorrespondences();
 	}
+
+	@Override
+	public void mapDatasets(Resource dataset1, Resource dataset2) {
+		// not used
+	}
+
 }

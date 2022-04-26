@@ -17,7 +17,6 @@ package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -37,14 +36,10 @@ import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.arq.querybuilder.WhereBuilder;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
-import org.apache.jena.rdf.model.InfModel;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.reasoner.rulesys.FBRuleReasoner;
-import org.apache.jena.reasoner.rulesys.Rule;
 import org.apache.jena.sparql.core.TriplePath;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.path.PathFactory;
@@ -68,19 +63,6 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 	private static final Var RESOURCE_2 = Var.alloc("resource2");
 	private static final Var RESOURCE_3 = Var.alloc("resource3");
 	private static ExprFactory exprFactory = new ExprFactory();
-	private final static List<Rule> correspondenceRules = Arrays.asList(
-			// corresponds inverse
-			Rule.parseRule("[ (?A " + AV.correspondsToResource + " ?B) "//
-					+ "-> (?B " + AV.correspondsToResource + " ?A) ]"),
-			// corresponds transitivity
-			Rule.parseRule("[ (?A " + AV.correspondsToResource + " ?B),(?B " + AV.correspondsToResource + " ?C) "//
-					+ "-> (?A " + AV.correspondsToResource + " ?C) ]"),
-			// correspondsNot inverse
-			Rule.parseRule("[ (?A " + AV.correspondsNotToResource + " ?B) "//
-					+ "-> (?B " + AV.correspondsNotToResource + " ?A) ]"),
-			// correspondsNot-corresponds chains
-			Rule.parseRule("[ (?A " + AV.correspondsNotToResource + " ?B),(?B " + AV.correspondsToResource + " ?C) "//
-					+ "-> (?A " + AV.correspondsNotToResource + " ?C) ]"));
 	private Map<Resource, Collection<Model>> inputMetaModelsByDataset = new HashMap<>();
 
 	private Map<Resource, Collection<Model>> inputPrimaryModelsByDataset = new HashMap<>();
@@ -100,11 +82,7 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 
 	private Map<Resource, Model> cachedInputPrimaryModelUnionByDataset = new HashMap<>();
 
-	private Map<Resource, Model> cachedMetaModelUnionByDataset = new HashMap<>();
-
 	private File relativeBasePath;
-
-	private InfModel cachedTransitiveCorrespondencesModel;
 
 	public P addAspects(Aspect... aspects) {
 		for (Aspect aspect : aspects) {
@@ -113,72 +91,8 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 		return self();
 	}
 
-	/**
-	 * Adds correspondences of several resources affecting a certain aspect and
-	 * thereby transitive implied correspondence. If the correspondences are already
-	 * known or contradict an existing incorrespondence, the correspondences will be
-	 * discard silently.
-	 * 
-	 * @param resources the corresponding resources
-	 * @param aspect    aspect affected by the correspondence
-	 */
-	public void addCorrespondence(Resource aspect, Collection<Resource> resources) {
-		addCorrespondence(aspect, resources.toArray(l -> new Resource[l]));
-	}
-
-	/**
-	 * Add correspondences of several resources belonging to a certain aspect. If
-	 * all correspondences are already known or any correspondence contradict an
-	 * existing incorrespondence, all correspondences will be discard silently.
-	 * 
-	 * @param resources the corresponding resources
-	 * @param aspect    aspect the corresponding resources belong to
-	 */
-	public void addCorrespondence(Resource aspect, Resource... resources) {
-		if (resources.length < 2) {
-			return;
-		}
-		Model transitiveCorrespondencesModel = getTransitiveCorrespondencesModel();
-		if (!anyIncorrespondend(resources) && !allCorrespondend(resources)) {
-			addIfAbsent(transitiveCorrespondencesModel, aspect, AV.relevantResource, resources[0]);
-			for (int i = 1; i < resources.length; i++) {
-				addIfAbsent(transitiveCorrespondencesModel, aspect, AV.relevantResource, resources[i]);
-				addIfAbsent(transitiveCorrespondencesModel, resources[0], AV.correspondsToResource, resources[i]);
-			}
-		}
-	}
-
-	/**
-	 * Adds incorrespondences of resources to one resource affecting a certain
-	 * aspect. If the incorrespondence is already known or contradicts an existing
-	 * correspondence, the correspondence will be discard silently.
-	 * 
-	 * @param aspect                   aspect affected by the incorrespondence
-	 * @param resource                 first resource
-	 * @param incorrespondentResources resources not corresponding to the first
-	 *                                 resource
-	 */
-	public void addIncorrespondence(Resource aspect, Resource resource, Resource... incorrespondentResources) {
-		Model transitiveCorrespondencesModel = getTransitiveCorrespondencesModel();
-		addIfAbsent(transitiveCorrespondencesModel, aspect, AV.relevantResource, resource);
-		for (Resource incorrespondentResource : incorrespondentResources) {
-			if (!correspondentOrIncorrespondent(resource, incorrespondentResource)) {
-				addIfAbsent(transitiveCorrespondencesModel, aspect, AV.relevantResource, incorrespondentResource);
-				addIfAbsent(transitiveCorrespondencesModel, resource, AV.correspondsNotToResource,
-						incorrespondentResource);
-			}
-		}
-	}
-
-	private static void addIfAbsent(Model model, Resource s, Property p, RDFNode o) {
-		if (!model.contains(s, p, o)) {
-			model.add(s, p, o);
-		}
-	}
-
 	public final P addInputMetaModel(Resource dataset, Model inputMetaModel) {
 		this.cachedInputMetaModelUnionByDataset.remove(dataset);
-		this.cachedMetaModelUnionByDataset.remove(dataset);
 		this.inputMetaModelsByDataset.computeIfAbsent(dataset, d -> new HashSet<>()).add(inputMetaModel);
 		return self();
 	}
@@ -210,7 +124,7 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 		if (resources.length < 2) {
 			return true;
 		}
-		Model transitiveCorrespondencesModel = getTransitiveCorrespondencesModel();
+		Model correspondencesModel = getCorrespondencesModel();
 		Query query = new AskBuilder()//
 				// TODO replace multiple VALUES clauses workaround when a better solution exists
 				// NOTE: addWhereValueVar() does not cross-join / add multiple VALUES clauses
@@ -220,7 +134,7 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 				.addFilter(exprFactory
 						.notexists(new WhereBuilder().addWhere(RESOURCE_1, AV.correspondsToResource, RESOURCE_2)))
 				.build();
-		return !QueryExecutionFactory.create(query, transitiveCorrespondencesModel).execAsk();
+		return !QueryExecutionFactory.create(query, correspondencesModel).execAsk();
 	}
 
 	/**
@@ -234,7 +148,7 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 		if (resources.length < 2) {
 			return false;
 		}
-		Model transitiveCorrespondencesModel = getTransitiveCorrespondencesModel();
+		Model correspondencesModel = getCorrespondencesModel();
 		Query query = new AskBuilder()//
 				// TODO replace multiple VALUES clauses workaround when a better solution exists
 				// NOTE: addWhereValueVar() does not cross-join / add multiple VALUES clauses
@@ -242,7 +156,7 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 				.addSubQuery(new SelectBuilder().addVar(RESOURCE_2).addWhereValueVar(RESOURCE_2, (Object[]) resources))
 				.addFilter(exprFactory.ne(RESOURCE_1, RESOURCE_2))
 				.addWhere(RESOURCE_1, AV.correspondsNotToResource, RESOURCE_2).build();
-		return QueryExecutionFactory.create(query, transitiveCorrespondencesModel).execAsk();
+		return QueryExecutionFactory.create(query, correspondencesModel).execAsk();
 	}
 
 	/**
@@ -255,10 +169,9 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 	 *         {@code false}
 	 */
 	public boolean correspond(Resource resource1, Resource resource2) {
-		Model transitiveCorrespondencesModel = getTransitiveCorrespondencesModel();
+		Model correspondencesModel = getCorrespondencesModel();
 		Query query = new AskBuilder().addWhere(resource1, AV.correspondsToResource, resource2).build();
-		return resource1.equals(resource2)
-				|| QueryExecutionFactory.create(query, transitiveCorrespondencesModel).execAsk();
+		return resource1.equals(resource2) || QueryExecutionFactory.create(query, correspondencesModel).execAsk();
 	}
 
 	/**
@@ -275,11 +188,10 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 	 *         exists, otherwise {@code false}
 	 */
 	public boolean correspondentOrIncorrespondent(Resource resource1, Resource resource2) {
-		Model transitiveCorrespondencesModel = getTransitiveCorrespondencesModel();
+		Model correspondencesModel = getCorrespondencesModel();
 		Query query = new AskBuilder().addWhere(resource1, AV.correspondsToResource, resource2)
 				.addUnion(new WhereBuilder().addWhere(resource1, AV.correspondsNotToResource, resource2)).build();
-		return resource1.equals(resource2)
-				|| QueryExecutionFactory.create(query, transitiveCorrespondencesModel).execAsk();
+		return resource1.equals(resource2) || QueryExecutionFactory.create(query, correspondencesModel).execAsk();
 	}
 
 	public Map<Resource, Aspect> getAspects() {
@@ -299,7 +211,7 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public Stream<List<Resource>> getCorrespondenceGroups(Resource aspect) {
-		Model transitiveCorrespondencesModel = getTransitiveCorrespondencesModel();
+		Model correspondencesModel = getCorrespondencesModel();
 		Query query = new SelectBuilder().addVar(RESOURCE_1).addVar(RESOURCE_2)
 				.addWhere(aspect, AV.relevantResource, RESOURCE_1)//
 				.addWhere(aspect, AV.relevantResource, RESOURCE_2)//
@@ -309,7 +221,7 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 						.notexists(new WhereBuilder().addWhere(RESOURCE_1, AV.correspondsToResource, RESOURCE_3)
 								.addFilter(exprFactory.gt(exprFactory.str(RESOURCE_1), exprFactory.str(RESOURCE_3)))))
 				.addOrderBy(RESOURCE_1).build();
-		return Queries.getStreamOfResultsGroupedBy(transitiveCorrespondencesModel, query, RESOURCE_1.getName())
+		return Queries.getStreamOfResultsGroupedBy(correspondencesModel, query, RESOURCE_1.getName())
 				.map(m -> (List<Resource>) (List) m.get(RESOURCE_2.getName()));
 	}
 
@@ -322,7 +234,7 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 	 *         least the given {@link Resource}
 	 */
 	public List<Resource> getCorrespondenceGroup(Resource resource) {
-		List<Resource> correspondenceGroup = getTransitiveCorrespondencesModel()
+		List<Resource> correspondenceGroup = getCorrespondencesModel()
 				.listObjectsOfProperty(resource, AV.correspondsToResource).mapWith(RDFNode::asResource).toList();
 		if (correspondenceGroup.isEmpty()) {
 			return Collections.singletonList(resource);
@@ -355,19 +267,6 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 	}
 
 	/**
-	 * Returns a union of the input meta models and the result meta model of a
-	 * dataset, or of the general meta models, if {@code dataset} is {@code null}.
-	 * 
-	 * @param dataset the assigned dataset the united meta models or {@code null}
-	 *                for the general meta models.
-	 * @return union of the meta models
-	 */
-	public Model getMetaModelUnion(@Nullable Resource dataset) {
-		return cachedMetaModelUnionByDataset.computeIfAbsent(dataset,
-				d -> Models.union(getOutputMetaModel(dataset), this.inputMetaModelsByDataset.get(dataset)));
-	}
-
-	/**
 	 * Returns the output meta model of a dataset, or the general output meta model,
 	 * if {@code dataset} is {@code null}. If not present, a new model will be
 	 * created.
@@ -377,9 +276,6 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 	 * @return the output meta model
 	 */
 	public final Model getOutputMetaModel(@Nullable Resource dataset) {
-		if (!outputMetaModelsByDataset.containsKey(dataset)) {
-			this.cachedMetaModelUnionByDataset.remove(dataset);
-		}
 		return this.outputMetaModelsByDataset.computeIfAbsent(dataset,
 				k -> ModelFactory.createDefaultModel().withDefaultMappings(Vocabularies.getDefaultPrefixMapping()));
 	}
@@ -406,16 +302,14 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 		return relativeBasePath;
 	}
 
-	private InfModel getTransitiveCorrespondencesModel() {
-		if (this.cachedTransitiveCorrespondencesModel == null) {
-			this.cachedTransitiveCorrespondencesModel = ModelFactory
-					.createInfModel(new FBRuleReasoner(correspondenceRules), this.getMetaModelUnion(null));
-		}
-		return this.cachedTransitiveCorrespondencesModel;
-	}
+	private Model cachedCorrespondencesModel;
 
-	public void persistTransitiveCorrespondences() {
-		this.getOutputMetaModel(null).add(this.getTransitiveCorrespondencesModel().getDeductionsModel());
+	public Model getCorrespondencesModel() {
+		if (this.cachedCorrespondencesModel == null) {
+			this.cachedCorrespondencesModel = Models.union(getOutputMetaModel(null),
+					this.inputMetaModelsByDataset.get(null));
+		}
+		return this.cachedCorrespondencesModel;
 	}
 
 	public void removeEmptyModels() {
@@ -431,8 +325,6 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 
 	protected final P replaceOutputMetaModel(Resource dataset, Model outputMetaModel) {
 		Objects.requireNonNull(dataset, "Replacing general output meta model not permitted.");
-		// Note: otherwise cachedTransitiveCorrespondencesModel would get invalid
-		this.cachedMetaModelUnionByDataset.remove(dataset);
 		this.outputMetaModelsByDataset.put(dataset, outputMetaModel);
 		return self();
 	}
