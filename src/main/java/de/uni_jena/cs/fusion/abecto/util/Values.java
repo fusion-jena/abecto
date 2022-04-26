@@ -1,7 +1,6 @@
 package de.uni_jena.cs.fusion.abecto.util;
 
 import java.util.Arrays;
-import java.util.Objects;
 
 import org.apache.jena.rdf.model.RDFNode;
 
@@ -14,8 +13,13 @@ public class Values {
 
 	@Override
 	public int hashCode() {
-		return Arrays.stream(valuesArray).filter(Objects::nonNull).mapToInt(Object::hashCode).reduce((a, b) -> a ^ b)
-				.orElse(0);
+		int hash = 0;
+		for (RDFNode node : valuesArray) {
+			if (node != null) {
+				hash ^= node.hashCode();
+			}
+		}
+		return hash;
 	}
 
 	@Override
