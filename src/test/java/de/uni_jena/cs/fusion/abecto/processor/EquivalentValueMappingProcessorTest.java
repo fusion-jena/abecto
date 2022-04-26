@@ -40,8 +40,8 @@ class EquivalentValueMappingProcessorTest {
 	@Test
 	public void testComputeMapping() throws Exception {
 		// prepare aspects
-		Query aspectPattern = QueryFactory.create("SELECT ?key ?variable1 ?variable2 ?variable3 WHERE {?key <" + property(1) + "> ?variable1; <"
-				+ property(2) + "> ?variable2; <" + property(3) + "> ?variable3}");
+		Query aspectPattern = QueryFactory.create("SELECT ?key ?variable1 ?variable2 ?variable3 WHERE { OPTIONAL { ?key <" + property(1) + "> ?variable1 } OPTIONAL { ?key <"
+				+ property(2) + "> ?variable2 } OPTIONAL { ?key <" + property(3) + "> ?variable3 } }");
 		Aspect aspect = new Aspect(aspect(1), "key").setPattern(dataset(1), aspectPattern).setPattern(dataset(2),
 				aspectPattern);
 
@@ -148,6 +148,13 @@ class EquivalentValueMappingProcessorTest {
 		model2.add(resource("case13-dataset2"), property(3), otherLiteral);
 		model2.add(resource("case13-dataset2"), property(3), someLiteral);
 
+		model1.add(resource("case14-dataset1"), property(1), resource("some"));
+		model1.add(resource("case14-dataset1"), property(2), resource("some"));
+		// skip property 3
+		model2.add(resource("case14-dataset2"), property(1), resource("equivalent"));
+		model2.add(resource("case14-dataset2"), property(2), resource("equivalent"));
+		// skip property 3
+
 		mappingModel.add(resource("some"), AV.correspondsToResource, resource("equivalent"));
 
 		EquivalentValueMappingProcessor processor;
@@ -173,5 +180,6 @@ class EquivalentValueMappingProcessorTest {
 		assertFalse(processor.allCorrespondend(resource("case11-dataset1"), resource("case11-dataset2")));
 		assertTrue( processor.allCorrespondend(resource("case12-dataset1"), resource("case12-dataset2")));
 		assertTrue( processor.allCorrespondend(resource("case13-dataset1"), resource("case13-dataset2")));
+		assertFalse(processor.allCorrespondend(resource("case14-dataset1"), resource("case14-dataset2")));
 	}
 }

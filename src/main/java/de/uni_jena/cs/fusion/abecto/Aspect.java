@@ -221,6 +221,16 @@ public class Aspect {
 		return index;
 	}
 
+	/**
+	 * Returns a hash index on multiple variables for {@link Resource Resources} of
+	 * a given {@link Aspect}. Resources with unbound variables are omitted.
+	 * 
+	 * @param aspect
+	 * @param dataset
+	 * @param variables
+	 * @param datasetModels
+	 * @return
+	 */
 	public static Map<Values, Set<Resource>> getResourceHashIndex(Aspect aspect, Resource dataset,
 			List<String> variables, Model datasetModels) {
 		Map<Values, Set<Resource>> index = new HashMap<>();
@@ -230,8 +240,11 @@ public class Aspect {
 		while (results.hasNext()) {
 			QuerySolution result = results.next();
 			Resource keyValue = result.getResource(aspect.getKeyVariableName());
-			Values valueArray = new Values(variables.stream().map(var -> result.get(var)).toArray(l -> new RDFNode[l]));
-			index.computeIfAbsent(valueArray, k -> new HashSet<>()).add(keyValue);
+			if (variables.stream().allMatch(var -> result.contains(var))) { // skip resources with unbound variables
+				Values valueArray = new Values(
+						variables.stream().map(var -> result.get(var)).toArray(l -> new RDFNode[l]));
+				index.computeIfAbsent(valueArray, k -> new HashSet<>()).add(keyValue);
+			}
 		}
 		return index;
 	}
