@@ -337,6 +337,9 @@ public class AspectTest {
 				+ "?v0 ex:p1/ex:p2 ?v012 ."//
 				+ "?v012 ^ex:p3 ?v012i3 ."//
 				+ "?v012i3 ex:p4 [ ex:p5 ?v012i345 ; ^ex:p5 ?v012i34i5 ] ."//
+				+ "{?v0 ex:p8a ?v08 .}"//
+				+ "UNION"//
+				+ "{?v0 ex:p8b ?v08 .}"//
 				+ "}"));
 
 		Model model = ModelFactory.createDefaultModel();
@@ -345,29 +348,30 @@ public class AspectTest {
 
 		aspect.determineVarPaths(model);
 
-		assertTrue(containsVarPath(model, aspectIri, dataset, "v0", "<http://example.org/p0>"));
-		assertTrue(containsVarPath(model, aspectIri, dataset, "v012",
-				"<http://example.org/p0>/(<http://example.org/p1>/<http://example.org/p2>)"));
-		assertTrue(containsVarPath(model, aspectIri, dataset, "v012i3",
-				"<http://example.org/p0>/(<http://example.org/p1>/(<http://example.org/p2>/^<http://example.org/p3>))"));
-		assertTrue(containsVarPath(model, aspectIri, dataset, "v012i345",
-				"<http://example.org/p0>/(<http://example.org/p1>/(<http://example.org/p2>/(^<http://example.org/p3>/(<http://example.org/p4>/<http://example.org/p5>))))"));
-		assertTrue(containsVarPath(model, aspectIri, dataset, "v012i34i5",
-				"<http://example.org/p0>/(<http://example.org/p1>/(<http://example.org/p2>/(^<http://example.org/p3>/(<http://example.org/p4>/^<http://example.org/p5>))))"));
+		assertEquals("<http://example.org/p0>", getVarPath(model, aspectIri, dataset, "v0"));
+		assertEquals("<http://example.org/p0>/(<http://example.org/p1>/<http://example.org/p2>)",
+				getVarPath(model, aspectIri, dataset, "v012"));
+		assertEquals(
+				"<http://example.org/p0>/(<http://example.org/p1>/(<http://example.org/p2>/^<http://example.org/p3>))",
+				getVarPath(model, aspectIri, dataset, "v012i3"));
+		assertEquals(
+				"<http://example.org/p0>/(<http://example.org/p1>/(<http://example.org/p2>/(^<http://example.org/p3>/(<http://example.org/p4>/<http://example.org/p5>))))",
+				getVarPath(model, aspectIri, dataset, "v012i345"));
+		assertEquals(
+				"<http://example.org/p0>/(<http://example.org/p1>/(<http://example.org/p2>/(^<http://example.org/p3>/(<http://example.org/p4>/^<http://example.org/p5>))))",
+				getVarPath(model, aspectIri, dataset, "v012i34i5"));
+		assertEquals("<http://example.org/p0>/(<http://example.org/p8a>|<http://example.org/p8b>)", getVarPath(model, aspectIri, dataset, "v08"));
 
 	}
 
-	private boolean containsVarPath(Model model, Resource aspectIri, Resource dataset, String variableName,
-			String propertyPath) {
-
+	private String getVarPath(Model model, Resource aspectIri, Resource dataset, String variableName) {
 		return QueryExecutionFactory.create(""//
-				+ "ASK {["//
+				+ "SELECT ?path WHERE {["//
 				+ "<" + AV.ofAspect.getURI() + "> <" + aspectIri.getURI() + "> ;"//
 				+ "<" + AV.associatedDataset.getURI() + "> <" + dataset.getURI() + "> ;"//
 				+ "<" + AV.hasVariablePath.getURI() + "> ["//
 				+ "<" + AV.variableName.getURI() + "> \"" + variableName + "\" ;"//
-				+ "<" + AV.propertyPath.getURI() + "> \"" + propertyPath + "\"^^<" + AV.SparqlPropertyPath.getURI()
-				+ "> ;"//
-				+ "]]}", model).execAsk();
+				+ "<" + AV.propertyPath.getURI() + "> ?path ;"//
+				+ "]]}", model).execSelect().next().get("path").asLiteral().getLexicalForm();
 	}
 }

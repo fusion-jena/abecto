@@ -45,6 +45,7 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.core.TriplePath;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.path.P_Alt;
 import org.apache.jena.sparql.path.P_Inverse;
 import org.apache.jena.sparql.path.P_Seq;
 import org.apache.jena.sparql.path.Path;
@@ -55,7 +56,6 @@ import org.apache.jena.sparql.syntax.RecursiveElementVisitor;
 import org.apache.jena.vocabulary.RDF;
 
 import com.google.common.base.Functions;
-import com.google.common.collect.Lists;
 
 import de.uni_jena.cs.fusion.abecto.util.Models;
 import de.uni_jena.cs.fusion.abecto.util.ToManyElementsException;
@@ -393,17 +393,20 @@ public class Aspect {
 			super(new ElementVisitorBase());
 		}
 
-		private Map<Node, Map<Node, LinkedList<Path>>> paths = new HashMap<>();
+		private Map<Node, Map<Node, Path>> paths = new HashMap<>();
 
 		private void consumeTriplePath(TriplePath triplePath) {
 			Node subject = triplePath.getSubject();
-			Path path = triplePath.getPath();
+			Path path = normalize(triplePath.getPath());
 			Node object = triplePath.getObject();
 			if ((subject.isVariable() || subject.isBlank()) && (object.isVariable() || object.isBlank())
 					&& path != null) {
-				LinkedList<Path> pathList = pathSeq2List(path);
-				paths.computeIfAbsent(subject, k -> new HashMap<>()).put(object, pathList);
-				paths.computeIfAbsent(object, k -> new HashMap<>()).put(subject, inverse(pathList));
+//				paths.computeIfAbsent(subject, k -> new HashMap<>()).compute(object,
+//						(k, v) -> (v == null) ? path : new P_Alt(path, v));
+				paths.computeIfAbsent(subject, k -> new HashMap<>()).merge(object, path, P_Alt::new);
+//				paths.computeIfAbsent(object, k -> new HashMap<>()).compute(subject,
+//						(k, v) -> (v == null) ? inverse(path) : new P_Alt(inverse(path), v));
+				paths.computeIfAbsent(object, k -> new HashMap<>()).merge(subject, inverse(path), P_Alt::new);
 			}
 		}
 
@@ -415,12 +418,13 @@ public class Aspect {
 						do {
 							progress = false;
 							if (!from.equals(to)) {
-								LinkedList<Path> direct = new LinkedList<Path>(paths.get(from).get(by));
-								direct.addAll(paths.get(by).get(to));
+								LinkedList<Path> direct = pathSeq2List(paths.get(from).get(by));
+								direct.addAll(pathSeq2List(paths.get(by).get(to)));
 								if (!paths.get(from).containsKey(to)
-										|| paths.get(from).get(to).size() > direct.size()) {
-									paths.get(from).put(to, direct);
-									paths.computeIfAbsent(to, k -> new HashMap<>()).put(from, inverse(direct));
+										|| pathSeq2List(paths.get(from).get(to)).size() > direct.size()) {
+									paths.get(from).put(to, list2PathSeq(direct));
+									paths.computeIfAbsent(to, k -> new HashMap<>()).put(from,
+											inverse(list2PathSeq(direct)));
 									progress = true;
 								}
 							}
@@ -443,11 +447,15 @@ public class Aspect {
 		}
 
 		private Path list2PathSeq(LinkedList<Path> list) {
-			Path path = list.pollLast();
-			while (!list.isEmpty()) {
-				path = new P_Seq(list.pollLast(), path);
+			Path path = list.getLast();
+			for (int i = list.size() - 2; i >= 0; i--) {
+				path = new P_Seq(list.get(i), path);
 			}
 			return path;
+		}
+
+		private Path normalize(Path path) {
+			return (path == null) ? null : list2PathSeq(pathSeq2List(path));
 		}
 
 		public Map<String, Path> getPaths(Var from) {
@@ -455,23 +463,22 @@ public class Aspect {
 			Map<String, Path> pathsToTarget = new HashMap<>();
 			paths.get(from.asNode()).forEach((node, path) -> {
 				if (node.isVariable() && !Var.isBlankNodeVar(node)) {
-					pathsToTarget.put(node.getName(), list2PathSeq(path));
+					pathsToTarget.put(node.getName(), path);
 				}
 			});
 			return pathsToTarget;
 		}
 
-		private LinkedList<Path> inverse(LinkedList<Path> path) {
-			path = new LinkedList<Path>(Lists.reverse(path));
-			for (int i = 0; i < path.size(); i++) {
-				Path element = path.get(i);
-				if (element instanceof P_Inverse) {
-					path.set(i, ((P_Inverse) element).getSubPath());
-				} else {
-					path.set(i, new P_Inverse(element));
-				}
+		private Path inverse(Path path) {
+			if (path instanceof P_Inverse) {
+				return ((P_Inverse) path).getSubPath();
+			} else if (path instanceof P_Seq) {
+				return normalize(new P_Seq(inverse(((P_Seq) path).getRight()), inverse(((P_Seq) path).getLeft())));
+			} else if (path instanceof P_Alt) {
+				return new P_Alt(inverse(((P_Alt) path).getLeft()), inverse(((P_Alt) path).getRight()));
+			} else {
+				return new P_Inverse(path);
 			}
-			return path;
 		}
 
 		@Override
