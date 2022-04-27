@@ -1,0 +1,42 @@
+PREFIX av: <http://w3id.org/abecto/vocabulary#>
+PREFIX dqv: <http://www.w3.org/ns/dqv#>
+PREFIX psv: <http://www.wikidata.org/prop/statement/value/>
+PREFIX wikibase: <http://wikiba.se/ontology#>
+PREFIX wd: <http://www.wikidata.org/entity/>
+PREFIX oa: <http://www.w3.org/ns/oa#>
+
+SELECT
+	# expected format https://github.com/wmde/wikidata-mismatch-finder/blob/main/docs/UserGuide.md
+	?statement_guid # Represents that unique id of the statement on wikidata that contains the mismatching data.
+	?property_id # The id of the wikidata property defining the wikidata value of the mismatch.
+	?wikidata_value # The value on wikidata that mismatches an external database.
+	?external_value # The value in the external database that mismatches a wikidata value.
+	?external_url # (Optional) A url or uri to the mismatching entity in the external database.
+WHERE {
+  BIND (<http://www.wikidata.org/> AS ?dataset)
+  [	a av:AspectPattern ;
+    av:associatedDataset ?dataset ;
+    av:ofAspect ?aspect ;
+    av:hasVariablePath [ av:variableName ?variable ; av:propertyPath ?propertyPath ; ]
+  ]
+    BIND (replace(replace(str(?propertyPath),"^.*<http://www.wikidata.org/prop/direct/",""), ">$", "") AS ?property_id)
+  ?deviationGraph dqv:computedOn ?dataset .
+  GRAPH ?deviationGraph {
+    ?deviation a av:Deviation ;
+               ^oa:hasBody [oa:hasTarget ?internal_url];
+               av:affectedAspect ?aspect ;
+               av:affectedVariableName ?variable;
+               av:affectedValue ?wikidata_value ;
+               av:comparedToValue ?external_value ;
+               av:comparedToResource ?external_url .
+  }
+  FILTER (strStarts(?property_id,"P"))
+  BIND (IRI(CONCAT("http://www.wikidata.org/prop/",?property_id)) AS ?p)
+  BIND (IRI(CONCAT("http://www.wikidata.org/prop/statement/",?property_id)) AS ?ps)
+  GRAPH ?sourceGraph {
+    ?internal_url ?p ?statement . 
+    ?statement ?ps ?wikidata_value .
+  }
+  BIND (strAfter(str(?statement),"http://www.wikidata.org/entity/statement/") AS ?statement_guid_tmp)
+  BIND (concat(strBefore(?statement_guid_tmp,"-"),"$",strAfter(?statement_guid_tmp,"-")) AS ?statement_guid)
+}
