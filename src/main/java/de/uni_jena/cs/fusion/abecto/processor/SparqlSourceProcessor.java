@@ -48,6 +48,7 @@ import org.apache.jena.sparql.syntax.ElementData;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.Template;
+import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -104,10 +105,11 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 	 * Properties that represent a hierarchy. Resources associated to a loaded
 	 * resource by a followUnlimited property will be loaded unlimited, but will not
 	 * cause retrieval of further resources not connected by a followUnlimited
-	 * property or a followInverseUnlimited property. Default: rdfs:subClassOf
+	 * property or a followInverseUnlimited property. Default: rdfs:subClassOf,
+	 * rdf:first, rdf:rest
 	 */
 	@Parameter
-	public Collection<Resource> followUnlimited = new ArrayList<>(Arrays.asList(RDFS.subClassOf));
+	public Collection<Resource> followUnlimited = new ArrayList<>(Arrays.asList(RDFS.subClassOf, RDF.first, RDF.rest));
 	/**
 	 * Properties that represent a hierarchy. Resources associated to a loaded
 	 * resource by the inverse of a followInverseUnlimited property will be loaded
