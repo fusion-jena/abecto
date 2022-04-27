@@ -50,6 +50,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sys.JenaSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -128,6 +129,8 @@ public class Abecto implements Callable<Integer> {
 				log.info("Plan execution skipped.");
 			}
 
+			reuseModelNamespaces(dataset);
+			
 			// write results as TRIG
 			if (trigOutputFile != null && !loadOnly) {
 				log.info("Writing plan execution results as TRIG file started.");
@@ -161,6 +164,13 @@ public class Abecto implements Callable<Integer> {
 		}
 
 		return 0;
+	}
+
+	public void reuseModelNamespaces(Dataset dataset) {
+		PrefixMapping datasetPrefixMapping = dataset.getPrefixMapping();
+		datasetPrefixMapping.setNsPrefixes(dataset.getDefaultModel().getNsPrefixMap());
+		dataset.listModelNames().forEachRemaining(
+				modelName -> datasetPrefixMapping.setNsPrefixes(dataset.getNamedModel(modelName).getNsPrefixMap()));
 	}
 
 	public void loadDataset(File configurationFile)
