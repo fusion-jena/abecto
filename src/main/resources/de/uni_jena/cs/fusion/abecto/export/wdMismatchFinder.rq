@@ -17,22 +17,33 @@ WHERE {
 		av:hasVariablePath		[ av:variableName ?variable ; av:propertyPath ?propertyPath ]
 	]
 	BIND (replace(str(?propertyPath),"<http://www.wikidata.org/prop/direct/(P\\d*)>","$1") AS ?property_id)
-	?deviationGraph dqv:computedOn ?dataset .
-	GRAPH ?deviationGraph {
-		?deviation	a						av:Deviation ;
-					^oa:hasBody				[ oa:hasTarget ?internal_url ];
-					av:affectedAspect		?aspect ;
-					av:affectedVariableName	?variable;
-					av:affectedValue		?wikidata_value ;
-					av:comparedToValue		?external_value ;
-					av:comparedToResource	?external_url .
-	}
-	BIND (IRI(CONCAT("http://www.wikidata.org/prop/",?property_id)) AS ?p)
-	BIND (IRI(CONCAT("http://www.wikidata.org/prop/statement/",?property_id)) AS ?ps)
-	OPTIONAL{
-		GRAPH ?sourceGraph {
-			?internal_url	?p	?statement .
-			?statement		?ps	?wikidata_value .
+	?issueGraph dqv:computedOn ?dataset .
+	{
+		GRAPH ?issueGraph {
+			[]	a						av:Deviation ;
+				^oa:hasBody				[ oa:hasTarget ?internal_url ];
+				av:affectedAspect		?aspect ;
+				av:affectedVariableName	?variable;
+				av:affectedValue		?wikidata_value ;
+				av:comparedToValue		?external_value ;
+				av:comparedToResource	?external_url .
+		}
+		BIND (IRI(CONCAT("http://www.wikidata.org/prop/",?property_id)) AS ?p)
+		BIND (IRI(CONCAT("http://www.wikidata.org/prop/statement/",?property_id)) AS ?ps)
+		OPTIONAL{
+			GRAPH ?sourceGraph {
+				?internal_url	?p	?statement .
+				?statement		?ps	?wikidata_value .
+			}
+		}
+	} UNION {
+		GRAPH ?issueGraph {
+			[]	a						av:ValueOmission ;
+				^oa:hasBody				[ oa:hasTarget ?internal_url ];
+				av:affectedAspect		?aspect ;
+				av:affectedVariableName	?variable;
+				av:comparedToValue		?external_value ;
+				av:comparedToResource	?external_url .
 		}
 	}
 	BIND (coalesce(
