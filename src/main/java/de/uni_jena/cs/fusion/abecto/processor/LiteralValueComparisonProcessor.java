@@ -20,7 +20,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import org.apache.jena.datatypes.RDFDatatype;
+import org.apache.jena.datatypes.xsd.XSDDateTime;
 import org.apache.jena.datatypes.xsd.impl.XSDBaseNumericType;
+import org.apache.jena.datatypes.xsd.impl.XSDDateTimeType;
+import org.apache.jena.datatypes.xsd.impl.XSDDateType;
 import org.apache.jena.datatypes.xsd.impl.XSDDouble;
 import org.apache.jena.datatypes.xsd.impl.XSDFloat;
 import org.apache.jena.rdf.model.Literal;
@@ -39,6 +42,12 @@ public class LiteralValueComparisonProcessor extends AbstractValueComparisonProc
 	 */
 	@Parameter
 	public Collection<String> languageFilterPatterns = new ArrayList<>();
+	/**
+	 * If true, literals of the types xsd:date and xsd:dateTime with equal year,
+	 * month and day part will match.
+	 */
+	@Parameter
+	public boolean allowTimeSkip;
 
 	@Override
 	public boolean useValue(RDFNode value) {
@@ -76,6 +85,16 @@ public class LiteralValueComparisonProcessor extends AbstractValueComparisonProc
 
 		RDFDatatype type1 = literal1.getDatatype();
 		RDFDatatype type2 = literal2.getDatatype();
+
+		// comparison of xsd:date and xsd:dateTime
+		if (allowTimeSkip && (type1 instanceof XSDDateType && type2 instanceof XSDDateTimeType
+				|| type1 instanceof XSDDateTimeType && type2 instanceof XSDDateType)) {
+			XSDDateTime date1 = ((XSDDateTime) literal1.getValue());
+			XSDDateTime date2 = ((XSDDateTime) literal2.getValue());
+			return date1.getDays() == date2.getDays() //
+					&& date1.getMonths() == date2.getMonths() //
+					&& date1.getYears() == date2.getYears();
+		}
 
 		// comparison of different number types
 		try {
