@@ -1,8 +1,5 @@
 PREFIX av: <http://w3id.org/abecto/vocabulary#>
 PREFIX dqv: <http://www.w3.org/ns/dqv#>
-PREFIX psv: <http://www.wikidata.org/prop/statement/value/>
-PREFIX wikibase: <http://wikiba.se/ontology#>
-PREFIX wd: <http://www.wikidata.org/entity/>
 PREFIX oa: <http://www.w3.org/ns/oa#>
 
 SELECT
@@ -32,9 +29,15 @@ WHERE {
 	}
 	BIND (IRI(CONCAT("http://www.wikidata.org/prop/",?property_id)) AS ?p)
 	BIND (IRI(CONCAT("http://www.wikidata.org/prop/statement/",?property_id)) AS ?ps)
-	GRAPH ?sourceGraph {
-		?internal_url	?p	?statement .
-		?statement		?ps	?wikidata_value .
+	OPTIONAL{
+		GRAPH ?sourceGraph {
+			?internal_url	?p	?statement .
+			?statement		?ps	?wikidata_value .
+		}
 	}
-	BIND (replace(str(?statement),"http://www.wikidata.org/entity/statement/([0-9a-zA-Z]*)-(.*)","$1\\$$2") AS ?statement_guid)
+	BIND (coalesce(
+		replace(str(?statement),"http://www.wikidata.org/entity/statement/([0-9a-zA-Z]*)-(.*)","$1\\$$2"),
+		strAfter(str(?internal_url),"http://www.wikidata.org/entity/") # fallback to entity id 
+	) AS ?statement_guid)
 }
+ORDER BY ?statement_guid ?property_id
