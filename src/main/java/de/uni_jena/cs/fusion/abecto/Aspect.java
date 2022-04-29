@@ -461,11 +461,15 @@ public class Aspect {
 		public Map<String, Path> getPaths(Var from) {
 			expandPaths();
 			Map<String, Path> pathsToTarget = new HashMap<>();
-			paths.get(from.asNode()).forEach((node, path) -> {
-				if (node.isVariable() && !Var.isBlankNodeVar(node)) {
-					pathsToTarget.put(node.getName(), path);
-				}
-			});
+			try {
+				paths.get(from.asNode()).forEach((node, path) -> {
+					if (node.isVariable() && !Var.isBlankNodeVar(node)) {
+						pathsToTarget.put(node.getName(), path);
+					}
+				});
+			} catch (NullPointerException e) {
+				throw new IllegalArgumentException(String.format("Variable \"%s\" not found.", from.getVarName()));
+			}
 			return pathsToTarget;
 		}
 
