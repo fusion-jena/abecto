@@ -8,21 +8,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 * extend **SparqlSourceProcessor**: add retries on failures configurable with parameters `chunkSizeDecreaseFactor` and `maxRetries`
 * extend **SparqlSourceProcessor**: add parameter `followInverseUnlimited`
+* extend **SparqlSourceProcessor**: add `rdf:first` and `rdf:rest` to default `followUnlimited` values 
 * extend **LiteralValueComparisonProcessor**: add parameter `languageFilterPatterns`
+* extend **LiteralValueComparisonProcessor**: add parameter `allowTimeSkip` to enable date part of `xsd:date` and `xsd:dateTime`
+* extend **MappingProcessor**: add persisting of transitive correspondences
+* extend **Parameters**: enable use of different Collection subtypes for Processor Parameters
+* extend **Aspect**: enable use of one pattern for multiple datasets
+* extend logging: log **Step** processing start and completion
+* extend logging: log CLI execution phases
+* extend built in documentation (`--help`)
 * add result export engine
 * add result export template `deviations`
 * add result export template `resourceOmissions`
+* add result export template `wdMismatchFinder` (see [Wikidata Mismatch Finder file format](https://github.com/wmde/wikidata-mismatch-finder/blob/main/docs/UserGuide.md#creating-a-mismatches-import-file])
+* add extraction of property path between key variable and other variables to make them available for exports
+* add reuse of sources prefix definitions for the output file
+* add CLI parameter `--loadOnly` to enable reuse of execution output for report generation
 
 ### Fixed
 * fix **EquivalentValueMappingProcessor**: fix message format
+* fix ** EquivalentValueMappingProcessor**: skip resource with unbound variables
 * fix **SparqlSourceProcessor**: enable arbitrary query lengths by updating Apache Jena fixing [JENA-2257](https://issues.apache.org/jira/browse/JENA-2257)
 * fix **SparqlSourceProcessor**: fix expected datatypes of some parameters
 * fix **SparqlSourceProcessor**: increased compatibility to SPARQL endpoint implementations
+* improve performance of several mapping and comparison processors
 
 ### Changed
-* improved logging library setup
-* changed **Step**: log processing start and completion
-* changed **Aspect**: enable use of one pattern for multiple datasets
+* changed logging format
 
 ## [0.4.0] - 2022-01-12
 
