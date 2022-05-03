@@ -34,6 +34,7 @@ WHERE {
 			GRAPH ?sourceGraph {
 				?internal_url	?p	?statement .
 				?statement		?ps	?wikidata_value .
+				FILTER(regex(str(?statement),"http://www.wikidata.org/entity/statement/([0-9a-zA-Z]*)-(.*)"))
 			}
 		}
 	} UNION {
