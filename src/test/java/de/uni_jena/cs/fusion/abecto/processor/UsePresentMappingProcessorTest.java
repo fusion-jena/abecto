@@ -18,8 +18,6 @@ package de.uni_jena.cs.fusion.abecto.processor;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.Arrays;
-
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QueryFactory;
@@ -31,16 +29,22 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.junit.jupiter.api.Test;
 
+import de.uni_jena.cs.fusion.abecto.Abecto;
 import de.uni_jena.cs.fusion.abecto.Aspect;
+import de.uni_jena.cs.fusion.abecto.datatype.SparqlQueryType;
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 
 public class UsePresentMappingProcessorTest {
 
 	@Test
 	public void computeResultModel() throws Exception {
-		Model inputPrimaryModel = ModelFactory.createDefaultModel();
+		Abecto.initApacheJena();
 
-		Resource aspectIri = ResourceFactory.createResource("http://example.org/aspect");
+		Model inputPrimaryModel = ModelFactory.createDefaultModel();
+		Model inputMetaModel = ModelFactory.createDefaultModel();
+
+		Resource aspectIri = inputMetaModel.createResource("http://example.org/aspect", AV.Aspect)
+				.addProperty(AV.keyVariableName, "key");
 		Resource dataset = ResourceFactory.createResource("http://example.org/dataset");
 
 		Property sameAs = ResourceFactory.createProperty("http://example.org/sameAs");
@@ -64,22 +68,25 @@ public class UsePresentMappingProcessorTest {
 		inputPrimaryModel.add(a1, sameAs, a2).add(b1, same, bLink).add(bLink, as, b2).add(c1, sameAs, c2)
 				.add(d1, sameAs, d2).add(e1, sameAs, issueLiteral);
 
-		Model inputMetaModel = ModelFactory.createDefaultModel();
 		inputMetaModel.add(c1, AV.affectedAspect, aspectIri);
 		inputMetaModel.add(c2, AV.affectedAspect, aspectIri);
 		inputMetaModel.add(d1, AV.affectedAspect, aspectIri);
 		inputMetaModel.add(d2, AV.affectedAspect, aspectIri);
 		inputMetaModel.add(c1, AV.correspondsToResource, c2);
 		inputMetaModel.add(d1, AV.correspondsNotToResource, d2);
+		inputMetaModel.createResource(AV.AspectPattern).addProperty(AV.ofAspect, aspectIri)
+				.addProperty(AV.definingQuery, "SELECT * WHERE {?key a <" + type.getURI()
+						+ ">; <http://example.org/sameAs>|<http://example.org/same>/<http://example.org/as> ?sameAs}",
+						new SparqlQueryType())
+				.addProperty(AV.associatedDataset, dataset);
 
-		Aspect aspect = new Aspect(aspectIri, "key");
-		aspect.setPattern(dataset, QueryFactory.create("SELECT ?key WHERE {?key a <" + type.getURI() + ">}"));
+		Aspect aspect = Aspect.getAspect(inputMetaModel, aspectIri);
+		aspect.determineVarPaths(inputMetaModel);
 
 		UsePresentMappingProcessor processor = new UsePresentMappingProcessor();
 		processor.addAspects(aspect);
 		processor.aspect = aspectIri;
-		processor.assignmentPaths = Arrays.asList("<http://example.org/sameAs>",
-				"<http://example.org/same>/<http://example.org/as>");
+		processor.variable = "sameAs";
 		processor.addInputMetaModel(null, inputMetaModel);
 		processor.addInputPrimaryModel(dataset, inputPrimaryModel);
 		processor.run();

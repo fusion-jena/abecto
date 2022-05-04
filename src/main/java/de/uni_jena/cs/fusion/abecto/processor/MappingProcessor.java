@@ -75,8 +75,11 @@ public abstract class MappingProcessor<P extends Processor<P>> extends Processor
 	 * @param resources the corresponding resources
 	 * @param aspect    aspect affected by the correspondence
 	 */
-	public void addCorrespondence(Resource aspect, Collection<Resource> resources) {
-		addCorrespondence(aspect, resources.toArray(l -> new Resource[l]));
+	public void addCorrespondence(Resource aspect, Collection<Resource> resources, Resource... moreResources) {
+		Resource[] allResource = new Resource[resources.size() + moreResources.length];
+		resources.toArray(allResource);
+		System.arraycopy(moreResources, 0, allResource, resources.size(), moreResources.length);
+		addCorrespondence(aspect, allResource);
 	}
 
 	/**

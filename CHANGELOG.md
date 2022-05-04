@@ -35,6 +35,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 * changed logging format
+* changed **UsePresentMappingProcessor**: replaced parameter `assignmentPaths` expecting SPARQL Property Paths with parameter `variable` expecting an aspect variable name
 
 ## [0.4.0] - 2022-01-12
 

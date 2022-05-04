@@ -103,6 +103,18 @@ public class MappingProcessorTest {
 		inputModel.removeAll();
 		outputModel.removeAll();
 
+		// collection and array
+		processor.addCorrespondence(aspect1, Arrays.asList(resource1), resource2, resource3);
+		assertTrue(outputModel.contains(aspect1, AV.relevantResource, resource1));
+		assertTrue(outputModel.contains(aspect1, AV.relevantResource, resource2));
+		assertTrue(outputModel.contains(aspect1, AV.relevantResource, resource3));
+		assertFalse(outputModel.contains(resource1, AV.correspondsToResource, resource1));
+		assertFalse(outputModel.contains(resource2, AV.correspondsToResource, resource2));
+		assertFalse(outputModel.contains(resource3, AV.correspondsToResource, resource3));
+		assertTrue(processor.allCorrespondend(resource1, resource2, resource3));
+		inputModel.removeAll();
+		outputModel.removeAll();
+
 		// assert nothing insert if all exist
 		inputModel.add(resource1, AV.correspondsToResource, resource2);
 		inputModel.add(resource1, AV.correspondsToResource, resource3);

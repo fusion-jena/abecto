@@ -362,6 +362,16 @@ public class Aspect {
 		return this;
 	}
 
+	private Map<Resource, Map<String, Path>> variablePathsByDataset = new HashMap<>();
+
+	public Path getVarPath(Resource dataset, String variable) {
+		return variablePathsByDataset.get(dataset).get(variable);
+	}
+
+	public String getVarPathAsString(Resource dataset, String variable) {
+		return TypeMapper.getInstance().getTypeByClass(Path.class).unparse(this.getVarPath(dataset, variable));
+	}
+
 	/**
 	 * Determines the property paths from the key variable of this {@link Aspect} to
 	 * other variables for all given dataset and adds them to the given
@@ -378,7 +388,8 @@ public class Aspect {
 			// get (blank-)node of the relevant aspect pattern
 			Resource aspectPattern = model.listResourcesWithProperty(AV.associatedDataset, dataset)
 					.filterKeep(r -> r.hasProperty(AV.ofAspect, this.iri)).next();
-			for (Entry<String, Path> variablePath : visitor.getPaths(keyVariable).entrySet()) {
+			this.variablePathsByDataset.put(dataset, visitor.getPaths(keyVariable));
+			for (Entry<String, Path> variablePath : this.variablePathsByDataset.get(dataset).entrySet()) {
 				aspectPattern.addProperty(AV.hasVariablePath, model.createResource(AV.VariablePath)//
 						.addLiteral(AV.variableName, variablePath.getKey())//
 						.addProperty(AV.propertyPath, sparqlPropertyPathType.unparse(variablePath.getValue()),
