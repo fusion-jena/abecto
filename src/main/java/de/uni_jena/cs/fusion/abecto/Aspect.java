@@ -54,6 +54,8 @@ import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.ElementVisitorBase;
 import org.apache.jena.sparql.syntax.RecursiveElementVisitor;
 import org.apache.jena.vocabulary.RDF;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Functions;
 
@@ -63,6 +65,8 @@ import de.uni_jena.cs.fusion.abecto.util.Values;
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 
 public class Aspect {
+
+	final static Logger log = LoggerFactory.getLogger(Aspect.class);
 
 	/**
 	 * Returns an {@link Aspect} determined by an given IRI in the given
@@ -382,18 +386,24 @@ public class Aspect {
 	public void determineVarPaths(Model model) {
 		RDFDatatype sparqlPropertyPathType = TypeMapper.getInstance().getTypeByClass(Path.class);
 		for (Resource dataset : patternByDataset.keySet()) {
-			VarPathsExtractionVisitor visitor = new VarPathsExtractionVisitor();
-			Query query = this.getPattern(dataset);
-			query.getQueryPattern().visit(visitor);
-			// get (blank-)node of the relevant aspect pattern
-			Resource aspectPattern = model.listResourcesWithProperty(AV.associatedDataset, dataset)
-					.filterKeep(r -> r.hasProperty(AV.ofAspect, this.iri)).next();
-			this.variablePathsByDataset.put(dataset, visitor.getPaths(keyVariable));
-			for (Entry<String, Path> variablePath : this.variablePathsByDataset.get(dataset).entrySet()) {
-				aspectPattern.addProperty(AV.hasVariablePath, model.createResource(AV.VariablePath)//
-						.addLiteral(AV.variableName, variablePath.getKey())//
-						.addProperty(AV.propertyPath, sparqlPropertyPathType.unparse(variablePath.getValue()),
-								sparqlPropertyPathType));
+			try {
+				VarPathsExtractionVisitor visitor = new VarPathsExtractionVisitor();
+				Query query = this.getPattern(dataset);
+				query.getQueryPattern().visit(visitor);
+				// get (blank-)node of the relevant aspect pattern
+				Resource aspectPattern = model.listResourcesWithProperty(AV.associatedDataset, dataset)
+						.filterKeep(r -> r.hasProperty(AV.ofAspect, this.iri)).next();
+				this.variablePathsByDataset.put(dataset, visitor.getPaths(keyVariable));
+				for (Entry<String, Path> variablePath : this.variablePathsByDataset.get(dataset).entrySet()) {
+					aspectPattern.addProperty(AV.hasVariablePath, model.createResource(AV.VariablePath)//
+							.addLiteral(AV.variableName, variablePath.getKey())//
+							.addProperty(AV.propertyPath, sparqlPropertyPathType.unparse(variablePath.getValue()),
+									sparqlPropertyPathType));
+				}
+			} catch (IllegalArgumentException e) {
+				log.warn(String.format(
+						"Failed to determine variables paths for aspect %s (key variable \"%s\") and dataset \"%s\".",
+						this.iri, this.keyVariableName, dataset), e);
 			}
 		}
 	}
