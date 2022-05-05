@@ -69,12 +69,20 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 	public Integer chunkSize = 500;
 	/**
 	 * Factor to reduce the {@link #chunkSize} after failed request to the source
-	 * SPARQL endpoint.
+	 * SPARQL endpoint. Default: 0.5
 	 * 
 	 * @see #maxRetries
 	 */
 	@Parameter
-	private Double chunkSizeDecreaseFactor = 0.8;
+	private Double chunkSizeDecreaseFactor = 0.5;
+	/**
+	 * Factor to increase the {@link #chunkSize} after successful request to the
+	 * source SPARQL endpoint until the initial value got restores. Default: 1.5
+	 * 
+	 * @see #maxRetries
+	 */
+	@Parameter
+	private Double chunkSizeIncreaseFactor = 1.5;
 	/**
 	 * SELECT query to retrieve a list of the relevant resources. All variables will
 	 * be taken into account. None IRI values will be ignored. ORDER BY, LIMIT and
@@ -120,12 +128,12 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 	public Collection<Resource> followInverseUnlimited = new ArrayList<>();
 	/**
 	 * Total maximum number of retries of failed request to the source SPARQL
-	 * endpoint. Default: 32
+	 * endpoint. Default: 128
 	 * 
 	 * @see #chunkSizeDecreaseFactor
 	 */
 	@Parameter
-	public Integer maxRetries = 32;
+	public Integer maxRetries = 128;
 
 	@Override
 	public void run() {
@@ -136,8 +144,7 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 				this.followUnlimited.stream().map(r -> ResourceFactory.createProperty(r.getURI()))
 						.collect(Collectors.toList()),
 				this.followInverseUnlimited.stream().map(r -> ResourceFactory.createProperty(r.getURI()))
-						.collect(Collectors.toList()),
-				this.maxDistance, this.chunkSize);
+						.collect(Collectors.toList()));
 	}
 
 	private static ElementGroup createElementGroup(Element... elements) {
@@ -186,7 +193,7 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 	 * @param chunkSize
 	 */
 	private void loadResources(QueryExecutionBuilder service, Collection<Resource> resourcesToLoad, Model resultModel,
-			boolean loadInverse, int chunkSize) {
+			boolean loadInverse) {
 
 		// initialize queries
 		Query[] queriesToExecute;
@@ -209,45 +216,48 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 		}
 
 		// prepare iteration
-		Query lastQuery = null;
-		ListIterator<Resource> resourcesToLoadIterator = new ArrayList<>(resourcesToLoad).listIterator();
-		while (resourcesToLoadIterator.hasNext()) {
+		for (Query queryToExecute : queriesToExecute) {
+			int currentChunkSize = this.chunkSize;
+			ListIterator<Resource> resourcesToLoadIterator = new ArrayList<>(resourcesToLoad).listIterator();
+			while (resourcesToLoadIterator.hasNext()) {
 
-			// add resource to current chunck
-			currentChunck.add(BindingFactory.binding(resourceToLoadVar, resourcesToLoadIterator.next().asNode()));
+				// add resource to current chunck
+				currentChunck.add(BindingFactory.binding(resourceToLoadVar, resourcesToLoadIterator.next().asNode()));
 
-			// execute chunk if necessary
-			if (currentChunck.size() == chunkSize || // chunk full or
-					!resourcesToLoadIterator.hasNext()) { // last resource
-				try {
+				// execute chunk if necessary
+				if (currentChunck.size() == currentChunkSize || // chunk full or
+						!resourcesToLoadIterator.hasNext()) { // last resource
+					try {
 
-					for (Query queryToExecute : queriesToExecute) {
 						// reuse prefixes returned by the service to shorten query
 						queryToExecute.setPrefixMapping(resultModel);
 						log.debug(String.format("Fetching %d resources: %s", currentChunck.size(), queryToExecute));
-						lastQuery = queryToExecute;
 						service.query(queryToExecute).build().execConstruct(resultModel);
-					}
+						// increase chunk size if less then chunkSize
+						currentChunkSize = Math.min(this.chunkSize,
+								(int) (currentChunkSize * this.chunkSizeIncreaseFactor));
 
-				} catch (Throwable e) {
-					if (this.maxRetries > 0) {
-						// reduce left over retries
-						this.maxRetries--;
-						// reduce chunk size
-						this.chunkSize = Math.max(1, (int) (this.chunkSize * this.chunkSizeDecreaseFactor));
-						for (int i = 0; i < currentChunck.size(); i++) {
-							// redo resources of current chunk
-							resourcesToLoadIterator.previous();
+					} catch (Throwable e) {
+						if (this.maxRetries > 0) {
+							// reduce left over retries
+							this.maxRetries--;
+							// reduce chunk size
+							currentChunkSize = Math.max(1, (int) (currentChunkSize * this.chunkSizeDecreaseFactor));
+							for (int i = 0; i < currentChunck.size(); i++) {
+								// redo resources of current chunk
+								resourcesToLoadIterator.previous();
+							}
+							log.warn(
+									String.format("Request failed: %s\n%s", e.getMessage(), queryToExecute.toString()));
+							log.warn(String.format("Continue with reduced chunk size: %d Left retries: %s",
+									currentChunkSize, this.maxRetries));
+						} else {
+							throw e;
 						}
-						log.warn(String.format("Request failed:\n%s", lastQuery.toString()), e);
-						log.warn(String.format("Continue with reduced chunk size: %d Left retries: %s", this.chunkSize,
-								this.maxRetries));
-					} else {
-						throw e;
+					} finally {
+						// reset chunk
+						currentChunck.clear();
 					}
-				} finally {
-					// reset chunk
-					currentChunck.clear();
 				}
 			}
 		}
@@ -255,7 +265,7 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 
 	private Model extract(Model resultModel, QueryExecutionBuilder service, Optional<Query> query,
 			Collection<Resource> list, Collection<Property> followInverse, Collection<Property> followUnlimited,
-			Collection<Property> followInverseUnlimited, int maxDistance, int chunkSize) {
+			Collection<Property> followInverseUnlimited) {
 
 		Set<Resource> resourcesLoaded = new HashSet<Resource>();
 		Set<Resource> resourcesToLoad = new HashSet<Resource>();
@@ -283,15 +293,15 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 
 		// get descriptions of relevant resources and determine associated resources to
 		// load next
-		for (int distance = 0; distance <= maxDistance; distance++) {
+		for (int distance = 0; distance <= this.maxDistance; distance++) {
 			// load resources in chunks
-			loadResources(service, resourcesToLoad, resultModel, true, chunkSize);
+			loadResources(service, resourcesToLoad, resultModel, true);
 
 			// remember loaded resources
 			resourcesLoaded.addAll(resourcesToLoad);
 			resourcesToLoad.clear();
 
-			if ( /* there is a next iteration */ distance < maxDistance) {
+			if ( /* there is a next iteration */ distance < this.maxDistance) {
 				// get associated resources to load in next iteration
 				for (Property followInverseProperty : followInverse) {
 					resultModel.listSubjectsWithProperty(followInverseProperty).filterKeep(RDFNode::isURIResource)
@@ -306,7 +316,7 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 		// earlier loaded resources by at least one of the `hierarchyProperties`
 		do {
 			// load resources in chunks
-			loadResources(service, resourcesToLoad, resultModel, true, chunkSize);
+			loadResources(service, resourcesToLoad, resultModel, true);
 
 			// remember loaded resources
 			resourcesLoaded.addAll(resourcesToLoad);
@@ -330,7 +340,7 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 		// get descriptions of properties used to describe loaded resources
 		do {
 			// load resources in chunks
-			loadResources(service, resourcesToLoad, resultModel, false, chunkSize);
+			loadResources(service, resourcesToLoad, resultModel, false);
 
 			// remember loaded resources
 			resourcesLoaded.addAll(resourcesToLoad);
