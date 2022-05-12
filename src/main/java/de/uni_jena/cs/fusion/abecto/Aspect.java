@@ -31,6 +31,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.datatypes.RDFDatatype;
@@ -43,6 +44,9 @@ import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.sparql.algebra.AlgebraGenerator;
+import org.apache.jena.sparql.algebra.OpAsQuery;
+import org.apache.jena.sparql.algebra.op.OpProject;
 import org.apache.jena.sparql.core.TriplePath;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.path.P_Alt;
@@ -176,7 +180,7 @@ public class Aspect {
 	 * @throws NullPointerException if no pattern is defined for the given dataset
 	 */
 	public static Map<String, Map<RDFNode, Set<Resource>>> getResourceIndex(Aspect aspect, Resource dataset,
-			Iterable<String> variables, Model datasetModels) throws NullPointerException {
+			Collection<String> variables, Model datasetModels) throws NullPointerException {
 		return getResourceIndex(aspect, dataset, variables, datasetModels, Functions.identity());
 	}
 
@@ -203,15 +207,18 @@ public class Aspect {
 	 * @throws NullPointerException if no pattern is defined for the given dataset
 	 */
 	public static <T> Map<String, Map<T, Set<Resource>>> getResourceIndex(Aspect aspect, Resource dataset,
-			Iterable<String> variables, Model datasetModels, Function<RDFNode, T> modifier)
+			Collection<String> variables, Model datasetModels, Function<RDFNode, T> modifier)
 			throws NullPointerException {
 		Map<String, Map<T, Set<Resource>>> index = new HashMap<>();
 
 		for (String variable : variables) {
 			index.put(variable, new HashMap<>());
 		}
-		// TODO remove not needed result vars from query
-		ResultSet results = QueryExecutionFactory.create(aspect.getPattern(dataset), datasetModels).execSelect();
+
+		// remove not needed variables from query
+		Query query = retainVariables(aspect.getPattern(dataset), aspect.keyVariable, variables);
+
+		ResultSet results = QueryExecutionFactory.create(query, datasetModels).execSelect();
 		while (results.hasNext()) {
 			QuerySolution result = results.next();
 			Resource keyValue = result.getResource(aspect.getKeyVariableName());
@@ -223,6 +230,20 @@ public class Aspect {
 			}
 		}
 		return index;
+	}
+
+	/**
+	 * 
+	 * @param query
+	 * @param keyVariable
+	 * @param variables
+	 * @return
+	 */
+	private static Query retainVariables(Query query, Var keyVariable, Collection<String> variables) {
+		OpProject op = (OpProject) new AlgebraGenerator().compile(query);
+		op = new OpProject(op.getSubOp(), op.getVars().stream()
+				.filter(v -> v.equals(keyVariable) || variables.contains(v.getName())).collect(Collectors.toList()));
+		return OpAsQuery.asQuery(op);
 	}
 
 	/**
@@ -239,8 +260,18 @@ public class Aspect {
 			List<String> variables, Model datasetModels) {
 		Map<Values, Set<Resource>> index = new HashMap<>();
 
-		// TODO remove not needed result vars from query
-		ResultSet results = QueryExecutionFactory.create(aspect.getPattern(dataset), datasetModels).execSelect();
+		Query query = aspect.getPattern(dataset);
+		List<String> resultVars = query.getResultVars();
+		if (!resultVars.containsAll(variables)) { // skip if unknown variable
+			log.warn("Failed to create resources hash index of aspect {} and dataset {}: Unknown variable(s): {}",
+					aspect.getIri(), dataset, variables.stream().filter(v -> resultVars.contains(v)).toArray());
+			return index;
+		}
+
+		// remove not needed variables from query
+		query = retainVariables(query, aspect.keyVariable, variables);
+
+		ResultSet results = QueryExecutionFactory.create(query, datasetModels).execSelect();
 		while (results.hasNext()) {
 			QuerySolution result = results.next();
 			Resource keyValue = result.getResource(aspect.getKeyVariableName());
@@ -257,15 +288,19 @@ public class Aspect {
 			List<String> variables, Model datasetModels) {
 		Map<Resource, Map<String, Set<RDFNode>>> resources = new HashMap<>();
 
-		// TODO remove not needed result vars from query
-		ResultSet results = QueryExecutionFactory.create(aspect.getPattern(dataset), datasetModels).execSelect();
-		while (results.hasNext()) {
-			QuerySolution result = results.next();
-			Resource keyValue = result.getResource(aspect.getKeyVariableName());
-			Map<String, Set<RDFNode>> resourceValues = resources.computeIfAbsent(keyValue, k -> new HashMap<>());
-			for (String variable : variables) {
-				if (result.contains(variable)) {
-					resourceValues.computeIfAbsent(variable, k -> new HashSet<>()).add(result.get(variable));
+		if (aspect.patternByDataset.containsKey(dataset)) {
+			// remove not needed variables from query
+			Query query = retainVariables(aspect.getPattern(dataset), aspect.keyVariable, variables);
+
+			ResultSet results = QueryExecutionFactory.create(query, datasetModels).execSelect();
+			while (results.hasNext()) {
+				QuerySolution result = results.next();
+				Resource keyValue = result.getResource(aspect.getKeyVariableName());
+				Map<String, Set<RDFNode>> resourceValues = resources.computeIfAbsent(keyValue, k -> new HashMap<>());
+				for (String variable : variables) {
+					if (result.contains(variable)) {
+						resourceValues.computeIfAbsent(variable, k -> new HashSet<>()).add(result.get(variable));
+					}
 				}
 			}
 		}
