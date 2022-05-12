@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 
 ### Added
+* add **FBRuleReasoningProcessor**: Generates statements using custom [rules](https://jena.apache.org/documentation/inference/#RULEhybrid)
 * extend **SparqlSourceProcessor**: add retries on failures configurable with parameters `chunkSizeDecreaseFactor` and `maxRetries`
 * extend **SparqlSourceProcessor**: add parameter `followInverseUnlimited`
 * extend **SparqlSourceProcessor**: add parameter `ignoreInverse`
