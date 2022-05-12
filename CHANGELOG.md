@@ -8,7 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 * extend **SparqlSourceProcessor**: add retries on failures configurable with parameters `chunkSizeDecreaseFactor` and `maxRetries`
 * extend **SparqlSourceProcessor**: add parameter `followInverseUnlimited`
-* extend **SparqlSourceProcessor**: add `rdf:first` and `rdf:rest` to default `followUnlimited` values 
+* extend **SparqlSourceProcessor**: add parameter `ignoreInverse`
+* extend **SparqlSourceProcessor**: add `rdf:first` and `rdf:rest` to default `followUnlimited` values
 * extend **LiteralValueComparisonProcessor**: add parameter `languageFilterPatterns`
 * extend **LiteralValueComparisonProcessor**: add parameter `allowTimeSkip` to enable date part of `xsd:date` and `xsd:dateTime`
 * extend **MappingProcessor**: add persisting of transitive correspondences

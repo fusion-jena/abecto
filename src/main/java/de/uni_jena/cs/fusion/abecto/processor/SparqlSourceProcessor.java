@@ -43,8 +43,13 @@ import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingFactory;
+import org.apache.jena.sparql.expr.E_NotOneOf;
+import org.apache.jena.sparql.expr.ExprList;
+import org.apache.jena.sparql.expr.ExprVar;
+import org.apache.jena.sparql.expr.nodevalue.NodeValueNode;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementData;
+import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.Template;
@@ -104,7 +109,7 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 	/**
 	 * Properties to track in inverse direction to compile a list of associated
 	 * resources to load. That means that the subject of a statement whose property
-	 * is in this list and whose object is a loaded resource will become a
+	 * is in this list and whose object is a loaded resource will become an
 	 * associated resource.
 	 */
 	@Parameter
@@ -126,6 +131,13 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 	 */
 	@Parameter
 	public Collection<Resource> followInverseUnlimited = new ArrayList<>();
+	/**
+	 * Properties to ignore in inverse direction. Statements with one of these
+	 * properties will neither get loaded nor will their subjects become an
+	 * associated resource.
+	 */
+	@Parameter
+	public Collection<Resource> ignoreInverse = new ArrayList<>();
 	/**
 	 * Total maximum number of retries of failed request to the source SPARQL
 	 * endpoint. Default: 128
@@ -204,11 +216,19 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 				.wrap(Collections.singletonList(new Triple(resourceToLoadVar, predicateVar, objectVar)));
 		Query query = createConstructQuery(new Template(pattern),
 				createElementGroup(new ElementTriplesBlock(pattern), values));
+
 		if (loadInverse) {
 			BasicPattern patternInverse = BasicPattern
 					.wrap(Collections.singletonList(new Triple(subjectVar, predicateVar, resourceToLoadVar)));
+			ElementFilter ignoreInverseFilter = (!ignoreInverse
+					.isEmpty())
+							? new ElementFilter(
+									new E_NotOneOf(new ExprVar(predicateVar),
+											new ExprList(ignoreInverse.stream().map(p -> new NodeValueNode(p.asNode()))
+													.collect(Collectors.toList()))))
+							: null;
 			Query queryInverse = createConstructQuery(new Template(patternInverse),
-					createElementGroup(new ElementTriplesBlock(patternInverse), values));
+					createElementGroup(new ElementTriplesBlock(patternInverse), ignoreInverseFilter, values));
 
 			queriesToExecute = new Query[] { query, queryInverse };
 		} else {
