@@ -5,7 +5,7 @@
 
 	<groupId>de.uni_jena.cs.fusion</groupId>
 	<artifactId>abecto</artifactId>
-	<version>0.4.1-SNAPSHOT</version>
+	<version>0.5.0</version>
 
 	<name>ABECTO</name>
 	<description>An ABox Evaluation and Comparison Tool for Ontologies</description>

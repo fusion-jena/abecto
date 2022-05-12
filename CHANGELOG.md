@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [0.5.0] - 2022-05-12
+
 ### Added
 * add **FBRuleReasoningProcessor**: Generates statements using custom [rules](https://jena.apache.org/documentation/inference/#RULEhybrid)
 * extend **SparqlSourceProcessor**: add retries on failures configurable with parameters `chunkSizeDecreaseFactor` and `maxRetries`
@@ -129,7 +131,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * add **ManualCategoryProcessor**: Enables users to manually define resource categories and their properties.
 * add **ResourceDeviationProcessor**: Detects deviations between the resource references of mapped resources as defined in the categories.
 
-[Unreleased]: https://github.com/fusion-jena/abecto/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/fusion-jena/abecto/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/fusion-jena/abecto/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/fusion-jena/abecto/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/fusion-jena/abecto/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/fusion-jena/abecto/compare/v0.2...v0.2.1
