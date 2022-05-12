@@ -45,6 +45,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.algebra.AlgebraGenerator;
+import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.OpAsQuery;
 import org.apache.jena.sparql.algebra.op.OpProject;
 import org.apache.jena.sparql.core.TriplePath;
@@ -240,8 +241,8 @@ public class Aspect {
 	 * @return
 	 */
 	private static Query retainVariables(Query query, Var keyVariable, Collection<String> variables) {
-		OpProject op = (OpProject) new AlgebraGenerator().compile(query);
-		op = new OpProject(op.getSubOp(), op.getVars().stream()
+		Op op = new AlgebraGenerator().compile(query);
+		op = new OpProject(op, query.getResultVars().stream().map(Var::alloc)
 				.filter(v -> v.equals(keyVariable) || variables.contains(v.getName())).collect(Collectors.toList()));
 		return OpAsQuery.asQuery(op);
 	}
