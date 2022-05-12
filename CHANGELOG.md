@@ -24,7 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * add result export engine
 * add result export template `deviations`
 * add result export template `resourceOmissions`
-* add result export template `wdMismatchFinder` (see [Wikidata Mismatch Finder file format](https://github.com/wmde/wikidata-mismatch-finder/blob/main/docs/UserGuide.md#creating-a-mismatches-import-file])
+* add result export template `wdMismatchFinder` (see [Wikidata Mismatch Finder file format](https://github.com/wmde/wikidata-mismatch-finder/blob/main/docs/UserGuide.md#creating-a-mismatches-import-file]))
 * add extraction of property path between key variable and other variables to make them available for exports
 * add reuse of sources prefix definitions for the output file
 * add CLI parameter `--loadOnly` to enable reuse of execution output for report generation
