@@ -4,7 +4,7 @@ PREFIX av: <http://w3id.org/abecto/vocabulary#>
 PREFIX dqv: <http://www.w3.org/ns/dqv#>
 PREFIX oa: <http://www.w3.org/ns/oa#>
 
-SELECT (COALESCE(?aspectLabel, ?aspectKeyVar) AS ?aspect) ?missedInDataset ?missingResource ?foundInDataset
+SELECT ?aspect ?missedInDataset ?missingResource (GROUP_CONCAT(?missingResourceLabel; SEPARATOR=", ") AS ?missingResourceLabelConcat) ?foundInDataset
 WHERE {
   GRAPH ?graph {
     [ rdf:type  dqv:QualityAnnotation ;
@@ -13,10 +13,18 @@ WHERE {
           av:affectedAspect      ?aspectResource ;
           av:comparedToDataset   ?foundInDataset ;
           av:comparedToResource  ?missingResource
-    	] ;
+        ] ;
       oa:hasTarget ?missedInDataset
     ] .
   }
   OPTIONAL { ?aspectResource rdfs:label ?aspectLabel .}
+  OPTIONAL { 
+      GRAPH ?sourceGraph {
+          ?missingResource rdfs:label ?missingResourceLabel .
+      }
+  }
   ?aspectResource av:keyVariableName ?aspectKeyVar .
+  BIND(COALESCE(?aspectLabel, ?aspectKeyVar) AS ?aspect)
 }
+GROUP BY ?missedInDataset ?foundInDataset ?aspect ?missingResource
+ORDER BY ?missedInDataset ?foundInDataset ?aspect ?missingResource

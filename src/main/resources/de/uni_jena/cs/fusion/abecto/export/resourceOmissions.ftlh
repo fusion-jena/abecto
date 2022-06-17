@@ -1,4 +1,4 @@
-aspect,missedInDataset,missingResource,foundInDataset
+aspect,missedInDataset,missingResource,missingResourceLabel,foundInDataset
 <#list data as row>
-"${row.aspect!}","${row.missedInDataset}","${row.missingResource}","${row.foundInDataset}"
+"${row.aspect!}","${row.missedInDataset}","${row.missingResource}","${row.missingResourceLabelConcat!}","${row.foundInDataset}"
 </#list>
