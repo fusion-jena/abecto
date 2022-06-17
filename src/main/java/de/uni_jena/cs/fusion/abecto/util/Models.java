@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
+import java.net.http.HttpClient.Redirect;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.util.Arrays;
@@ -89,13 +90,13 @@ public class Models {
 	public static Model read(Model model, URI uri) throws IllegalArgumentException, IOException, InterruptedException {
 		try {
 			// using the content type or file extension for language detection
-			RDFParser.source(uri.getPath()).errorHandler(ErrorHandlerFactory.errorHandlerNoLogging).parse(model);
+			RDFParser.source(uri.toString()).errorHandler(ErrorHandlerFactory.errorHandlerNoLogging).parse(model);
 			return model;
 		} catch (Exception e) {
 			// try again using brute force language detection
 
 			// create a client
-			var client = HttpClient.newHttpClient();
+			var client = HttpClient.newBuilder().followRedirects(Redirect.NORMAL).build();
 
 			// create a request
 			var request = HttpRequest.newBuilder(uri)
@@ -142,7 +143,7 @@ public class Models {
 
 	public static void write(OutputStream out, Model model, Lang lang) throws IOException {
 		if (lang.equals(Lang.JSONLD)) {
-			RDFDataMgr.write(out, model, RDFFormat.JSONLD_FLATTEN_PRETTY);
+			RDFDataMgr.write(out, model, RDFFormat.JSONLD_PRETTY);
 		} else {
 			RDFDataMgr.write(out, model, lang);
 		}
