@@ -48,10 +48,12 @@ import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sys.JenaSystem;
+import org.apache.jena.vocabulary.RDF;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,6 +61,8 @@ import de.uni_jena.cs.fusion.abecto.datatype.SparqlPropertyPathType;
 import de.uni_jena.cs.fusion.abecto.datatype.SparqlQueryType;
 import de.uni_jena.cs.fusion.abecto.datatype.XsdDateTimeStampType;
 import de.uni_jena.cs.fusion.abecto.util.Datasets;
+import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
+import de.uni_jena.cs.fusion.abecto.vocabulary.DQV;
 import freemarker.core.ParseException;
 import freemarker.template.Configuration;
 import freemarker.template.MalformedTemplateNameException;
@@ -106,6 +110,24 @@ public class Abecto implements Callable<Integer> {
 			"--export" }, paramLabel = "Export Template and File", description = "Template and output file for an result export. Can be set multiple times.")
 	Map<String, File> exports;
 
+	@Option(names = "--reportOn", paramLabel = "Dataset to check", description = "IRI of the dataset to report on. Reports will get limited to resoults about this dataset.")
+	String datasetToReportOnIri;
+
+	@Option(names = "--failOnDeviation", paramLabel = "Fail on Deviation", description = "If set, a exit code > 0 will be returned, if the results contain a deviation. Useful together with \"--reportOn\".")
+	boolean failOnDeviation;
+
+	@Option(names = "--failOnValueOmission", paramLabel = "Fail on Value Omission", description = "If set, a exit code > 0 will be returned, if the results contain a value omission. Useful together with \"--reportOn\".")
+	boolean failOnValueOmission;
+
+	@Option(names = "--failOnResourceOmission", paramLabel = "Fail on Resource Omission", description = "If set, a exit code > 0 will be returned, if the results contain a resource omission. Useful together with \"--reportOn\".")
+	boolean failOnResourceOmission;
+
+	@Option(names = "--failOnWrongValue", paramLabel = "Fail on Wrong Value", description = "If set, a exit code > 0 will be returned, if the results contain a wrong value. Useful together with \"--reportOn\".")
+	boolean failOnWrongValue;
+
+	@Option(names = "--failOnIssue", paramLabel = "Fail on Issue", description = "If set, a exit code > 0 will be returned, if the results contain a issue. Useful together with \"--reportOn\".")
+	boolean failOnIssue;
+
 	@Parameters(index = "0", paramLabel = "Plan Dataset File", description = "RDF dataset file containing the plan configuration and optionally plan execution results (see --loadOnly).")
 	File planDatasetFile;
 
@@ -130,12 +152,18 @@ public class Abecto implements Callable<Integer> {
 			}
 
 			reuseModelNamespaces(dataset);
-			
+
 			// write results as TRIG
 			if (trigOutputFile != null && !loadOnly) {
 				log.info("Writing plan execution results as TRIG file started.");
 				RDFDataMgr.write(new FileOutputStream(trigOutputFile), dataset, Lang.TRIG);
 				log.info("Writing plan execution results as TRIG file completed.");
+			}
+
+			// set models to report on
+			Dataset reportOn = this.dataset;
+			if (reportOn != null) {
+				reportOn = getModelsForDataset(datasetToReportOnIri, reportOn);
 			}
 
 			// export results
@@ -151,9 +179,19 @@ public class Abecto implements Callable<Integer> {
 				// apply export templates
 				for (Entry<String, File> export : exports.entrySet()) {
 					log.info(String.format("Export with template \"%s\" started.", export.getKey()));
-					export(export.getKey(), export.getValue());
+					export(export.getKey(), export.getValue(), reportOn);
 					log.info(String.format("Export with template \"%s\" completed.", export.getKey()));
 				}
+			}
+
+			if (this.failOnDeviation && datasetAffectedBy(reportOn, AV.Deviation)
+					|| this.failOnValueOmission && datasetAffectedBy(reportOn, AV.ValueOmission)
+					|| this.failOnResourceOmission && datasetAffectedBy(reportOn, AV.ResourceOmission)
+					|| this.failOnWrongValue && datasetAffectedBy(reportOn, AV.WrongValue)
+					|| this.failOnIssue && datasetAffectedBy(reportOn, AV.Issue)) {
+				return 1;
+			} else {
+				return 0;
 			}
 		} catch (CompletionException e) {
 			log.error("Plan execution failed.", e.getCause());
@@ -162,8 +200,25 @@ public class Abecto implements Callable<Integer> {
 			log.error(e.getMessage(), e);
 			return 2;
 		}
+	}
 
-		return 0;
+	private boolean datasetAffectedBy(Dataset dataset, Resource affectedBy) {
+		return dataset.getUnionModel().contains(null, RDF.type, affectedBy);
+	}
+
+	private static Dataset getModelsForDataset(String datasetToReportOnIri, Dataset allModels) {
+		Model configurationModel = allModels.getDefaultModel();
+		Resource datasetToReportOnResource = ResourceFactory.createResource(datasetToReportOnIri);
+		Dataset modelsForDataset = DatasetFactory.create(configurationModel);
+		allModels.listModelNames().forEachRemaining(modelResource -> {
+			if ((configurationModel.contains(modelResource, RDF.type, AV.MetaDataGraph)
+					|| configurationModel.contains(modelResource, RDF.type, AV.PrimaryDataGraph))
+					&& (!configurationModel.contains(modelResource, DQV.computedOn)
+							|| configurationModel.contains(modelResource, DQV.computedOn, datasetToReportOnResource))) {
+				modelsForDataset.addNamedModel(modelResource, allModels.getNamedModel(modelResource));
+			}
+		});
+		return modelsForDataset;
 	}
 
 	public void reuseModelNamespaces(Dataset dataset) {
@@ -185,14 +240,14 @@ public class Abecto implements Callable<Integer> {
 		Datasets.read(this.dataset, new FileInputStream(configurationFile));
 	}
 
-	public void export(String exportType, File outputFile) throws TemplateNotFoundException,
+	public void export(String exportType, File outputFile, Dataset reportOn) throws TemplateNotFoundException,
 			MalformedTemplateNameException, ParseException, IOException, TemplateException {
-		Template template = freemarker.getTemplate(exportType + ".ftlh");
+		Template template = this.freemarker.getTemplate(exportType + ".ftlh");
 		String queryStr = new String(
 				this.getClass().getResourceAsStream(TEMPLATE_FOLDER + "/" + exportType + ".rq").readAllBytes(),
 				StandardCharsets.UTF_8);
 		List<Map<String, String>> data = new ArrayList<>();
-		ResultSet results = QueryExecutionFactory.create(queryStr, dataset).execSelect();
+		ResultSet results = QueryExecutionFactory.create(queryStr, reportOn).execSelect();
 		results.forEachRemaining(binding -> {
 			Map<String, String> map = new HashMap<>();
 			data.add(map);
