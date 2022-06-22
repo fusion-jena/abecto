@@ -1,0 +1,59 @@
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX av: <http://w3id.org/abecto/vocabulary#>
+PREFIX dqv: <http://www.w3.org/ns/dqv#>
+PREFIX oa: <http://www.w3.org/ns/oa#>
+PREFIX p-plan: <http://purl.org/net/p-plan#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+SELECT ?aspect ?dataset1 ?resource1 (GROUP_CONCAT(DISTINCT ?resource1Label; SEPARATOR=", ") AS ?resource1Labels) (GROUP_CONCAT(DISTINCT ?resource2Label; SEPARATOR=", ") AS ?resource2Labels) ?resource2 ?dataset2 ?processor
+WHERE {
+  {
+    GRAPH ?stepGraph {
+      [ rdf:type  dqv:QualityAnnotation ;
+        oa:hasBody 
+          [ rdf:type               av:ResourceOmission ;
+            av:affectedAspect      ?aspectResource ;
+            av:comparedToDataset   ?dataset2 ;
+            av:comparedToResource  ?resource2
+          ] ;
+        oa:hasTarget ?dataset1
+      ] .
+    }
+    OPTIONAL { GRAPH ?source2Graph { ?resource2 rdfs:label ?resource2Label . } }
+  } UNION {
+    GRAPH ?stepGraph {
+      [ rdf:type  dqv:QualityAnnotation ;
+        oa:hasBody 
+          [ rdf:type               av:ResourceOmission ;
+            av:affectedAspect      ?aspectResource ;
+            av:comparedToDataset   ?dataset1 ;
+            av:comparedToResource  ?resource1
+          ] ;
+        oa:hasTarget ?dataset2
+      ] .
+    }
+    OPTIONAL { GRAPH ?source1Graph { ?resource1 rdfs:label ?resource1Label . } }
+  } UNION {
+    GRAPH ?stepGraph { ?resource1 av:correspondsToResource ?resource2 . }
+    FILTER (?resource1 != ?resource2)
+    GRAPH ?otherGraph { ?aspectResource av:relevantResource ?resource1, ?resource2 . }
+    ?primaryDataGraph1 a av:PrimaryDataGraph ;
+                       av:associatedDataset ?dataset1 .
+    ?primaryDataGraph2 a av:PrimaryDataGraph ;
+                       av:associatedDataset ?dataset2 .
+    FILTER EXISTS { GRAPH ?primaryDataGraph1 { ?resource1 ?primaryDataProperty1 ?primaryDataValue1 . } }
+    FILTER EXISTS { GRAPH ?primaryDataGraph2 { ?resource2 ?primaryDataProperty2 ?primaryDataValue2 . } }
+    OPTIONAL { GRAPH ?primaryDataGraph1 { ?resource1 rdfs:label ?resource1Label . } }
+    OPTIONAL { GRAPH ?primaryDataGraph2 { ?resource2 rdfs:label ?resource2Label . } }
+  }
+  
+  # processor name
+  OPTIONAL { ?stepGraph prov:wasGeneratedBy/p-plan:correspondsToStep/rdfs:label ?processor . }
+  # aspect name
+  OPTIONAL { ?aspectResource rdfs:label ?aspectLabel .}
+  ?aspectResource av:keyVariableName ?aspectKeyVar .
+  BIND(COALESCE(?aspectLabel, ?aspectKeyVar) AS ?aspect)
+}
+GROUP BY ?aspect ?dataset1 ?resource1 ?resource2 ?dataset2 ?processor
+ORDER BY ?aspect ?dataset1 ?resource1 ?resource2 ?dataset2 ?processor
