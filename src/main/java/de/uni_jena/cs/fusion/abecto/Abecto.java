@@ -211,10 +211,10 @@ public class Abecto implements Callable<Integer> {
 		Resource datasetToReportOnResource = ResourceFactory.createResource(datasetToReportOnIri);
 		Dataset modelsForDataset = DatasetFactory.create(configurationModel);
 		allModels.listModelNames().forEachRemaining(modelResource -> {
-			if ((configurationModel.contains(modelResource, RDF.type, AV.MetaDataGraph)
-					|| configurationModel.contains(modelResource, RDF.type, AV.PrimaryDataGraph))
-					&& (!configurationModel.contains(modelResource, DQV.computedOn)
-							|| configurationModel.contains(modelResource, DQV.computedOn, datasetToReportOnResource))) {
+			if (configurationModel.contains(modelResource, RDF.type, AV.PrimaryDataGraph)
+					|| (configurationModel.contains(modelResource, RDF.type, AV.MetaDataGraph)
+							&& (!configurationModel.contains(modelResource, DQV.computedOn) || configurationModel
+									.contains(modelResource, DQV.computedOn, datasetToReportOnResource)))) {
 				modelsForDataset.addNamedModel(modelResource, allModels.getNamedModel(modelResource));
 			}
 		});
