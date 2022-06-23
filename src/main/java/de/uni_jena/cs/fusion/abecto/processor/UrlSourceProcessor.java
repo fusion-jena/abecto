@@ -16,6 +16,7 @@
 package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.net.URI;
+import java.util.List;
 
 import org.apache.jena.rdf.model.Resource;
 
@@ -25,14 +26,16 @@ import de.uni_jena.cs.fusion.abecto.util.Models;
 public class UrlSourceProcessor extends Processor<UrlSourceProcessor> {
 
 	@Parameter
-	public Resource url;
+	public List<Resource> url;
 
 	@Override
 	public void run() {
-		try {
-			Models.read(this.getOutputPrimaryModel().get(), new URI(this.url.getURI()));
-		} catch (Throwable e) {
-			throw new RuntimeException(String.format("Failed to read RDF file from URL \"%s\".", this.url.getURI()), e);
+		for (Resource item : url) {
+			try {
+				Models.read(this.getOutputPrimaryModel().get(), new URI(item.getURI()));
+			} catch (Throwable e) {
+				throw new RuntimeException(String.format("Failed to read RDF file from URL \"%s\".", item.getURI()), e);
+			}
 		}
 	}
 }
