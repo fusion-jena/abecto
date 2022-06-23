@@ -163,7 +163,7 @@ public class Abecto implements Callable<Integer> {
 
 			// set models to report on
 			Dataset reportOn = this.dataset;
-			if (reportOn != null) {
+			if (datasetToReportOnIri != null) {
 				reportOn = getModelsForDataset(datasetToReportOnIri, reportOn);
 			}
 
