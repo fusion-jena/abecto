@@ -10,9 +10,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * add CLI parameter `--reportOn` to enable limited scope of reports and exit codes to a single dataset
 * add result export template `mappingReview`
 * extend **UrlSourceProcessor**: permit multiple `url` parameter values
+* extended result export template `resourceOmission`: sort, add optional rdfs:label
 
 ### Fixed
 * fix result export template `deviations`: remove duplicated columns
+* fix **UrlSourceProcessor**: use correct URL for request in heuristic language detection mode; enable followRedirects in brute force language detection mode
 
 ### Changed
 * TRIG output avoids base and empty prefix to ease result reading
