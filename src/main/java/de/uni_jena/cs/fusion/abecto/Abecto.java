@@ -49,8 +49,8 @@ import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.jena.riot.Lang;
-import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.riot.RDFWriter;
 import org.apache.jena.shared.PrefixMapping;
 import org.apache.jena.sys.JenaSystem;
 import org.apache.jena.vocabulary.RDF;
@@ -156,7 +156,8 @@ public class Abecto implements Callable<Integer> {
 			// write results as TRIG
 			if (trigOutputFile != null && !loadOnly) {
 				log.info("Writing plan execution results as TRIG file started.");
-				RDFDataMgr.write(new FileOutputStream(trigOutputFile), dataset, Lang.TRIG);
+				RDFWriter.source(dataset).base(null) // no base prefix to ease result reading
+						.format(RDFFormat.TRIG_PRETTY).output(new FileOutputStream(trigOutputFile));
 				log.info("Writing plan execution results as TRIG file completed.");
 			}
 
@@ -226,6 +227,8 @@ public class Abecto implements Callable<Integer> {
 		datasetPrefixMapping.setNsPrefixes(dataset.getDefaultModel().getNsPrefixMap());
 		dataset.listModelNames().forEachRemaining(
 				modelName -> datasetPrefixMapping.setNsPrefixes(dataset.getNamedModel(modelName).getNsPrefixMap()));
+		// no empty prefix to ease result reading
+		datasetPrefixMapping.removeNsPrefix("");
 	}
 
 	public void loadDataset(File configurationFile)

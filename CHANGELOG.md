@@ -14,6 +14,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Fixed
 * fix result export template `deviations`: remove duplicated columns
 
+### Changed
+* TRIG output avoids base and empty prefix to ease result reading
+
 ## [0.5.0] - 2022-05-12
 
 ### Added
