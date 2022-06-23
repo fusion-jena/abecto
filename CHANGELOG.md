@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [0.6.0] - 2022-06-23
+
 ### Added
 * add CLI parameters `--failOnDeviation`, `--failOnValueOmission`, `--failOnResourceOmission`, `--failOnWrongValue` and `--failOnIssue` to enable exit code 1 in case of deviations/value omissions/resource omissions/wrong values/other issues
 * add CLI parameter `--reportOn` to enable limited scope of reports and exit codes to a single dataset
@@ -145,7 +147,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * add **ManualCategoryProcessor**: Enables users to manually define resource categories and their properties.
 * add **ResourceDeviationProcessor**: Detects deviations between the resource references of mapped resources as defined in the categories.
 
-[Unreleased]: https://github.com/fusion-jena/abecto/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/fusion-jena/abecto/compare/v0.6.0...HEAD
+[0.5.0]: https://github.com/fusion-jena/abecto/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/fusion-jena/abecto/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/fusion-jena/abecto/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/fusion-jena/abecto/compare/v0.2.1...v0.3.0
