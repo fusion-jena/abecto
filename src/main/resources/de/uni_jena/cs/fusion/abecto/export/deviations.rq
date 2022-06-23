@@ -7,7 +7,7 @@ PREFIX oa: <http://www.w3.org/ns/oa#>
 PREFIX prov: <http://www.w3.org/ns/prov#>
 PREFIX prov: <http://www.w3.org/ns/prov#>
 
-SELECT ?aspect ?affectedGraph ?affectedResource ?affectedVariableName ?affectedValue ?comparedToValue ?comparedToResource ?comparedToDataset ?mappedBy
+SELECT DISTINCT ?aspect ?affectedGraph ?affectedResource ?affectedVariableName ?affectedValue ?comparedToValue ?comparedToResource ?comparedToDataset ?mappedBy
 WHERE {
   GRAPH ?qualityAnnotationGraph {
     [ rdf:type  dqv:QualityAnnotation ;
