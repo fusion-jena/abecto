@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Fixed
 * fix result export template `deviations`: remove duplicated columns
 * fix **UrlSourceProcessor**: use correct URL for request in heuristic language detection mode; enable followRedirects in brute force language detection mode
+* fix all reports: include report templates into JAR
 
 ### Changed
 * TRIG output avoids base and empty prefix to ease result reading
@@ -52,7 +53,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 * fix **EquivalentValueMappingProcessor**: fix message format
-* fix ** EquivalentValueMappingProcessor**: skip resource with unbound variables
+* fix **EquivalentValueMappingProcessor**: skip resource with unbound variables
 * fix **SparqlSourceProcessor**: enable arbitrary query lengths by updating Apache Jena fixing [JENA-2257](https://issues.apache.org/jira/browse/JENA-2257)
 * fix **SparqlSourceProcessor**: fix expected datatypes of some parameters
 * fix **SparqlSourceProcessor**: increased compatibility to SPARQL endpoint implementations
