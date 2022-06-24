@@ -157,8 +157,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * add **ResourceDeviationProcessor**: Detects deviations between the resource references of mapped resources as defined in the categories.
 
 [Unreleased]: https://github.com/fusion-jena/abecto/compare/v0.7.0...HEAD
-[0.5.0]: https://github.com/fusion-jena/abecto/compare/v0.6.0...v0.7.0
-[0.5.0]: https://github.com/fusion-jena/abecto/compare/v0.5.0...v0.6.0
+[0.7.0]: https://github.com/fusion-jena/abecto/compare/v0.6.0...v0.7.0
+[0.6.0]: https://github.com/fusion-jena/abecto/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/fusion-jena/abecto/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/fusion-jena/abecto/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/fusion-jena/abecto/compare/v0.2.1...v0.3.0
