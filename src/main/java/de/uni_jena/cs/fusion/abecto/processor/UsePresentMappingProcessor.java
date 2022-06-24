@@ -48,12 +48,13 @@ public class UsePresentMappingProcessor extends MappingProcessor<UsePresentMappi
 			// check if aspect pattern contains the variable
 			try {
 				if (!aspectObject.getPattern(dataset).getResultVars().contains(variable)) {
-					log.warn("Missing variable(s) in pattern of aspect {} and dataset {}: {}", aspect, dataset,
-							variable);
+					log.warn("Missing variable \"{}\" in pattern of aspect \"{}\" for dataset \"{}\".", variable,
+							aspectObject.getKeyVariableName(), dataset);
 					return;
 				}
 			} catch (NullPointerException e) {
-				log.warn("No pattern for aspect {} and dataset {} defined.", aspect, dataset);
+				log.warn("No pattern of aspect \"{}\" for dataset \"{}\" defined.", aspectObject.getKeyVariableName(),
+						dataset);
 				return;
 			}
 

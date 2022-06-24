@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## Fixed
+* fix **UsePresentMappingProcessor**: fix logging
+
 ## [0.7.0] - 2022-06-24
 
 ### Added
