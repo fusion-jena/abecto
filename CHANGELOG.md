@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+* extend **FileSourceProcessor**: permit multiple `path` parameter values
+
+### Changed
+* rename **RdfFileSourceProcessor** into **FileSourceProcessor**
 
 ## [0.6.0] - 2022-06-23
 
@@ -12,7 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * add CLI parameter `--reportOn` to enable limited scope of reports and exit codes to a single dataset
 * add result export template `mappingReview`
 * extend **UrlSourceProcessor**: permit multiple `url` parameter values
-* extended result export template `resourceOmission`: sort, add optional rdfs:label
+* extend result export template `resourceOmission`: sort results, add optional rdfs:label
 
 ### Fixed
 * fix result export template `deviations`: remove duplicated columns

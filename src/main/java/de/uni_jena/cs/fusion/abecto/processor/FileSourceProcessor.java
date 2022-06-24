@@ -18,26 +18,28 @@ package de.uni_jena.cs.fusion.abecto.processor;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.List;
 
 import de.uni_jena.cs.fusion.abecto.Parameter;
 import de.uni_jena.cs.fusion.abecto.util.Models;
 
-public class RdfFileSourceProcessor extends Processor<RdfFileSourceProcessor> {
-	// TODO test
+public class FileSourceProcessor extends Processor<FileSourceProcessor> {
 
 	/**
 	 * Relative path from the configuration file to the RDF file.
 	 */
 	@Parameter
-	public String path;
+	public List<String> path;
 
 	@Override
 	public void run() {
-		File file = new File(this.getRelativeBasePath(), this.path);
-		try {
-			Models.read(this.getOutputPrimaryModel().get(), new FileInputStream(file));
-		} catch (IOException e) {
-			throw new RuntimeException("Failed to read RDF file.", e);
+		for (String item : path) {
+			File file = new File(this.getRelativeBasePath(), item);
+			try {
+				Models.read(this.getOutputPrimaryModel().get(), new FileInputStream(file));
+			} catch (IOException e) {
+				throw new RuntimeException("Failed to read RDF file.", e);
+			}
 		}
 	}
 

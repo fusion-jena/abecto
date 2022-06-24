@@ -6,30 +6,23 @@
 _:plan a av:Plan ;
     .
 
-_:source1file1 a av:Step ;
+_:source1 a av:Step ;
     p-plan:isStepOfPlan _:plan ;
-    av:processorClass abecto:RdfFileSourceProcessor ;
-    av:hasParameter [av:key "path" ; av:value "tutorial-source1part1.ttl" ] ;
+    av:processorClass abecto:FileSourceProcessor ;
+    av:hasParameter [av:key "path" ; av:value "tutorial-source1part1.ttl", "tutorial-source1part2.ttl" ] ;
     av:associatedDataset _:dataset1 ;
     .
 
-_:source1file2 a av:Step ;
+_:source2 a av:Step ;
     p-plan:isStepOfPlan _:plan ;
-    av:processorClass abecto:RdfFileSourceProcessor ;
-    av:hasParameter [av:key "path" ; av:value "tutorial-source1part2.ttl" ] ;
-    av:associatedDataset _:dataset1 ;
-    .
-
-_:source2file1 a av:Step ;
-    p-plan:isStepOfPlan _:plan ;
-    av:processorClass abecto:RdfFileSourceProcessor ;
+    av:processorClass abecto:FileSourceProcessor ;
     av:hasParameter [av:key "path" ; av:value "tutorial-source2.ttl" ] ;
     av:associatedDataset _:dataset2 ;
     .
 
-_:source3file1 a av:Step ;
+_:source3 a av:Step ;
     p-plan:isStepOfPlan _:plan ;
-    av:processorClass abecto:RdfFileSourceProcessor ;
+    av:processorClass abecto:FileSourceProcessor ;
     av:hasParameter [av:key "path" ; av:value "tutorial-source3.ttl" ] ;
     av:associatedDataset _:dataset3 ;
     .
@@ -81,7 +74,7 @@ GRAPH _:manualMappings
 _:jaroWinklerMapping a av:Step ;
     p-plan:isStepOfPlan _:plan ;
     av:processorClass abecto:JaroWinklerMappingProcessor ;
-    p-plan:isPrecededBy _:source1file1, _:source1file2, _:source2file1, _:source3file1 ;
+    p-plan:isPrecededBy _:source1, _:source2, _:source3 ;
     av:predefinedMetaDataGraph _:manualMappings ;
     av:hasParameter
         [av:key "threshold" ; av:value 9e-1 ] ,
