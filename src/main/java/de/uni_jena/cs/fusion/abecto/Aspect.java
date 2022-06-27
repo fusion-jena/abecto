@@ -394,7 +394,7 @@ public class Aspect {
 	 */
 	public Query getPattern(Resource dataset) throws NullPointerException {
 		return Objects.requireNonNull(patternByDataset.get(dataset),
-				() -> String.format("Pattern of aspect %s and dataset %s not defined.", this.iri, dataset));
+				() -> String.format("Pattern of aspect %s for dataset %s not defined.", this.keyVariableName, dataset));
 	}
 
 	public Aspect setPattern(Resource dataset, Query pattern) {

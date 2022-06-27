@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 * rename **RdfFileSourceProcessor** into **FileSourceProcessor**
+* improve **UsePresentMappingProcessor**: improve logging on missing aspect patterns
 
 ## [0.6.0] - 2022-06-23
 
