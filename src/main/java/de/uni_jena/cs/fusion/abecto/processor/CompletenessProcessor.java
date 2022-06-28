@@ -25,6 +25,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.jena.rdf.model.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
 import de.uni_jena.cs.fusion.abecto.Metadata;
@@ -42,6 +44,7 @@ import de.uni_jena.cs.fusion.abecto.vocabulary.OM;
  * annotations.
  */
 public class CompletenessProcessor extends Processor<CompletenessProcessor> {
+	final static Logger log = LoggerFactory.getLogger(CompletenessProcessor.class);
 
 	/**
 	 * The {@link Aspect Aspects} to process.
@@ -68,18 +71,25 @@ public class CompletenessProcessor extends Processor<CompletenessProcessor> {
 
 			Aspect aspect = this.getAspects().get(aspectIri);
 
+			Set<Resource> datasetsCoveringTheAspekt = new HashSet<>();
+
 			// get resources by dataset and aspect
 			Map<Resource, Set<Resource>> uncoveredResourcesByDataset = new HashMap<>();
 			for (Resource dataset : this.getDatasets()) {
-				uncoveredResourcesByDataset.put(dataset,
-						Aspect.getResourceKeys(aspect, dataset, this.getInputPrimaryModelUnion(dataset)));
-				// store count
-				count.put(dataset, uncoveredResourcesByDataset.get(dataset).size());
+				try {
+					uncoveredResourcesByDataset.put(dataset,
+							Aspect.getResourceKeys(aspect, dataset, this.getInputPrimaryModelUnion(dataset)));
+					datasetsCoveringTheAspekt.add(dataset);
+					// store count
+					count.put(dataset, uncoveredResourcesByDataset.get(dataset).size());
+				} catch (NullPointerException e) {
+					log.warn(e.getMessage());
+				}
 			}
 
 			// prepare measurements
-			for (Resource dataset : this.getDatasets()) {
-				for (Resource datasetComparedTo : this.getDatasets()) {
+			for (Resource dataset : datasetsCoveringTheAspekt) {
+				for (Resource datasetComparedTo : datasetsCoveringTheAspekt) {
 					absoluteCoverage.computeIfAbsent(dataset, x -> new HashMap<>()).put(datasetComparedTo, 0);
 				}
 			}
@@ -88,7 +98,7 @@ public class CompletenessProcessor extends Processor<CompletenessProcessor> {
 			getCorrespondenceGroups(aspectIri).forEach(correspondingResources -> {
 				Map<Resource, Set<Resource>> occurrencesByDataset = new HashMap<>();
 				// count resources of the dataset in the correspondence set
-				for (Resource dataset : this.getDatasets()) {
+				for (Resource dataset : datasetsCoveringTheAspekt) {
 					Set<Resource> uncoveredResourcesOfDataset = uncoveredResourcesByDataset.get(dataset);
 					Set<Resource> occurrencesOfDataset = occurrencesByDataset.computeIfAbsent(dataset,
 							r -> new HashSet<>());
@@ -98,7 +108,7 @@ public class CompletenessProcessor extends Processor<CompletenessProcessor> {
 						}
 					}
 				}
-				for (Resource dataset : this.getDatasets()) {
+				for (Resource dataset : datasetsCoveringTheAspekt) {
 					int occurrences = occurrencesByDataset.containsKey(dataset)
 							? occurrencesByDataset.get(dataset).size()
 							: 0;
@@ -107,7 +117,7 @@ public class CompletenessProcessor extends Processor<CompletenessProcessor> {
 						omissions.merge(dataset, 1, Integer::sum);
 
 						// report resource omission for resources in correspondence sets
-						for (Resource datasetComparedTo : this.getDatasets()) {
+						for (Resource datasetComparedTo : datasetsCoveringTheAspekt) {
 							for (Resource resourceComparedTo : occurrencesByDataset.get(datasetComparedTo)) {
 								Metadata.addResourceOmission(dataset, datasetComparedTo, resourceComparedTo,
 										aspect.getIri(), this.getOutputMetaModel(dataset));
@@ -115,7 +125,7 @@ public class CompletenessProcessor extends Processor<CompletenessProcessor> {
 						}
 					}
 					if (occurrences > 0) {
-						for (Resource datasetComparedTo : this.getDatasets()) {
+						for (Resource datasetComparedTo : datasetsCoveringTheAspekt) {
 							if (!occurrencesByDataset.get(datasetComparedTo).isEmpty()) {
 								// do not use Resource#getURI() as it might be null for blank nodes
 								if (dataset.hashCode() < datasetComparedTo.hashCode()) {
@@ -149,14 +159,14 @@ public class CompletenessProcessor extends Processor<CompletenessProcessor> {
 				}
 
 				// remove covered resources
-				for (Resource dataset : this.getDatasets()) {
+				for (Resource dataset : datasetsCoveringTheAspekt) {
 					uncoveredResourcesByDataset.get(dataset).removeAll(correspondingResources);
 				}
 			});
 
 			// report resource omissions for resources not in correspondence sets
-			for (Resource datasetComparedTo : this.getDatasets()) {
-				for (Resource dataset : this.getDatasets()) {
+			for (Resource datasetComparedTo : datasetsCoveringTheAspekt) {
+				for (Resource dataset : datasetsCoveringTheAspekt) {
 					if (!dataset.equals(datasetComparedTo)) {
 						for (Resource uncoveredResource : uncoveredResourcesByDataset.get(datasetComparedTo)) {
 							Metadata.addResourceOmission(dataset, datasetComparedTo, uncoveredResource, aspect.getIri(),
@@ -167,7 +177,7 @@ public class CompletenessProcessor extends Processor<CompletenessProcessor> {
 			}
 
 			// adjust and store resource count by duplicates count
-			for (Resource dataset : this.getDatasets()) {
+			for (Resource dataset : datasetsCoveringTheAspekt) {
 				count.merge(dataset, -duplicates.getOrDefault(dataset, 0), Integer::sum);
 
 				Metadata.addQualityMeasurement(AV.count, count.get(dataset), OM.one, dataset, aspect.getIri(),
@@ -177,8 +187,8 @@ public class CompletenessProcessor extends Processor<CompletenessProcessor> {
 			// calculate population size
 			BigDecimal populationSize = BigDecimal.ZERO;
 			if (totalPairwiseOverlap.get() != 0) {
-				for (Resource dataset : this.getDatasets()) {
-					for (Resource datasetComparedTo : this.getDatasets()) {
+				for (Resource dataset : datasetsCoveringTheAspekt) {
+					for (Resource datasetComparedTo : datasetsCoveringTheAspekt) {
 						// do not use Resource#getURI() as it might be null for blank nodes
 						if (dataset.hashCode() < datasetComparedTo.hashCode()) {
 							populationSize = populationSize.add(BigDecimal.valueOf(count.get(dataset))
@@ -191,14 +201,14 @@ public class CompletenessProcessor extends Processor<CompletenessProcessor> {
 			}
 
 			// calculate & store measurements
-			for (Resource dataset : this.getDatasets()) {
+			for (Resource dataset : datasetsCoveringTheAspekt) {
 
 				// calculate & store completeness:
 				if (totalPairwiseOverlap.get() != 0) {
 					/** Ratio of resources in an estimated population covered by this dataset */
 					BigDecimal completeness = BigDecimal.valueOf(count.get(dataset)).divide(populationSize, 2,
 							RoundingMode.HALF_UP);
-					Collection<Resource> otherDatasets = this.getDatasets();
+					Collection<Resource> otherDatasets = new HashSet<>(datasetsCoveringTheAspekt);
 					otherDatasets.remove(dataset);
 					Metadata.addQualityMeasurement(AV.marCompletenessThomas08, completeness, OM.one, dataset,
 							otherDatasets, aspect.getIri(), this.getOutputMetaModel(dataset));
@@ -206,7 +216,7 @@ public class CompletenessProcessor extends Processor<CompletenessProcessor> {
 
 				// calculate relative coverage
 				relativeCoverage.put(dataset, new HashMap<>());
-				for (Resource datasetComparedTo : this.getDatasets()) {
+				for (Resource datasetComparedTo : datasetsCoveringTheAspekt) {
 					if (!dataset.equals(datasetComparedTo)) {
 						int countComparedTo = count.get(datasetComparedTo);
 						if (countComparedTo == 0) {
@@ -221,8 +231,8 @@ public class CompletenessProcessor extends Processor<CompletenessProcessor> {
 			}
 
 			// measures
-			for (Resource dataset : this.getDatasets()) {
-				for (Resource datasetComparedTo : this.getDatasets()) {
+			for (Resource dataset : datasetsCoveringTheAspekt) {
+				for (Resource datasetComparedTo : datasetsCoveringTheAspekt) {
 					if (!dataset.equals(datasetComparedTo)) {
 						Metadata.addQualityMeasurement(AV.relativeCoverage,
 								relativeCoverage.get(dataset).get(datasetComparedTo), OM.one, dataset,

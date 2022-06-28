@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Fixed
 * fix **UsePresentMappingProcessor**: fix logging
+* fix **CompletenessProcessor**: add handling of missing aspect coverage by a datasets
 
 ## [0.7.0] - 2022-06-24
 
