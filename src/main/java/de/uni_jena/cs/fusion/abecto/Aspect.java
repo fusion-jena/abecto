@@ -401,6 +401,10 @@ public class Aspect {
 		return new HashSet<Resource>(patternByDataset.keySet());
 	}
 
+	public boolean coversDataset(Resource dataset) {
+		return patternByDataset.containsKey(dataset);
+	}
+
 	public Aspect setPattern(Resource dataset, Query pattern) {
 		patternByDataset.put(dataset, pattern);
 		return this;

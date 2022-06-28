@@ -50,6 +50,10 @@ public class JaroWinklerMappingProcessor extends MappingProcessor<JaroWinklerMap
 		// get parameters
 		Aspect aspect = this.getAspects().get(this.aspect);
 
+		if (!aspect.coversDataset(dataset1) || !aspect.coversDataset(dataset2)) {
+			return;
+		}
+
 		// make index case insensitive, if requested
 		Function<RDFNode, String> modifier;
 		if (this.caseSensitive) {
