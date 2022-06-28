@@ -100,7 +100,7 @@ public class Aspect {
 					.mapWith(RDFNode::asResource).toList()) {
 				Query pattern = (Query) assertOne(
 						configurationModel.listObjectsOfProperty(aspectPatter, AV.definingQuery)).asLiteral()
-								.getValue();
+						.getValue();
 				if (!pattern.isSelectType()) {
 					throw new IllegalArgumentException(
 							String.format("Pattern of aspect %s and dataset %s is not a SPARQL Select Query.",
@@ -395,6 +395,10 @@ public class Aspect {
 	public Query getPattern(Resource dataset) throws NullPointerException {
 		return Objects.requireNonNull(patternByDataset.get(dataset),
 				() -> String.format("Pattern of aspect %s for dataset %s not defined.", this.keyVariableName, dataset));
+	}
+
+	public Set<Resource> getDatasets() {
+		return new HashSet<Resource>(patternByDataset.keySet());
 	}
 
 	public Aspect setPattern(Resource dataset, Query pattern) {

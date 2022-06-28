@@ -71,20 +71,15 @@ public class CompletenessProcessor extends Processor<CompletenessProcessor> {
 
 			Aspect aspect = this.getAspects().get(aspectIri);
 
-			Set<Resource> datasetsCoveringTheAspekt = new HashSet<>();
+			Set<Resource> datasetsCoveringTheAspekt = aspect.getDatasets();
 
 			// get resources by dataset and aspect
 			Map<Resource, Set<Resource>> uncoveredResourcesByDataset = new HashMap<>();
-			for (Resource dataset : this.getDatasets()) {
-				try {
-					uncoveredResourcesByDataset.put(dataset,
-							Aspect.getResourceKeys(aspect, dataset, this.getInputPrimaryModelUnion(dataset)));
-					datasetsCoveringTheAspekt.add(dataset);
-					// store count
-					count.put(dataset, uncoveredResourcesByDataset.get(dataset).size());
-				} catch (NullPointerException e) {
-					log.warn(e.getMessage());
-				}
+			for (Resource dataset : datasetsCoveringTheAspekt) {
+				uncoveredResourcesByDataset.put(dataset,
+						Aspect.getResourceKeys(aspect, dataset, this.getInputPrimaryModelUnion(dataset)));
+				// store count
+				count.put(dataset, uncoveredResourcesByDataset.get(dataset).size());
 			}
 
 			// prepare measurements

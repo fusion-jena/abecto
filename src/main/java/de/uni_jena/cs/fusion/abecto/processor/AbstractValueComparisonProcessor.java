@@ -42,18 +42,18 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 	public final void run() {
 		Aspect aspect = this.getAspects().get(this.aspect);
 		Map<Resource, Map<Resource, Map<String, Set<RDFNode>>>> resourceByDataset = new HashMap<>();
-		this.getDatasets().forEach(dataset -> resourceByDataset.put(dataset,
+		aspect.getDatasets().forEach(dataset -> resourceByDataset.put(dataset,
 				Aspect.getResources(aspect, dataset, variables, this.getInputPrimaryModelUnion(dataset))));
 		getCorrespondenceGroups(aspect.getIri()).forEach(correspondingResources -> {
 			for (Resource correspondingResource1 : correspondingResources) {
-				for (Resource dataset1 : this.getDatasets()) {
+				for (Resource dataset1 : aspect.getDatasets()) {
 					Map<String, Set<RDFNode>> values1 = resourceByDataset.get(dataset1).get(correspondingResource1);
 					if (values1 != null) {
 						for (Resource correspondingResource2 : correspondingResources) {
 							if (correspondingResource1.getURI().compareTo(correspondingResource2.getURI()) >= 0) {
 								// avoid doing work twice, but enable comparing representations of one resource
 								// in different datasets
-								for (Resource dataset2 : this.getDatasets()) {
+								for (Resource dataset2 : aspect.getDatasets()) {
 									if (!correspondingResource1.equals(correspondingResource2)
 											|| !dataset1.equals(dataset2)) {
 										// avoid comparing the representation of one resource in one dataset
