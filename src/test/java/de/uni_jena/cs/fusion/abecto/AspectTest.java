@@ -360,7 +360,8 @@ public class AspectTest {
 		assertEquals(
 				"<http://example.org/p0>/(<http://example.org/p1>/(<http://example.org/p2>/(^<http://example.org/p3>/(<http://example.org/p4>/^<http://example.org/p5>))))",
 				getVarPath(model, aspectIri, dataset, "v012i34i5"));
-		assertEquals("<http://example.org/p0>/(<http://example.org/p8a>|<http://example.org/p8b>)", getVarPath(model, aspectIri, dataset, "v08"));
+		assertEquals("<http://example.org/p0>/(<http://example.org/p8a>|<http://example.org/p8b>)",
+				getVarPath(model, aspectIri, dataset, "v08"));
 
 	}
 
@@ -373,5 +374,17 @@ public class AspectTest {
 				+ "<" + AV.variableName.getURI() + "> \"" + variableName + "\" ;"//
 				+ "<" + AV.propertyPath.getURI() + "> ?path ;"//
 				+ "]]}", model).execSelect().next().get("path").asLiteral().getLexicalForm();
+	}
+
+	/**
+	 * For https://issues.apache.org/jira/browse/JENA-2335
+	 */
+	@Test
+	public void retainVariables() {
+		String queryStr = "SELECT ?a ?d WHERE { ?a <http://example.org/p> ?b . BIND(?b AS ?c) BIND(?c AS ?d) }";
+		String queryStr2 = Aspect.retainVariables(QueryFactory.create(queryStr), Var.alloc("a"), Arrays.asList("d"))
+				.toString();
+		assertTrue(queryStr2.contains("(?b AS ?c)"));
+
 	}
 }

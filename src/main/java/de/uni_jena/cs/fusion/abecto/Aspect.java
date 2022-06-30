@@ -31,7 +31,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.datatypes.RDFDatatype;
@@ -44,10 +43,6 @@ import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.sparql.algebra.AlgebraGenerator;
-import org.apache.jena.sparql.algebra.Op;
-import org.apache.jena.sparql.algebra.OpAsQuery;
-import org.apache.jena.sparql.algebra.op.OpProject;
 import org.apache.jena.sparql.core.TriplePath;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.path.P_Alt;
@@ -216,8 +211,10 @@ public class Aspect {
 			index.put(variable, new HashMap<>());
 		}
 
+		Query query = aspect.getPattern(dataset);
+
 		// remove not needed variables from query
-		Query query = retainVariables(aspect.getPattern(dataset), aspect.keyVariable, variables);
+		query = retainVariables(query, aspect.keyVariable, variables);
 
 		ResultSet results = QueryExecutionFactory.create(query, datasetModels).execSelect();
 		while (results.hasNext()) {
@@ -234,17 +231,23 @@ public class Aspect {
 	}
 
 	/**
+	 * Removes all result variables from a {@link Query} except of variables given
+	 * in {@code keyVariable} and {@code variables}.
 	 * 
 	 * @param query
 	 * @param keyVariable
 	 * @param variables
 	 * @return
 	 */
-	private static Query retainVariables(Query query, Var keyVariable, Collection<String> variables) {
-		Op op = new AlgebraGenerator().compile(query);
-		op = new OpProject(op, query.getResultVars().stream().map(Var::alloc)
-				.filter(v -> v.equals(keyVariable) || variables.contains(v.getName())).collect(Collectors.toList()));
-		return OpAsQuery.asQuery(op);
+	static Query retainVariables(Query query, Var keyVariable, Collection<String> variables) {
+		// TODO HOTFIX for https://issues.apache.org/jira/browse/JENA-2335
+		return query;
+		// Op op = new AlgebraGenerator().compile(query);
+		// op = new OpProject(op,
+		// query.getResultVars().stream().map(Var::alloc).filter(v ->
+		// v.equals(keyVariable) ||
+		// variables.contains(v.getName())).collect(Collectors.toList()));
+		// return OpAsQuery.asQuery(op);
 	}
 
 	/**
@@ -290,8 +293,9 @@ public class Aspect {
 		Map<Resource, Map<String, Set<RDFNode>>> resources = new HashMap<>();
 
 		if (aspect.patternByDataset.containsKey(dataset)) {
+			Query query = aspect.getPattern(dataset);
 			// remove not needed variables from query
-			Query query = retainVariables(aspect.getPattern(dataset), aspect.keyVariable, variables);
+			query = retainVariables(query, aspect.keyVariable, variables);
 
 			ResultSet results = QueryExecutionFactory.create(query, datasetModels).execSelect();
 			while (results.hasNext()) {
