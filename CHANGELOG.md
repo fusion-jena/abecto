@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * fix **JaroWinklerMappingProcessor**: add handling of missing aspect coverage by a datasets
 * fix **JaroWinklerMappingProcessor**: update similarity library fixing a bug that might cause a lower similarity between resources with several values of the compared variable
 * fix all reports: disable special character escaping
+* hotfix for https://issues.apache.org/jira/browse/JENA-2335 
 
 ## [0.7.0] - 2022-06-24
 
