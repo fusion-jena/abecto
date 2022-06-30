@@ -245,7 +245,7 @@ public class Abecto implements Callable<Integer> {
 
 	public void export(String exportType, File outputFile, Dataset reportOn) throws TemplateNotFoundException,
 			MalformedTemplateNameException, ParseException, IOException, TemplateException {
-		Template template = this.freemarker.getTemplate(exportType + ".ftlh");
+		Template template = this.freemarker.getTemplate(exportType + ".ftl");
 		String queryStr = new String(
 				this.getClass().getResourceAsStream(TEMPLATE_FOLDER + "/" + exportType + ".rq").readAllBytes(),
 				StandardCharsets.UTF_8);
