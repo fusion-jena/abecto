@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## Fixed
+* fix all reports
+
 ## [0.7.1] - 2022-06-30
 
 ## Fixed

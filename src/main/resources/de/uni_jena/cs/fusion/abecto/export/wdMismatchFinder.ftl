@@ -1,3 +1,4 @@
+<#ftl output_format="plainText">
 <#--
 
     Copyright © 2019 Heinz Nixdorf Chair for Distributed Information Systems, Friedrich Schiller University Jena (http://www.fusion.uni-jena.de/)
@@ -15,7 +16,6 @@
     limitations under the License.
 
 -->
-<#ftl output_format="plainText">
 statement_guid,property_id,wikidata_value,external_value,external_url
 <#list data as row>
 "${row.statement_guid}","${row.property_id}","${row.wikidata_value!}","${row.external_value}","${row.external_url}"

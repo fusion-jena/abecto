@@ -1,3 +1,4 @@
+<#ftl output_format="plainText">
 <#--
 
     Copyright © 2019 Heinz Nixdorf Chair for Distributed Information Systems, Friedrich Schiller University Jena (http://www.fusion.uni-jena.de/)
@@ -15,7 +16,6 @@
     limitations under the License.
 
 -->
-<#ftl output_format="plainText">
 aspect,missedInDataset,missingResource,missingResourceLabel,foundInDataset
 <#list data as row>
 "${row.aspect!}","${row.missedInDataset}","${row.missingResource}","${row.missingResourceLabelConcat!}","${row.foundInDataset}"
