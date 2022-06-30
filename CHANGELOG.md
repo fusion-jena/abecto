@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [0.7.2] - 2022-06-30
+
 ## Fixed
 * fix all reports
 
@@ -172,7 +174,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * add **ManualCategoryProcessor**: Enables users to manually define resource categories and their properties.
 * add **ResourceDeviationProcessor**: Detects deviations between the resource references of mapped resources as defined in the categories.
 
-[Unreleased]: https://github.com/fusion-jena/abecto/compare/v0.7.1...HEAD
+[Unreleased]: https://github.com/fusion-jena/abecto/compare/v0.7.2...HEAD
+[0.7.1]: https://github.com/fusion-jena/abecto/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/fusion-jena/abecto/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/fusion-jena/abecto/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/fusion-jena/abecto/compare/v0.5.0...v0.6.0
