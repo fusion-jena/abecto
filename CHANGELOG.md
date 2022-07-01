@@ -5,8 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [0.8.0] - 2022-07-01
+
 ### Added
-* extend **LiteralValueComparisonProcessor**: add parameter `allowLangTagSkip` to enable comparison of values from source using and not using language tags
+* extend **LiteralValueComparisonProcessor**: add parameter `allowLangTagSkip` to enable comparison of values from sources using and not using language tags
 
 ## [0.7.2] - 2022-06-30
 
@@ -177,8 +179,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * add **ManualCategoryProcessor**: Enables users to manually define resource categories and their properties.
 * add **ResourceDeviationProcessor**: Detects deviations between the resource references of mapped resources as defined in the categories.
 
-[Unreleased]: https://github.com/fusion-jena/abecto/compare/v0.7.2...HEAD
-[0.7.1]: https://github.com/fusion-jena/abecto/compare/v0.7.1...v0.7.2
+[Unreleased]: https://github.com/fusion-jena/abecto/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/fusion-jena/abecto/compare/v0.7.2...v0.8.0
+[0.7.2]: https://github.com/fusion-jena/abecto/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/fusion-jena/abecto/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/fusion-jena/abecto/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/fusion-jena/abecto/compare/v0.5.0...v0.6.0
