@@ -21,7 +21,9 @@ import java.util.Collection;
 
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.xsd.XSDDateTime;
+import org.apache.jena.datatypes.xsd.impl.RDFLangString;
 import org.apache.jena.datatypes.xsd.impl.XSDBaseNumericType;
+import org.apache.jena.datatypes.xsd.impl.XSDBaseStringType;
 import org.apache.jena.datatypes.xsd.impl.XSDDateTimeType;
 import org.apache.jena.datatypes.xsd.impl.XSDDateType;
 import org.apache.jena.datatypes.xsd.impl.XSDDouble;
@@ -29,6 +31,8 @@ import org.apache.jena.datatypes.xsd.impl.XSDFloat;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.sparql.expr.nodevalue.NodeFunctions;
+
+import com.github.jsonldjava.shaded.com.google.common.base.Objects;
 
 import de.uni_jena.cs.fusion.abecto.Parameter;
 
@@ -43,11 +47,17 @@ public class LiteralValueComparisonProcessor extends AbstractValueComparisonProc
 	@Parameter
 	public Collection<String> languageFilterPatterns = new ArrayList<>();
 	/**
-	 * If true, literals of the types xsd:date and xsd:dateTime with equal year,
-	 * month and day part will match.
+	 * If true, a literal of the type xsd:date and a literal of the type
+	 * xsd:dateTime with equal year, month and day part will match.
 	 */
 	@Parameter
 	public boolean allowTimeSkip;
+	/**
+	 * If true, literals of the type xsd:string or xsd:dateTime with equal lexical
+	 * value but different language tag will match.
+	 */
+	@Parameter
+	public boolean allowLangTagSkip;
 
 	@Override
 	public boolean useValue(RDFNode value) {
@@ -94,6 +104,14 @@ public class LiteralValueComparisonProcessor extends AbstractValueComparisonProc
 			return date1.getDays() == date2.getDays() //
 					&& date1.getMonths() == date2.getMonths() //
 					&& date1.getYears() == date2.getYears();
+		}
+
+		// ignore lang tags
+		if (allowLangTagSkip && (type1 instanceof XSDBaseStringType || type1 instanceof RDFLangString)
+				&& (type2 instanceof XSDBaseStringType || type2 instanceof RDFLangString)) {
+			String string1 = literal1.getString();
+			String string2 = literal2.getString();
+			return Objects.equal(string1, string2);
 		}
 
 		// comparison of different number types

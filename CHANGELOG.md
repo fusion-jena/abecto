@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+* extend **LiteralValueComparisonProcessor**: add parameter `allowLangTagSkip` to enable comparison of values from source using and not using language tags
+
 ## [0.7.2] - 2022-06-30
 
 ## Fixed

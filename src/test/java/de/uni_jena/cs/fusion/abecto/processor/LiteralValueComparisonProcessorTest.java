@@ -54,6 +54,53 @@ class LiteralValueComparisonProcessorTest extends AbstractValueComparisonProcess
 	}
 
 	@Test
+	public void allowLangTagSkip() {
+		LiteralValueComparisonProcessor processor = new LiteralValueComparisonProcessor();
+		String lex = "lex";
+
+		assertTrue(processor.equivalentValues(ResourceFactory.createStringLiteral(lex),
+				ResourceFactory.createStringLiteral(lex)));
+		assertTrue(processor.equivalentValues(ResourceFactory.createStringLiteral(lex),
+				ResourceFactory.createLangLiteral(lex, "")));
+		assertFalse(processor.equivalentValues(ResourceFactory.createStringLiteral(lex),
+				ResourceFactory.createLangLiteral(lex, "en")));
+		assertTrue(processor.equivalentValues(ResourceFactory.createLangLiteral(lex, ""),
+				ResourceFactory.createStringLiteral(lex)));
+		assertTrue(processor.equivalentValues(ResourceFactory.createLangLiteral(lex, ""),
+				ResourceFactory.createLangLiteral(lex, "")));
+		assertFalse(processor.equivalentValues(ResourceFactory.createLangLiteral(lex, ""),
+				ResourceFactory.createLangLiteral(lex, "en")));
+		assertFalse(processor.equivalentValues(ResourceFactory.createLangLiteral(lex, "en"),
+				ResourceFactory.createStringLiteral(lex)));
+		assertFalse(processor.equivalentValues(ResourceFactory.createLangLiteral(lex, "en"),
+				ResourceFactory.createLangLiteral(lex, "")));
+		assertTrue(processor.equivalentValues(ResourceFactory.createLangLiteral(lex, "en"),
+				ResourceFactory.createLangLiteral(lex, "en")));
+
+		processor.allowLangTagSkip = true;
+
+		assertTrue(processor.equivalentValues(ResourceFactory.createStringLiteral(lex),
+				ResourceFactory.createStringLiteral(lex)));
+		assertTrue(processor.equivalentValues(ResourceFactory.createStringLiteral(lex),
+				ResourceFactory.createLangLiteral(lex, "")));
+		assertTrue(processor.equivalentValues(ResourceFactory.createStringLiteral(lex),
+				ResourceFactory.createLangLiteral(lex, "en")));
+		assertTrue(processor.equivalentValues(ResourceFactory.createLangLiteral(lex, ""),
+				ResourceFactory.createStringLiteral(lex)));
+		assertTrue(processor.equivalentValues(ResourceFactory.createLangLiteral(lex, ""),
+				ResourceFactory.createLangLiteral(lex, "")));
+		assertTrue(processor.equivalentValues(ResourceFactory.createLangLiteral(lex, ""),
+				ResourceFactory.createLangLiteral(lex, "en")));
+		assertTrue(processor.equivalentValues(ResourceFactory.createLangLiteral(lex, "en"),
+				ResourceFactory.createStringLiteral(lex)));
+		assertTrue(processor.equivalentValues(ResourceFactory.createLangLiteral(lex, "en"),
+				ResourceFactory.createLangLiteral(lex, "")));
+		assertTrue(processor.equivalentValues(ResourceFactory.createLangLiteral(lex, "en"),
+				ResourceFactory.createLangLiteral(lex, "en")));
+
+	}
+
+	@Test
 	void useValue() {
 		LiteralValueComparisonProcessor processor = new LiteralValueComparisonProcessor();
 		String lex = "";
@@ -66,7 +113,7 @@ class LiteralValueComparisonProcessorTest extends AbstractValueComparisonProcess
 		assertTrue(processor.useValue(ResourceFactory.createLangLiteral(lex, "en-us")));
 		assertTrue(processor.useValue(ResourceFactory.createLangLiteral(lex, "de")));
 		assertTrue(processor.useValue(ResourceFactory.createLangLiteral(lex, "de-de")));
-		
+
 		// none
 		processor.languageFilterPatterns = Arrays.asList("");
 		assertTrue(processor.useValue(ResourceFactory.createStringLiteral(lex)));
@@ -74,7 +121,7 @@ class LiteralValueComparisonProcessorTest extends AbstractValueComparisonProcess
 		assertFalse(processor.useValue(ResourceFactory.createLangLiteral(lex, "en-us")));
 		assertFalse(processor.useValue(ResourceFactory.createLangLiteral(lex, "de")));
 		assertFalse(processor.useValue(ResourceFactory.createLangLiteral(lex, "de-de")));
-		
+
 		// any
 		processor.languageFilterPatterns = Arrays.asList("*");
 		assertFalse(processor.useValue(ResourceFactory.createStringLiteral(lex)));
@@ -82,7 +129,7 @@ class LiteralValueComparisonProcessorTest extends AbstractValueComparisonProcess
 		assertTrue(processor.useValue(ResourceFactory.createLangLiteral(lex, "en-us")));
 		assertTrue(processor.useValue(ResourceFactory.createLangLiteral(lex, "de")));
 		assertTrue(processor.useValue(ResourceFactory.createLangLiteral(lex, "de-de")));
-		
+
 		// en
 		processor.languageFilterPatterns = Arrays.asList("en");
 		assertFalse(processor.useValue(ResourceFactory.createStringLiteral(lex)));
@@ -90,17 +137,17 @@ class LiteralValueComparisonProcessorTest extends AbstractValueComparisonProcess
 		assertTrue(processor.useValue(ResourceFactory.createLangLiteral(lex, "en-us")));
 		assertFalse(processor.useValue(ResourceFactory.createLangLiteral(lex, "de")));
 		assertFalse(processor.useValue(ResourceFactory.createLangLiteral(lex, "de-de")));
-		
+
 		// en or de
-		processor.languageFilterPatterns = Arrays.asList("en","de");
+		processor.languageFilterPatterns = Arrays.asList("en", "de");
 		assertFalse(processor.useValue(ResourceFactory.createStringLiteral(lex)));
 		assertTrue(processor.useValue(ResourceFactory.createLangLiteral(lex, "en")));
 		assertTrue(processor.useValue(ResourceFactory.createLangLiteral(lex, "en-us")));
 		assertTrue(processor.useValue(ResourceFactory.createLangLiteral(lex, "de")));
 		assertTrue(processor.useValue(ResourceFactory.createLangLiteral(lex, "de-de")));
-		
+
 		// en or none
-		processor.languageFilterPatterns = Arrays.asList("en","");
+		processor.languageFilterPatterns = Arrays.asList("en", "");
 		assertTrue(processor.useValue(ResourceFactory.createStringLiteral(lex)));
 		assertTrue(processor.useValue(ResourceFactory.createLangLiteral(lex, "en")));
 		assertTrue(processor.useValue(ResourceFactory.createLangLiteral(lex, "en-us")));
