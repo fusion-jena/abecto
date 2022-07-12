@@ -30,26 +30,33 @@ WHERE {
 		}
 		BIND (IRI(CONCAT("http://www.wikidata.org/prop/",?property_id)) AS ?p)
 		BIND (IRI(CONCAT("http://www.wikidata.org/prop/statement/",?property_id)) AS ?ps)
-		OPTIONAL{
+# TODO: add if https://phabricator.wikimedia.org/T312767 is fixed
+#		OPTIONAL{
 			GRAPH ?sourceGraph {
 				?internal_url	?p	?statement .
 				?statement		?ps	?wikidata_value .
 				FILTER(regex(str(?statement),"http://www.wikidata.org/entity/statement/([0-9a-zA-Z]*)-(.*)"))
 			}
-		}
-	} UNION {
-		GRAPH ?issueGraph {
-			[]	a						av:ValueOmission ;
-				^oa:hasBody				[ oa:hasTarget ?internal_url ];
-				av:affectedAspect		?aspect ;
-				av:affectedVariableName	?variable;
-				av:comparedToValue		?external_value ;
-				av:comparedToResource	?external_url .
-		}
+# TODO: add if https://phabricator.wikimedia.org/T312767 is fixed
+#		}
+#	} UNION {
+#		GRAPH ?issueGraph {
+#			[]	a						av:ValueOmission ;
+#				^oa:hasBody				[ oa:hasTarget ?internal_url ];
+#				av:affectedAspect		?aspect ;
+#				av:affectedVariableName	?variable;
+#				av:comparedToValue		?external_value ;
+#				av:comparedToResource	?external_url .
+#		}
 	}
-	BIND (coalesce(
-		replace(str(?statement),"http://www.wikidata.org/entity/statement/([0-9a-zA-Z]*)-(.*)","$1\\$$2"),
-		strAfter(str(?internal_url),"http://www.wikidata.org/entity/") # fallback to entity id 
-	) AS ?statement_guid)
+# TODO: remove workaround for https://phabricator.wikimedia.org/T312767
+	BIND (replace(str(?statement),"http://www.wikidata.org/entity/statement/([0-9a-zA-Z]*)-(.*)","$1\\$$2") AS ?statement_guid)
+# TODO: add if https://phabricator.wikimedia.org/T312767 is fixed
+#	BIND (coalesce(
+#		replace(str(?statement),"http://www.wikidata.org/entity/statement/([0-9a-zA-Z]*)-(.*)","$1\\$$2"),
+#		strAfter(str(?internal_url),"http://www.wikidata.org/entity/") # fallback to entity id 
+#	) AS ?statement_guid)
+# TODO: replace if https://phabricator.wikimedia.org/T312851 is fixed
+	FILTER REGEX(?property_id, "^P\\d*$", "i")
 }
 ORDER BY ?statement_guid ?property_id

@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Fixed
+* fix **wdMismatchFinder** report: exclude not yet supported mismatches of [(alternative) labels or missing values](https://phabricator.wikimedia.org/T312767) and [qualifier values](https://phabricator.wikimedia.org/T312851)
+
 ## [0.8.0] - 2022-07-01
 
 ### Added
