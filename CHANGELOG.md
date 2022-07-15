@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Fixed
+* fix **wdMismatchFinder** report: remove datatypes of wikidata_value and external_value
+
 ## [0.9.0] - 2022-07-15
 
 ### Added

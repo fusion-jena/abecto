@@ -6,8 +6,8 @@ SELECT
 	# expected format https://github.com/wmde/wikidata-mismatch-finder/blob/main/docs/UserGuide.md
 	?statement_guid # Represents that unique id of the statement on wikidata that contains the mismatching data.
 	?property_id # The id of the wikidata property defining the wikidata value of the mismatch.
-	?wikidata_value # The value on wikidata that mismatches an external database.
-	?external_value # The value in the external database that mismatches a wikidata value.
+	(STR(?wikidata_valueX) AS ?wikidata_value) # The value on wikidata that mismatches an external database.
+	(STR(?external_valueX) AS ?external_value) # The value in the external database that mismatches a wikidata value.
 	?external_url # (Optional) A url or uri to the mismatching entity in the external database.
 WHERE {
 	BIND (<http://www.wikidata.org/> AS ?dataset)
@@ -24,8 +24,8 @@ WHERE {
 				^oa:hasBody				[ oa:hasTarget ?internal_url ];
 				av:affectedAspect		?aspect ;
 				av:affectedVariableName	?variable;
-				av:affectedValue		?wikidata_value ;
-				av:comparedToValue		?external_value ;
+				av:affectedValue		?wikidata_valueX ;
+				av:comparedToValue		?external_valueX ;
 				av:comparedToResource	?external_url .
 		}
 		BIND (IRI(CONCAT("http://www.wikidata.org/prop/",?property_id)) AS ?p)
@@ -34,7 +34,7 @@ WHERE {
 #		OPTIONAL{
 			GRAPH ?sourceGraph {
 				?internal_url	?p	?statement .
-				?statement		?ps	?wikidata_value .
+				?statement		?ps	?wikidata_valueX .
 				FILTER(regex(str(?statement),"http://www.wikidata.org/entity/statement/([0-9a-zA-Z]*)-(.*)"))
 			}
 			?sourceGraph a av:PrimaryDataGraph ;
@@ -47,7 +47,7 @@ WHERE {
 #				^oa:hasBody				[ oa:hasTarget ?internal_url ];
 #				av:affectedAspect		?aspect ;
 #				av:affectedVariableName	?variable;
-#				av:comparedToValue		?external_value ;
+#				av:comparedToValue		?external_valueX ;
 #				av:comparedToResource	?external_url .
 #		}
 	}
