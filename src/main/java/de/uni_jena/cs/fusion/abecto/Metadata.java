@@ -134,6 +134,7 @@ public class Metadata {
 			Model outputAffectedDatasetMetaModel) {
 		Resource qualityMeasurement = outputAffectedDatasetMetaModel.createResource(AV.QualityMeasurement);
 		qualityMeasurement.addProperty(DQV.isMeasurementOf, measure);
+		qualityMeasurement.addProperty(DQV.computedOn, computedOnDataset);
 		qualityMeasurement.addLiteral(DQV.value, value);
 		qualityMeasurement.addProperty(SdmxAttribute.unitMeasure, unit);
 		qualityMeasurement.addProperty(AV.affectedAspect, affectedAspect);
@@ -158,6 +159,7 @@ public class Metadata {
 		builder.addVar(UNIT);
 		builder.addWhere(QUALITY_MEASUREMENT, RDF.type, AV.QualityMeasurement);
 		builder.addWhere(QUALITY_MEASUREMENT, DQV.isMeasurementOf, measure);
+		builder.addWhere(QUALITY_MEASUREMENT, DQV.computedOn, computedOnDataset);
 		builder.addWhere(QUALITY_MEASUREMENT, DQV.value, VALUE);
 		builder.addWhere(QUALITY_MEASUREMENT, SdmxAttribute.unitMeasure, UNIT);
 		builder.addWhere(QUALITY_MEASUREMENT, AV.affectedAspect, affectedAspect);

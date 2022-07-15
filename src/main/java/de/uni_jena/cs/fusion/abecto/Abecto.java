@@ -47,6 +47,7 @@ import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.riot.RDFFormat;
@@ -131,14 +132,18 @@ public class Abecto implements Callable<Integer> {
 	@Parameters(index = "0", paramLabel = "Plan Dataset File", description = "RDF dataset file containing the plan configuration and optionally plan execution results (see --loadOnly).")
 	File planDatasetFile;
 
-	private Dataset dataset;
+	private Dataset dataset = DatasetFactory.createGeneral();
 	private File relativeBasePath;
 	private Configuration freemarker;
 	private final static String TEMPLATE_FOLDER = "/de/uni_jena/cs/fusion/abecto/export";
+	private final static String VOCABULARY_FOLDER = "/de/uni_jena/cs/fusion/abecto/vocabulary";
 
 	@Override
 	public Integer call() {
 		try {
+			// load abecto vocabulary
+			loadVocabulary("http://w3id.org/abecto/vocabulary", "abecto-vocabulary.ttl", "TTL");
+
 			log.info("Loading plan dataset file started.");
 			loadDataset(planDatasetFile);
 			log.info("Loading plan dataset file completed.");
@@ -203,6 +208,11 @@ public class Abecto implements Callable<Integer> {
 		}
 	}
 
+	private void loadVocabulary(String graphIri, String fileName, String lang) {
+		this.dataset.addNamedModel(graphIri, ModelFactory.createDefaultModel()
+				.read(this.getClass().getResourceAsStream(VOCABULARY_FOLDER + "/" + fileName), null, lang));
+	}
+
 	private boolean datasetAffectedBy(Dataset dataset, Resource affectedBy) {
 		return dataset.getUnionModel().contains(null, RDF.type, affectedBy);
 	}
@@ -238,8 +248,6 @@ public class Abecto implements Callable<Integer> {
 		this.relativeBasePath = configurationFile.getParentFile();
 
 		// read configuration
-		this.dataset = DatasetFactory.createGeneral();
-
 		Datasets.read(this.dataset, new FileInputStream(configurationFile));
 	}
 

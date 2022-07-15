@@ -1,0 +1,319 @@
+@prefix av: <http://w3id.org/abecto/vocabulary#> .
+@prefix dcat: <http://www.w3.org/ns/dcat#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix dqv: <http://www.w3.org/ns/dqv#> .
+@prefix ldqd: <http://www.w3.org/2016/05/ldqd#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix p-plan: <http://purl.org/net/p-plan#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfg: <http://www.w3.org/2004/03/trix/rdfg-1/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix vaem: <http://www.linkedmodel.org/schema/vaem#> .
+@prefix vann: <http://purl.org/vocab/vann/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://w3id.org/abecto/vocabulary> a owl:Ontology ;
+    owl:imports <http://www.w3.org/ns/dcat> ;
+    owl:imports <http://www.w3.org/ns/dqv> ;
+    owl:imports <http://www.w3.org/2016/05/ldqd> ;
+    owl:imports <http://www.opmw.org/p-plan.owl> ;
+    vaem:rationale "using statement `owl:imports <http://www.opmw.org/p-plan.owl>` because statement `owl:imports <http://purl.org/net/p-plan>` does not work" ;
+    owl:imports <http://www.w3.org/ns/prov> ;
+    owl:imports <http://www.w3.org/2004/03/trix/rdfg-1/> ;
+    vann:preferredNamespaceUri "http://w3id.org/abecto/vocabulary#";
+    vann:preferredNamespacePrefix "av";
+    dcterms:title "ABECTO Vocabulary"@en;
+    dcterms:description "The ABECTO Vocabulary (AV) is a vocabulary for the description of execution plans and results of the ABox Evaluation and Comparison Tool for Ontologies (ABECTO)."@en ;
+    dcterms:creator [
+        schema:name "Jan Martin Keil" ;
+        schema:identifier <https://orcid.org/0000-0002-7733-0193> ;
+        schema:affiliation [
+            schema:name "Heinz Nixdorf Chair for Distributed Information Systems, Friedrich Schiller University Jena" ;
+            schema:url <https://www.fusion.uni-jena.de/> ;
+        ] ;
+    ] ;
+    dcterms:license <http://creativecommons.org/licenses/by/4.0/> ;
+    dcterms:created "2022-05-09"^^xsd:date ;
+    owl:versionInfo "0.2.0" ;
+    owl:versionIRI <http://w3id.org/abecto/vocabulary/0.2.0> ;
+    owl:priorVersion <http://w3id.org/abecto/vocabulary/0.1> ;
+    .
+
+av:Plan a rdfs:Class ;
+    rdfs:subClassOf p-plan:Plan ;
+    rdfs:label "ABECTO plan"@en ;
+    rdfs:comment "An ABECTO execution plan."@en ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+av:Step a rdfs:Class ;
+    rdfs:subClassOf p-plan:Step ;
+    rdfs:label "step"@en ;
+    rdfs:comment "A single step in an ABECTO execution plan defined by the processor class, preceding steps (p-plan:isPrecededBy), parameters (av:hasParameter), and predefined meta data (av:predefinedMetaDataGraph)."@en ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+av:StepExecution a rdfs:Class ;
+    rdfs:subClassOf p-plan:Activity ;
+    rdfs:label "step execution"@en ;
+    rdfs:comment "An activity that executes a single step of a plan. It is determined by the correspnding step (p-plan:corresondsToStep), start and end date time (prov:startedAtTime, prov:endedAtTime), and the used primary and meta data graphs (prov:used)."@en ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+av:Parameter a rdfs:Class ;
+    rdfs:label "parameter"@en ;
+    rdfs:comment "A generic parameter defined by a key String (av:key) and a value literal (rdf:value)."@en ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+av:Aspect a rdfs:Class ;
+    rdfs:label "aspect"@en ;
+    rdfs:comment "An aspect denotes a group of facts from multiple datasets belonging to corresponding features or classes of resources."@en ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+av:AspectPattern a rdfs:Class ;
+    rdfs:label "aspect pattern"@en ;
+    rdfs:comment "An aspect pattern determines the facts from a single dataset (av:associatedDataset) belonging to a specific aspect (av:ofAspect) using a SPARQL select query (av:definingQuery)."@en ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+av:QualityMeasurement a rdfs:Class ;
+    rdfs:subClassOf dqv:QualityMeasurement ;
+    rdfs:label "quality measurement"@en ;
+    rdfs:comment "A quality measurement represents the result value (dqv:value) of an evaluation of a given dataset (dqv:computedOn) against a specific quality metric (dqv:isMeasurementOf)."@en ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+av:QualityAnnotationBody a rdfs:Class ;
+    rdfs:label "quality annotation body"@en ;
+    rdfs:comment "A quality annotation body is the body (oa:hasBody) of a dqv:QualityAnnotation on a resource (oa:hasTarget). This class serves as super class of different types of annotation bodies and is not intended for direct use."@en ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+av:Deviation a rdfs:Class ;
+    rdfs:subClassOf av:QualityAnnotationBody ;
+    rdfs:label "deviation"@en ;
+    rdfs:comment "An instance serves as the body (oa:hasBody) of a dqv:QualityAnnotation on a resource (oa:hasTarget). It denotes a mismatch of the value (av:affectedValue) of a specified variable (av:affectedVariableName) from a specified aspect (av:affectedAspect) to the corresponding value (av:comparedToValue) of a corresponding resource (av:comparedToResource) from a specified dataset (av:comparedToDataset)."@en ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+av:WrongValue a rdfs:Class ;
+    rdfs:subClassOf av:QualityAnnotationBody ;
+    rdfs:label "wrong value"@en ;
+    rdfs:comment "An instance serves as the body (oa:hasBody) of a dqv:QualityAnnotation on a resource (oa:hasTarget). It denotes the incorrectness of a value (av:affectedValue) of a specified variable (av:affectedVariableName) from a specified aspect (av:affectedAspect)."@en ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+av:ValueOmission a rdfs:Class ;
+    rdfs:subClassOf av:QualityAnnotationBody ;
+    rdfs:label "value omission"@en ;
+    rdfs:comment "An instance serves as the body (oa:hasBody) of a dqv:QualityAnnotation on a resource (oa:hasTarget). It denotes the absent of a certain value for a specified variable (av:affectedVariableName) from a specified aspect (av:affectedAspect) in comparison to a value (av:comparedToValue) of a corresponding resource (av:comparedToResource) from a specified dataset (av:comparedToDataset)."@en ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+av:VariablePath a rdfs:Class ;
+    rdfs:label "variable path"@en ;
+    rdfs:comment "A connection between the key variable and another variable (av:variableName) of an aspect by a property path (av:propertyPath)."@en ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+av:ResourceOmission a rdfs:Class ;
+    rdfs:subClassOf av:QualityAnnotationBody ;
+    rdfs:label "resource omission"@en ;
+    rdfs:comment "An instance serves as the body (oa:hasBody) of a dqv:QualityAnnotation on a dataset (oa:hasTarget). It denotes the absent of a corresponding resource from a specified aspect (av:affectedAspect) in comparison to a resource (av:comparedToResource) from a specified dataset (av:comparedToDataset)."@en ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+av:Issue a rdfs:Class ;
+    rdfs:subClassOf av:QualityAnnotationBody ;
+    rdfs:label "issue"@en ;
+    rdfs:comment "An instance serves as the body (oa:hasBody) of a dqv:QualityAnnotation on a resource or a dataset (oa:hasTarget). It describes an issue of a certain type (av:issueType) with a description (rdfs:comment). An issue might affect a certain aspect (av:Aspect), a certain aspect variable (av:affectedVariableName), or a certain aspect variable value (av:affectedValue)."@en ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+av:MetaDataGraph a rdfs:Class ;
+    rdfs:subClassOf dqv:QualityMetadata , rdfg:Graph , prov:Entity ;
+    rdfs:label "meta data graph"@en ;
+    rdfs:comment "A meta data graph is a RDF graph that contains meta data of a dataset (dqv:computedOn)."@en ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+av:PrimaryDataGraph a rdfs:Class ;
+    rdfs:subClassOf rdfg:Graph , prov:Entity ;
+    rdfs:label "primary data graph"@en ;
+    rdfs:comment "A primary data graph is a RDF graph that contains primary data of a dataset (av:associatedDataset)."@en ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+
+av:hasParameter a owl:ObjectProperty ;
+    rdfs:label "has parameter"@en ;
+    rdfs:comment "A parameter that was, is, or will be involved in an execution."@en ;
+    rdfs:range av:Parameter ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+av:ofAspect a owl:ObjectProperty ;
+    rdfs:label "of aspect"@en ;
+    rdfs:comment "The aspect an aspect pattern belongs to."@en ;
+    rdfs:domain av:AspectPattern;
+    rdfs:range av:Aspect ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+av:affectedAspect a owl:ObjectProperty ;
+    rdfs:label "affected aspect"@en ;
+    rdfs:comment "The aspect that is concerned by some meta data, such as deviations, value omissions and resource omissions, quality measurements or issues."@en ;
+    rdfs:domain [ rdf:type owl:Class ; owl:unionOf ( av:QualityAnnotationBody av:QualityMeasurement ) ] ;
+    rdfs:range av:Aspect ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+av:associatedDataset a owl:ObjectProperty ;
+    rdfs:label "associated dataset"@en ;
+    rdfs:comment "The dataset to that a resource belongs, such as primary or meta data graphs, aspect patterns or steps."@en ;
+    rdfs:range dcat:Dataset ;
+    rdfs:seeAlso av:PrimaryDataGraph , av:MetaDataGraph , av:AspectPattern , av:Step ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+av:comparedToDataset a owl:ObjectProperty ;
+    rdfs:label "compared to dataset"@en ;
+    rdfs:comment "The dataset in comparison to that were derived some meta data, such as deviations, value omissions, resource omissions, or quality measurements."@en ;
+    rdfs:domain [ rdf:type owl:Class ; owl:unionOf ( av:QualityAnnotationBody av:QualityMeasurement ) ] ;
+    rdfs:range dcat:Dataset ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+av:comparedToResource a owl:ObjectProperty ;
+    rdfs:label "compared to resource"@en ;
+    rdfs:comment "The resource in comparison to that were derived some meta data, such as deviations, value omissions or resource omissions."@en ;
+    rdfs:domain av:QualityAnnotationBody ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+av:correspondsToResource a owl:ObjectProperty, owl:SymmetricProperty, owl:TransitiveProperty ;
+    rdfs:label "corresponds to resource"@en ;
+    rdfs:comment "A resource that corresponds to this resource."@en ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+av:correspondsNotToResource a owl:ObjectProperty, owl:SymmetricProperty ;
+    owl:propertyChainAxiom ( av:correspondsNotToResource av:correspondsToResource ) ;
+    rdfs:label "corresponds not to resource"@en ;
+    rdfs:comment "A resource that not corresponds to this resource."@en ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+av:relevantResource a owl:ObjectProperty ;
+    rdfs:label "relevant resource"@en ;
+    rdfs:comment "A resource that is relevant for an aspekt."@en ;
+    rdfs:domain av:Aspect ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+av:predefinedMetaDataGraph a owl:ObjectProperty ;
+    rdfs:label "predefined meta data graph"@en ;
+    rdfs:comment "A predefined meta data graph that will be taken into account during the execution of a step without being the execution result of a preceding step."@en ;
+    rdfs:domain av:Step ;
+    rdfs:range av:MetaDataGraph ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+av:javaClass a owl:ObjectProperty ;
+    rdfs:label "processor class"@en ;
+    rdfs:comment "The associated Java class of a processor. The value is expected to be a resource represented by an IRI with the \"java\" scheme and the fully qualified name of the class as path, e.g. \"<java:java.util.Collection>\"."@en ;
+    rdfs:domain av:Step ;
+    rdfs:seeAlso "https://docs.oracle.com/javase/specs/jls/se16/html/jls-3.html#jls-3.8"^^xsd:anyURI ;
+    rdfs:seeAlso "https://docs.oracle.com/javase/specs/jls/se16/html/jls-6.html#jls-6.5.3.2"^^xsd:anyURI ;
+    rdfs:seeAlso "https://docs.oracle.com/javase/specs/jls/se16/html/jls-6.html#jls-6.7"^^xsd:anyURI ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+
+av:SparqlQuery a rdfs:Datatype ;
+    rdfs:label "SPARQL select query"@en ;
+    rdfs:comment "The datatype of SPARQL queries."@en ;
+    rdfs:seeAlso "http://www.w3.org/TR/sparql11-query#rQuery"^^xsd:anyURI ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+
+av:SparqlPropertyPath a rdfs:Datatype ;
+    rdfs:label "SPARQL property path"@en ;
+    rdfs:comment "The datatype of SPARQL property paths."@en ;
+    rdfs:seeAlso "http://www.w3.org/TR/sparql11-query#rPath "^^xsd:anyURI ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+
+av:definingQuery a owl:DatatypeProperty ;
+    rdfs:label "defining query"@en ;
+    rdfs:comment "The query that defines the pattern of an aspect for a certain dataset."@en ;
+    rdfs:domain av:AspectPattern ;
+    rdfs:range av:SparqlQuery ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+av:key a owl:DatatypeProperty ;
+    rdfs:label "key"@en ;
+    rdfs:label "name"@en ;
+    rdfs:comment "The key or name of a parameter."@en ;
+    rdfs:domain av:Parameter ;
+    rdfs:range xsd:string ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+av:value a owl:DatatypeProperty ;
+    rdfs:label "value"@en ;
+    rdfs:comment "The value of a parameter."@en ;
+    rdfs:domain av:Parameter ;
+    rdfs:range xsd:string ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+av:keyVariableName a owl:DatatypeProperty ;
+    rdfs:label "key variable name"@en ;
+    rdfs:comment "The name of a variable that serves as primary key for an aspect."@en ;
+    rdfs:domain av:Aspect ;
+    rdfs:range xsd:string ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+av:variableName a owl:DatatypeProperty ;
+    rdfs:label "variable name"@en ;
+    rdfs:comment "The name of a variable the key variable of an aspect is connected with via a certain property path (av:propertyPath)."@en ;
+    rdfs:domain av:VariablePath ;
+    rdfs:range xsd:string ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+av:propertyPath a owl:DatatypeProperty ;
+    rdfs:label "variable name"@en ;
+    rdfs:comment "The property path that connects the key variable of an aspect to a certain variable (av:variableName)."@en ;
+    rdfs:domain av:VariablePath ;
+    rdfs:range av:SparqlPropertyPath ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+av:affectedVariableName a owl:DatatypeProperty ;
+    rdfs:label "affected variable name"@en ;
+    rdfs:comment "The variable of an aspect that is concerned by some meta data, such as deviations, value omissions, quality measurements, or issues."@en ;
+    rdfs:domain av:QualityAnnotationBody ;
+    rdfs:range xsd:string ;
+    rdfs:seeAlso av:Deviation , av:ValueOmission , dqv:QualityMeasurement , av:Issue ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+av:affectedValue a owl:DatatypeProperty ;
+    rdfs:label "affected value"@en ;
+    rdfs:comment "The variable value of a resource of an aspect that is concerned by some meta data, such as deviations or issues."@en ;
+    rdfs:domain av:QualityAnnotationBody ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+av:comparedToValue a owl:DatatypeProperty ;
+    rdfs:label "compared to value"@en ;
+    rdfs:comment "The value in comparison to that were derived some meta data, such as deviations, or value omissions."@en ;
+    rdfs:domain av:QualityAnnotationBody ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+av:issueType a owl:DatatypeProperty , owl:FunctionalProperty ;
+    rdfs:label "issue type"@en ;
+    rdfs:comment "The described custom type of an issue."@en ;
+    rdfs:domain av:Issue ;
+    rdfs:range xsd:string ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+
+av:marCompletenessThomas08 a dqv:Metric ;
+    rdfs:label "mark and recapture"@en ;
+    rdfs:comment "The ratio of the completeness of a dataset compared to multiple other datasets regarding a certain aspect estimated using the mark and recapture method as defined in Thomas 2008."@en ;
+    dqv:inDimension ldqd:completeness ;
+    rdfs:seeAlso <https://doi.org/10.1145/1390334.1390531> ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+av:relativeCoverage a dqv:Metric ;
+    rdfs:label "relative coverage"@en ;
+    rdfs:comment "The ratio of resources of a certain aspect in another dataset for that the assessed dataset contains a corresponding resource."@en ;
+    dqv:inDimension ldqd:completeness ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+av:absoluteCoverage a dqv:Metric ;
+    rdfs:label "absolute coverage"@en ;
+    rdfs:comment "The number of resources of a certain aspect in another dataset for that the assessed dataset contains a corresponding resource."@en ;
+    dqv:inDimension ldqd:completeness ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+av:count a dqv:Metric ;
+    rdfs:label "count"@en ;
+    rdfs:comment "The number of resource of a certain aspect in a dataset."@en ;
+    dqv:inDimension ldqd:completeness ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
