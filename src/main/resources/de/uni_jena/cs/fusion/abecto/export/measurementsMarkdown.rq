@@ -1,0 +1,51 @@
+PREFIX av: <http://w3id.org/abecto/vocabulary#>
+PREFIX dqv: <http://www.w3.org/ns/dqv#>
+PREFIX oa: <http://www.w3.org/ns/oa#>
+PREFIX om: <http://www.ontology-of-units-of-measure.org/resource/om-2/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX sdmx-attribute: <http://purl.org/linked-data/sdmx/2009/attribute#>
+
+SELECT
+	(STR(SAMPLE(?measurementTypeLabel)) AS ?measurementTypeName)
+	(SAMPLE(?affectedAspectX) AS ?affectedAspect)
+	(SAMPLE(?affectedVariableNameX) AS ?affectedVariableName)
+	(SAMPLE(?computedOnDatasetX) AS ?computedOnDataset)
+	(STR(SAMPLE(?valueX)) AS ?value)
+	(STR(SAMPLE(?unitSymbolX)) AS ?unitSymbol)
+	(GROUP_CONCAT(?comparedToDataset;separator=", ") AS ?comparedToDatasets)
+	(STR(COUNT(DISTINCT ?comparedToDataset)) AS ?comparedToDatasetsCount)
+	(STR(SAMPLE(?measurementTypeDescriptionX)) AS ?measurementTypeDescription)
+WHERE {
+	GRAPH ?graph {
+		?measurement a av:QualityMeasurement ;
+					 dqv:isMeasurementOf ?measurementType ;
+					 dqv:computedOn ?computedOnDatasetX ;
+					 av:affectedAspect ?affectedAspectResource ;
+					 dqv:value ?valueX ;
+					 sdmx-attribute:unitMeasure ?unit .
+		OPTIONAL { ?measurement av:comparedToDataset ?comparedToDataset . }
+		OPTIONAL { ?measurement av:affectedVariableName ?affectedVariableNameX . }
+	}
+	?affectedAspectResource av:keyVariableName ?affectedAspectKey .
+	OPTIONAL { ?affectedAspectResource rdfs:label ?affectedAspectLabel . }
+	BIND(STR(COALESCE(?affectedAspectLabel, ?affectedAspectKey)) AS ?affectedAspectX)
+	GRAPH <http://w3id.org/abecto/vocabulary> {
+		?measurementType rdfs:label ?measurementTypeLabel .
+		OPTIONAL { ?measurementType rdfs:comment ?measurementTypeDescriptionX . }
+	}
+	OPTIONAL { 
+		GRAPH <http://www.ontology-of-units-of-measure.org/resource/om-2> {
+			FILTER(?unit != om:one)
+			?unit om:symbol ?unitSymbolX .
+		}
+	}
+}
+GROUP BY
+	?measurement
+ORDER BY
+	?measurementTypeName
+	?affectedAspect
+	?affectedVariableName
+	?computedOnDataset
+	?value
+	?unitSymbol
