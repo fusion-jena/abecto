@@ -141,9 +141,6 @@ public class Abecto implements Callable<Integer> {
 	@Override
 	public Integer call() {
 		try {
-			// load abecto vocabulary
-			loadVocabulary("http://w3id.org/abecto/vocabulary", "abecto-vocabulary.ttl", "TTL");
-
 			log.info("Loading plan dataset file started.");
 			loadDataset(planDatasetFile);
 			log.info("Loading plan dataset file completed.");
@@ -171,6 +168,10 @@ public class Abecto implements Callable<Integer> {
 			if (datasetToReportOnIri != null) {
 				reportOn = getModelsForDataset(datasetToReportOnIri, reportOn);
 			}
+
+			// load vocabulary
+			loadVocabulary("http://w3id.org/abecto/vocabulary", "abecto-vocabulary.ttl", "TTL");
+			loadVocabulary("http://www.ontology-of-units-of-measure.org/resource/om-2", "om-2.0.rdf", "RDF/XML");
 
 			// export results
 			if (exports != null) {

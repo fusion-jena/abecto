@@ -20,7 +20,11 @@ WHERE {
         oa:hasTarget ?dataset1
       ] .
     }
-    OPTIONAL { GRAPH ?source2Graph { ?resource2 rdfs:label ?resource2Label . } }
+    OPTIONAL {
+        GRAPH ?primaryDataGraph2 { ?resource2 rdfs:label ?resource2Label . }
+        ?primaryDataGraph2 a av:PrimaryDataGraph ;
+                           av:associatedDataset ?dataset2 .
+    }
   } UNION {
     GRAPH ?stepGraph {
       [ rdf:type  dqv:QualityAnnotation ;
@@ -33,7 +37,11 @@ WHERE {
         oa:hasTarget ?dataset2
       ] .
     }
-    OPTIONAL { GRAPH ?source1Graph { ?resource1 rdfs:label ?resource1Label . } }
+    OPTIONAL {
+        GRAPH ?primaryDataGraph1 { ?resource1 rdfs:label ?resource1Label . }
+        ?primaryDataGraph1 a av:PrimaryDataGraph ;
+                           av:associatedDataset ?dataset1 .
+    }
   } UNION {
     GRAPH ?stepGraph { ?resource1 av:correspondsToResource ?resource2 . }
     FILTER (?resource1 != ?resource2)

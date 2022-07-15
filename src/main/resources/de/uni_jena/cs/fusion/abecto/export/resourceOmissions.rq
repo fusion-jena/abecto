@@ -22,6 +22,8 @@ WHERE {
       GRAPH ?sourceGraph {
           ?missingResource rdfs:label ?missingResourceLabel .
       }
+      ?sourceGraph a av:PrimaryDataGraph ;
+                   av:associatedDataset ?foundInDataset .
   }
   ?aspectResource av:keyVariableName ?aspectKeyVar .
   BIND(COALESCE(?aspectLabel, ?aspectKeyVar) AS ?aspect)

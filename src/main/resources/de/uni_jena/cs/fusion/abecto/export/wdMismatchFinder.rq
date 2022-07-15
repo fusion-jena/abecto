@@ -37,6 +37,8 @@ WHERE {
 				?statement		?ps	?wikidata_value .
 				FILTER(regex(str(?statement),"http://www.wikidata.org/entity/statement/([0-9a-zA-Z]*)-(.*)"))
 			}
+			?sourceGraph a av:PrimaryDataGraph ;
+						 av:associatedDataset ?dataset .
 # TODO: add if https://phabricator.wikimedia.org/T312767 is fixed
 #		}
 #	} UNION {
