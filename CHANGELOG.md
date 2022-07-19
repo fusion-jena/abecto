@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Fixed
+* fix **Step**: consider associated dataset of predefined metadata graphs
+
 ## [0.9.1] - 2022-07-15
 
 ### Fixed

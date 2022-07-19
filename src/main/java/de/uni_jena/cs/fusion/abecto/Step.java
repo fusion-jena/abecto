@@ -32,6 +32,7 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.shared.Lock;
+import org.apache.jena.util.iterator.ExtendedIterator;
 import org.apache.jena.vocabulary.RDFS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -156,9 +157,17 @@ public class Step implements Runnable {
 			}
 			configurationModel.listObjectsOfProperty(stepIri, AV.predefinedMetaDataGraph).mapWith(RDFNode::asResource)
 					.forEach(inputMetaModelIri -> {
-						Model inputMetaModel = dataset.getNamedModel(inputMetaModelIri);
-						inputMetaModel = MappingProcessor.inferTransitiveCorrespondences(inputMetaModel);
-						processor.addInputMetaModel(null, inputMetaModel);
+						Model inputMetaModel = MappingProcessor
+								.inferTransitiveCorrespondences(dataset.getNamedModel(inputMetaModelIri));
+						ExtendedIterator<Resource> computedOnDatasetIterator = configurationModel
+								.listObjectsOfProperty(inputMetaModelIri, DQV.computedOn)
+								.filterKeep(RDFNode::isResource).mapWith(RDFNode::asResource);
+						if (computedOnDatasetIterator.hasNext()) {
+							computedOnDatasetIterator
+									.forEach(computedOn -> processor.addInputMetaModel(computedOn, inputMetaModel));
+						} else {
+							processor.addInputMetaModel(null, inputMetaModel);
+						}
 						inputModelIris.add(inputMetaModelIri);
 					});
 			for (Resource inputModelIri : inputModelIris) {
