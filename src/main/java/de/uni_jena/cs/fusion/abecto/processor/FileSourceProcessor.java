@@ -17,13 +17,17 @@ package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.uni_jena.cs.fusion.abecto.Parameter;
 import de.uni_jena.cs.fusion.abecto.util.Models;
 
 public class FileSourceProcessor extends Processor<FileSourceProcessor> {
+
+	final static Logger log = LoggerFactory.getLogger(FileSourceProcessor.class);
 
 	/**
 	 * Relative path from the configuration file to the RDF file.
@@ -35,10 +39,11 @@ public class FileSourceProcessor extends Processor<FileSourceProcessor> {
 	public void run() {
 		for (String item : path) {
 			File file = new File(this.getRelativeBasePath(), item);
-			try {
-				Models.read(this.getOutputPrimaryModel().get(), new FileInputStream(file));
-			} catch (IOException e) {
-				throw new RuntimeException("Failed to read RDF file.", e);
+			try (FileInputStream in = new FileInputStream(file)) {
+				Models.read(this.getOutputPrimaryModel().get(), in);
+			} catch (Throwable e) {
+				log.error(String.format("Failed to read RDF file \"%s\".\n%s", file, e.getMessage()));
+				throw new RuntimeException(String.format("Failed to read RDF file \"%s\".", file), e);
 			}
 		}
 	}

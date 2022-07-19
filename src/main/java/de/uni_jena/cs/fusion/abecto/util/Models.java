@@ -28,6 +28,7 @@ import java.net.http.HttpResponse.BodyHandlers;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
@@ -63,8 +64,8 @@ public class Models {
 		return ModelFactory.createOntologyModel(OntModelSpec.OWL_MEM);
 	}
 
-	public static final Collection<Lang> supportedLanguages = Arrays.asList(Lang.RDFXML, Lang.NT, Lang.N3, Lang.TTL,
-			Lang.JSONLD, Lang.RDFJSON, Lang.NQ, Lang.TRIG, Lang.RDFTHRIFT, Lang.TRIX, Lang.SHACLC);
+	public static final Collection<Lang> supportedLanguages = Arrays.asList(Lang.RDFXML, Lang.TRIG, Lang.N3,
+			Lang.JSONLD, Lang.RDFJSON, Lang.NQ, Lang.RDFTHRIFT, Lang.TRIX, Lang.SHACLC);
 
 	public static Model read(Model model, InputStream in) throws IOException, IllegalArgumentException {
 		if (!in.markSupported()) {
@@ -73,6 +74,7 @@ public class Models {
 		in.mark(MAX_BUFFER_SIZE);
 		// try each supported language
 		InputStream unclosableIn = new UncloseableInputStream(in);
+		LinkedHashMap<Lang, Throwable> throwables = new LinkedHashMap<>();
 		for (Lang lang : supportedLanguages) {
 			try {
 				RDFParser.source(unclosableIn).lang(lang).errorHandler(ErrorHandlerFactory.errorHandlerNoLogging)
@@ -80,11 +82,18 @@ public class Models {
 				in.close();
 				return model;
 			} catch (Throwable t) {
+				throwables.put(lang, t);
 				in.reset();
 				continue;
 			}
 		}
-		throw new IllegalArgumentException("Unknown RDF language.");
+		throw new IllegalArgumentException(
+				"Unknown RDF language.\\n  "
+						+ throwables
+								.entrySet().stream().map(e -> String.format("Failed to parse %s: %s",
+										e.getKey().getName(), e.getValue().getMessage().replaceFirst("\n\\s+", " ")
+												.replaceAll("\n\\s+", ", ").replaceAll("\n", " ")))
+								.collect(Collectors.joining("\n  ")));
 	}
 
 	public static Model read(Model model, URI uri) throws IllegalArgumentException, IOException, InterruptedException {

@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.jena.query.Dataset;
 import org.apache.jena.riot.Lang;
@@ -28,11 +29,9 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.uni_jena.cs.fusion.abecto.Abecto;
-
 public class Datasets {
 
-	final static Logger log = LoggerFactory.getLogger(Abecto.class);
+	final static Logger log = LoggerFactory.getLogger(Datasets.class);
 
 	/**
 	 * The maximum size of array to allocate.
@@ -61,16 +60,18 @@ public class Datasets {
 				RDFDataMgr.read(dataset, unclosableIn, lang);
 				in.close();
 				return;
-			} catch (Throwable t) {
-				throwables.put(lang, t);
+			} catch (Throwable e) {
+				throwables.put(lang, e);
 				in.reset();
 				continue;
 			}
 		}
-		for (Lang lang : throwables.keySet()) {
-			log.info(String.format("Failed to parse %s: %s", lang.getName(), throwables.get(lang).getMessage()
-					.replaceFirst("\n\\s+", " ").replaceAll("\n\\s+", ", ").replaceAll("\n", " ")));
-		}
-		throw new IllegalArgumentException("Unknown RDF language.");
+		throw new IllegalArgumentException(
+				"Unknown RDF language.\\n  "
+						+ throwables
+								.entrySet().stream().map(e -> String.format("Failed to parse %s: %s",
+										e.getKey().getName(), e.getValue().getMessage().replaceFirst("\n\\s+", " ")
+												.replaceAll("\n\\s+", ", ").replaceAll("\n", " ")))
+								.collect(Collectors.joining("\n  ")));
 	}
 }
