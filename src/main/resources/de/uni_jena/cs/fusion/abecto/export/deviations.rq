@@ -7,7 +7,7 @@ PREFIX oa: <http://www.w3.org/ns/oa#>
 PREFIX prov: <http://www.w3.org/ns/prov#>
 PREFIX prov: <http://www.w3.org/ns/prov#>
 
-SELECT DISTINCT ?aspect ?affectedGraph ?affectedResource ?affectedVariableName ?affectedValue ?comparedToValue ?comparedToResource ?comparedToDataset ?mappedBy
+SELECT DISTINCT ?aspect ?affectedGraph ?affectedResource ?affectedVariableName ?affectedValue ?comparedToValue ?comparedToResource ?comparedToDataset ?mappedBy ?snippetToAnnotateValueComparedToAsWrong
 WHERE {
   GRAPH ?qualityAnnotationGraph {
     [ rdf:type  dqv:QualityAnnotation ;
@@ -33,5 +33,18 @@ WHERE {
     }
     ?mappingGraph prov:wasGeneratedBy/p-plan:correspondsToStep/rdfs:label ?mappedBy .
   }
+  BIND(CONCAT(
+              '[ rdf:type dqv:QualityAnnotation ; oa:hasBody [ rdf:type av:WrongValue ; av:affectedAspect ',
+              IF(ISBLANK(?aspectResource), STR(?aspectResource), CONCAT('<',STR(?aspectResource),'>')),
+              ' ; av:affectedVariableName ""',
+              ?affectedVariableName,
+              '"" ; av:affectedValue ""',
+              STR(?comparedToValue),
+              '""',
+              IF(DATATYPE(?comparedToValue) = rdf:langString, CONCAT('@',LANG(?comparedToValue)), CONCAT('^^<',STR(DATATYPE(?comparedToValue)),'>')),
+              ' ; ] ; oa:hasTarget <',
+              STR(?comparedToResource),
+              '> ] .'
+             ) AS ?snippetToAnnotateValueComparedToAsWrong)
 }
 ORDER BY ?aspect ?affectedGraph ?affectedResource ?affectedVariableName 

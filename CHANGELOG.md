@@ -5,9 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+* extend report `deviations`: add column `snippetToAnnotateValueComparedToAsWrong` to ease wrong value annotation for future plan executions
+
 ### Fixed
 * fix **Step**: consider associated dataset of predefined metadata graphs
 * fix report engine: avoid character escaping in of literals
+
+### Added
 
 ## [0.9.1] - 2022-07-15
 
