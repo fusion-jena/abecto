@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [0.10.0] - 2022-07-19
+
 ### Added
 * extend report `deviations`: add column `snippetToAnnotateValueComparedToAsWrong` to ease wrong value annotation for future plan executions
 
@@ -201,7 +203,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * add **ManualCategoryProcessor**: Enables users to manually define resource categories and their properties.
 * add **ResourceDeviationProcessor**: Detects deviations between the resource references of mapped resources as defined in the categories.
 
-[Unreleased]: https://github.com/fusion-jena/abecto/compare/v0.9.1...HEAD
+[Unreleased]: https://github.com/fusion-jena/abecto/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/fusion-jena/abecto/compare/v0.9.1...v0.10.0
 [0.9.1]: https://github.com/fusion-jena/abecto/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/fusion-jena/abecto/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/fusion-jena/abecto/compare/v0.7.2...v0.8.0
