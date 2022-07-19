@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 * fix **Step**: consider associated dataset of predefined metadata graphs
+* fix report engine: avoid character escaping in of literals
 
 ## [0.9.1] - 2022-07-15
 

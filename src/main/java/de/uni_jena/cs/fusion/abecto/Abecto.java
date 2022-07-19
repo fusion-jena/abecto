@@ -265,7 +265,13 @@ public class Abecto implements Callable<Integer> {
 			data.add(map);
 			results.getResultVars().forEach(var -> {
 				if (binding.contains(var)) {
-					map.put(var, binding.get(var).toString());
+					if (binding.get(var).isLiteral()) {
+						map.put(var, binding.get(var).asLiteral().getString());
+					} else if (binding.get(var).isResource()) {
+						map.put(var, "<" + binding.get(var).asResource().toString() + ">");
+					} else {
+						map.put(var, binding.get(var).toString());
+					}
 				}
 			});
 		});
