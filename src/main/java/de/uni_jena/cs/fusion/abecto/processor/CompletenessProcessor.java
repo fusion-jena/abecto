@@ -35,7 +35,7 @@ import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 import de.uni_jena.cs.fusion.abecto.vocabulary.OM;
 
 /**
- * Provides measurements for <strong>number of duplicates</strong>,
+ * Provides measurements for <strong>number of resources</strong>,
  * <strong>absolute coverage</strong>, <strong>relative coverage</strong>, and
  * <strong>completeness</strong> per aspect (estimated using the mark and
  * recapture method as defined in defined in
