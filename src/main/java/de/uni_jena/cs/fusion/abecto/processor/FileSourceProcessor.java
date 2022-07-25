@@ -38,7 +38,10 @@ public class FileSourceProcessor extends Processor<FileSourceProcessor> {
 	@Override
 	public void run() {
 		for (String item : path) {
-			File file = new File(this.getRelativeBasePath(), item);
+			File file = new File(item);
+			if (!file.isAbsolute()) {
+				file = new File(this.getRelativeBasePath(), item);
+			}
 			try (FileInputStream in = new FileInputStream(file)) {
 				Models.read(this.getOutputPrimaryModel().get(), in);
 			} catch (Throwable e) {
