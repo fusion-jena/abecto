@@ -64,8 +64,8 @@ public class Models {
 		return ModelFactory.createOntologyModel(OntModelSpec.OWL_MEM);
 	}
 
-	public static final Collection<Lang> supportedLanguages = Arrays.asList(Lang.RDFXML, Lang.TRIG, Lang.N3,
-			Lang.JSONLD, Lang.RDFJSON, Lang.NQ, Lang.RDFTHRIFT, Lang.TRIX, Lang.SHACLC);
+	public static final Collection<Lang> supportedLanguages = Arrays.asList(Lang.RDFXML, Lang.TRIG, Lang.NQ,
+			Lang.JSONLD, Lang.RDFJSON, Lang.RDFTHRIFT, Lang.TRIX, Lang.SHACLC);
 
 	public static Model read(Model model, InputStream in) throws IOException, IllegalArgumentException {
 		if (!in.markSupported()) {
