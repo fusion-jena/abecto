@@ -16,24 +16,27 @@
 package de.uni_jena.cs.fusion.abecto.processor;
 
 import org.apache.jena.reasoner.Reasoner;
-import org.apache.jena.reasoner.rulesys.FBRuleReasoner;
+import org.apache.jena.reasoner.rulesys.GenericRuleReasoner;
 import org.apache.jena.reasoner.rulesys.Rule;
 
 import de.uni_jena.cs.fusion.abecto.Parameter;
 
 /**
- * Provides inferred primary data based on custom <a href=
- * "https://jena.apache.org/documentation/inference/#RULEhybrid">rules</a>. An
- * arbitrary number of rules can be set with the parameter {@link #rules}.
+ * Provides inferred primary data based on custom
+ * <a href= "https://jena.apache.org/documentation/inference/#rules">rules</a>
+ * using the Apache Jena Forward RETE engine. An arbitrary number of rules can
+ * be set with the parameter {@link #rules}.
  */
-public class FBRuleReasoningProcessor extends AbstractReasoningProcessor<FBRuleReasoningProcessor> {
+public class ForwardRuleReasoningProcessor extends AbstractReasoningProcessor<ForwardRuleReasoningProcessor> {
 
 	@Parameter
 	public String rules;
 
 	@Override
 	public Reasoner getReasoner() {
-		return new FBRuleReasoner(Rule.parseRules(rules));
+		GenericRuleReasoner reasoner = new GenericRuleReasoner(Rule.parseRules(rules));
+		reasoner.setMode(GenericRuleReasoner.FORWARD_RETE);
+		return reasoner;
 	}
 
 }
