@@ -34,7 +34,7 @@ import de.uni_jena.cs.fusion.abecto.util.Values;
 
 /**
  * Provides correspondences based on equivalent values of resources in different
- * datasets. Corresponding Resources are treated as equivalent values. If there
+ * datasets. Corresponding resources are treated as equivalent values. If there
  * exists multiple values for one variable, only one pair of values must be
  * equivalent. Unbound variables are treated as not equivalent.
  */
