@@ -23,11 +23,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Objects;
 
+import org.apache.jena.datatypes.xsd.XSDDateTime;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
@@ -146,8 +146,9 @@ public class StepTest {
 				.addProperty(AV.processorClass,
 						ResourceFactory.createResource("java:" + StepTest.TestProcessor.class.getName()))
 				.addProperty(AV.associatedDataset, dataset2)
-				.addProperty(AV.hasParameter, configurationModel.createResource(AV.Parameter)
-						.addLiteral(AV.key, "integerParameter").addLiteral(AV.value, 3))
+				.addProperty(AV.hasParameter,
+						configurationModel.createResource(AV.Parameter).addLiteral(AV.key, "integerParameter")
+								.addLiteral(AV.value, 3))
 				.addProperty(AV.predefinedMetaDataGraph, inputMetaDataModelIri);
 
 		configurationModel.createResource(step4Iri, AV.Step)
@@ -245,9 +246,9 @@ public class StepTest {
 	}
 
 	private void assertValidExecutionTime(Resource execution) {
-		assertTrue(((OffsetDateTime) execution.listProperties(PROV.startedAtTime).next().getLiteral().getValue())
-				.compareTo(
-						(OffsetDateTime) execution.listProperties(PROV.endedAtTime).next().getLiteral().getValue()) < 0,
+		assertTrue(
+				((XSDDateTime) execution.listProperties(PROV.startedAtTime).next().getLiteral().getValue()).compareTo(
+						(XSDDateTime) execution.listProperties(PROV.endedAtTime).next().getLiteral().getValue()) < 0,
 				String.format("Invalid execution times found at execution of %s.",
 						execution.getPropertyResourceValue(PPlan.correspondsToStep).getURI()));
 	}
@@ -287,6 +288,11 @@ public class StepTest {
 
 		@Override
 		public void run() {
+			try {
+				Thread.sleep(100); // ensure notable amount of time elapsed during the processor execution
+			} catch (InterruptedException e) {
+			}
+
 			if (this.getAssociatedDataset().isPresent()) {
 				Resource dataset = this.getAssociatedDataset().get();
 				this.getOutputPrimaryModel().get().addLiteral(dataset, STEP_NUMBER, this.integerParameter);

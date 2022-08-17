@@ -16,9 +16,9 @@
 package de.uni_jena.cs.fusion.abecto;
 
 import java.io.File;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -181,7 +181,7 @@ public class Step implements Runnable {
 					});
 
 			// run the processor
-			stepExecutionIri.addLiteral(PROV.startedAtTime, OffsetDateTime.now());
+			stepExecutionIri.addLiteral(PROV.startedAtTime, new GregorianCalendar());
 		} finally {
 			configurationModel.leaveCriticalSection();
 		}
@@ -194,7 +194,7 @@ public class Step implements Runnable {
 
 		configurationModel.enterCriticalSection(Lock.WRITE);
 		try {
-			stepExecutionIri.addLiteral(PROV.endedAtTime, OffsetDateTime.now());
+			stepExecutionIri.addLiteral(PROV.endedAtTime, new GregorianCalendar());
 			// set output primary model metadata, if applicable
 			processor.getAssociatedDataset().ifPresent(datasetIri -> {
 				Optional<Model> outputModel = processor.getOutputPrimaryModel();

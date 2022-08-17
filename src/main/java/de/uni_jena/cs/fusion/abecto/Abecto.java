@@ -41,7 +41,6 @@ import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 
-import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.QueryExecutionFactory;
@@ -58,7 +57,6 @@ import org.apache.jena.vocabulary.RDF;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.uni_jena.cs.fusion.abecto.datatype.XsdDateTimeStampType;
 import de.uni_jena.cs.fusion.abecto.util.Datasets;
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 import de.uni_jena.cs.fusion.abecto.vocabulary.DQV;
@@ -322,8 +320,6 @@ public class Abecto implements Callable<Integer> {
 
 	public static void initApacheJena() {
 		JenaSystem.init();
-		// register custom datatypes
-		TypeMapper.getInstance().registerDatatype(new XsdDateTimeStampType());
 
 		// TODO use caching HTTP client
 		// HttpEnv.setDftHttpClient(dftHttpClient);

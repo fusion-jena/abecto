@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Removed
 * **Breaking Change**: removed support for the RDF datatypes `av:SparqlPropertyPath` and `av:SparqlQuery`
+* remove custom xsd:dateTimeStamp mapping
 
 ## [0.10.0] - 2022-07-19
 
