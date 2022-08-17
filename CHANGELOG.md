@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [1.0.0] - 2022-08-17
+
 ### Added
 * extend `@Parameter` annotation: add parameter `converter` expecting an implementation of the [Jackson](https://github.com/FasterXML/jackson) `Converter` interface and make use of them during processor initialization, to enable early execution failures due to invalid parameter values
 
@@ -214,7 +216,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * add `ManualCategoryProcessor`: Enables users to manually define resource categories and their properties.
 * add `ResourceDeviationProcessor`: Detects deviations between the resource references of mapped resources as defined in the categories.
 
-[Unreleased]: https://github.com/fusion-jena/abecto/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/fusion-jena/abecto/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/fusion-jena/abecto/compare/v0.10.0...v1.0.0
 [0.10.0]: https://github.com/fusion-jena/abecto/compare/v0.9.1...v0.10.0
 [0.9.1]: https://github.com/fusion-jena/abecto/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/fusion-jena/abecto/compare/v0.8.0...v0.9.0
