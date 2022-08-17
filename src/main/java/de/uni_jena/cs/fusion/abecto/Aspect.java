@@ -33,8 +33,6 @@ import java.util.Set;
 import java.util.function.Function;
 
 import org.apache.jena.arq.querybuilder.SelectBuilder;
-import org.apache.jena.datatypes.RDFDatatype;
-import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
@@ -49,6 +47,7 @@ import org.apache.jena.sparql.path.P_Alt;
 import org.apache.jena.sparql.path.P_Inverse;
 import org.apache.jena.sparql.path.P_Seq;
 import org.apache.jena.sparql.path.Path;
+import org.apache.jena.sparql.path.PathWriter;
 import org.apache.jena.sparql.syntax.ElementPathBlock;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.ElementVisitorBase;
@@ -59,6 +58,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Functions;
 
+import de.uni_jena.cs.fusion.abecto.converter.StringToQueryConverter;
 import de.uni_jena.cs.fusion.abecto.util.Models;
 import de.uni_jena.cs.fusion.abecto.util.ToManyElementsException;
 import de.uni_jena.cs.fusion.abecto.util.Values;
@@ -67,6 +67,10 @@ import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 public class Aspect {
 
 	final static Logger log = LoggerFactory.getLogger(Aspect.class);
+
+	public static String path2String(Path value) {
+		return PathWriter.asString(value, Vocabularies.getDefaultPrologue());
+	}
 
 	/**
 	 * Returns an {@link Aspect} determined by an given IRI in the given
@@ -93,9 +97,9 @@ public class Aspect {
 		for (Resource aspectPatter : configurationModel.listResourcesWithProperty(AV.ofAspect, aspectIri).toList()) {
 			for (Resource dataset : configurationModel.listObjectsOfProperty(aspectPatter, AV.associatedDataset)
 					.mapWith(RDFNode::asResource).toList()) {
-				Query pattern = (Query) assertOne(
-						configurationModel.listObjectsOfProperty(aspectPatter, AV.definingQuery)).asLiteral()
-						.getValue();
+				Query pattern = StringToQueryConverter
+						.apply(assertOne(configurationModel.listObjectsOfProperty(aspectPatter, AV.definingQuery))
+								.asLiteral().getString());
 				if (!pattern.isSelectType()) {
 					throw new IllegalArgumentException(
 							String.format("Pattern of aspect %s and dataset %s is not a SPARQL Select Query.",
@@ -421,7 +425,7 @@ public class Aspect {
 	}
 
 	public String getVarPathAsString(Resource dataset, String variable) {
-		return TypeMapper.getInstance().getTypeByClass(Path.class).unparse(this.getVarPath(dataset, variable));
+		return path2String(this.getVarPath(dataset, variable));
 	}
 
 	/**
@@ -432,7 +436,6 @@ public class Aspect {
 	 * @param model the model to add the determined paths
 	 */
 	public void determineVarPaths(Model model) {
-		RDFDatatype sparqlPropertyPathType = TypeMapper.getInstance().getTypeByClass(Path.class);
 		for (Resource dataset : patternByDataset.keySet()) {
 			try {
 				VarPathsExtractionVisitor visitor = new VarPathsExtractionVisitor();
@@ -445,8 +448,7 @@ public class Aspect {
 				for (Entry<String, Path> variablePath : this.variablePathsByDataset.get(dataset).entrySet()) {
 					aspectPattern.addProperty(AV.hasVariablePath, model.createResource(AV.VariablePath)//
 							.addLiteral(AV.variableName, variablePath.getKey())//
-							.addProperty(AV.propertyPath, sparqlPropertyPathType.unparse(variablePath.getValue()),
-									sparqlPropertyPathType));
+							.addProperty(AV.propertyPath, path2String(variablePath.getValue())));
 				}
 			} catch (IllegalArgumentException e) {
 				log.warn(String.format(

@@ -31,7 +31,6 @@ import org.junit.jupiter.api.Test;
 
 import de.uni_jena.cs.fusion.abecto.Abecto;
 import de.uni_jena.cs.fusion.abecto.Aspect;
-import de.uni_jena.cs.fusion.abecto.datatype.SparqlQueryType;
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 
 public class UsePresentMappingProcessorTest {
@@ -76,8 +75,7 @@ public class UsePresentMappingProcessorTest {
 		inputMetaModel.add(d1, AV.correspondsNotToResource, d2);
 		inputMetaModel.createResource(AV.AspectPattern).addProperty(AV.ofAspect, aspectIri)
 				.addProperty(AV.definingQuery, "SELECT * WHERE {?key a <" + type.getURI()
-						+ ">; <http://example.org/sameAs>|<http://example.org/same>/<http://example.org/as> ?sameAs}",
-						new SparqlQueryType())
+						+ ">; <http://example.org/sameAs>|<http://example.org/same>/<http://example.org/as> ?sameAs}")
 				.addProperty(AV.associatedDataset, dataset);
 
 		Aspect aspect = Aspect.getAspect(inputMetaModel, aspectIri);

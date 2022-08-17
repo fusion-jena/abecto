@@ -25,6 +25,8 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.TreeSet;
 
+import com.fasterxml.jackson.databind.util.Converter;
+
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
 import de.uni_jena.cs.fusion.abecto.util.ToManyElementsException;
 
@@ -38,8 +40,16 @@ public class Parameters {
 		ArrayList<String> unusedParameters = new ArrayList<>(parameters.keySet());
 		for (Field field : processor.getClass().getFields()) {
 			if (field.isAnnotationPresent(Parameter.class)) {
-				List<?> values = parameters.get(field.getName());
+				List<Object> values = (List<Object>) parameters.get(field.getName());
+				// convert values
+				Class<? extends Converter> converterClass = field.getAnnotation(Parameter.class).converter();
+				if (!converterClass.equals(Converter.None.class)) {
+					Converter<Object, Object> converter = converterClass.getDeclaredConstructor().newInstance();
+					values.replaceAll(value -> (Object) converter.convert((Object) value));
+				}
+				// track parameter coverage
 				unusedParameters.remove(field.getName());
+				// set parameter
 				if (Collection.class.isAssignableFrom(field.getType())) {
 					Collection parameter = Collection.class.cast(field.get(processor));
 					// parameter collection not initialized
@@ -61,7 +71,7 @@ public class Parameters {
 						// clear default values
 						parameter.clear();
 						// add values
-						Collection.class.cast(field.get(processor)).addAll(values);
+						parameter.addAll(values);
 					}
 				} else {
 					if (values != null && values.size() > 1) {

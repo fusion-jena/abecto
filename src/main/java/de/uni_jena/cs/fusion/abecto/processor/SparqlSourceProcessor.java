@@ -59,6 +59,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.uni_jena.cs.fusion.abecto.Parameter;
+import de.uni_jena.cs.fusion.abecto.converter.StringToQueryConverter;
 
 public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 
@@ -93,7 +94,7 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 	 * be taken into account. None IRI values will be ignored. ORDER BY, LIMIT and
 	 * OFFSET might become overwritten.
 	 */
-	@Parameter
+	@Parameter(converter = StringToQueryConverter.class)
 	public Optional<Query> query = Optional.empty();
 	/** List of the relevant resources. */
 	@Parameter

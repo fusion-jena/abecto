@@ -22,10 +22,11 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 
 import de.uni_jena.cs.fusion.abecto.Parameter;
+import de.uni_jena.cs.fusion.abecto.converter.StringToQueryConverter;
 
 public class SparqlConstructProcessor extends Processor<SparqlConstructProcessor> {
 
-	@Parameter
+	@Parameter(converter = StringToQueryConverter.class)
 	public Query query;
 	@Parameter
 	public Integer maxIterations = 1;

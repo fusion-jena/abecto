@@ -20,6 +20,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import com.fasterxml.jackson.databind.util.Converter;
+
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
 
 /**
@@ -29,5 +31,6 @@ import de.uni_jena.cs.fusion.abecto.processor.Processor;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface Parameter {
-
+	@SuppressWarnings("rawtypes")
+	public Class<? extends Converter> converter() default Converter.None.class;
 }

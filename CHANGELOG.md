@@ -5,9 +5,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+* extend `@Parameter` annotation: add parameter `converter` expecting an implementation of the [Jackson](https://github.com/FasterXML/jackson) `Converter` interface and make use of them during processor initialization, to enable early execution failures due to invalid parameter values
+
 ### Changed
-* improve `FileSourceProcessor:` improve parsing error logging
+* improve `FileSourceProcessor:` improve parser error logging
 * **Breaking Change**: renamed `FBRuleReasoningProcessor` into `ForwardRuleReasoningProcessor`
+* **Breaking Change**: `SparqlConstructProcessor` and `SparqlSourceProcessor` expect datatype `xsd:string` instead of `av:SparqlQuery` for parameter `query`, to ease configuration writing
+* **Breaking Change**: `av:VariablePath`s of aspects expect datatype `xsd:string` instead of `av:SparqlPropertyPath` for the property `av:propertyPath`
+
+### Removed
+* **Breaking Change**: removed support for the RDF datatypes `av:SparqlPropertyPath` and `av:SparqlQuery`
 
 ## [0.10.0] - 2022-07-19
 

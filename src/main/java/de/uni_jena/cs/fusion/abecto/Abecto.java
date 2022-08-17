@@ -58,8 +58,6 @@ import org.apache.jena.vocabulary.RDF;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.uni_jena.cs.fusion.abecto.datatype.SparqlPropertyPathType;
-import de.uni_jena.cs.fusion.abecto.datatype.SparqlQueryType;
 import de.uni_jena.cs.fusion.abecto.datatype.XsdDateTimeStampType;
 import de.uni_jena.cs.fusion.abecto.util.Datasets;
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
@@ -326,8 +324,6 @@ public class Abecto implements Callable<Integer> {
 		JenaSystem.init();
 		// register custom datatypes
 		TypeMapper.getInstance().registerDatatype(new XsdDateTimeStampType());
-		TypeMapper.getInstance().registerDatatype(new SparqlQueryType());
-		TypeMapper.getInstance().registerDatatype(new SparqlPropertyPathType());
 
 		// TODO use caching HTTP client
 		// HttpEnv.setDftHttpClient(dftHttpClient);

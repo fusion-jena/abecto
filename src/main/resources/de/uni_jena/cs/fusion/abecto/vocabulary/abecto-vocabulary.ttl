@@ -35,10 +35,10 @@
         ] ;
     ] ;
     dcterms:license <http://creativecommons.org/licenses/by/4.0/> ;
-    dcterms:created "2022-05-09"^^xsd:date ;
-    owl:versionInfo "0.2.0" ;
-    owl:versionIRI <http://w3id.org/abecto/vocabulary/0.2.0> ;
-    owl:priorVersion <http://w3id.org/abecto/vocabulary/0.1> ;
+    dcterms:created "2022-08-17"^^xsd:date ;
+    owl:versionInfo "1.0.0" ;
+    owl:versionIRI <http://w3id.org/abecto/vocabulary/1.0.0> ;
+    owl:priorVersion <http://w3id.org/abecto/vocabulary/0.2.0> ;
     .
 
 av:Plan a rdfs:Class ;
@@ -207,25 +207,11 @@ av:javaClass a owl:ObjectProperty ;
     rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
     .
 
-av:SparqlQuery a rdfs:Datatype ;
-    rdfs:label "SPARQL select query"@en ;
-    rdfs:comment "The datatype of SPARQL queries."@en ;
-    rdfs:seeAlso "http://www.w3.org/TR/sparql11-query#rQuery"^^xsd:anyURI ;
-    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
-    .
-
-av:SparqlPropertyPath a rdfs:Datatype ;
-    rdfs:label "SPARQL property path"@en ;
-    rdfs:comment "The datatype of SPARQL property paths."@en ;
-    rdfs:seeAlso "http://www.w3.org/TR/sparql11-query#rPath "^^xsd:anyURI ;
-    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
-    .
-
 av:definingQuery a owl:DatatypeProperty ;
     rdfs:label "defining query"@en ;
     rdfs:comment "The query that defines the pattern of an aspect for a certain dataset."@en ;
     rdfs:domain av:AspectPattern ;
-    rdfs:range av:SparqlQuery ;
+    rdfs:range xsd:string ;
     rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
     .
 av:key a owl:DatatypeProperty ;
@@ -258,10 +244,10 @@ av:variableName a owl:DatatypeProperty ;
     rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
     .
 av:propertyPath a owl:DatatypeProperty ;
-    rdfs:label "variable name"@en ;
+    rdfs:label "property path"@en ;
     rdfs:comment "The property path that connects the key variable of an aspect to a certain variable (av:variableName)."@en ;
     rdfs:domain av:VariablePath ;
-    rdfs:range av:SparqlPropertyPath ;
+    rdfs:range xsd:string ;
     rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
     .
 av:affectedVariableName a owl:DatatypeProperty ;
@@ -294,7 +280,7 @@ av:issueType a owl:DatatypeProperty , owl:FunctionalProperty ;
 
 av:marCompletenessThomas08 a dqv:Metric ;
     rdfs:label "mark and recapture"@en ;
-    rdfs:comment "The ratio of the completeness of a dataset compared to multiple other datasets regarding a certain aspect estimated using the mark and recapture method as defined in Thomas 2008."@en ;
+    rdfs:comment "The ratio of the completeness of a dataset compared to multiple other datasets regarding a certain aspect estimated using the mark and recapture method as defined in Paul Thomas, 2008, Generalising multiple capture-recapture to non-uniform sample sizes, https://doi.org/10.1145/1390334.1390531."@en ;
     dqv:inDimension ldqd:completeness ;
     rdfs:seeAlso <https://doi.org/10.1145/1390334.1390531> ;
     rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
@@ -313,7 +299,7 @@ av:absoluteCoverage a dqv:Metric ;
     .
 av:count a dqv:Metric ;
     rdfs:label "count"@en ;
-    rdfs:comment "The number of resource of a certain aspect in a dataset."@en ;
+    rdfs:comment "The number of resources of a certain aspect in a dataset."@en ;
     dqv:inDimension ldqd:completeness ;
     rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
     .
