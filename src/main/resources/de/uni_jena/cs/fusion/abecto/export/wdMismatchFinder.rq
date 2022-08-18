@@ -8,7 +8,7 @@ SELECT
 	?property_id # The id of the wikidata property defining the wikidata value of the mismatch.
 	(STR(?wikidata_valueX) AS ?wikidata_value) # The value on wikidata that mismatches an external database.
 	(STR(?external_valueX) AS ?external_value) # The value in the external database that mismatches a wikidata value.
-	?external_url # (Optional) A url or uri to the mismatching entity in the external database.
+	(STR(?external_urlX) AS ?external_url) # (Optional) A url or uri to the mismatching entity in the external database.
 WHERE {
 	BIND (<http://www.wikidata.org/> AS ?dataset)
 	[	a						av:AspectPattern ;
@@ -26,7 +26,7 @@ WHERE {
 				av:affectedVariableName	?variable;
 				av:affectedValue		?wikidata_valueX ;
 				av:comparedToValue		?external_valueX ;
-				av:comparedToResource	?external_url .
+				av:comparedToResource	?external_urlX .
 		}
 		BIND (IRI(CONCAT("http://www.wikidata.org/prop/",?property_id)) AS ?p)
 		BIND (IRI(CONCAT("http://www.wikidata.org/prop/statement/",?property_id)) AS ?ps)
@@ -48,7 +48,7 @@ WHERE {
 #				av:affectedAspect		?aspect ;
 #				av:affectedVariableName	?variable;
 #				av:comparedToValue		?external_valueX ;
-#				av:comparedToResource	?external_url .
+#				av:comparedToResource	?external_urlX .
 #		}
 	}
 # TODO: remove workaround for https://phabricator.wikimedia.org/T312767

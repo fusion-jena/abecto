@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Fixed
+* fix report `wdMismatchFinder`: remove `<` and `>` around external_url values
+
 ## [1.0.0] - 2022-08-17
 
 ### Added
