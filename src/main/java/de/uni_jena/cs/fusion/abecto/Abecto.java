@@ -94,38 +94,38 @@ public class Abecto implements Callable<Integer> {
 	}
 
 	@Option(names = { "-p",
-			"--plan" }, paramLabel = "Plan IRI", description = "IRI of the plan to process. Required, if the configuration contains multiple plans.")
+			"--plan" }, paramLabel = "IRI", description = "IRI of the plan to process. Required, if the configuration contains multiple plans.")
 	String planIri;
 
-	@Option(names = "--trig", paramLabel = "TRIG Output File", description = "RDF TRIG dataset file for the execution results.")
+	@Option(names = "--trig", paramLabel = "FILE", description = "RDF TRIG dataset file for the execution results.")
 	File trigOutputFile;
 
-	@Option(names = "--loadOnly", paramLabel = "Load Only", description = "If set, the plan will not get executed. This enables to export results without repeated plan execution.")
+	@Option(names = "--loadOnly", description = "If set, the plan will not get executed. This enables to export results without repeated plan execution.")
 	boolean loadOnly;
 
 	@Option(names = { "-E",
-			"--export" }, paramLabel = "Export Template and File", description = "Template and output file for an result export. Can be set multiple times.")
+			"--export" }, paramLabel = "TEMPLATE_NAME=FILE", description = "Template and output file for an result export. Can be set multiple times.")
 	Map<String, File> exports;
 
-	@Option(names = "--reportOn", paramLabel = "Dataset to check", description = "IRI of the dataset to report on. Reports will get limited to resoults about this dataset.")
+	@Option(names = "--reportOn", paramLabel = "IRI", description = "IRI of the dataset to report on. Reports will get limited to results about this dataset.")
 	String datasetToReportOnIri;
 
-	@Option(names = "--failOnDeviation", paramLabel = "Fail on Deviation", description = "If set, a exit code > 0 will be returned, if the results contain a deviation. Useful together with \"--reportOn\".")
+	@Option(names = "--failOnDeviation", description = "If set, a exit code > 0 will be returned, if the results contain a deviation. Useful together with \"--reportOn\".")
 	boolean failOnDeviation;
 
-	@Option(names = "--failOnValueOmission", paramLabel = "Fail on Value Omission", description = "If set, a exit code > 0 will be returned, if the results contain a value omission. Useful together with \"--reportOn\".")
+	@Option(names = "--failOnValueOmission", description = "If set, a exit code > 0 will be returned, if the results contain a value omission. Useful together with \"--reportOn\".")
 	boolean failOnValueOmission;
 
-	@Option(names = "--failOnResourceOmission", paramLabel = "Fail on Resource Omission", description = "If set, a exit code > 0 will be returned, if the results contain a resource omission. Useful together with \"--reportOn\".")
+	@Option(names = "--failOnResourceOmission", description = "If set, a exit code > 0 will be returned, if the results contain a resource omission. Useful together with \"--reportOn\".")
 	boolean failOnResourceOmission;
 
-	@Option(names = "--failOnWrongValue", paramLabel = "Fail on Wrong Value", description = "If set, a exit code > 0 will be returned, if the results contain a wrong value. Useful together with \"--reportOn\".")
+	@Option(names = "--failOnWrongValue", description = "If set, a exit code > 0 will be returned, if the results contain a wrong value. Useful together with \"--reportOn\".")
 	boolean failOnWrongValue;
 
-	@Option(names = "--failOnIssue", paramLabel = "Fail on Issue", description = "If set, a exit code > 0 will be returned, if the results contain a issue. Useful together with \"--reportOn\".")
+	@Option(names = "--failOnIssue", description = "If set, a exit code > 0 will be returned, if the results contain an issue. Useful together with \"--reportOn\".")
 	boolean failOnIssue;
 
-	@Parameters(index = "0", paramLabel = "Plan Dataset File", description = "RDF dataset file containing the plan configuration and optionally plan execution results (see --loadOnly).")
+	@Parameters(index = "0", paramLabel = "FILE", description = "RDF dataset file containing the plan configuration and optionally plan execution results (see --loadOnly).")
 	File planDatasetFile;
 
 	private Dataset dataset = DatasetFactory.createGeneral();

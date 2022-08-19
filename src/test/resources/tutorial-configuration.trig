@@ -1,38 +1,39 @@
+@base <http://example.org/> .
 @prefix av: <http://w3id.org/abecto/vocabulary#> .
 @prefix p-plan: <http://purl.org/net/p-plan#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix abecto: <java:de.uni_jena.cs.fusion.abecto.processor.> .
 
-_:plan a av:Plan ;
+<plan> a av:Plan ;
     .
 
-_:source1 a av:Step ;
-    p-plan:isStepOfPlan _:plan ;
+<source1> a av:Step ;
+    p-plan:isStepOfPlan <plan> ;
     av:processorClass abecto:FileSourceProcessor ;
     av:hasParameter [av:key "path" ; av:value "tutorial-source1part1.ttl", "tutorial-source1part2.ttl" ] ;
-    av:associatedDataset _:dataset1 ;
+    av:associatedDataset <dataset1> ;
     .
 
-_:source2 a av:Step ;
-    p-plan:isStepOfPlan _:plan ;
+<source2> a av:Step ;
+    p-plan:isStepOfPlan <plan> ;
     av:processorClass abecto:FileSourceProcessor ;
     av:hasParameter [av:key "path" ; av:value "tutorial-source2.ttl" ] ;
-    av:associatedDataset _:dataset2 ;
+    av:associatedDataset <dataset2> ;
     .
 
-_:source3 a av:Step ;
-    p-plan:isStepOfPlan _:plan ;
+<source3> a av:Step ;
+    p-plan:isStepOfPlan <plan> ;
     av:processorClass abecto:FileSourceProcessor ;
     av:hasParameter [av:key "path" ; av:value "tutorial-source3.ttl" ] ;
-    av:associatedDataset _:dataset3 ;
+    av:associatedDataset <dataset3> ;
     .
 
-_:aspectPerson a av:Aspect ;
+<aspectPerson> a av:Aspect ;
     av:keyVariableName "person" ;
     .
 []  a av:AspectPattern ;
-    av:ofAspect _:aspectPerson ;
-    av:associatedDataset _:dataset1 ;
+    av:ofAspect <aspectPerson> ;
+    av:associatedDataset <dataset1> ;
     av:definingQuery """
         SELECT ?person ?label ?pnr ?boss
         WHERE {
@@ -43,8 +44,8 @@ _:aspectPerson a av:Aspect ;
     """ ;
     .
 []  a av:AspectPattern ;
-    av:ofAspect _:aspectPerson ;
-    av:associatedDataset _:dataset2 ;
+    av:ofAspect <aspectPerson> ;
+    av:associatedDataset <dataset2> ;
     av:definingQuery """
         SELECT ?person ?label ?boss
         WHERE {
@@ -54,8 +55,8 @@ _:aspectPerson a av:Aspect ;
     """ ;
     .
 []  a av:AspectPattern ;
-    av:ofAspect _:aspectPerson ;
-    av:associatedDataset _:dataset3 ;
+    av:ofAspect <aspectPerson> ;
+    av:associatedDataset <dataset3> ;
     av:definingQuery """
         SELECT ?person ?label ?pnr
         WHERE {
@@ -65,46 +66,46 @@ _:aspectPerson a av:Aspect ;
     """ ;
     .
 
-GRAPH _:manualMappings
+GRAPH <manualMappings>
 {
     <http://example.org/b/william> av:correspondsNotToResource <http://example.org/c/P004> .
-    _:aspectPerson av:relevantResource <http://example.org/b/william>, <http://example.org/c/P004> .
+    <aspectPerson> av:relevantResource <http://example.org/b/william>, <http://example.org/c/P004> .
 }
 
-_:jaroWinklerMapping a av:Step ;
-    p-plan:isStepOfPlan _:plan ;
+<jaroWinklerMapping> a av:Step ;
+    p-plan:isStepOfPlan <plan> ;
     av:processorClass abecto:JaroWinklerMappingProcessor ;
-    p-plan:isPrecededBy _:source1, _:source2, _:source3 ;
-    av:predefinedMetaDataGraph _:manualMappings ;
+    p-plan:isPrecededBy <source1>, <source2>, <source3> ;
+    av:predefinedMetaDataGraph <manualMappings> ;
     av:hasParameter
         [av:key "threshold" ; av:value 9e-1 ] ,
         [av:key "caseSensitive" ; av:value false ] ,
-        [av:key "aspect" ; av:value _:aspectPerson ] ,
+        [av:key "aspect" ; av:value <aspectPerson> ] ,
         [av:key "variables" ; av:value "label" ] ;
     .
 
-_:literalValueComparison a av:Step ;
-    p-plan:isStepOfPlan _:plan ;
+<literalValueComparison> a av:Step ;
+    p-plan:isStepOfPlan <plan> ;
     av:processorClass abecto:LiteralValueComparisonProcessor ;
-    p-plan:isPrecededBy _:jaroWinklerMapping ;
+    p-plan:isPrecededBy <jaroWinklerMapping> ;
     av:hasParameter
-        [av:key "aspect" ; av:value _:aspectPerson ] ,
+        [av:key "aspect" ; av:value <aspectPerson> ] ,
         [av:key "variables" ; av:value "label", "pnr" ] ;
     .
 
-_:resourceValueComparison a av:Step ;
-    p-plan:isStepOfPlan _:plan ;
+<resourceValueComparison> a av:Step ;
+    p-plan:isStepOfPlan <plan> ;
     av:processorClass abecto:ResourceValueComparisonProcessor ;
-    p-plan:isPrecededBy _:jaroWinklerMapping ;
+    p-plan:isPrecededBy <jaroWinklerMapping> ;
     av:hasParameter
-        [av:key "aspect" ; av:value _:aspectPerson ] ,
+        [av:key "aspect" ; av:value <aspectPerson> ] ,
         [av:key "variables" ; av:value "boss" ] ;
     .
 
-_:completeness a av:Step ;
-    p-plan:isStepOfPlan _:plan ;
+<completeness> a av:Step ;
+    p-plan:isStepOfPlan <plan> ;
     av:processorClass abecto:CompletenessProcessor ;
-    p-plan:isPrecededBy _:jaroWinklerMapping ;
+    p-plan:isPrecededBy <jaroWinklerMapping> ;
     av:hasParameter
-        [av:key "aspects" ; av:value _:aspectPerson ] ;
+        [av:key "aspects" ; av:value <aspectPerson> ] ;
     .
