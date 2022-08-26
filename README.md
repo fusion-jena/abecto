@@ -16,7 +16,131 @@ This will create a stand alone .jar file at [target/abecto.jar](target).
 
 ## Configuration
 
-The execution of ABECTO is configured in a configuration file, which is a RDF dataset file ([TriG](https://www.w3.org/TR/trig/), [N-Quads](https://www.w3.org/TR/n-quads/), …), using the [ABECTO Vocabulary](http://w3id.org/abecto/vocabulary). For an example see the [tutorial configuration](src/test/resources/tutorial-configuration.trig). Further build in processors can be found in [src/main/java/de/uni_jena/cs/fusion/abecto/processor/](src/main/java/de/uni_jena/cs/fusion/abecto/processor/).
+The execution of ABECTO is configured in a plan file, which is a RDF dataset file ([TriG](https://www.w3.org/TR/trig/), [N-Quads](https://www.w3.org/TR/n-quads/), …), using the [ABECTO Vocabulary](http://w3id.org/abecto/vocabulary). For an example see the [tutorial configuration](src/test/resources/tutorial-configuration.trig). Further build in processors can be found in [src/main/java/de/uni_jena/cs/fusion/abecto/processor/](src/main/java/de/uni_jena/cs/fusion/abecto/processor/).
+
+### How to write an ABECTO plan?
+
+1. **Namespace:** To ease writing add a base declaration for the IRIs of your plan and some prefix declarations. A good start is the following example. You might adapt the base IRI and add further prefixes related to the compared knowledge graphs.
+
+   ```
+   @base                     <http://example.org/> .
+   @prefix abecto:           <java:de.uni_jena.cs.fusion.abecto.processor.> .
+   @prefix av:               <http://w3id.org/abecto/vocabulary#> .
+   @prefix pplan:            <http://purl.org/net/p-plan#> .
+   @prefix rdf:              <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+   @prefix rdfs:             <http://www.w3.org/2000/01/rdf-schema#> .
+   @prefix xsd:              <http://www.w3.org/2001/XMLSchema#> .
+   ```
+
+2. **Plan:** Declare the plan
+
+   ```
+   <plan> a av:Plan ;
+    .
+    ```
+
+3. **Aspects:** Specify the resources to compare by adding at least one aspect declaration. The following example declares the aspect `<aspectPerson>` with the key variable `person` covered by three datasets (`<dataset1>`, `<dataset2>`, `<dataset3>`). For each dataset a defining SPARQL select query is declared that returns the key variable and further variables to compare.
+
+   ```
+   <aspectPerson> a av:Aspect ;
+       av:keyVariableName "person" ;
+       .
+   []  a av:AspectPattern ;
+       av:ofAspect <aspectPerson> ;
+       av:associatedDataset <dataset1> ;
+       av:definingQuery """
+           SELECT ?person ?label ?pnr ?boss
+           WHERE {
+               ?person <http://www.w3.org/2000/01/rdf-schema#label> ?label ;
+                   <http://example.org/a/pnr> ?pnr ;
+                   <http://example.org/a/boss> ?boss .
+           }
+       """ ;
+       .
+   []  a av:AspectPattern ;
+       av:ofAspect <aspectPerson> ;
+       av:associatedDataset <dataset2> ;
+       av:definingQuery """
+           SELECT ?person ?label ?boss
+           WHERE {
+               ?person <http://www.w3.org/2000/01/rdf-schema#label> ?label .
+               OPTIONAL { ?person <http://example.org/b/boss> ?boss }
+           }
+       """ ;
+       .
+   []  a av:AspectPattern ;
+       av:ofAspect <aspectPerson> ;
+       av:associatedDataset <dataset3> ;
+       av:definingQuery """
+           SELECT ?person ?label ?pnr
+           WHERE {
+               ?person <http://www.w3.org/2000/01/rdf-schema#label> ?label ;
+                   <http://example.org/c/pnr> ?pnr .
+           }
+       """ ;
+       .
+   ```
+
+4. **Source Steps:** Specify plan steps that load the sources of the primary data of the datasets. The following example declares steps to load primary data of three dataset from four files. Each source step is an independent starting point of the plan without preceding steps. Providing `rdfs:label` to the steps will ease reading the execution logs and reports.
+
+   ```
+   <source1> a av:Step ;
+       rdfs:label "Load Dataset 1"@en;
+       p-plan:isStepOfPlan <plan> ;
+       av:processorClass abecto:FileSourceProcessor ;
+       av:hasParameter [av:key "path" ; av:value "tutorial-source1part1.ttl", "tutorial-source1part2.ttl" ] ;
+       av:associatedDataset <dataset1> ;
+       .
+
+   <source2> a av:Step ;
+       rdfs:label "Load Dataset 2"@en;
+       p-plan:isStepOfPlan <plan> ;
+       av:processorClass abecto:FileSourceProcessor ;
+       av:hasParameter [av:key "path" ; av:value "tutorial-source2.ttl" ] ;
+       av:associatedDataset <dataset2> ;
+       .
+
+   <source3> a av:Step ;
+       rdfs:label "Load Dataset 3"@en;
+       p-plan:isStepOfPlan <plan> ;
+       av:processorClass abecto:FileSourceProcessor ;
+       av:hasParameter [av:key "path" ; av:value "tutorial-source3.ttl" ] ;
+       av:associatedDataset <dataset3> ;
+       .
+   ```
+
+5. **Transformation, Mapping, and Comparison/Evaluation Steps:** Specify further steps for transforming, mapping and comparing the primary data. Each step will have at least one preceding steps specified using `p-plan:isPrecededBy`. With `av:predefinedMetaDataGraph` steps you can manually add mappings, mapping exclusions or annotations into the process. The following example declares a mapping step `<jaroWinklerMapping>` to map resources based on string similarity and a comparison step `<literalValueComparison>` to compare literal values. At the mapping step, an predefined metadata graph `<manualMappings>` is introduced to prevent the mapping of two resources. The mapping step is preceded by all three source steps. The comparison step is only directly preceded by the mapping step. But the data returned by all indirect preceding steps are also available. 
+
+   ```
+   GRAPH <manualMappings>
+   {
+       <http://example.org/b/william> av:correspondsNotToResource <http://example.org/c/P004> .
+       <aspectPerson> av:relevantResource <http://example.org/b/william>, <http://example.org/c/P004> .
+   }
+
+   <jaroWinklerMapping> a av:Step ;
+       rdfs:label "Person Mapping using Name Similarity"@en;
+       p-plan:isStepOfPlan <plan> ;
+       av:processorClass abecto:JaroWinklerMappingProcessor ;
+       p-plan:isPrecededBy <source1>, <source2>, <source3> ;
+       av:predefinedMetaDataGraph <manualMappings> ;
+       av:hasParameter
+           [av:key "threshold" ; av:value 9e-1 ] ,
+           [av:key "caseSensitive" ; av:value false ] ,
+           [av:key "aspect" ; av:value <aspectPerson> ] ,
+           [av:key "variables" ; av:value "label" ] ;
+       .
+
+   <literalValueComparison> a av:Step ;
+       rdfs:label "Comparison of Persons Name and PNR"@en;
+       p-plan:isStepOfPlan <plan> ;
+       av:processorClass abecto:LiteralValueComparisonProcessor ;
+       p-plan:isPrecededBy <jaroWinklerMapping> ;
+       av:hasParameter
+           [av:key "aspect" ; av:value <aspectPerson> ] ,
+           [av:key "variables" ; av:value "label", "pnr" ] ;
+       .
+    ```
 
 ## Execution
 
