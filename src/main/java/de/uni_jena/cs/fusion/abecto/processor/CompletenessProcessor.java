@@ -60,7 +60,7 @@ public class CompletenessProcessor extends Processor<CompletenessProcessor> {
 			Map<Resource, Map<Resource, Integer>> absoluteCoverage = new HashMap<>();
 			/** Ratio of covered resources of another dataset, excluding duplicates. */
 			Map<Resource, Map<Resource, BigDecimal>> relativeCoverage = new HashMap<>();
-			/** Number of duplicate resources in this dataset, excluding the on to stay. */
+			/** Number of duplicate resources in this dataset, excluding the one to stay. */
 			Map<Resource, Integer> duplicates = new HashMap<>();
 			/** Number of resources in this dataset, excluding duplicates. */
 			Map<Resource, Integer> count = new HashMap<>();
