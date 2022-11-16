@@ -48,28 +48,30 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 			for (Resource correspondingResource1 : correspondingResources) {
 				for (Resource dataset1 : aspect.getDatasets()) {
 					Map<String, Set<RDFNode>> values1 = resourceByDataset.get(dataset1).get(correspondingResource1);
-					if (values1 != null) {
-						for (Resource correspondingResource2 : correspondingResources) {
-							if (correspondingResource1.getURI().compareTo(correspondingResource2.getURI()) >= 0) {
-								// avoid doing work twice, but enable comparing representations of one resource
-								// in different datasets
-								for (Resource dataset2 : aspect.getDatasets()) {
-									if (!correspondingResource1.equals(correspondingResource2)
-											|| !dataset1.equals(dataset2)) {
-										// avoid comparing the representation of one resource in one dataset
-										// with itself
-										Map<String, Set<RDFNode>> values2 = resourceByDataset.get(dataset2)
-												.get(correspondingResource2);
-										if (values2 != null) {
-											for (String variable : this.variables) {
-												this.compareVariableValues(variable, dataset1, correspondingResource1,
-														values1.getOrDefault(variable, Collections.emptySet()),
-														dataset2, correspondingResource2,
-														values2.getOrDefault(variable, Collections.emptySet()));
-											}
-										}
-									}
-								}
+					if (values1 == null) {
+						continue;
+					}
+					for (Resource correspondingResource2 : correspondingResources) {
+						if (correspondingResource1.getURI().compareTo(correspondingResource2.getURI()) < 0) {
+							// avoid doing work twice, but enable comparing representations of one resource
+							// in different datasets
+							continue;
+						}
+						for (Resource dataset2 : aspect.getDatasets()) {
+							if (correspondingResource1.equals(correspondingResource2) && dataset1.equals(dataset2)) {
+								// avoid comparing the representation of one resource in one dataset
+								// with itself
+								continue;
+							}
+							Map<String, Set<RDFNode>> values2 = resourceByDataset.get(dataset2)
+									.get(correspondingResource2);
+							if (values2 == null) {
+								continue;
+							}
+							for (String variable : this.variables) {
+								this.compareVariableValues(variable, dataset1, correspondingResource1,
+										values1.getOrDefault(variable, Collections.emptySet()), dataset2,
+										correspondingResource2, values2.getOrDefault(variable, Collections.emptySet()));
 							}
 						}
 					}
@@ -101,53 +103,61 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 		valuesIterator1 = values1.iterator();
 		value1loop: while (valuesIterator1.hasNext()) {
 			RDFNode value1 = valuesIterator1.next();
-			if (this.isValidValue(value1)) {
-				if (this.useValue(value1)) {
-					if (!Metadata.isWrongValue(correspondingResource1, variable, value1, aspect,
-							this.getInputMetaModelUnion(dataset1))) {
-						valuesIterator2 = values2.iterator();
-						while (valuesIterator2.hasNext()) {
-							RDFNode value2 = valuesIterator2.next();
-							if (this.isValidValue(value2)) {
-								if (this.useValue(value2)) {
-									if (!Metadata.isWrongValue(correspondingResource2, variable, value2, aspect,
-											this.getInputMetaModelUnion(dataset2))) {
-										if (this.equivalentValues(value1, value2)) {
-											// remove pair of equivalent values
-											valuesIterator1.remove();
-											valuesIterator2.remove();
-											continue value1loop;
-										}
-									} else {
-										// remove wrong value to avoid further processing
-										valuesIterator2.remove();
-									}
-								} else {
-									// remove unused (filtered) value to avoid further processing
-									valuesIterator2.remove();
-								}
-							} else {
-								// report invalid value
-								Metadata.addIssue(correspondingResource2, variable, value2, aspect, "Invalid Value",
-										this.invalidValueComment(), this.getOutputMetaModel(dataset2));
-								// remove invalid value to avoid further processing
-								valuesIterator2.remove();
-							}
-						}
-					} else {
-						// remove wrong value to avoid further processing
-						valuesIterator1.remove();
-					}
-				} else {
-					// remove unused (filtered) value to avoid further processing
-					valuesIterator1.remove();
-				}
-			} else {
+
+			if (!this.isValidValue(value1)) {
 				// report invalid value
 				Metadata.addIssue(correspondingResource1, variable, value1, aspect, "Invalid Value",
 						this.invalidValueComment(), this.getOutputMetaModel(dataset1));
 				// remove invalid value to avoid further processing
 				valuesIterator1.remove();
+				continue;
+			}
+
+			if (!this.useValue(value1)) {
+				// remove unused (filtered) value to avoid further processing
+				valuesIterator1.remove();
+				continue;
+			}
+
+			if (Metadata.isWrongValue(correspondingResource1, variable, value1, aspect,
+					this.getInputMetaModelUnion(dataset1))) {
+				// remove wrong value to avoid further processing
+				valuesIterator1.remove();
+				continue;
+			}
+
+			valuesIterator2 = values2.iterator();
+			while (valuesIterator2.hasNext()) {
+				RDFNode value2 = valuesIterator2.next();
+
+				if (!this.isValidValue(value2)) {
+					// report invalid value
+					Metadata.addIssue(correspondingResource2, variable, value2, aspect, "Invalid Value",
+							this.invalidValueComment(), this.getOutputMetaModel(dataset2));
+					// remove invalid value to avoid further processing
+					valuesIterator2.remove();
+					continue;
+				}
+
+				if (!this.useValue(value2)) {
+					// remove unused (filtered) value to avoid further processing
+					valuesIterator2.remove();
+					continue;
+				}
+
+				if (Metadata.isWrongValue(correspondingResource2, variable, value2, aspect,
+						this.getInputMetaModelUnion(dataset2))) {
+					// remove wrong value to avoid further processing
+					valuesIterator2.remove();
+					continue;
+				}
+
+				if (this.equivalentValues(value1, value2)) {
+					// remove pair of equivalent values
+					valuesIterator1.remove();
+					valuesIterator2.remove();
+					continue value1loop;
+				}
 			}
 		}
 
@@ -157,25 +167,28 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 				Metadata.addValuesOmission(correspondingResource1.asResource(), variable, dataset2,
 						correspondingResource2.asResource(), value2, this.aspect, this.getOutputMetaModel(dataset1));
 			}
-		} else if (values2.isEmpty()) {
+			return;
+		}
+
+		if (values2.isEmpty()) {
 			// report missing values
 			for (RDFNode value1 : values1) {
 				Metadata.addValuesOmission(correspondingResource2.asResource(), variable, dataset1,
 						correspondingResource1.asResource(), value1, this.aspect, this.getOutputMetaModel(dataset2));
 			}
-		} else {
-			// report pairs of deviating values
-			for (RDFNode value1 : values1) {
-				for (RDFNode value2 : values2) {
-					Metadata.addDeviation(correspondingResource1.asResource(), variable, value1, dataset2,
-							correspondingResource2.asResource(), value2, this.aspect,
-							this.getOutputMetaModel(dataset1));
-					Metadata.addDeviation(correspondingResource2.asResource(), variable, value2, dataset1,
-							correspondingResource1.asResource(), value1, this.aspect,
-							this.getOutputMetaModel(dataset2));
-				}
+			return;
+		}
+
+		// report pairs of deviating values
+		for (RDFNode value1 : values1) {
+			for (RDFNode value2 : values2) {
+				Metadata.addDeviation(correspondingResource1.asResource(), variable, value1, dataset2,
+						correspondingResource2.asResource(), value2, this.aspect, this.getOutputMetaModel(dataset1));
+				Metadata.addDeviation(correspondingResource2.asResource(), variable, value2, dataset1,
+						correspondingResource1.asResource(), value1, this.aspect, this.getOutputMetaModel(dataset2));
 			}
 		}
+
 	}
 
 	/**
