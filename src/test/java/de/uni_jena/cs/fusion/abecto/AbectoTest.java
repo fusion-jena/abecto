@@ -18,6 +18,7 @@ package de.uni_jena.cs.fusion.abecto;
 import java.io.File;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Assertions;
 
 public class AbectoTest {
 
@@ -29,6 +30,11 @@ public class AbectoTest {
 		abecto.loadDataset(configurationFile);
 		abecto.executePlan(null);
 		// TODO check output
+	}
+	
+	@Test
+	public void allwaysFails() {
+		Assertions.fail("Some Message");
 	}
 
 }
