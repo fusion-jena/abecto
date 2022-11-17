@@ -1,3 +1,4 @@
+[![Tests](https://github.com/fusion-jena/abecto/actions/workflows/maven.yml/badge.svg)](https://github.com/fusion-jena/abecto/actions/workflows/maven.yml)
 [![DOI](https://zenodo.org/badge/261377020.svg)](https://zenodo.org/badge/latestdoi/261377020)
 
 # ABECTO
