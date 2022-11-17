@@ -20,6 +20,7 @@ jobs:
       run: mvn -B package --file pom.xml
     - name: Archive Reports
       uses: actions/upload-artifact@v3
+      if: always()
       with:
         name: junit reports
         path: target/surefire-reports/*.xml
@@ -30,4 +31,3 @@ jobs:
         name: Maven Tests
         path: target/surefire-reports/*.xml
         reporter: java-junit
-        fail-on-error: true
