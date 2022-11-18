@@ -214,9 +214,7 @@ public class CompletenessProcessor extends Processor<CompletenessProcessor> {
 				for (Resource datasetComparedTo : datasetsCoveringTheAspekt) {
 					if (!dataset.equals(datasetComparedTo)) {
 						int countComparedTo = count.get(datasetComparedTo);
-						if (countComparedTo == 0) {
-							relativeCoverage.get(dataset).put(datasetComparedTo, BigDecimal.ONE);
-						} else {
+						if (countComparedTo != 0) {
 							int overlap = absoluteCoverage.get(dataset).get(datasetComparedTo);
 							relativeCoverage.get(dataset).put(datasetComparedTo, BigDecimal.valueOf(overlap)
 									.divide(BigDecimal.valueOf(countComparedTo), 2, RoundingMode.HALF_UP));

@@ -15,6 +15,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * fix `LiteralValueComparisonProcessor`: possibly additional value deviations or value omissions in case of duplicated resources in the dataset
 * fix `ResourceValueComparisonProcessor`: possibly additional value deviations or value omissions in case of duplicated resources in the dataset
 
+### Changed
+* change `CompletenessProcessor`: avoid relativeCoverage measurement in case of no values in other dataset
+
 ## [1.0.1] - 2022-08-18
 
 ### Fixed
