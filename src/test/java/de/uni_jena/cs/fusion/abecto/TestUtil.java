@@ -33,6 +33,7 @@ import org.apache.jena.vocabulary.RDFS;
 import de.uni_jena.cs.fusion.abecto.util.Models;
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 import de.uni_jena.cs.fusion.abecto.vocabulary.DQV;
+import de.uni_jena.cs.fusion.abecto.vocabulary.SdmxAttribute;
 
 public class TestUtil {
 	public final static String namespace = "http://example.org/";
@@ -158,6 +159,31 @@ public class TestUtil {
 		builder.addWhere(qualityAnnotation, RDF.type, DQV.QualityAnnotation);
 		builder.addWhere(qualityAnnotation, OA.hasTarget, affectedResource);
 		builder.addWhere(qualityAnnotation, OA.hasBody, valueOmission);
+
+		return QueryExecutionFactory.create(builder.build(), outputAffectedDatasetMetaModel).execAsk();
+	}
+
+	public static boolean containsualityMeasurement(Resource measure, @Nullable Number value, Resource unit,
+			Resource computedOnDataset, @Nullable String affectedVariableName, Iterable<Resource> comparedToDatasets,
+			Resource affectedAspect, Model outputAffectedDatasetMetaModel) {
+
+		Var qualityMeasurement = Var.alloc("qualityMeasurement");
+
+		AskBuilder builder = new AskBuilder();
+		builder.addWhere(qualityMeasurement, RDF.type, AV.QualityMeasurement);
+		builder.addWhere(qualityMeasurement, DQV.isMeasurementOf, measure);
+		builder.addWhere(qualityMeasurement, DQV.computedOn, computedOnDataset);
+		if (value != null) {
+			builder.addWhere(qualityMeasurement, DQV.value, value);
+		}
+		builder.addWhere(qualityMeasurement, SdmxAttribute.unitMeasure, unit);
+		builder.addWhere(qualityMeasurement, AV.affectedAspect, affectedAspect);
+		if (affectedVariableName != null) {
+			builder.addWhere(qualityMeasurement, AV.affectedVariableName, affectedVariableName);
+		}
+		for (Resource comparedToDataset : comparedToDatasets) {
+			builder.addWhere(qualityMeasurement, AV.comparedToDataset, comparedToDataset);
+		}
 
 		return QueryExecutionFactory.create(builder.build(), outputAffectedDatasetMetaModel).execAsk();
 	}

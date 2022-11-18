@@ -5,6 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+* extend `LiteralValueComparisonProcessor`: add calculation of measurement count, absolute coverage, relative coverage and estimated completeness per variable
+* extend `ResourceValueComparisonProcessor`: add calculation of measurement count, absolute coverage, relative coverage and estimated completeness per variable
+
+### Fixed
+* fix `LiteralValueComparisonProcessor`: possibly missing value deviations or value omissions in case of duplicated resources in other dataset
+* fix `ResourceValueComparisonProcessor`: possibly missing value deviations or value omissions in case of duplicated resources in other dataset
+* fix `LiteralValueComparisonProcessor`: possibly additional value deviations or value omissions in case of duplicated resources in the dataset
+* fix `ResourceValueComparisonProcessor`: possibly additional value deviations or value omissions in case of duplicated resources in the dataset
+
 ## [1.0.1] - 2022-08-18
 
 ### Fixed
