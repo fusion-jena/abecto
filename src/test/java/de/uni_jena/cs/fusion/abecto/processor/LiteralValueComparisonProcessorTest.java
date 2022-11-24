@@ -28,7 +28,6 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.sys.JenaSystem;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class LiteralValueComparisonProcessorTest extends AbstractValueComparisonProcessorTest {
@@ -36,13 +35,6 @@ class LiteralValueComparisonProcessorTest extends AbstractValueComparisonProcess
 	@BeforeAll
 	public static void initJena() {
 		JenaSystem.init();
-	}
-
-	@BeforeEach
-	public void initMapping() {
-		for (int i = 0; i < 10; i++) {
-			this.addMapping(resource(1), resource(2));
-		}
 	}
 
 	@Override
