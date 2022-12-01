@@ -70,13 +70,13 @@ class ResourceValueComparisonProcessorTest extends AbstractValueComparisonProces
 		assertUnexpectedValueType(resource(10), ResourceFactory.createTypedLiteral("3.2E9", XSDDatatype.XSDdouble),
 				"Should be a resource.");
 
-		assertMissing(Arrays.asList(resource(11)), Arrays.asList(), Arrays.asList(), Arrays.asList(resource(11)));
+		assertMissing(Arrays.asList(resource(11)), Arrays.asList(), Arrays.asList(), Arrays.asList(resource(11)),0);
 		assertMissing(Arrays.asList(resource(11), resource(12)), Arrays.asList(), Arrays.asList(),
-				Arrays.asList(resource(11), resource(12)));
+				Arrays.asList(resource(11), resource(12)),0);
 		assertMissing(Arrays.asList(resource(11), resource(12)), Arrays.asList(resource(21)), Arrays.asList(),
-				Arrays.asList(resource(12)));
+				Arrays.asList(resource(12)), 1);
 
 		assertDeviation(Arrays.asList(resource(11), resource(12)), Arrays.asList(resource(21), resource(23)),
-				Arrays.asList(resource(11)), Arrays.asList(resource(21)));
+				Arrays.asList(resource(11)), Arrays.asList(resource(21)), 1);
 	}
 }

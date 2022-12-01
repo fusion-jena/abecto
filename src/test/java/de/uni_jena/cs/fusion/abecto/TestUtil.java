@@ -15,9 +15,12 @@
  */
 package de.uni_jena.cs.fusion.abecto;
 
+import java.math.BigDecimal;
+
 import javax.annotation.Nullable;
 
 import org.apache.jena.arq.querybuilder.AskBuilder;
+import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Model;
@@ -163,7 +166,7 @@ public class TestUtil {
 		return QueryExecutionFactory.create(builder.build(), outputAffectedDatasetMetaModel).execAsk();
 	}
 
-	public static boolean containsualityMeasurement(Resource measure, @Nullable Number value, Resource unit,
+	public static boolean containsMeasurement(Resource measure, @Nullable Number value, Resource unit,
 			Resource computedOnDataset, @Nullable String affectedVariableName, Iterable<Resource> comparedToDatasets,
 			Resource affectedAspect, Model outputAffectedDatasetMetaModel) {
 
@@ -186,6 +189,37 @@ public class TestUtil {
 		}
 
 		return QueryExecutionFactory.create(builder.build(), outputAffectedDatasetMetaModel).execAsk();
+	}
+
+	public static BigDecimal getMeasurement(Resource measure, Resource unit, Resource computedOnDataset,
+			@Nullable String affectedVariableName, @Nullable Iterable<Resource> comparedToDatasets,
+			Resource affectedAspect, Model outputAffectedDatasetMetaModel) {
+
+		Var qualityMeasurement = Var.alloc("qualityMeasurement");
+		Var value = Var.alloc("value");
+
+		SelectBuilder builder = new SelectBuilder();
+		builder.addVar(value);
+		builder.addWhere(qualityMeasurement, RDF.type, AV.QualityMeasurement);
+		builder.addWhere(qualityMeasurement, DQV.isMeasurementOf, measure);
+		builder.addWhere(qualityMeasurement, DQV.computedOn, computedOnDataset);
+		if (value != null) {
+			builder.addWhere(qualityMeasurement, DQV.value, value);
+		}
+		builder.addWhere(qualityMeasurement, SdmxAttribute.unitMeasure, unit);
+		builder.addWhere(qualityMeasurement, AV.affectedAspect, affectedAspect);
+		if (affectedVariableName != null) {
+			builder.addWhere(qualityMeasurement, AV.affectedVariableName, affectedVariableName);
+		}
+		if (comparedToDatasets != null) {
+			for (Resource comparedToDataset : comparedToDatasets) {
+				builder.addWhere(qualityMeasurement, AV.comparedToDataset, comparedToDataset);
+			}
+		}
+
+		return new BigDecimal(Models
+				.assertOne(QueryExecutionFactory.create(builder.build(), outputAffectedDatasetMetaModel).execSelect())
+				.getLiteral(value.getName()).getLexicalForm());
 	}
 
 }

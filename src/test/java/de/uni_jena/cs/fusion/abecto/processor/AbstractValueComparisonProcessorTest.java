@@ -18,9 +18,10 @@ package de.uni_jena.cs.fusion.abecto.processor;
 import static de.uni_jena.cs.fusion.abecto.TestUtil.aspect;
 import static de.uni_jena.cs.fusion.abecto.TestUtil.containsDeviation;
 import static de.uni_jena.cs.fusion.abecto.TestUtil.containsIssue;
+import static de.uni_jena.cs.fusion.abecto.TestUtil.containsMeasurement;
 import static de.uni_jena.cs.fusion.abecto.TestUtil.containsValuesOmission;
-import static de.uni_jena.cs.fusion.abecto.TestUtil.containsualityMeasurement;
 import static de.uni_jena.cs.fusion.abecto.TestUtil.dataset;
+import static de.uni_jena.cs.fusion.abecto.TestUtil.getMeasurement;
 import static de.uni_jena.cs.fusion.abecto.TestUtil.property;
 import static de.uni_jena.cs.fusion.abecto.TestUtil.resource;
 import static de.uni_jena.cs.fusion.abecto.TestUtil.subject;
@@ -35,13 +36,19 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import javax.annotation.Nullable;
+
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.vocabulary.RDF;
+import org.junit.jupiter.api.Test;
+
+import com.github.jsonldjava.shaded.com.google.common.base.Objects;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
@@ -49,12 +56,39 @@ import de.uni_jena.cs.fusion.abecto.vocabulary.OM;
 
 public abstract class AbstractValueComparisonProcessorTest {
 
-	Query pattern = QueryFactory.create("SELECT ?key ?value ?dummy WHERE {OPTIONAL{?key <" + property(1)
-			+ "> ?value} ?key <" + property(2) + "> ?dummy}");
+	private static class TestValueComparisonProcessor
+			extends AbstractValueComparisonProcessor<TestValueComparisonProcessor> {
+
+		public static TestValueComparisonProcessor getInstance() {
+			TestValueComparisonProcessor processor = new TestValueComparisonProcessor();
+			processor.variables = Collections.singletonList("value");
+			processor.aspect = aspect(1);
+			return processor;
+		}
+
+		@Override
+		public boolean equivalentValues(RDFNode value1, RDFNode value2) {
+			return Objects.equal(value1, value2);
+		}
+
+		@Override
+		public String invalidValueComment() {
+			return "";
+		}
+
+		@Override
+		public boolean isValidValue(RDFNode value) {
+			return true;
+		}
+	}
+
+	Query pattern = QueryFactory.create("SELECT ?key ?value ?dummy WHERE { ?key <" + property(2)
+			+ "> ?dummy OPTIONAL{?key <" + property(1) + "> ?value}}");
 	Aspect aspect1 = new Aspect(aspect(1), "key").setPattern(dataset(1), pattern).setPattern(dataset(2), pattern);
 	Model mappingModel = ModelFactory.createDefaultModel();
+
 	{
-		addMapping(subject(1), subject(2), subject(3));
+		addMapping(subject(1), subject(2), subject(3), subject(4));
 	}
 
 	public void addMapping(Resource... resources) {
@@ -65,71 +99,40 @@ public abstract class AbstractValueComparisonProcessorTest {
 		}
 	}
 
-	public abstract Processor<?> getInstance(List<String> variables, Resource aspect);
-
-	Model[] compare(Model model1, Model model2) throws Exception {
-		Processor<?> processor = getInstance(Collections.singletonList("value"), aspect(1))
-				.addInputPrimaryModel(dataset(1), model1).addInputPrimaryModel(dataset(2), model2)
-				.addInputMetaModel(null, MappingProcessor.inferTransitiveCorrespondences(mappingModel))
-				.addAspects(aspect1);
-		processor.run();
-		return new Model[] { processor.getOutputMetaModel(dataset(1)), processor.getOutputMetaModel(dataset(2)) };
-	}
-
-	void assertUnexpectedValueType(RDFNode expectedValue, RDFNode unexpectedValue, String issueComment)
+	void assertDeviation(Collection<RDFNode> values1, Collection<RDFNode> values2,
+			Collection<RDFNode> notDeviatingValues1, Collection<RDFNode> notDeviatingValues2, int overlap)
 			throws Exception {
-		// first direction
-		Model model1 = ModelFactory.createDefaultModel().add(subject(1), property(1), unexpectedValue);
-		Model model2 = ModelFactory.createDefaultModel().add(subject(2), property(1), expectedValue);
-		model1.add(subject(1), property(2), resource("alwaysPresent"));
-		model2.add(subject(2), property(2), resource("alwaysPresent"));
-		Model[] outputMetaModels = compare(model1, model2);
-		assertFalse(outputMetaModels[0].contains(null, RDF.type, AV.Deviation));
-		assertFalse(outputMetaModels[1].contains(null, RDF.type, AV.Deviation));
-		assertTrue(outputMetaModels[0].contains(null, RDF.type, AV.ValueOmission));
-		assertFalse(outputMetaModels[1].contains(null, RDF.type, AV.ValueOmission));
-
-		assertTrue(containsIssue(subject(1), "value", unexpectedValue, aspect(1), "Invalid Value", issueComment,
-				outputMetaModels[0]));
-		assertEquals(1, outputMetaModels[0].listStatements(null, RDF.type, AV.Issue).toList().size());
-		assertEquals(0, outputMetaModels[1].listStatements(null, RDF.type, AV.Issue).toList().size());
-
-		assertMeasurements(dataset(1), dataset(2), aspect(1), "value", outputMetaModels[0], 1, 1, 0, 0);
-		assertMeasurements(dataset(2), dataset(1), aspect(1), "value", outputMetaModels[1], 1, 1, 0, 0);
-
-		// second direction
-		model1 = ModelFactory.createDefaultModel().add(subject(1), property(1), expectedValue);
-		model2 = ModelFactory.createDefaultModel().add(subject(2), property(1), unexpectedValue);
-		model1.add(subject(1), property(2), resource("alwaysPresent"));
-		model2.add(subject(2), property(2), resource("alwaysPresent"));
-		outputMetaModels = compare(model1, model2);
-		assertFalse(outputMetaModels[0].contains(null, RDF.type, AV.Deviation));
-		assertFalse(outputMetaModels[1].contains(null, RDF.type, AV.Deviation));
-		assertFalse(outputMetaModels[0].contains(null, RDF.type, AV.ValueOmission));
-		assertTrue(outputMetaModels[1].contains(null, RDF.type, AV.ValueOmission));
-
-		assertTrue(containsIssue(subject(2), "value", unexpectedValue, aspect(1), "Invalid Value", issueComment,
-				outputMetaModels[1]));
-		assertEquals(0, outputMetaModels[0].listStatements(null, RDF.type, AV.Issue).toList().size());
-		assertEquals(1, outputMetaModels[1].listStatements(null, RDF.type, AV.Issue).toList().size());
-
-		assertMeasurements(dataset(1), dataset(2), aspect(1), "value", outputMetaModels[0], 1, 1, 0, 0);
-		assertMeasurements(dataset(2), dataset(1), aspect(1), "value", outputMetaModels[1], 1, 1, 0, 0);
+		assertDeviationOneDirection(values1, values2, notDeviatingValues1, notDeviatingValues2, overlap);
+		assertDeviationOneDirection(values2, values1, notDeviatingValues2, notDeviatingValues1, overlap);
 	}
 
 	void assertDeviation(RDFNode value1, RDFNode value2) throws Exception {
 		assertDeviation(Collections.singleton(value1), Collections.singleton(value2), Collections.emptyList(),
-				Collections.emptyList());
+				Collections.emptyList(), 0);
 	}
 
-	void assertDeviation(Collection<RDFNode> values1, Collection<RDFNode> values2,
-			Collection<RDFNode> notDeviatingValues1, Collection<RDFNode> notDeviatingValues2) throws Exception {
-		assertDeviationOneDirection(values1, values2, notDeviatingValues1, notDeviatingValues2);
-		assertDeviationOneDirection(values2, values1, notDeviatingValues2, notDeviatingValues1);
+	public void assertDeviation(Resource affectedDataset, Resource affectedResource, String affectedValue,
+			Resource comparedToDataset, Resource comparedToResource, String comparedToValue, Model outputMetaModel,
+			boolean expected) {
+		boolean actual = containsDeviation(affectedResource, "value",
+				ResourceFactory.createStringLiteral(affectedValue), comparedToDataset, comparedToResource,
+				ResourceFactory.createStringLiteral(comparedToValue), aspect(1), outputMetaModel);
+		if (expected) {
+			assertTrue(actual, String.format(
+					"Value \"%s\" of %s from %s and value \"%s\" of %s from %s should be reported as deviation.",
+					affectedValue, affectedResource, affectedDataset, comparedToValue, comparedToResource,
+					comparedToDataset));
+		} else {
+			assertFalse(actual, String.format(
+					"Value \"%s\" of %s from %s and value \"%s\" of %s from %s should not be reported as deviation.",
+					affectedValue, affectedResource, affectedDataset, comparedToValue, comparedToResource,
+					comparedToDataset));
+		}
 	}
 
 	void assertDeviationOneDirection(Collection<RDFNode> values1, Collection<RDFNode> values2,
-			Collection<RDFNode> notDeviatingValues1, Collection<RDFNode> notDeviatingValues2) throws Exception {
+			Collection<RDFNode> notDeviatingValues1, Collection<RDFNode> notDeviatingValues2, int overlap)
+			throws Exception {
 		int expectedDeviationCount = (values1.size() - notDeviatingValues1.size())
 				* (values2.size() - notDeviatingValues2.size());
 		// first direction
@@ -166,43 +169,103 @@ public abstract class AbstractValueComparisonProcessorTest {
 		assertEquals(expectedDeviationCount,
 				outputMetaModels[1].listStatements(null, RDF.type, AV.Deviation).toList().size());
 
-		assertMeasurements(dataset(1), dataset(2), aspect(1), "value", outputMetaModels[0], values1.size(),
-				values2.size(), notDeviatingValues2.size(), notDeviatingValues1.size());
-		assertMeasurements(dataset(2), dataset(1), aspect(1), "value", outputMetaModels[1], values2.size(),
-				values1.size(), notDeviatingValues1.size(), notDeviatingValues2.size());
+		// assert measurements
+		BigDecimal expectedCount1 = new BigDecimal(values1.size());
+		BigDecimal expectedCount2 = new BigDecimal(values2.size());
+		BigDecimal expectedAbsoluteCoverage1 = new BigDecimal(notDeviatingValues1.size());
+		BigDecimal expectedAbsoluteCoverage2 = new BigDecimal(notDeviatingValues2.size());
+		BigDecimal expectedRelativeCoverage1 = (expectedCount2.equals(BigDecimal.ZERO)) ? null
+				: expectedAbsoluteCoverage1.divide(expectedCount2, AbstractValueComparisonProcessor.SCALE,
+						RoundingMode.HALF_UP);
+		BigDecimal expectedRelativeCoverage2 = (expectedCount1.equals(BigDecimal.ZERO)) ? null
+				: expectedAbsoluteCoverage2.divide(expectedCount1, AbstractValueComparisonProcessor.SCALE,
+						RoundingMode.HALF_UP);
+		BigDecimal overlapD = new BigDecimal(overlap);
+		BigDecimal expectedCompleteness1 = (overlapD.equals(BigDecimal.ZERO)) ? null
+				: expectedCount1.divide(expectedCount1.multiply(expectedCount2).divide(overlapD,
+						AbstractValueComparisonProcessor.SCALE, RoundingMode.HALF_UP));
+		BigDecimal expectedCompleteness2 = (overlapD.equals(BigDecimal.ZERO)) ? null
+				: expectedCount2.divide(expectedCount1.multiply(expectedCount2).divide(overlapD,
+						AbstractValueComparisonProcessor.SCALE, RoundingMode.HALF_UP));
+		assertMeasurements(expectedCount1, expectedCount2, expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+				expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
+				dataset(1), dataset(2), aspect(1), outputMetaModels[0], outputMetaModels[1]);
 	}
 
-	void assertSame(RDFNode value1, RDFNode value2) throws Exception {
-		assertSameOneDirection(value2, value1);
-		assertSameOneDirection(value1, value2);
-	}
+	private void assertMeasurements(BigDecimal expectedCount1, BigDecimal expectedCount2,
+			BigDecimal expectedAbsoluteCoverage1, BigDecimal expectedAbsoluteCoverage2,
+			@Nullable BigDecimal expectedRelativeCoverage1, @Nullable BigDecimal expectedRelativeCoverage2,
+			@Nullable BigDecimal expectedCompleteness1, @Nullable BigDecimal expectedCompleteness2, Resource dataset1,
+			Resource dataset2, Resource aspect1, Model outputMetaModel1, Model outputMetaModel2) {
 
-	void assertSameOneDirection(RDFNode value1, RDFNode value2) throws Exception {
-		// first direction
-		Model model1 = ModelFactory.createDefaultModel().add(subject(1), property(1), value1);
-		Model model2 = ModelFactory.createDefaultModel().add(subject(2), property(1), value2);
-		model1.add(subject(1), property(2), resource("alwaysPresent"));
-		model2.add(subject(2), property(2), resource("alwaysPresent"));
-		Model[] outputMetaModels = compare(model1, model2);
-		assertFalse(outputMetaModels[0].contains(null, RDF.type, AV.Issue));
-		assertFalse(outputMetaModels[1].contains(null, RDF.type, AV.Issue));
-		assertFalse(outputMetaModels[0].contains(null, RDF.type, AV.Deviation));
-		assertFalse(outputMetaModels[1].contains(null, RDF.type, AV.Deviation));
-		assertFalse(outputMetaModels[0].contains(null, RDF.type, AV.ValueOmission));
-		assertFalse(outputMetaModels[1].contains(null, RDF.type, AV.ValueOmission));
-		// check measurement
-		assertMeasurements(dataset(1), dataset(2), aspect(1), "value", outputMetaModels[0], 1, 1, 1, 1);
-		assertMeasurements(dataset(2), dataset(1), aspect(1), "value", outputMetaModels[1], 1, 1, 1, 1);
+		assertEquals(expectedCount1,
+				getMeasurement(AV.count, OM.one, dataset(1), "value", null, aspect(1), outputMetaModel1),
+				"Wrong count for dataset 1.");
+		assertEquals(expectedCount2,
+				getMeasurement(AV.count, OM.one, dataset(2), "value", null, aspect(1), outputMetaModel2),
+				"Wrong count for dataset 2.");
+		assertEquals(
+				expectedAbsoluteCoverage1, getMeasurement(AV.absoluteCoverage, OM.one, dataset(1), "value",
+						Collections.singleton(dataset(2)), aspect(1), outputMetaModel1),
+				"Wrong absolute coverage for dataset 1.");
+		assertEquals(
+				expectedAbsoluteCoverage2, getMeasurement(AV.absoluteCoverage, OM.one, dataset(2), "value",
+						Collections.singleton(dataset(1)), aspect(1), outputMetaModel2),
+				"Wrong absolute coverage for dataset 2.");
+		if (expectedRelativeCoverage1 != null) {
+			assertEquals(
+					expectedRelativeCoverage1.stripTrailingZeros(), getMeasurement(AV.relativeCoverage, OM.one,
+							dataset(1), "value", Collections.singleton(dataset(2)), aspect(1), outputMetaModel1),
+					"Wrong relative coverage for dataset 1.");
+		} else {
+			assertFalse(
+					containsMeasurement(AV.relativeCoverage, null, OM.one, dataset(1), "value",
+							Collections.singleton(dataset(2)), aspect(1), outputMetaModel1),
+					"Unexpected existence of relative coverage for dataset 1.");
+		}
+		if (expectedRelativeCoverage2 != null) {
+			assertEquals(
+					expectedRelativeCoverage2.stripTrailingZeros(), getMeasurement(AV.relativeCoverage, OM.one,
+							dataset(2), "value", Collections.singleton(dataset(1)), aspect(1), outputMetaModel2),
+					"Wrong relative coverage of dataset 2.");
+		} else {
+			assertFalse(
+					containsMeasurement(AV.relativeCoverage, null, OM.one, dataset(2), "value",
+							Collections.singleton(dataset(1)), aspect(1), outputMetaModel2),
+					"Unexpected existence of relative coverage for dataset 2.");
+		}
+		if (expectedCompleteness1 != null) {
+			assertEquals(expectedCompleteness1.stripTrailingZeros(),
+					getMeasurement(AV.marCompletenessThomas08, OM.one, dataset(1), "value",
+							Collections.singleton(dataset(2)), aspect(1), outputMetaModel1),
+					"Wrong completeness of dataset 1.");
+		} else {
+			assertFalse(
+					containsMeasurement(AV.marCompletenessThomas08, null, OM.one, dataset(1), "value",
+							Collections.singleton(dataset(2)), aspect(1), outputMetaModel1),
+					"Unexpected existence of completeness for dataset 1.");
+		}
+		if (expectedCompleteness2 != null) {
+			assertEquals(expectedCompleteness2.stripTrailingZeros(),
+					getMeasurement(AV.marCompletenessThomas08, OM.one, dataset(2), "value",
+							Collections.singleton(dataset(1)), aspect(1), outputMetaModel2),
+					"Wrong completeness of dataset 2.");
+		} else {
+			assertFalse(
+					containsMeasurement(AV.marCompletenessThomas08, null, OM.one, dataset(2), "value",
+							Collections.singleton(dataset(1)), aspect(1), outputMetaModel2),
+					"Unexpected existence of completeness for dataset 2.");
+		}
 	}
 
 	void assertMissing(Collection<RDFNode> values1, Collection<RDFNode> values2, Collection<RDFNode> missingValues1,
-			Collection<RDFNode> missingValues2) throws Exception {
-		assertMissingOneDirection(values1, values2, missingValues1, missingValues2);
-		assertMissingOneDirection(values2, values1, missingValues2, missingValues1);
+			Collection<RDFNode> missingValues2, int overlap) throws Exception {
+		assertMissingOneDirection(values1, values2, missingValues1, missingValues2, overlap);
+		assertMissingOneDirection(values2, values1, missingValues2, missingValues1, overlap);
 	}
 
 	void assertMissingOneDirection(Collection<RDFNode> values1, Collection<RDFNode> values2,
-			Collection<RDFNode> missingValues1, Collection<RDFNode> missingValues2) throws Exception {
+			Collection<RDFNode> missingValues1, Collection<RDFNode> missingValues2, int overlap) throws Exception {
 		Model model1 = ModelFactory.createDefaultModel();
 		Model model2 = ModelFactory.createDefaultModel();
 		for (RDFNode value1 : values1) {
@@ -230,43 +293,1104 @@ public abstract class AbstractValueComparisonProcessorTest {
 			assertTrue(containsValuesOmission(subject(2), "value", dataset(1), subject(1), missingValue2, aspect(1),
 					outputMetaModels[1]));
 		}
-		// check measurement
-		assertMeasurements(dataset(1), dataset(2), aspect(1), "value", outputMetaModels[0], values1.size(),
-				values2.size(), values2.size() - missingValues1.size(), values1.size() - missingValues2.size());
-		assertMeasurements(dataset(2), dataset(1), aspect(1), "value", outputMetaModels[1], values2.size(),
-				values1.size(), values1.size() - missingValues2.size(), values2.size() - missingValues1.size());
+
+		// assert measurements
+		BigDecimal expectedCount1 = new BigDecimal(values1.size());
+		BigDecimal expectedCount2 = new BigDecimal(values2.size());
+		BigDecimal expectedAbsoluteCoverage1 = new BigDecimal(values2.size() - missingValues1.size());
+		BigDecimal expectedAbsoluteCoverage2 = new BigDecimal(values1.size() - missingValues2.size());
+		BigDecimal expectedRelativeCoverage1 = (expectedCount2.equals(BigDecimal.ZERO)) ? null
+				: expectedAbsoluteCoverage1.divide(expectedCount2, AbstractValueComparisonProcessor.SCALE,
+						RoundingMode.HALF_UP);
+		BigDecimal expectedRelativeCoverage2 = (expectedCount1.equals(BigDecimal.ZERO)) ? null
+				: expectedAbsoluteCoverage2.divide(expectedCount1, AbstractValueComparisonProcessor.SCALE,
+						RoundingMode.HALF_UP);
+		BigDecimal overlapD = new BigDecimal(overlap);
+		BigDecimal expectedCompleteness1 = (overlapD.equals(BigDecimal.ZERO)) ? null
+				: expectedCount1.divide(expectedCount1.multiply(expectedCount2).divide(overlapD,
+						AbstractValueComparisonProcessor.SCALE, RoundingMode.HALF_UP));
+		BigDecimal expectedCompleteness2 = (overlapD.equals(BigDecimal.ZERO)) ? null
+				: expectedCount2.divide(expectedCount1.multiply(expectedCount2).divide(overlapD,
+						AbstractValueComparisonProcessor.SCALE, RoundingMode.HALF_UP));
+		assertMeasurements(expectedCount1, expectedCount2, expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+				expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
+				dataset(1), dataset(2), aspect(1), outputMetaModels[0], outputMetaModels[1]);
 	}
 
-	void assertMeasurements(Resource dataset1, Resource dataset2, Resource aspect, String variable,
-			Model outputMetaModel, int count1, int count2, int absoluteCoverage1, int absoluteCoverage2)
-			throws Exception {
-		BigDecimal relativeCoverage = BigDecimal.ZERO;
-		if (count2 != 0) {
-			relativeCoverage = BigDecimal.valueOf(absoluteCoverage1).divide(BigDecimal.valueOf(count2), 2,
-					RoundingMode.HALF_UP);
-		}
-		BigDecimal totalPairwiseOverlap = BigDecimal.valueOf(absoluteCoverage1 + absoluteCoverage2)
-				.divide(BigDecimal.valueOf(2), 0, RoundingMode.CEILING);
-		BigDecimal populationSize = null;
-		if (!totalPairwiseOverlap.equals(BigDecimal.ZERO)) {
-			populationSize = BigDecimal.valueOf(count1 * count2).divide(totalPairwiseOverlap, 2, RoundingMode.HALF_UP);
-		}
-		BigDecimal completeness = null;
-		if (populationSize != null) {
-			completeness = BigDecimal.valueOf(count1).divide(populationSize, 2, RoundingMode.HALF_UP);
-		}
-		assertTrue(containsualityMeasurement(AV.count, count1, OM.one, dataset1, variable, Collections.emptyList(),
-				aspect(1), outputMetaModel));
-		assertTrue(containsualityMeasurement(AV.absoluteCoverage, absoluteCoverage1, OM.one, dataset1, variable,
-				Collections.singleton(dataset2), aspect, outputMetaModel));
-		assertTrue(containsualityMeasurement(AV.relativeCoverage, relativeCoverage, OM.one, dataset1, variable,
-				Collections.singleton(dataset2), aspect, outputMetaModel));
-		if (completeness != null) {
-			assertTrue(containsualityMeasurement(AV.marCompletenessThomas08, completeness, OM.one, dataset1, variable,
-					Collections.singleton(dataset2), aspect, outputMetaModel));
+	public void assertMissingValue(Resource affectedDataset, Resource affectedResource, Resource comparedToDataset,
+			Resource comparedToResource, String missingValue, Model outputMetaModel, boolean expected) {
+		boolean actual = containsValuesOmission(affectedResource, "value", comparedToDataset, comparedToResource,
+				ResourceFactory.createStringLiteral(missingValue), aspect(1), outputMetaModel);
+		if (expected) {
+			assertTrue(actual,
+					String.format("Value \"%s\" for %s from %s should be reported as missing compared to %s from %s.",
+							missingValue, affectedResource, affectedDataset, comparedToResource, comparedToDataset));
 		} else {
-			assertFalse(containsualityMeasurement(AV.marCompletenessThomas08, null, OM.one, dataset1, variable,
-					Collections.singleton(dataset2), aspect, outputMetaModel));
+			assertFalse(actual,
+					String.format(
+							"Value \"%s\" for %s from %s should not be reported as missing compared to %s from %s.",
+							missingValue, affectedResource, affectedDataset, comparedToResource, comparedToDataset));
 		}
+	}
+
+	void assertSame(RDFNode value1, RDFNode value2) throws Exception {
+		assertSameOneDirection(value2, value1);
+		assertSameOneDirection(value1, value2);
+	}
+
+	void assertSameOneDirection(RDFNode value1, RDFNode value2) throws Exception {
+		// first direction
+		Model model1 = ModelFactory.createDefaultModel().add(subject(1), property(1), value1);
+		Model model2 = ModelFactory.createDefaultModel().add(subject(2), property(1), value2);
+		model1.add(subject(1), property(2), resource("alwaysPresent"));
+		model2.add(subject(2), property(2), resource("alwaysPresent"));
+		Model[] outputMetaModels = compare(model1, model2);
+		assertFalse(outputMetaModels[0].contains(null, RDF.type, AV.Issue));
+		assertFalse(outputMetaModels[1].contains(null, RDF.type, AV.Issue));
+		assertFalse(outputMetaModels[0].contains(null, RDF.type, AV.Deviation));
+		assertFalse(outputMetaModels[1].contains(null, RDF.type, AV.Deviation));
+		assertFalse(outputMetaModels[0].contains(null, RDF.type, AV.ValueOmission));
+		assertFalse(outputMetaModels[1].contains(null, RDF.type, AV.ValueOmission));
+		// check measurement
+
+		// assert measurements
+		BigDecimal expectedCount1 = BigDecimal.ONE;
+		BigDecimal expectedCount2 = BigDecimal.ONE;
+		BigDecimal expectedAbsoluteCoverage1 = BigDecimal.ONE;
+		BigDecimal expectedAbsoluteCoverage2 = BigDecimal.ONE;
+		BigDecimal expectedRelativeCoverage1 = BigDecimal.ONE;
+		BigDecimal expectedRelativeCoverage2 = BigDecimal.ONE;
+		BigDecimal expectedCompleteness1 = BigDecimal.ONE;
+		BigDecimal expectedCompleteness2 = BigDecimal.ONE;
+		assertMeasurements(expectedCount1, expectedCount2, expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+				expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
+				dataset(1), dataset(2), aspect(1), outputMetaModels[0], outputMetaModels[1]);
+	}
+
+	void assertUnexpectedValueType(RDFNode expectedValue, RDFNode unexpectedValue, String issueComment)
+			throws Exception {
+		// first direction
+		Model model1 = ModelFactory.createDefaultModel().add(subject(1), property(1), unexpectedValue);
+		Model model2 = ModelFactory.createDefaultModel().add(subject(2), property(1), expectedValue);
+		model1.add(subject(1), property(2), resource("alwaysPresent"));
+		model2.add(subject(2), property(2), resource("alwaysPresent"));
+		Model[] outputMetaModels = compare(model1, model2);
+		assertFalse(outputMetaModels[0].contains(null, RDF.type, AV.Deviation));
+		assertFalse(outputMetaModels[1].contains(null, RDF.type, AV.Deviation));
+		assertTrue(outputMetaModels[0].contains(null, RDF.type, AV.ValueOmission));
+		assertFalse(outputMetaModels[1].contains(null, RDF.type, AV.ValueOmission));
+
+		assertTrue(containsIssue(subject(1), "value", unexpectedValue, aspect(1), "Invalid Value", issueComment,
+				outputMetaModels[0]));
+		assertEquals(1, outputMetaModels[0].listStatements(null, RDF.type, AV.Issue).toList().size());
+		assertEquals(0, outputMetaModels[1].listStatements(null, RDF.type, AV.Issue).toList().size());
+
+		// assert measurements first direction
+		BigDecimal expectedCount1 = BigDecimal.ONE;
+		BigDecimal expectedCount2 = BigDecimal.ONE;
+		BigDecimal expectedAbsoluteCoverage1 = BigDecimal.ZERO;
+		BigDecimal expectedAbsoluteCoverage2 = BigDecimal.ZERO;
+		BigDecimal expectedRelativeCoverage1 = BigDecimal.ZERO;
+		BigDecimal expectedRelativeCoverage2 = BigDecimal.ZERO;
+		BigDecimal expectedCompleteness1 = null;
+		BigDecimal expectedCompleteness2 = null;
+		assertMeasurements(expectedCount1, expectedCount2, expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+				expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
+				dataset(1), dataset(2), aspect(1), outputMetaModels[0], outputMetaModels[1]);
+
+		// second direction
+		model1 = ModelFactory.createDefaultModel().add(subject(1), property(1), expectedValue);
+		model2 = ModelFactory.createDefaultModel().add(subject(2), property(1), unexpectedValue);
+		model1.add(subject(1), property(2), resource("alwaysPresent"));
+		model2.add(subject(2), property(2), resource("alwaysPresent"));
+		outputMetaModels = compare(model1, model2);
+		assertFalse(outputMetaModels[0].contains(null, RDF.type, AV.Deviation));
+		assertFalse(outputMetaModels[1].contains(null, RDF.type, AV.Deviation));
+		assertFalse(outputMetaModels[0].contains(null, RDF.type, AV.ValueOmission));
+		assertTrue(outputMetaModels[1].contains(null, RDF.type, AV.ValueOmission));
+
+		assertTrue(containsIssue(subject(2), "value", unexpectedValue, aspect(1), "Invalid Value", issueComment,
+				outputMetaModels[1]));
+		assertEquals(0, outputMetaModels[0].listStatements(null, RDF.type, AV.Issue).toList().size());
+		assertEquals(1, outputMetaModels[1].listStatements(null, RDF.type, AV.Issue).toList().size());
+
+		// assert measurements second direction
+		// some expected values as for first direction
+		assertMeasurements(expectedCount1, expectedCount2, expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+				expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
+				dataset(1), dataset(2), aspect(1), outputMetaModels[0], outputMetaModels[1]);
+	}
+
+	Model[] compare(Model model1, Model model2) throws Exception {
+		return compare(getInstance(Collections.singletonList("value"), aspect(1)), model1, model2);
+	}
+
+	Model[] compare(Processor<?> processor, Model model1, Model model2) throws Exception {
+		processor.addInputPrimaryModel(dataset(1), model1).addInputPrimaryModel(dataset(2), model2)
+				.addInputMetaModel(null, MappingProcessor.inferTransitiveCorrespondences(mappingModel))
+				.addAspects(aspect1);
+		processor.run();
+		return new Model[] { processor.getOutputMetaModel(dataset(1)), processor.getOutputMetaModel(dataset(2)) };
+	}
+
+	@Test
+	public void duplicatesWithAllValuesComparedToDuplicatesWithAllValues() throws Exception {
+		Model[] outputMetaModels = prepareAndRunComparison(Arrays.asList("value1", "value2"),
+				Arrays.asList("value1", "value2"), true, Arrays.asList("value1", "value2"),
+				Arrays.asList("value1", "value2"), true);
+		Model outputMetaModel1 = outputMetaModels[0];
+		Model outputMetaModel2 = outputMetaModels[1];
+
+		// omissions subject 1
+		assertMissingValue(dataset(1), subject(1), dataset(1), subject(2), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(1), subject(2), "value2", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(2), subject(3), "value2", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(2), subject(4), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(2), subject(4), "value2", outputMetaModel1, false);
+
+		// omissions subject 2
+		assertMissingValue(dataset(1), subject(2), dataset(1), subject(1), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(2), dataset(1), subject(1), "value2", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(2), dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(2), dataset(2), subject(3), "value2", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(2), dataset(2), subject(4), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(2), dataset(2), subject(4), "value2", outputMetaModel1, false);
+
+		// omissions subject 3
+		assertMissingValue(dataset(2), subject(3), dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(1), subject(1), "value2", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(1), subject(2), "value2", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(2), subject(4), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(2), subject(4), "value2", outputMetaModel2, false);
+
+		// omissions subject 4
+		assertMissingValue(dataset(2), subject(4), dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(1), subject(1), "value2", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(1), subject(2), "value2", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(2), subject(3), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(2), subject(3), "value2", outputMetaModel2, false);
+
+		// deviations subject 1
+		assertDeviation(dataset(1), subject(1), "value1", dataset(1), subject(2), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value1", dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value1", dataset(2), subject(4), "value1", outputMetaModel1, false);
+
+		assertDeviation(dataset(1), subject(1), "value1", dataset(1), subject(2), "value2", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value1", dataset(2), subject(3), "value2", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value1", dataset(2), subject(4), "value2", outputMetaModel1, false);
+
+		assertDeviation(dataset(1), subject(1), "value2", dataset(1), subject(2), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value2", dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value2", dataset(2), subject(4), "value1", outputMetaModel1, false);
+
+		// deviations subject 2
+		assertDeviation(dataset(1), subject(2), "value1", dataset(1), subject(1), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value1", dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value1", dataset(2), subject(4), "value1", outputMetaModel1, false);
+
+		assertDeviation(dataset(1), subject(2), "value1", dataset(1), subject(1), "value2", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value1", dataset(2), subject(3), "value2", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value1", dataset(2), subject(4), "value2", outputMetaModel1, false);
+
+		assertDeviation(dataset(1), subject(2), "value2", dataset(1), subject(1), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value2", dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value2", dataset(2), subject(4), "value1", outputMetaModel1, false);
+
+		// deviations subject 3
+		assertDeviation(dataset(2), subject(3), "value1", dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value1", dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value1", dataset(2), subject(4), "value1", outputMetaModel2, false);
+
+		assertDeviation(dataset(2), subject(3), "value1", dataset(1), subject(1), "value2", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value1", dataset(1), subject(2), "value2", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value1", dataset(2), subject(4), "value2", outputMetaModel2, false);
+
+		assertDeviation(dataset(2), subject(3), "value2", dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value2", dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value2", dataset(2), subject(4), "value1", outputMetaModel2, false);
+		// deviations subject 4
+		assertDeviation(dataset(2), subject(4), "value1", dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value1", dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value1", dataset(2), subject(3), "value1", outputMetaModel2, false);
+
+		assertDeviation(dataset(2), subject(4), "value1", dataset(1), subject(1), "value2", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value1", dataset(1), subject(2), "value2", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value1", dataset(2), subject(3), "value2", outputMetaModel2, false);
+
+		assertDeviation(dataset(2), subject(4), "value2", dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value2", dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value2", dataset(2), subject(3), "value1", outputMetaModel2, false);
+
+		// assert measurements
+		BigDecimal expectedCount1 = new BigDecimal(4);
+		BigDecimal expectedCount2 = new BigDecimal(4);
+		BigDecimal expectedAbsoluteCoverage1 = new BigDecimal(4);
+		BigDecimal expectedAbsoluteCoverage2 = new BigDecimal(4);
+		BigDecimal expectedRelativeCoverage1 = new BigDecimal(1);
+		BigDecimal expectedRelativeCoverage2 = new BigDecimal(1);
+		BigDecimal expectedCompleteness1 = new BigDecimal(1);
+		BigDecimal expectedCompleteness2 = new BigDecimal(1);
+		assertMeasurements(expectedCount1, expectedCount2, expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+				expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
+				dataset(1), dataset(2), aspect(1), outputMetaModel1, outputMetaModel2);
+	}
+
+	@Test
+	public void duplicatesWithAllValuesComparedToSingleWithAllValues() throws Exception {
+		Model[] outputMetaModels = prepareAndRunComparison(Arrays.asList("value1"), Arrays.asList("value1"), true,
+				Arrays.asList("value1"), Arrays.asList(), false);
+		Model outputMetaModel1 = outputMetaModels[0];
+		Model outputMetaModel2 = outputMetaModels[1];
+
+		// omissions subject 1
+		assertMissingValue(dataset(1), subject(1), dataset(1), subject(2), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(1), subject(2), "value2", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(2), subject(3), "value2", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(2), subject(4), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(2), subject(4), "value2", outputMetaModel1, false);
+
+		// omissions subject 2
+		assertMissingValue(dataset(1), subject(2), dataset(1), subject(1), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(2), dataset(1), subject(1), "value2", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(2), dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(2), dataset(2), subject(3), "value2", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(2), dataset(2), subject(4), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(2), dataset(2), subject(4), "value2", outputMetaModel1, false);
+
+		// omissions subject 3
+		assertMissingValue(dataset(2), subject(3), dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(1), subject(1), "value2", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(1), subject(2), "value2", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(2), subject(4), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(2), subject(4), "value2", outputMetaModel2, false);
+
+		// omissions subject 4
+		assertMissingValue(dataset(2), subject(4), dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(1), subject(1), "value2", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(1), subject(2), "value2", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(2), subject(3), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(2), subject(3), "value2", outputMetaModel2, false);
+
+		// deviations subject 1
+		assertDeviation(dataset(1), subject(1), "value1", dataset(1), subject(2), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value1", dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value1", dataset(2), subject(4), "value1", outputMetaModel1, false);
+
+		assertDeviation(dataset(1), subject(1), "value1", dataset(1), subject(2), "value2", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value1", dataset(2), subject(3), "value2", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value1", dataset(2), subject(4), "value2", outputMetaModel1, false);
+
+		assertDeviation(dataset(1), subject(1), "value2", dataset(1), subject(2), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value2", dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value2", dataset(2), subject(4), "value1", outputMetaModel1, false);
+
+		// deviations subject 2
+		assertDeviation(dataset(1), subject(2), "value1", dataset(1), subject(1), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value1", dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value1", dataset(2), subject(4), "value1", outputMetaModel1, false);
+
+		assertDeviation(dataset(1), subject(2), "value1", dataset(1), subject(1), "value2", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value1", dataset(2), subject(3), "value2", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value1", dataset(2), subject(4), "value2", outputMetaModel1, false);
+
+		assertDeviation(dataset(1), subject(2), "value2", dataset(1), subject(1), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value2", dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value2", dataset(2), subject(4), "value1", outputMetaModel1, false);
+
+		// deviations subject 3
+		assertDeviation(dataset(2), subject(3), "value1", dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value1", dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value1", dataset(2), subject(4), "value1", outputMetaModel2, false);
+
+		assertDeviation(dataset(2), subject(3), "value1", dataset(1), subject(1), "value2", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value1", dataset(1), subject(2), "value2", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value1", dataset(2), subject(4), "value2", outputMetaModel2, false);
+
+		assertDeviation(dataset(2), subject(3), "value2", dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value2", dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value2", dataset(2), subject(4), "value1", outputMetaModel2, false);
+		// deviations subject 4
+		assertDeviation(dataset(2), subject(4), "value1", dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value1", dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value1", dataset(2), subject(3), "value1", outputMetaModel2, false);
+
+		assertDeviation(dataset(2), subject(4), "value1", dataset(1), subject(1), "value2", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value1", dataset(1), subject(2), "value2", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value1", dataset(2), subject(3), "value2", outputMetaModel2, false);
+
+		assertDeviation(dataset(2), subject(4), "value2", dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value2", dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value2", dataset(2), subject(3), "value1", outputMetaModel2, false);
+
+		// assert measurements
+		BigDecimal expectedCount1 = new BigDecimal(2);
+		BigDecimal expectedCount2 = new BigDecimal(1);
+		BigDecimal expectedAbsoluteCoverage1 = new BigDecimal(1);
+		BigDecimal expectedAbsoluteCoverage2 = new BigDecimal(2);
+		BigDecimal expectedRelativeCoverage1 = new BigDecimal(1);
+		BigDecimal expectedRelativeCoverage2 = new BigDecimal(1);
+		BigDecimal expectedCompleteness1 = new BigDecimal(1);
+		BigDecimal expectedCompleteness2 = new BigDecimal(1);
+		assertMeasurements(expectedCount1, expectedCount2, expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+				expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
+				dataset(1), dataset(2), aspect(1), outputMetaModel1, outputMetaModel2);
+	}
+
+	@Test
+	public void duplicatesWithComplementaryValuesComparedToDuplicatesWithAllValues() throws Exception {
+		Model[] outputMetaModels = prepareAndRunComparison(Arrays.asList("value1"), Arrays.asList("value2"), true,
+				Arrays.asList("value1", "value2"), Arrays.asList("value1", "value2"), true);
+		Model outputMetaModel1 = outputMetaModels[0];
+		Model outputMetaModel2 = outputMetaModels[1];
+
+		// omissions subject 1
+		assertMissingValue(dataset(1), subject(1), dataset(1), subject(2), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(1), subject(2), "value2", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(2), subject(3), "value2", outputMetaModel1, true);
+		assertMissingValue(dataset(1), subject(1), dataset(2), subject(4), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(2), subject(4), "value2", outputMetaModel1, true);
+
+		// omissions subject 2
+		assertMissingValue(dataset(1), subject(2), dataset(1), subject(1), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(2), dataset(1), subject(1), "value2", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(2), dataset(2), subject(3), "value1", outputMetaModel1, true);
+		assertMissingValue(dataset(1), subject(2), dataset(2), subject(3), "value2", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(2), dataset(2), subject(4), "value1", outputMetaModel1, true);
+		assertMissingValue(dataset(1), subject(2), dataset(2), subject(4), "value2", outputMetaModel1, false);
+
+		// omissions subject 3
+		assertMissingValue(dataset(2), subject(3), dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(1), subject(1), "value2", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(1), subject(2), "value2", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(2), subject(4), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(2), subject(4), "value2", outputMetaModel2, false);
+
+		// omissions subject 4
+		assertMissingValue(dataset(2), subject(4), dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(1), subject(1), "value2", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(1), subject(2), "value2", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(2), subject(3), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(2), subject(3), "value2", outputMetaModel2, false);
+
+		// deviations subject 1
+		assertDeviation(dataset(1), subject(1), "value1", dataset(1), subject(2), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value1", dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value1", dataset(2), subject(4), "value1", outputMetaModel1, false);
+
+		assertDeviation(dataset(1), subject(1), "value1", dataset(1), subject(2), "value2", outputMetaModel1, true);
+		assertDeviation(dataset(1), subject(1), "value1", dataset(2), subject(3), "value2", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value1", dataset(2), subject(4), "value2", outputMetaModel1, false);
+
+		assertDeviation(dataset(1), subject(1), "value2", dataset(1), subject(2), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value2", dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value2", dataset(2), subject(4), "value1", outputMetaModel1, false);
+
+		// deviations subject 2
+		assertDeviation(dataset(1), subject(2), "value1", dataset(1), subject(1), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value1", dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value1", dataset(2), subject(4), "value1", outputMetaModel1, false);
+
+		assertDeviation(dataset(1), subject(2), "value1", dataset(1), subject(1), "value2", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value1", dataset(2), subject(3), "value2", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value1", dataset(2), subject(4), "value2", outputMetaModel1, false);
+
+		assertDeviation(dataset(1), subject(2), "value2", dataset(1), subject(1), "value1", outputMetaModel1, true);
+		assertDeviation(dataset(1), subject(2), "value2", dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value2", dataset(2), subject(4), "value1", outputMetaModel1, false);
+
+		// deviations subject 3
+		assertDeviation(dataset(2), subject(3), "value1", dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value1", dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value1", dataset(2), subject(4), "value1", outputMetaModel2, false);
+
+		assertDeviation(dataset(2), subject(3), "value1", dataset(1), subject(1), "value2", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value1", dataset(1), subject(2), "value2", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value1", dataset(2), subject(4), "value2", outputMetaModel2, false);
+
+		assertDeviation(dataset(2), subject(3), "value2", dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value2", dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value2", dataset(2), subject(4), "value1", outputMetaModel2, false);
+		// deviations subject 4
+		assertDeviation(dataset(2), subject(4), "value1", dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value1", dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value1", dataset(2), subject(3), "value1", outputMetaModel2, false);
+
+		assertDeviation(dataset(2), subject(4), "value1", dataset(1), subject(1), "value2", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value1", dataset(1), subject(2), "value2", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value1", dataset(2), subject(3), "value2", outputMetaModel2, false);
+
+		assertDeviation(dataset(2), subject(4), "value2", dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value2", dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value2", dataset(2), subject(3), "value1", outputMetaModel2, false);
+
+		// assert measurements
+		BigDecimal expectedCount1 = new BigDecimal(2);
+		BigDecimal expectedCount2 = new BigDecimal(4);
+		BigDecimal expectedAbsoluteCoverage1 = new BigDecimal(4);
+		BigDecimal expectedAbsoluteCoverage2 = new BigDecimal(2);
+		BigDecimal expectedRelativeCoverage1 = new BigDecimal(1);
+		BigDecimal expectedRelativeCoverage2 = new BigDecimal(1);
+		BigDecimal expectedCompleteness1 = new BigDecimal(1);
+		BigDecimal expectedCompleteness2 = new BigDecimal(1);
+		assertMeasurements(expectedCount1, expectedCount2, expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+				expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
+				dataset(1), dataset(2), aspect(1), outputMetaModel1, outputMetaModel2);
+	}
+
+	@Test
+	public void duplicatesWithComplementaryValuesComparedToSingleWithAllValues() throws Exception {
+		Model[] outputMetaModels = prepareAndRunComparison(Arrays.asList("value1"), Arrays.asList("value2"), true,
+				Arrays.asList("value1", "value2"), Arrays.asList(), false);
+		Model outputMetaModel1 = outputMetaModels[0];
+		Model outputMetaModel2 = outputMetaModels[1];
+
+		// omissions subject 1
+		assertMissingValue(dataset(1), subject(1), dataset(1), subject(2), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(1), subject(2), "value2", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(2), subject(3), "value2", outputMetaModel1, true);
+		assertMissingValue(dataset(1), subject(1), dataset(2), subject(4), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(2), subject(4), "value2", outputMetaModel1, false);
+
+		// omissions subject 2
+		assertMissingValue(dataset(1), subject(2), dataset(1), subject(1), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(2), dataset(1), subject(1), "value2", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(2), dataset(2), subject(3), "value1", outputMetaModel1, true);
+		assertMissingValue(dataset(1), subject(2), dataset(2), subject(3), "value2", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(2), dataset(2), subject(4), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(2), dataset(2), subject(4), "value2", outputMetaModel1, false);
+
+		// omissions subject 3
+		assertMissingValue(dataset(2), subject(3), dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(1), subject(1), "value2", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(1), subject(2), "value2", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(2), subject(4), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(2), subject(4), "value2", outputMetaModel2, false);
+
+		// omissions subject 4
+		assertMissingValue(dataset(2), subject(4), dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(1), subject(1), "value2", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(1), subject(2), "value2", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(2), subject(3), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(2), subject(3), "value2", outputMetaModel2, false);
+
+		// deviations subject 1
+		assertDeviation(dataset(1), subject(1), "value1", dataset(1), subject(2), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value1", dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value1", dataset(2), subject(4), "value1", outputMetaModel1, false);
+
+		assertDeviation(dataset(1), subject(1), "value1", dataset(1), subject(2), "value2", outputMetaModel1, true);
+		assertDeviation(dataset(1), subject(1), "value1", dataset(2), subject(3), "value2", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value1", dataset(2), subject(4), "value2", outputMetaModel1, false);
+
+		assertDeviation(dataset(1), subject(1), "value2", dataset(1), subject(2), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value2", dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value2", dataset(2), subject(4), "value1", outputMetaModel1, false);
+
+		// deviations subject 2
+		assertDeviation(dataset(1), subject(2), "value1", dataset(1), subject(1), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value1", dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value1", dataset(2), subject(4), "value1", outputMetaModel1, false);
+
+		assertDeviation(dataset(1), subject(2), "value1", dataset(1), subject(1), "value2", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value1", dataset(2), subject(3), "value2", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value1", dataset(2), subject(4), "value2", outputMetaModel1, false);
+
+		assertDeviation(dataset(1), subject(2), "value2", dataset(1), subject(1), "value1", outputMetaModel1, true);
+		assertDeviation(dataset(1), subject(2), "value2", dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value2", dataset(2), subject(4), "value1", outputMetaModel1, false);
+
+		// deviations subject 3
+		assertDeviation(dataset(2), subject(3), "value1", dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value1", dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value1", dataset(2), subject(4), "value1", outputMetaModel2, false);
+
+		assertDeviation(dataset(2), subject(3), "value1", dataset(1), subject(1), "value2", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value1", dataset(1), subject(2), "value2", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value1", dataset(2), subject(4), "value2", outputMetaModel2, false);
+
+		assertDeviation(dataset(2), subject(3), "value2", dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value2", dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value2", dataset(2), subject(4), "value1", outputMetaModel2, false);
+		// deviations subject 4
+		assertDeviation(dataset(2), subject(4), "value1", dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value1", dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value1", dataset(2), subject(3), "value1", outputMetaModel2, false);
+
+		assertDeviation(dataset(2), subject(4), "value1", dataset(1), subject(1), "value2", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value1", dataset(1), subject(2), "value2", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value1", dataset(2), subject(3), "value2", outputMetaModel2, false);
+
+		assertDeviation(dataset(2), subject(4), "value2", dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value2", dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value2", dataset(2), subject(3), "value1", outputMetaModel2, false);
+
+		// assert measurements
+		BigDecimal expectedCount1 = new BigDecimal(2);
+		BigDecimal expectedCount2 = new BigDecimal(2);
+		BigDecimal expectedAbsoluteCoverage1 = new BigDecimal(2);
+		BigDecimal expectedAbsoluteCoverage2 = new BigDecimal(2);
+		BigDecimal expectedRelativeCoverage1 = new BigDecimal(1);
+		BigDecimal expectedRelativeCoverage2 = new BigDecimal(1);
+		BigDecimal expectedCompleteness1 = new BigDecimal(1);
+		BigDecimal expectedCompleteness2 = new BigDecimal(1);
+		assertMeasurements(expectedCount1, expectedCount2, expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+				expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
+				dataset(1), dataset(2), aspect(1), outputMetaModel1, outputMetaModel2);
+	}
+
+	@Test
+	public void duplicatesWithMissingValuesComparedToDuplicatesWithAllValues() throws Exception {
+		Model[] outputMetaModels = prepareAndRunComparison(Arrays.asList("value1"), Arrays.asList("value1"), true,
+				Arrays.asList("value1", "value2"), Arrays.asList("value1", "value2"), true);
+		Model outputMetaModel1 = outputMetaModels[0];
+		Model outputMetaModel2 = outputMetaModels[1];
+
+		// omissions subject 1
+		assertMissingValue(dataset(1), subject(1), dataset(1), subject(2), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(1), subject(2), "value2", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(2), subject(3), "value2", outputMetaModel1, true);
+		assertMissingValue(dataset(1), subject(1), dataset(2), subject(4), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(2), subject(4), "value2", outputMetaModel1, true);
+
+		// omissions subject 2
+		assertMissingValue(dataset(1), subject(2), dataset(1), subject(1), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(2), dataset(1), subject(1), "value2", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(2), dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(2), dataset(2), subject(3), "value2", outputMetaModel1, true);
+		assertMissingValue(dataset(1), subject(2), dataset(2), subject(4), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(2), dataset(2), subject(4), "value2", outputMetaModel1, true);
+
+		// omissions subject 3
+		assertMissingValue(dataset(2), subject(3), dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(1), subject(1), "value2", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(1), subject(2), "value2", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(2), subject(4), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(2), subject(4), "value2", outputMetaModel2, false);
+
+		// omissions subject 4
+		assertMissingValue(dataset(2), subject(4), dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(1), subject(1), "value2", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(1), subject(2), "value2", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(2), subject(3), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(2), subject(3), "value2", outputMetaModel2, false);
+
+		// deviations subject 1
+		assertDeviation(dataset(1), subject(1), "value1", dataset(1), subject(2), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value1", dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value1", dataset(2), subject(4), "value1", outputMetaModel1, false);
+
+		assertDeviation(dataset(1), subject(1), "value1", dataset(1), subject(2), "value2", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value1", dataset(2), subject(3), "value2", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value1", dataset(2), subject(4), "value2", outputMetaModel1, false);
+
+		assertDeviation(dataset(1), subject(1), "value2", dataset(1), subject(2), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value2", dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value2", dataset(2), subject(4), "value1", outputMetaModel1, false);
+
+		// deviations subject 2
+		assertDeviation(dataset(1), subject(2), "value1", dataset(1), subject(1), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value1", dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value1", dataset(2), subject(4), "value1", outputMetaModel1, false);
+
+		assertDeviation(dataset(1), subject(2), "value1", dataset(1), subject(1), "value2", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value1", dataset(2), subject(3), "value2", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value1", dataset(2), subject(4), "value2", outputMetaModel1, false);
+
+		assertDeviation(dataset(1), subject(2), "value2", dataset(1), subject(1), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value2", dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value2", dataset(2), subject(4), "value1", outputMetaModel1, false);
+
+		// deviations subject 3
+		assertDeviation(dataset(2), subject(3), "value1", dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value1", dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value1", dataset(2), subject(4), "value1", outputMetaModel2, false);
+
+		assertDeviation(dataset(2), subject(3), "value1", dataset(1), subject(1), "value2", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value1", dataset(1), subject(2), "value2", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value1", dataset(2), subject(4), "value2", outputMetaModel2, false);
+
+		assertDeviation(dataset(2), subject(3), "value2", dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value2", dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value2", dataset(2), subject(4), "value1", outputMetaModel2, false);
+		// deviations subject 4
+		assertDeviation(dataset(2), subject(4), "value1", dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value1", dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value1", dataset(2), subject(3), "value1", outputMetaModel2, false);
+
+		assertDeviation(dataset(2), subject(4), "value1", dataset(1), subject(1), "value2", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value1", dataset(1), subject(2), "value2", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value1", dataset(2), subject(3), "value2", outputMetaModel2, false);
+
+		assertDeviation(dataset(2), subject(4), "value2", dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value2", dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value2", dataset(2), subject(3), "value1", outputMetaModel2, false);
+
+		// assert measurements
+		BigDecimal expectedCount1 = new BigDecimal(2);
+		BigDecimal expectedCount2 = new BigDecimal(4);
+		BigDecimal expectedAbsoluteCoverage1 = new BigDecimal(2);
+		BigDecimal expectedAbsoluteCoverage2 = new BigDecimal(2);
+		BigDecimal expectedRelativeCoverage1 = new BigDecimal(0.5);
+		BigDecimal expectedRelativeCoverage2 = new BigDecimal(1);
+		BigDecimal expectedCompleteness1 = new BigDecimal(0.5);
+		BigDecimal expectedCompleteness2 = new BigDecimal(1);
+		assertMeasurements(expectedCount1, expectedCount2, expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+				expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
+				dataset(1), dataset(2), aspect(1), outputMetaModel1, outputMetaModel2);
+	}
+
+	@Test
+	public void duplicatesWithMissingValuesComparedToSingleWithAllValues() throws Exception {
+		Model[] outputMetaModels = prepareAndRunComparison(Arrays.asList("value1"), Arrays.asList(), true,
+				Arrays.asList("value1", "value2"), Arrays.asList(), false);
+		Model outputMetaModel1 = outputMetaModels[0];
+		Model outputMetaModel2 = outputMetaModels[1];
+
+		// omissions subject 1
+		assertMissingValue(dataset(1), subject(1), dataset(1), subject(2), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(1), subject(2), "value2", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(2), subject(3), "value2", outputMetaModel1, true);
+		assertMissingValue(dataset(1), subject(1), dataset(2), subject(4), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(2), subject(4), "value2", outputMetaModel1, false);
+
+		// omissions subject 2
+		assertMissingValue(dataset(1), subject(2), dataset(1), subject(1), "value1", outputMetaModel1, true);
+		assertMissingValue(dataset(1), subject(2), dataset(1), subject(1), "value2", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(2), dataset(2), subject(3), "value1", outputMetaModel1, true);
+		assertMissingValue(dataset(1), subject(2), dataset(2), subject(3), "value2", outputMetaModel1, true);
+		assertMissingValue(dataset(1), subject(2), dataset(2), subject(4), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(2), dataset(2), subject(4), "value2", outputMetaModel1, false);
+
+		// omissions subject 3
+		assertMissingValue(dataset(2), subject(3), dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(1), subject(1), "value2", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(1), subject(2), "value2", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(2), subject(4), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(2), subject(4), "value2", outputMetaModel2, false);
+
+		// omissions subject 4
+		assertMissingValue(dataset(2), subject(4), dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(1), subject(1), "value2", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(1), subject(2), "value2", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(2), subject(3), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(2), subject(3), "value2", outputMetaModel2, false);
+
+		// deviations subject 1
+		assertDeviation(dataset(1), subject(1), "value1", dataset(1), subject(2), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value1", dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value1", dataset(2), subject(4), "value1", outputMetaModel1, false);
+
+		assertDeviation(dataset(1), subject(1), "value1", dataset(1), subject(2), "value2", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value1", dataset(2), subject(3), "value2", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value1", dataset(2), subject(4), "value2", outputMetaModel1, false);
+
+		assertDeviation(dataset(1), subject(1), "value2", dataset(1), subject(2), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value2", dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value2", dataset(2), subject(4), "value1", outputMetaModel1, false);
+
+		// deviations subject 2
+		assertDeviation(dataset(1), subject(2), "value1", dataset(1), subject(1), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value1", dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value1", dataset(2), subject(4), "value1", outputMetaModel1, false);
+
+		assertDeviation(dataset(1), subject(2), "value1", dataset(1), subject(1), "value2", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value1", dataset(2), subject(3), "value2", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value1", dataset(2), subject(4), "value2", outputMetaModel1, false);
+
+		assertDeviation(dataset(1), subject(2), "value2", dataset(1), subject(1), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value2", dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value2", dataset(2), subject(4), "value1", outputMetaModel1, false);
+
+		// deviations subject 3
+		assertDeviation(dataset(2), subject(3), "value1", dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value1", dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value1", dataset(2), subject(4), "value1", outputMetaModel2, false);
+
+		assertDeviation(dataset(2), subject(3), "value1", dataset(1), subject(1), "value2", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value1", dataset(1), subject(2), "value2", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value1", dataset(2), subject(4), "value2", outputMetaModel2, false);
+
+		assertDeviation(dataset(2), subject(3), "value2", dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value2", dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value2", dataset(2), subject(4), "value1", outputMetaModel2, false);
+		// deviations subject 4
+		assertDeviation(dataset(2), subject(4), "value1", dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value1", dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value1", dataset(2), subject(3), "value1", outputMetaModel2, false);
+
+		assertDeviation(dataset(2), subject(4), "value1", dataset(1), subject(1), "value2", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value1", dataset(1), subject(2), "value2", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value1", dataset(2), subject(3), "value2", outputMetaModel2, false);
+
+		assertDeviation(dataset(2), subject(4), "value2", dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value2", dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value2", dataset(2), subject(3), "value1", outputMetaModel2, false);
+
+		// assert measurements
+		BigDecimal expectedCount1 = new BigDecimal(1);
+		BigDecimal expectedCount2 = new BigDecimal(2);
+		BigDecimal expectedAbsoluteCoverage1 = new BigDecimal(1);
+		BigDecimal expectedAbsoluteCoverage2 = new BigDecimal(1);
+		BigDecimal expectedRelativeCoverage1 = new BigDecimal(0.5);
+		BigDecimal expectedRelativeCoverage2 = new BigDecimal(1);
+		BigDecimal expectedCompleteness1 = new BigDecimal(0.5);
+		BigDecimal expectedCompleteness2 = new BigDecimal(1);
+		assertMeasurements(expectedCount1, expectedCount2, expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+				expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
+				dataset(1), dataset(2), aspect(1), outputMetaModel1, outputMetaModel2);
+	}
+
+	public abstract Processor<?> getInstance(List<String> variables, Resource aspect);
+
+	private Model[] prepareAndRunComparison(Collection<String> valuesR1D1, Collection<String> valuesR2D1,
+			boolean presentR2D1, Collection<String> valuesR1D2, Collection<String> valuesR2D2, boolean presentR2D2)
+			throws Exception {
+		Model model1 = ModelFactory.createDefaultModel();
+		valuesR1D1.forEach(v -> model1.add(subject(1), property(1), v));
+		valuesR2D1.forEach(v -> model1.add(subject(2), property(1), v));
+		Model model2 = ModelFactory.createDefaultModel();
+		valuesR1D2.forEach(v -> model2.add(subject(3), property(1), v));
+		valuesR2D2.forEach(v -> model2.add(subject(4), property(1), v));
+
+		model1.add(subject(1), property(2), resource("alwaysPresent"));
+		if (presentR2D1)
+			model1.add(subject(2), property(2), resource("alwaysPresent"));
+		model2.add(subject(3), property(2), resource("alwaysPresent"));
+		if (presentR2D2)
+			model2.add(subject(4), property(2), resource("alwaysPresent"));
+
+		TestValueComparisonProcessor processor = TestValueComparisonProcessor.getInstance();
+
+		return compare(processor, model1, model2);
+	}
+
+	@Test
+	public void singleToSingleAllValues() throws Exception {
+		Model[] outputMetaModels = prepareAndRunComparison(Arrays.asList("value1"), Arrays.asList(), false,
+				Arrays.asList("value1"), Arrays.asList(), false);
+		Model outputMetaModel1 = outputMetaModels[0];
+		Model outputMetaModel2 = outputMetaModels[1];
+
+		// omissions subject 1
+		assertMissingValue(dataset(1), subject(1), dataset(1), subject(2), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(1), subject(2), "value2", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(2), subject(3), "value2", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(2), subject(4), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(2), subject(4), "value2", outputMetaModel1, false);
+
+		// omissions subject 2
+		assertMissingValue(dataset(1), subject(2), dataset(1), subject(1), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(2), dataset(1), subject(1), "value2", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(2), dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(2), dataset(2), subject(3), "value2", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(2), dataset(2), subject(4), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(2), dataset(2), subject(4), "value2", outputMetaModel1, false);
+
+		// omissions subject 3
+		assertMissingValue(dataset(2), subject(3), dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(1), subject(1), "value2", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(1), subject(2), "value2", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(2), subject(4), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(2), subject(4), "value2", outputMetaModel2, false);
+
+		// omissions subject 4
+		assertMissingValue(dataset(2), subject(4), dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(1), subject(1), "value2", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(1), subject(2), "value2", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(2), subject(3), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(2), subject(3), "value2", outputMetaModel2, false);
+
+		// deviations subject 1
+		assertDeviation(dataset(1), subject(1), "value1", dataset(1), subject(2), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value1", dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value1", dataset(2), subject(4), "value1", outputMetaModel1, false);
+
+		assertDeviation(dataset(1), subject(1), "value1", dataset(1), subject(2), "value2", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value1", dataset(2), subject(3), "value2", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value1", dataset(2), subject(4), "value2", outputMetaModel1, false);
+
+		assertDeviation(dataset(1), subject(1), "value2", dataset(1), subject(2), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value2", dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value2", dataset(2), subject(4), "value1", outputMetaModel1, false);
+
+		// deviations subject 2
+		assertDeviation(dataset(1), subject(2), "value1", dataset(1), subject(1), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value1", dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value1", dataset(2), subject(4), "value1", outputMetaModel1, false);
+
+		assertDeviation(dataset(1), subject(2), "value1", dataset(1), subject(1), "value2", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value1", dataset(2), subject(3), "value2", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value1", dataset(2), subject(4), "value2", outputMetaModel1, false);
+
+		assertDeviation(dataset(1), subject(2), "value2", dataset(1), subject(1), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value2", dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value2", dataset(2), subject(4), "value1", outputMetaModel1, false);
+
+		// deviations subject 3
+		assertDeviation(dataset(2), subject(3), "value1", dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value1", dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value1", dataset(2), subject(4), "value1", outputMetaModel2, false);
+
+		assertDeviation(dataset(2), subject(3), "value1", dataset(1), subject(1), "value2", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value1", dataset(1), subject(2), "value2", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value1", dataset(2), subject(4), "value2", outputMetaModel2, false);
+
+		assertDeviation(dataset(2), subject(3), "value2", dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value2", dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value2", dataset(2), subject(4), "value1", outputMetaModel2, false);
+		// deviations subject 4
+		assertDeviation(dataset(2), subject(4), "value1", dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value1", dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value1", dataset(2), subject(3), "value1", outputMetaModel2, false);
+
+		assertDeviation(dataset(2), subject(4), "value1", dataset(1), subject(1), "value2", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value1", dataset(1), subject(2), "value2", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value1", dataset(2), subject(3), "value2", outputMetaModel2, false);
+
+		assertDeviation(dataset(2), subject(4), "value2", dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value2", dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value2", dataset(2), subject(3), "value1", outputMetaModel2, false);
+
+		// assert measurements
+		BigDecimal expectedCount1 = new BigDecimal(1);
+		BigDecimal expectedCount2 = new BigDecimal(1);
+		BigDecimal expectedAbsoluteCoverage1 = new BigDecimal(1);
+		BigDecimal expectedAbsoluteCoverage2 = new BigDecimal(1);
+		BigDecimal expectedRelativeCoverage1 = new BigDecimal(1);
+		BigDecimal expectedRelativeCoverage2 = new BigDecimal(1);
+		BigDecimal expectedCompleteness1 = new BigDecimal(1);
+		BigDecimal expectedCompleteness2 = new BigDecimal(1);
+		assertMeasurements(expectedCount1, expectedCount2, expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+				expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
+				dataset(1), dataset(2), aspect(1), outputMetaModel1, outputMetaModel2);
+	}
+
+	@Test
+	public void singleToSingleDifferentValues() throws Exception {
+		Model[] outputMetaModels = prepareAndRunComparison(Arrays.asList("value1"), Arrays.asList(), false,
+				Arrays.asList("value2"), Arrays.asList(), false);
+		Model outputMetaModel1 = outputMetaModels[0];
+		Model outputMetaModel2 = outputMetaModels[1];
+
+		// omissions subject 1
+		assertMissingValue(dataset(1), subject(1), dataset(1), subject(2), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(1), subject(2), "value2", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(2), subject(3), "value2", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(2), subject(4), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(2), subject(4), "value2", outputMetaModel1, false);
+
+		// omissions subject 2
+		assertMissingValue(dataset(1), subject(2), dataset(1), subject(1), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(2), dataset(1), subject(1), "value2", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(2), dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(2), dataset(2), subject(3), "value2", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(2), dataset(2), subject(4), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(2), dataset(2), subject(4), "value2", outputMetaModel1, false);
+
+		// omissions subject 3
+		assertMissingValue(dataset(2), subject(3), dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(1), subject(1), "value2", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(1), subject(2), "value2", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(2), subject(4), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(2), subject(4), "value2", outputMetaModel2, false);
+
+		// omissions subject 4
+		assertMissingValue(dataset(2), subject(4), dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(1), subject(1), "value2", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(1), subject(2), "value2", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(2), subject(3), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(2), subject(3), "value2", outputMetaModel2, false);
+
+		// deviations subject 1
+		assertDeviation(dataset(1), subject(1), "value1", dataset(1), subject(2), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value1", dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value1", dataset(2), subject(4), "value1", outputMetaModel1, false);
+
+		assertDeviation(dataset(1), subject(1), "value1", dataset(1), subject(2), "value2", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value1", dataset(2), subject(3), "value2", outputMetaModel1, true);
+		assertDeviation(dataset(1), subject(1), "value1", dataset(2), subject(4), "value2", outputMetaModel1, false);
+
+		assertDeviation(dataset(1), subject(1), "value2", dataset(1), subject(2), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value2", dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value2", dataset(2), subject(4), "value1", outputMetaModel1, false);
+
+		// deviations subject 2
+		assertDeviation(dataset(1), subject(2), "value1", dataset(1), subject(1), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value1", dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value1", dataset(2), subject(4), "value1", outputMetaModel1, false);
+
+		assertDeviation(dataset(1), subject(2), "value1", dataset(1), subject(1), "value2", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value1", dataset(2), subject(3), "value2", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value1", dataset(2), subject(4), "value2", outputMetaModel1, false);
+
+		assertDeviation(dataset(1), subject(2), "value2", dataset(1), subject(1), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value2", dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value2", dataset(2), subject(4), "value1", outputMetaModel1, false);
+
+		// deviations subject 3
+		assertDeviation(dataset(2), subject(3), "value1", dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value1", dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value1", dataset(2), subject(4), "value1", outputMetaModel2, false);
+
+		assertDeviation(dataset(2), subject(3), "value1", dataset(1), subject(1), "value2", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value1", dataset(1), subject(2), "value2", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value1", dataset(2), subject(4), "value2", outputMetaModel2, false);
+
+		assertDeviation(dataset(2), subject(3), "value2", dataset(1), subject(1), "value1", outputMetaModel2, true);
+		assertDeviation(dataset(2), subject(3), "value2", dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value2", dataset(2), subject(4), "value1", outputMetaModel2, false);
+		// deviations subject 4
+		assertDeviation(dataset(2), subject(4), "value1", dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value1", dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value1", dataset(2), subject(3), "value1", outputMetaModel2, false);
+
+		assertDeviation(dataset(2), subject(4), "value1", dataset(1), subject(1), "value2", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value1", dataset(1), subject(2), "value2", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value1", dataset(2), subject(3), "value2", outputMetaModel2, false);
+
+		assertDeviation(dataset(2), subject(4), "value2", dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value2", dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value2", dataset(2), subject(3), "value1", outputMetaModel2, false);
+
+		// assert measurements
+		BigDecimal expectedCount1 = new BigDecimal(1);
+		BigDecimal expectedCount2 = new BigDecimal(1);
+		BigDecimal expectedAbsoluteCoverage1 = new BigDecimal(0);
+		BigDecimal expectedAbsoluteCoverage2 = new BigDecimal(0);
+		BigDecimal expectedRelativeCoverage1 = new BigDecimal(0);
+		BigDecimal expectedRelativeCoverage2 = new BigDecimal(0);
+		BigDecimal expectedCompleteness1 = null;
+		BigDecimal expectedCompleteness2 = null;
+		assertMeasurements(expectedCount1, expectedCount2, expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+				expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
+				dataset(1), dataset(2), aspect(1), outputMetaModel1, outputMetaModel2);
+	}
+
+	@Test
+	public void singleToSingleMissingValues() throws Exception {
+		Model[] outputMetaModels = prepareAndRunComparison(Arrays.asList(), Arrays.asList(), false,
+				Arrays.asList("value1"), Arrays.asList(), false);
+		Model outputMetaModel1 = outputMetaModels[0];
+		Model outputMetaModel2 = outputMetaModels[1];
+
+		// omissions subject 1
+		assertMissingValue(dataset(1), subject(1), dataset(1), subject(2), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(1), subject(2), "value2", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(2), subject(3), "value1", outputMetaModel1, true);
+		assertMissingValue(dataset(1), subject(1), dataset(2), subject(3), "value2", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(2), subject(4), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(1), dataset(2), subject(4), "value2", outputMetaModel1, false);
+
+		// omissions subject 2
+		assertMissingValue(dataset(1), subject(2), dataset(1), subject(1), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(2), dataset(1), subject(1), "value2", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(2), dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(2), dataset(2), subject(3), "value2", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(2), dataset(2), subject(4), "value1", outputMetaModel1, false);
+		assertMissingValue(dataset(1), subject(2), dataset(2), subject(4), "value2", outputMetaModel1, false);
+
+		// omissions subject 3
+		assertMissingValue(dataset(2), subject(3), dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(1), subject(1), "value2", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(1), subject(2), "value2", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(2), subject(4), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(3), dataset(2), subject(4), "value2", outputMetaModel2, false);
+
+		// omissions subject 4
+		assertMissingValue(dataset(2), subject(4), dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(1), subject(1), "value2", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(1), subject(2), "value2", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(2), subject(3), "value1", outputMetaModel2, false);
+		assertMissingValue(dataset(2), subject(4), dataset(2), subject(3), "value2", outputMetaModel2, false);
+
+		// deviations subject 1
+		assertDeviation(dataset(1), subject(1), "value1", dataset(1), subject(2), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value1", dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value1", dataset(2), subject(4), "value1", outputMetaModel1, false);
+
+		assertDeviation(dataset(1), subject(1), "value1", dataset(1), subject(2), "value2", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value1", dataset(2), subject(3), "value2", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value1", dataset(2), subject(4), "value2", outputMetaModel1, false);
+
+		assertDeviation(dataset(1), subject(1), "value2", dataset(1), subject(2), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value2", dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(1), "value2", dataset(2), subject(4), "value1", outputMetaModel1, false);
+
+		// deviations subject 2
+		assertDeviation(dataset(1), subject(2), "value1", dataset(1), subject(1), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value1", dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value1", dataset(2), subject(4), "value1", outputMetaModel1, false);
+
+		assertDeviation(dataset(1), subject(2), "value1", dataset(1), subject(1), "value2", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value1", dataset(2), subject(3), "value2", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value1", dataset(2), subject(4), "value2", outputMetaModel1, false);
+
+		assertDeviation(dataset(1), subject(2), "value2", dataset(1), subject(1), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value2", dataset(2), subject(3), "value1", outputMetaModel1, false);
+		assertDeviation(dataset(1), subject(2), "value2", dataset(2), subject(4), "value1", outputMetaModel1, false);
+
+		// deviations subject 3
+		assertDeviation(dataset(2), subject(3), "value1", dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value1", dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value1", dataset(2), subject(4), "value1", outputMetaModel2, false);
+
+		assertDeviation(dataset(2), subject(3), "value1", dataset(1), subject(1), "value2", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value1", dataset(1), subject(2), "value2", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value1", dataset(2), subject(4), "value2", outputMetaModel2, false);
+
+		assertDeviation(dataset(2), subject(3), "value2", dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value2", dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(3), "value2", dataset(2), subject(4), "value1", outputMetaModel2, false);
+		// deviations subject 4
+		assertDeviation(dataset(2), subject(4), "value1", dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value1", dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value1", dataset(2), subject(3), "value1", outputMetaModel2, false);
+
+		assertDeviation(dataset(2), subject(4), "value1", dataset(1), subject(1), "value2", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value1", dataset(1), subject(2), "value2", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value1", dataset(2), subject(3), "value2", outputMetaModel2, false);
+
+		assertDeviation(dataset(2), subject(4), "value2", dataset(1), subject(1), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value2", dataset(1), subject(2), "value1", outputMetaModel2, false);
+		assertDeviation(dataset(2), subject(4), "value2", dataset(2), subject(3), "value1", outputMetaModel2, false);
+
+		// assert measurements
+		BigDecimal expectedCount1 = new BigDecimal(0);
+		BigDecimal expectedCount2 = new BigDecimal(1);
+		BigDecimal expectedAbsoluteCoverage1 = new BigDecimal(0);
+		BigDecimal expectedAbsoluteCoverage2 = new BigDecimal(0);
+		BigDecimal expectedRelativeCoverage1 = new BigDecimal(0);
+		BigDecimal expectedRelativeCoverage2 = null;
+		BigDecimal expectedCompleteness1 = null;
+		BigDecimal expectedCompleteness2 = null;
+		assertMeasurements(expectedCount1, expectedCount2, expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+				expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
+				dataset(1), dataset(2), aspect(1), outputMetaModel1, outputMetaModel2);
 	}
 }

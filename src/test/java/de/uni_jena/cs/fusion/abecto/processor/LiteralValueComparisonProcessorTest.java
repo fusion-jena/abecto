@@ -405,7 +405,7 @@ class LiteralValueComparisonProcessorTest extends AbstractValueComparisonProcess
 				ResourceFactory.createTypedLiteral("0.0032", XSDDatatype.XSDdouble),
 				ResourceFactory.createTypedLiteral("4.2e-3", XSDDatatype.XSDdouble));
 
-		assertUnexpectedValueType(ResourceFactory.createTypedLiteral("value1", null), resource("otherEntity"),
+		assertUnexpectedValueType(ResourceFactory.createStringLiteral("value1"), resource("otherEntity"),
 				"Should be a literal.");
 		assertUnexpectedValueType(ResourceFactory.createTypedLiteral("true", XSDDatatype.XSDboolean),
 				resource("otherEntity"), "Should be a literal.");
@@ -428,12 +428,12 @@ class LiteralValueComparisonProcessorTest extends AbstractValueComparisonProcess
 		Literal one = ResourceFactory.createTypedLiteral("1", XSDDatatype.XSDinteger);
 		Literal two = ResourceFactory.createTypedLiteral("2", XSDDatatype.XSDinteger);
 		Literal three = ResourceFactory.createTypedLiteral("3", XSDDatatype.XSDinteger);
-		assertMissing(Arrays.asList(one), Arrays.asList(), Arrays.asList(), Arrays.asList(one));
-		assertMissing(Arrays.asList(one, two), Arrays.asList(), Arrays.asList(), Arrays.asList(one, two));
-		assertMissing(Arrays.asList(one, two), Arrays.asList(one), Arrays.asList(), Arrays.asList(two));
+		assertMissing(Arrays.asList(one), Arrays.asList(), Arrays.asList(), Arrays.asList(one), 0);
+		assertMissing(Arrays.asList(one, two), Arrays.asList(), Arrays.asList(), Arrays.asList(one, two), 0);
+		assertMissing(Arrays.asList(one, two), Arrays.asList(one), Arrays.asList(), Arrays.asList(two), 1);
 
 		// deviation if same present
-		assertDeviation(Arrays.asList(one, two), Arrays.asList(one, three), Arrays.asList(one), Arrays.asList(one));
+		assertDeviation(Arrays.asList(one, two), Arrays.asList(one, three), Arrays.asList(one), Arrays.asList(one), 1);
 
 	}
 }

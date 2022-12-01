@@ -17,13 +17,18 @@ package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
@@ -60,16 +65,24 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 	 * 
 	 * Index: variable, affectedDataset
 	 */
-	private Map<String, Map<Resource, Integer>> count = new HashMap<>();
+	private Map<String, Map<Resource, Integer>> count;
+	/**
+	 * Number of distinct values in this dataset, per variable.
+	 * 
+	 * Index: variable, affectedDataset
+	 */
+	private Map<String, Map<Resource, Integer>> countDistinct;
 	/**
 	 * Number of overlaps between all pairs of dataset by dataset compared to by
 	 * multiplied by 2.
 	 */
-	private Map<String, Integer> totalPairwiseOverlapTwice = new HashMap<>();
+	private Map<String, Integer> totalPairwiseOverlapByVariable = new HashMap<>();
 	/**
 	 * Estimated population site of values, per variable.
 	 */
 	private Map<String, BigDecimal> populationSize = new HashMap<>();
+
+	public final static int SCALE = 16;
 
 	/**
 	 * Returns a merge per dataset of all values of the given resources. Values that
@@ -78,13 +91,12 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 	 * will not be added.
 	 * 
 	 * @return merge of the vaules per dataset; index: dataset, variable, value,
-	 *         resource
+	 *         resources
 	 */
-	private Map<Resource, Map<String, Map<RDFNode, Collection<Resource>>>> getValuesPerDataset(
-			Collection<Resource> resources,
+	private Map<Resource, Map<String, Map<RDFNode, Set<Resource>>>> getValuesPerDataset(Collection<Resource> resources,
 			Map<Resource, Map<Resource, Map<String, Set<RDFNode>>>> valuesByVariableByResourceByDataset) {
 		// init result map
-		Map<Resource, Map<String, Map<RDFNode, Collection<Resource>>>> datasetValueMerges = new HashMap<>();
+		Map<Resource, Map<String, Map<RDFNode, Set<Resource>>>> datasetValueMerges = new HashMap<>();
 		// iterate datasets
 		for (Resource dataset : valuesByVariableByResourceByDataset.keySet()) {
 			var valuesByVariableByResource = valuesByVariableByResourceByDataset.get(dataset);
@@ -136,16 +148,19 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 		return datasetValueMerges;
 	}
 
-	private void calculateCounts(
+	private void calculateCount(Set<Resource> datasets, Iterable<String> variables,
 			Map<Resource, Map<Resource, Map<String, Set<RDFNode>>>> valuesByVariableByResourceByDataset) {
+
+		// init count
+		count = new HashMap<>();
+
 		// calculate count
 		for (String variable : variables) {
-			// init count
-			Map<Resource, Integer> countByDataset = count.computeIfAbsent(variable, v -> new HashMap<>());
-			for (Resource affectedDataset : valuesByVariableByResourceByDataset.keySet()) {
+			var countByDataset = count.computeIfAbsent(variable, v -> new HashMap<>());
+			for (Resource affectedDataset : datasets) {
+				countByDataset.putIfAbsent(affectedDataset, 0);
 				for (Map<String, Set<RDFNode>> valuesByVariable : valuesByVariableByResourceByDataset
-						.get(affectedDataset).values()) {
-					// update count
+						.getOrDefault(affectedDataset, Collections.emptyMap()).values()) {
 					countByDataset.merge(affectedDataset,
 							valuesByVariable.getOrDefault(variable, Collections.emptySet()).size(), Integer::sum);
 				}
@@ -153,35 +168,153 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 		}
 	}
 
+	/**
+	 * Calculates the count of values for the given datasets and values. Equivalent
+	 * values per resource will be counted only once, but equivalent values per
+	 * corresponding resource will be counted multiple times.
+	 * 
+	 * @param datasets
+	 * @param variables
+	 * @param valuesByVariableByResourceByDataset
+	 */
+	private void calculateCountDistinctPerResource(Set<Resource> datasets, Iterable<String> variables,
+			Map<Resource, Map<Resource, Map<String, Set<RDFNode>>>> valuesByVariableByResourceByDataset) {
+
+		ArrayList<RDFNode> distinctValues = new ArrayList<>();
+
+		// init countDistinct
+		countDistinct = new HashMap<>();
+
+		for (String variable : variables) {
+			var countDistinctByDataset = countDistinct.computeIfAbsent(variable, v -> new HashMap<>());
+			for (Resource affectedDataset : datasets) {
+				if (!valuesByVariableByResourceByDataset.containsKey(affectedDataset)) {
+					continue;
+				}
+				var valuesByVariableByResource = valuesByVariableByResourceByDataset.get(affectedDataset);
+				int countDistinctIntermediate = count.get(variable).get(affectedDataset);
+				// determine distinct correction
+				for (Map<String, Set<RDFNode>> valuesByVariable : valuesByVariableByResource.values()) {
+					if (!valuesByVariable.containsKey(variable)) {
+						continue;
+					}
+					distinctValues.clear();
+					for (RDFNode value : valuesByVariable.get(variable)) {
+						if (distinctValues.stream().anyMatch(v -> equivalentValues(v, value))) {
+							countDistinctIntermediate--;
+						} else {
+							distinctValues.add(value);
+						}
+					}
+
+				}
+				// store measurement
+				countDistinctByDataset.put(affectedDataset, countDistinctIntermediate);
+			}
+		}
+	}
+
+	private void updateCountDistinctForCorrespondingResources(Set<Resource> datasets, Iterable<String> variables,
+			Map<Resource, Map<String, Map<RDFNode, Set<Resource>>>> resourcesByValueByVariableByDataset) {
+		for (Resource affectedDataset : datasets) {
+			if (!resourcesByValueByVariableByDataset.containsKey(affectedDataset)) {
+				continue;
+			}
+			var resourcesByValueByVariable = resourcesByValueByVariableByDataset.get(affectedDataset);
+			for (String variable : variables) {
+				if (!resourcesByValueByVariable.containsKey(variable)) {
+					continue;
+				}
+				var resourcesByValue = resourcesByValueByVariable.get(variable);
+				int countAdjustment = 0;
+				for (Set<Resource> resources : distinctByIdentity(resourcesByValue.values())) {
+					countAdjustment = countAdjustment + 1 - resources.size();
+				}
+				countDistinct.get(variable).merge(affectedDataset, countAdjustment, Integer::sum);
+			}
+		}
+	}
+
+	private void calculateAbsoluteCoverage(String variable, Resource dataset1, Resource dataset2,
+			Collection<Resource> resources1, Map<RDFNode, Set<Resource>> resourcesByMappedValues,
+			Map<Resource, Map<Resource, Map<String, Set<RDFNode>>>> valuesByVariableByResourceByDataset) {
+		int absoluteCoverageCount = 0;
+		for (Resource resource1 : resources1) {
+			for (RDFNode value1 : valuesByVariableByResourceByDataset.get(dataset1).get(resource1)
+					.getOrDefault(variable, Collections.emptySet())) {
+				if (// value not only from this dataset
+				!resources1.containsAll(resourcesByMappedValues.getOrDefault(value1, Collections.emptySet()))) {
+					absoluteCoverageCount++;
+				}
+			}
+		}
+		absoluteCoverage.computeIfAbsent(variable, v -> new HashMap<>()).computeIfAbsent(dataset2, v -> new HashMap<>())
+				.merge(dataset1, absoluteCoverageCount, Integer::sum);
+	}
+
+	private <T> Set<T> distinctByIdentity(Collection<T> items) {
+		Set<T> distinctItems = Collections.newSetFromMap(new IdentityHashMap<>());
+		distinctItems.addAll(items);
+		return distinctItems;
+	}
+
+	private void updatePairwiseOverlap(String variable, Collection<Resource> resources1,
+			Collection<Resource> resources2, Map<RDFNode, Set<Resource>> resourcesByMappedValues) {
+		int totalPairwiseOverlap = 0;
+		// use set of resource sets for mapping values
+		// NOTE: equivalent values use the same set, so get distinct set instances
+		for (Set<Resource> resourceSet : distinctByIdentity(resourcesByMappedValues.values())) {
+			if (!resources1.stream().anyMatch(resourceSet::contains)) {
+				continue;
+			}
+			if (!resources2.stream().anyMatch(resourceSet::contains)) {
+				continue;
+			}
+			totalPairwiseOverlap++;
+		}
+
+		totalPairwiseOverlapByVariable.merge(variable, totalPairwiseOverlap, Integer::sum);
+	}
+
+	private static <T> Set<T> intersection(Collection<T> a, Collection<T> b) {
+		Set<T> set = new HashSet<>();
+		set.addAll(a);
+		set.retainAll(b);
+		return set;
+	}
+
 	@Override
 	public final void run() {
 		Aspect aspect = this.getAspects().get(this.aspect);
 
-		/** dataset -> resource -> variable -> values */
 		Map<Resource, Map<Resource, Map<String, Set<RDFNode>>>> valuesByVariableByResourceByDataset = new HashMap<>();
 		for (Resource dataset : aspect.getDatasets()) {
 			valuesByVariableByResourceByDataset.put(dataset,
 					Aspect.getResources(aspect, dataset, variables, this.getInputPrimaryModelUnion(dataset)));
 		}
 
-		calculateCounts(valuesByVariableByResourceByDataset);
-
+		calculateCount(aspect.getDatasets(), variables, valuesByVariableByResourceByDataset);
+		calculateCountDistinctPerResource(aspect.getDatasets(), variables, valuesByVariableByResourceByDataset);
 		getCorrespondenceGroups(aspect.getIri()).forEach(correspondingResources -> {
 			var valuesPerDataset = getValuesPerDataset(correspondingResources, valuesByVariableByResourceByDataset);
+			updateCountDistinctForCorrespondingResources(aspect.getDatasets(), variables, valuesPerDataset);
 			for (Resource dataset1 : aspect.getDatasets()) {
-				var resources1 = valuesByVariableByResourceByDataset.get(dataset1).keySet();
+				var resources1 = intersection(correspondingResources,
+						valuesByVariableByResourceByDataset.get(dataset1).keySet());
 				var valuesOfDataset1 = valuesPerDataset.get(dataset1);
 				for (Resource dataset2 : aspect.getDatasets()) {
 					if (dataset1.hashCode() < dataset2.hashCode()) {
 						// do not do work twice
 						continue;
 					}
-					var resources2 = valuesByVariableByResourceByDataset.get(dataset2).keySet();
+					var resources2 = intersection(correspondingResources,
+							valuesByVariableByResourceByDataset.get(dataset2).keySet());
 					var valuesOfDataset2 = valuesPerDataset.get(dataset2);
 					for (String variable : variables) {
 						this.compareVariableValues(variable, dataset1, resources1,
 								valuesOfDataset1.getOrDefault(variable, Collections.emptyMap()), dataset2, resources2,
-								valuesOfDataset2.getOrDefault(variable, Collections.emptyMap()));
+								valuesOfDataset2.getOrDefault(variable, Collections.emptyMap()),
+								valuesByVariableByResourceByDataset);
 					}
 				}
 
@@ -191,7 +324,7 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 		// calculate value population size per variable
 		for (String variable : variables) {
 			populationSize.put(variable, BigDecimal.ZERO);
-			if (totalPairwiseOverlapTwice.get(variable) != 0) {
+			if (totalPairwiseOverlapByVariable.get(variable) != 0) {
 				for (Resource affectedDataset : aspect.getDatasets()) {
 					for (Resource comparedToDataset : aspect.getDatasets()) {
 						if (affectedDataset.hashCode() >= comparedToDataset.hashCode()) {
@@ -200,15 +333,13 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 							continue;
 						}
 						populationSize.merge(variable,
-								BigDecimal.valueOf(count.get(variable).get(affectedDataset))
-										.multiply(BigDecimal.valueOf(count.get(variable).get(comparedToDataset))),
+								BigDecimal.valueOf(countDistinct.get(variable).get(affectedDataset)).multiply(
+										BigDecimal.valueOf(countDistinct.get(variable).get(comparedToDataset))),
 								BigDecimal::add);
 					}
 				}
-				// TODO rounding mode ceiling right?
-				populationSize.merge(variable,
-						BigDecimal.valueOf(totalPairwiseOverlapTwice.get(variable)).divide(BigDecimal.valueOf(2),0,RoundingMode.CEILING),
-						(x, y) -> x.divide(y, 0, RoundingMode.HALF_UP));
+				populationSize.merge(variable, BigDecimal.valueOf(totalPairwiseOverlapByVariable.get(variable)),
+						(x, y) -> x.divide(y, SCALE, RoundingMode.HALF_UP));
 			}
 		}
 
@@ -216,10 +347,10 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 			for (Resource affectedDataset : aspect.getDatasets()) {
 
 				// calculate & store completeness:
-				if (totalPairwiseOverlapTwice.get(variable) != 0) {
+				if (totalPairwiseOverlapByVariable.get(variable) != 0) {
 					/** Ratio of values in an estimated population covered by this dataset */
-					BigDecimal completeness = BigDecimal.valueOf(count.get(variable).get(affectedDataset))
-							.divide(populationSize.get(variable), 2, RoundingMode.HALF_UP);
+					BigDecimal completeness = BigDecimal.valueOf(countDistinct.get(variable).get(affectedDataset))
+							.divide(populationSize.get(variable), SCALE, RoundingMode.HALF_UP);
 					Collection<Resource> otherDatasets = new HashSet<>(aspect.getDatasets());
 					otherDatasets.remove(affectedDataset);
 					Metadata.addQualityMeasurement(AV.marCompletenessThomas08, completeness, OM.one, affectedDataset,
@@ -239,7 +370,7 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 						relativeCoverage.computeIfAbsent(variable, v -> new HashMap<>())
 								.computeIfAbsent(affectedDataset, v -> new HashMap<>())
 								.put(comparedToDataset, BigDecimal.valueOf(overlap)
-										.divide(BigDecimal.valueOf(countComparedTo), 2, RoundingMode.HALF_UP));
+										.divide(BigDecimal.valueOf(countComparedTo), SCALE, RoundingMode.HALF_UP));
 					}
 				}
 			}
@@ -250,12 +381,14 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 			for (Resource affectedDataset : aspect.getDatasets()) {
 				for (Resource comparedToDataset : aspect.getDatasets()) {
 					if (!affectedDataset.equals(comparedToDataset)) {
-						Metadata.addQualityMeasurement(AV.relativeCoverage,
-								relativeCoverage.getOrDefault(variable, Collections.emptyMap())
-										.getOrDefault(affectedDataset, Collections.emptyMap())
-										.getOrDefault(comparedToDataset, BigDecimal.ZERO),
-								OM.one, affectedDataset, variable, comparedToDataset, aspect.getIri(),
-								this.getOutputMetaModel(affectedDataset));
+						BigDecimal relativeCoverageValue = relativeCoverage
+								.getOrDefault(variable, Collections.emptyMap())
+								.getOrDefault(affectedDataset, Collections.emptyMap()).get(comparedToDataset);
+						if (relativeCoverageValue != null) {
+							Metadata.addQualityMeasurement(AV.relativeCoverage, relativeCoverageValue, OM.one,
+									affectedDataset, variable, comparedToDataset, aspect.getIri(),
+									this.getOutputMetaModel(affectedDataset));
+						}
 						Metadata.addQualityMeasurement(AV.absoluteCoverage,
 								absoluteCoverage.getOrDefault(variable, Collections.emptyMap())
 										.getOrDefault(affectedDataset, Collections.emptyMap())
@@ -271,6 +404,32 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 	}
 
 	/**
+	 * 
+	 * Note: Not the most efficient way to do this, but there is no
+	 * {@link Comparator} available to use {@link TreeMap#TreeMap(Comparator)}.
+	 *
+	 * @param resourcesByMappedValues
+	 * @param values
+	 */
+	private void mapResources(Map<RDFNode, Set<Resource>> resourcesByMappedValues,
+			Map<RDFNode, Set<Resource>> resourcesByValues) {
+		for (RDFNode value : resourcesByValues.keySet()) {
+			for (RDFNode valueKey : resourcesByMappedValues.keySet()) {
+				if (equivalentValues(value, valueKey)) {
+					Set<Resource> valuesSet = resourcesByMappedValues.get(valueKey);
+					// add values to existing set
+					valuesSet.addAll(resourcesByValues.get(value));
+					// map value to same set, so equivalent values will share one set
+					resourcesByMappedValues.putIfAbsent(value, valuesSet);
+					break;
+				}
+			}
+			// no equivalent value in map
+			resourcesByMappedValues.computeIfAbsent(value, v -> new HashSet<>()).addAll(resourcesByValues.get(value));
+		}
+	}
+
+	/**
 	 * Compares the values of one variable from two corresponding resources in two
 	 * datasets and stores encountered deviations and issues in both according
 	 * outputMetaModels (derived by {@link #getOutputMetaModel(Resource)}). Either
@@ -280,86 +439,51 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 	 * @param variable               Name of the compared variable
 	 * @param dataset1               IRI of the first dataset
 	 * @param correspondingResource1 IRI of the first resource
-	 * @param values1                Variable values of the first resource
+	 * @param resourcesByValue1      Variable values of the first resource
 	 * @param dataset2               IRI of the second dataset
-	 * @param values2                Variable values of the second resource
+	 * @param resourcesByValue2      Variable values of the second resource
 	 */
-	public void compareVariableValues(String variable, Resource dataset1, Collection<Resource> resources1,
-			Map<RDFNode, Collection<Resource>> values1, Resource dataset2, Collection<Resource> resources2,
-			Map<RDFNode, Collection<Resource>> values2) {
+	public void compareVariableValues(String variable, Resource dataset1, Set<Resource> resources1,
+			Map<RDFNode, Set<Resource>> resourcesByValue1, Resource dataset2, Set<Resource> resources2,
+			Map<RDFNode, Set<Resource>> resourcesByValue2,
+			Map<Resource, Map<Resource, Map<String, Set<RDFNode>>>> valuesByVariableByResourceByDataset) {
 
-		var notMatchingValues1 = new HashSet<>(values1.keySet());
-		var notMatchingValues2 = new HashSet<>(values2.keySet());
+		Map<RDFNode, Set<Resource>> resourcesByMappedValues = new HashMap<>();
+		mapResources(resourcesByMappedValues, resourcesByValue1);
+		mapResources(resourcesByMappedValues, resourcesByValue2);
 
-		var matchingValues1 = new HashSet<RDFNode>();
-		var matchingValues2 = new HashSet<RDFNode>();
-
-		// find matching values
-		for (RDFNode value1 : values1.keySet()) {
-			for (RDFNode value2 : values2.keySet()) {
-				if (equivalentValues(value1, value2)) {
-					notMatchingValues1.remove(value1);
-					notMatchingValues2.remove(value2);
-					matchingValues1.add(value1);
-					matchingValues2.add(value2);
-					// NOTE: do not break loop, there might be cases of multiple equivalent values
-				}
-			}
-		}
-
-		// report missing matching values
+		// deviation: pair of resources with each having a value not present in the
+		// other resource
+		// omission: pair of resources with one having a value not present in the other,
+		// but not vice versa
 		for (Resource resource1 : resources1) {
-			nextValue: for (RDFNode value2 : matchingValues2) {
-				for (RDFNode value1 : values1.keySet()) {
-					if (values1.get(value1).contains(resource1) && equivalentValues(value1, value2)) {
-						continue nextValue;
-					}
-				}
-				for (Resource resource2 : values2.get(value2)) {
-					Metadata.addValuesOmission(resource1.asResource(), variable, dataset2, resource2.asResource(),
-							value2, this.aspect, this.getOutputMetaModel(dataset1));
-				}
-			}
-		}
-		for (Resource resource2 : resources2) {
-			nextValue: for (RDFNode value1 : matchingValues1) {
-				for (RDFNode value2 : values2.keySet()) {
-					if (values2.get(value2).contains(resource2) && equivalentValues(value2, value1)) {
-						continue nextValue;
-					}
-				}
-				for (Resource resource1 : values1.get(value1)) {
-					Metadata.addValuesOmission(resource2.asResource(), variable, dataset1, resource1.asResource(),
-							value1, this.aspect, this.getOutputMetaModel(dataset2));
-				}
-			}
-		}
+			var values1 = valuesByVariableByResourceByDataset.get(dataset1).get(resource1)
+					.getOrDefault(variable, Collections.emptySet()).stream().filter(v -> isValidValue(v))
+					.collect(Collectors.toSet());
+			for (Resource resource2 : resources2) {
+				var values2 = valuesByVariableByResourceByDataset.get(dataset2).get(resource2)
+						.getOrDefault(variable, Collections.emptySet()).stream().filter(v -> isValidValue(v))
+						.collect(Collectors.toSet());
+				var notMatchingValues1 = values1.stream().filter(value1 -> !resourcesByMappedValues
+						.getOrDefault(value1, Collections.emptySet()).contains(resource2)).collect(Collectors.toList());
+				var notMatchingValues2 = values2.stream().filter(value2 -> !resourcesByMappedValues
+						.getOrDefault(value2, Collections.emptySet()).contains(resource1)).collect(Collectors.toList());
 
-		// report missing not matching values
-		if (notMatchingValues1.isEmpty()) {
-			for (RDFNode value2 : notMatchingValues2) {
-				for (Resource resource2 : values2.get(value2)) {
-					for (Resource resource1 : resources1) {
+				// report missing not matching values
+				if (notMatchingValues1.isEmpty()) {
+					for (RDFNode value2 : notMatchingValues2) {
 						Metadata.addValuesOmission(resource1, variable, dataset2, resource2, value2, this.aspect,
 								this.getOutputMetaModel(dataset1));
 					}
-				}
-			}
-		} else if (notMatchingValues2.isEmpty()) {
-			for (RDFNode value1 : notMatchingValues1) {
-				for (Resource resource1 : values1.get(value1)) {
-					for (Resource resource2 : resources2) {
+				} else if (notMatchingValues2.isEmpty()) {
+					for (RDFNode value1 : notMatchingValues1) {
 						Metadata.addValuesOmission(resource2, variable, dataset1, resource1, value1, this.aspect,
 								this.getOutputMetaModel(dataset2));
 					}
-				}
-			}
-		} else {
-			// report pairs of deviating values
-			for (RDFNode value1 : notMatchingValues1) {
-				for (RDFNode value2 : notMatchingValues2) {
-					for (Resource resource1 : values1.get(value1)) {
-						for (Resource resource2 : values2.get(value2)) {
+				} else {
+					// report pairs of deviating values
+					for (RDFNode value1 : notMatchingValues1) {
+						for (RDFNode value2 : notMatchingValues2) {
 							Metadata.addDeviation(resource1.asResource(), variable, value1, dataset2,
 									resource2.asResource(), value2, this.aspect, this.getOutputMetaModel(dataset1));
 							Metadata.addDeviation(resource2.asResource(), variable, value2, dataset1,
@@ -371,25 +495,13 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 		}
 
 		// update measurements
+		calculateAbsoluteCoverage(variable, dataset1, dataset2, resources1, resourcesByMappedValues,
+				valuesByVariableByResourceByDataset);
+		calculateAbsoluteCoverage(variable, dataset2, dataset1, resources2, resourcesByMappedValues,
+				valuesByVariableByResourceByDataset);
 		if (!dataset1.equals(dataset2)) {
-			int overlapTwice = 0;
-			for (RDFNode value1 : matchingValues1) {
-				overlapTwice += values1.get(value1).size();
-				absoluteCoverage.computeIfAbsent(variable, v -> new HashMap<>())
-						.computeIfAbsent(dataset2, v -> new HashMap<>())
-						.merge(dataset1, values1.getOrDefault(value1, Collections.emptySet()).size(), Integer::sum);
-			}
-			for (RDFNode value2 : matchingValues2) {
-				overlapTwice += values2.get(value2).size();
-				absoluteCoverage.computeIfAbsent(variable, v -> new HashMap<>())
-						.computeIfAbsent(dataset1, v -> new HashMap<>())
-						.merge(dataset2, values2.getOrDefault(value2, Collections.emptySet()).size(), Integer::sum);
-			}
-			// NOTE: mark and recapture assumes equal absoluteCoverage in both directions,
-			// use average (floor) to approximate
-			totalPairwiseOverlapTwice.merge(variable, overlapTwice, Integer::sum);
+			updatePairwiseOverlap(variable, resources1, resources2, resourcesByMappedValues);
 		}
-
 	}
 
 	/**
