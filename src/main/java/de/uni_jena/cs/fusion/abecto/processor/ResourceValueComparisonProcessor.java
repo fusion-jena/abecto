@@ -35,6 +35,6 @@ public class ResourceValueComparisonProcessor
 
 	@Override
 	public boolean equivalentValues(RDFNode value1, RDFNode value2) {
-		return correspond(value1.asResource(), value2.asResource());
+		return value1.isResource() && value2.isResource() && correspond(value1.asResource(), value2.asResource());
 	}
 }

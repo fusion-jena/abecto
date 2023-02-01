@@ -85,6 +85,10 @@ public class LiteralValueComparisonProcessor extends AbstractValueComparisonProc
 
 	@Override
 	public boolean equivalentValues(RDFNode value1, RDFNode value2) {
+		if (!value1.isLiteral() || !value2.isLiteral()) {
+			return false;
+		}
+
 		Literal literal1 = value1.asLiteral();
 		Literal literal2 = value2.asLiteral();
 

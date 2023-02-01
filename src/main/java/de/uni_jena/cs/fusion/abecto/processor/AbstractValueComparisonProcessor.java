@@ -145,42 +145,32 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 
 	/**
 	 * Removes all values that do not match to {@link #isValidValue(RDFNode)},
-	 * {@link #useValue(RDFNode)}, or are known wrong values. If a value is not
-	 * valid, an invalid value issue will be stored in the according output meta
-	 * model.
+	 * {@link #useValue(RDFNode)}, or are known wrong values.
 	 * 
 	 * @param valuesByVariableByResource
 	 * @param dataset
 	 */
-	private void filterValuesByResource(Map<Resource, Map<String, Set<RDFNode>>> valuesByVariableByResource,
-			Resource dataset) {
+	private void filterValues(Map<Resource, Map<String, Set<RDFNode>>> valuesByVariableByResource, Resource dataset) {
 		for (Resource resource : valuesByVariableByResource.keySet()) {
-			Map<String, Set<RDFNode>> valuesByVariable = valuesByVariableByResource.get(resource);
-			for (String variable : valuesByVariable.keySet()) {
-				Iterator<RDFNode> values = valuesByVariable.get(variable).iterator();
-				while (values.hasNext()) {
-					RDFNode value = values.next();
+			filterValues(valuesByVariableByResource.get(resource), resource, dataset);
+		}
+	}
 
-					if (!this.isValidValue(value)) {
-						// remove value
-						values.remove();
-						continue;
-					}
-
-					if (!this.useValue(value)) {
-						// remove value
-						values.remove();
-						continue;
-					}
-
-					if (Metadata.isWrongValue(resource, variable, value, aspect,
-							this.getInputMetaModelUnion(dataset))) {
-						// remove value
-						values.remove();
-						continue;
-					}
-				}
-			}
+	/**
+	 * Removes all values that do not match to {@link #isValidValue(RDFNode)},
+	 * {@link #useValue(RDFNode)}, or are known wrong values.
+	 * 
+	 * @param valuesByVariableByResource
+	 * @param resource
+	 * @param dataset
+	 */
+	private void filterValues(Map<String, Set<RDFNode>> valuesByVariable, Resource resource, Resource dataset) {
+		Model inputMetaModel = this.getInputMetaModelUnion(dataset);
+		for (String variable : valuesByVariable.keySet()) {
+			Set<RDFNode> values = valuesByVariable.get(variable);
+			values.removeIf(value -> !isValidValue(value));
+			values.removeIf(value -> !useValue(value));
+			values.removeIf(value -> Metadata.isWrongValue(resource, variable, value, aspect, inputMetaModel));
 		}
 	}
 
@@ -247,7 +237,7 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 				Map<Resource, Map<String, Set<RDFNode>>> valuesByVariableByResource1 = aspect
 						.selectResourceValues(correspondingResources, dataset1, variables, model1);
 				reportInvalidValues(valuesByVariableByResource1, dataset1);
-				filterValuesByResource(valuesByVariableByResource1, dataset1);
+				filterValues(valuesByVariableByResource1, dataset1);
 
 				for (String variable : variables) {
 					// get values of all corresponding resources
@@ -270,7 +260,7 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 					Model model2 = this.getInputPrimaryModelUnion(dataset2);
 					Map<Resource, Map<String, Set<RDFNode>>> valuesByVariableByResource2 = aspect
 							.selectResourceValues(correspondingResources, dataset2, variables, model2);
-					filterValuesByResource(valuesByVariableByResource2, dataset2);
+					filterValues(valuesByVariableByResource2, dataset2);
 					for (String variable : variables) {
 						this.compareVariableValues(variable, dataset1, valuesByVariableByResource1, dataset2,
 								valuesByVariableByResource2);
@@ -482,11 +472,9 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 	/**
 	 * Checks if two values are equivalent.
 	 * 
-	 * @param variable the variable the value belongs to
-	 * @param dataset  the dataset the value belongs to
-	 * @param resource the resource the value belongs to
-	 * @param value    the value to check
-	 * @return {@code true}, if the value is valid, otherwise {@code false}
+	 * @param value1 the first value to compare
+	 * @param value2 the second value to compare
+	 * @return {@code true}, if the values are equivalent, otherwise {@code false}
 	 */
 	public abstract boolean equivalentValues(RDFNode value1, RDFNode value2);
 
