@@ -43,7 +43,7 @@ import de.uni_jena.cs.fusion.abecto.Aspect;
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 import de.uni_jena.cs.fusion.abecto.vocabulary.DQV;
 
-public class CompletenessProcessorTest {
+public class PopulationComparisonProcessorTest {
 
 	@Test
 	public void computeResultModel() throws Exception {
@@ -100,7 +100,7 @@ public class CompletenessProcessorTest {
 		Aspect aspect3 = new Aspect(aspect(3), "key").setPattern(dataset(1), query3).setPattern(dataset(2), query3)
 				.setPattern(dataset(3), query3);
 
-		CompletenessProcessor processor = new CompletenessProcessor()
+		PopulationComparisonProcessor processor = new PopulationComparisonProcessor()
 				.addInputPrimaryModel(dataset(1), inputPrimaryModel1)
 				.addInputPrimaryModel(dataset(2), inputPrimaryModel2)
 				.addInputPrimaryModel(dataset(3), inputPrimaryModel3).addInputMetaModel(null, inputGeneralMetaModel)
