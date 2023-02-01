@@ -31,6 +31,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.graph.Node;
@@ -57,6 +58,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Functions;
+import com.google.common.collect.Streams;
 
 import de.uni_jena.cs.fusion.abecto.converter.StringToQueryConverter;
 import de.uni_jena.cs.fusion.abecto.util.Models;
@@ -292,6 +294,7 @@ public class Aspect {
 		return index;
 	}
 
+	@Deprecated
 	public static Map<Resource, Map<String, Set<RDFNode>>> getResources(Aspect aspect, Resource dataset,
 			List<String> variables, Model datasetModels) {
 		Map<Resource, Map<String, Set<RDFNode>>> resources = new HashMap<>();
@@ -317,6 +320,125 @@ public class Aspect {
 	}
 
 	/**
+	 * Returns the values of the given {@link Resource Resources} that are covered
+	 * by the pattern of the given dataset in the given {@link Model}. If this
+	 * aspect does not cover the given dataset an empty result is returned. If the
+	 * model does not contain any value for a given resource, the resource is mapped
+	 * to {@code null}.
+	 * 
+	 * @param resource
+	 * @param dataset
+	 * @param model
+	 * @return
+	 */
+	public Map<Resource, Map<String, Set<RDFNode>>> selectResourceValues(Collection<Resource> resources,
+			Resource dataset, List<String> variables, Model model) {
+		if (!this.patternByDataset.containsKey(dataset)) {
+			return Collections.emptyMap();
+		}
+
+		Query pattern = this.getPattern(dataset);
+
+		Map<Resource, Map<String, Set<RDFNode>>> valuesByResource = new HashMap<>();
+
+		for (Resource resource : resources) {
+			Map<String, Set<RDFNode>> resourceValues = selectResourceValues(resource, pattern, variables, model);
+			if (resourceValues != null) {
+				valuesByResource.put(resource, resourceValues);
+			}
+		}
+
+		return valuesByResource;
+	}
+
+	/**
+	 * Returns the values of the given {@link Resource} that are covered by the
+	 * pattern of the given dataset in the given {@link Model}. If this aspect does
+	 * not cover the given dataset or the model does not contain values for the
+	 * given resource, {@code null} is returned.
+	 * 
+	 * @param resource
+	 * @param dataset
+	 * @param model
+	 * @return
+	 */
+	public Map<String, Set<RDFNode>> selectResourceValues(Resource resource, Resource dataset,
+			Collection<String> variables, Model model) {
+		if (!this.patternByDataset.containsKey(dataset)) {
+			return Collections.emptyMap();
+		}
+
+		Query pattern = this.getPattern(dataset);
+
+		return this.selectResourceValues(resource, pattern, variables, model);
+	}
+
+	/**
+	 * Returns the values of the given {@link Resource} that are covered by the
+	 * pattern of the given dataset in the given {@link Model}. If this aspect does
+	 * not cover the given dataset or the model does not contain values for the
+	 * given resource, {@code null} is returned.
+	 * 
+	 * @param resource
+	 * @param dataset
+	 * @param model
+	 * @return
+	 */
+	public Map<String, Set<RDFNode>> selectResourceValues(Resource resource, Query pattern,
+			Collection<String> variables, Model model) {
+		Query query = SelectBuilder.rewrite(pattern.cloneQuery(),
+				Collections.singletonMap(this.keyVariable, resource.asNode()));
+		ResultSet results = QueryExecutionFactory.create(query, model).execSelect();
+
+		if (!results.hasNext()) {
+			return null;
+		}
+
+		Map<String, Set<RDFNode>> values = new HashMap<String, Set<RDFNode>>();
+		for (String variable : variables) {
+			values.put(variable, new HashSet<>());
+		}
+		while (results.hasNext()) {
+			QuerySolution result = results.next();
+			for (String variable : variables) {
+				if (result.contains(variable)) {
+					RDFNode value = result.get(variable);
+					values.get(variable).add(value);
+				}
+			}
+		}
+
+		return values;
+	}
+
+	/**
+	 * Returns a new {@link Collection} instance containing the given resources that
+	 * are covered by the pattern for the given dataset in the given {@link Model}.
+	 * 
+	 * @param resources
+	 * @param dataset
+	 * @param model
+	 * @return
+	 */
+	public Collection<Resource> getResourcesInDataset(Collection<Resource> resources, Resource dataset, Model model) {
+		if (!this.patternByDataset.containsKey(dataset)) {
+			return Collections.emptySet();
+		}
+		Collection<Resource> intersection = new ArrayList<Resource>();
+
+		Query pattern = this.getPattern(dataset);
+		for (Resource resource : resources) {
+			Query query = SelectBuilder.rewrite(pattern.cloneQuery(),
+					Collections.singletonMap(this.keyVariable, resource.asNode()));
+			query.setQueryAskType();
+			if (QueryExecutionFactory.create(query, model).execAsk()) {
+				intersection.add(resource);
+			}
+		}
+		return intersection;
+	}
+
+	/**
 	 * Returns a {@link Set} of all resource keys of a given aspect in a given
 	 * dataset.
 	 * 
@@ -330,12 +452,10 @@ public class Aspect {
 	 * 
 	 * @throws NullPointerException if no pattern is defined for the given dataset
 	 */
-	public static Set<Resource> getResourceKeys(Aspect aspect, Resource dataset, Model datasetModels)
+	public static Stream<Resource> getResourceKeys(Aspect aspect, Resource dataset, Model datasetModels)
 			throws NullPointerException {
-		Set<Resource> resourceKeys = new HashSet<>();
-
 		Query aspectQuery = aspect.getPattern(dataset);
-		// close query without result vars
+		// copy query without result vars
 		Query query = new Query();
 		query.setQuerySelectType();
 		query.setPrefixMapping(aspectQuery.getPrefixMapping());
@@ -359,11 +479,8 @@ public class Aspect {
 		ResultSet results = QueryExecutionFactory.create(query, datasetModels).execSelect();
 
 		String keyVariableName = aspect.getKeyVariableName();
-		while (results.hasNext()) {
-			resourceKeys.add(results.next().getResource(keyVariableName));
-		}
 
-		return resourceKeys;
+		return Streams.stream(results).map(querySolution -> querySolution.getResource(keyVariableName));
 	}
 
 	private final Resource iri;

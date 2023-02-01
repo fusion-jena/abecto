@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import org.apache.jena.rdf.model.Resource;
 import org.slf4j.Logger;
@@ -77,7 +78,8 @@ public class CompletenessProcessor extends Processor<CompletenessProcessor> {
 			Map<Resource, Set<Resource>> uncoveredResourcesByDataset = new HashMap<>();
 			for (Resource dataset : datasetsCoveringTheAspekt) {
 				uncoveredResourcesByDataset.put(dataset,
-						Aspect.getResourceKeys(aspect, dataset, this.getInputPrimaryModelUnion(dataset)));
+						Aspect.getResourceKeys(aspect, dataset, this.getInputPrimaryModelUnion(dataset))
+								.collect(Collectors.toSet()));
 				// store count
 				count.put(dataset, uncoveredResourcesByDataset.get(dataset).size());
 			}

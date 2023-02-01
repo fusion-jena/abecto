@@ -26,6 +26,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
@@ -316,7 +317,7 @@ public class AspectTest {
 		Query pattern = QueryFactory.create("SELECT ?key ?value WHERE {?key <" + property.getURI() + "> ?value .}");
 		aspect.setPattern(dataset, pattern);
 
-		Set<Resource> resources = Aspect.getResourceKeys(aspect, dataset, primaryDataModel);
+		Set<Resource> resources = Aspect.getResourceKeys(aspect, dataset, primaryDataModel).collect(Collectors.toSet()	);
 
 		assertEquals(4, resources.size());
 		assertTrue(resources.contains(resource1));
