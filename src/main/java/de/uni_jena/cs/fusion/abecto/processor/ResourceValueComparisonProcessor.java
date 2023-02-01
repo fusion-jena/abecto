@@ -22,10 +22,7 @@ public class ResourceValueComparisonProcessor
 
 	@Override
 	public boolean isValidValue(RDFNode value) {
-		if (!value.isResource()) {
-			return false;
-		}
-		return true;
+		return value.isResource();
 	}
 
 	@Override

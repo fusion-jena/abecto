@@ -72,10 +72,7 @@ public class LiteralValueComparisonProcessor extends AbstractValueComparisonProc
 
 	@Override
 	public boolean isValidValue(RDFNode value) {
-		if (!value.isLiteral()) {
-			return false;
-		}
-		return true;
+		return value.isLiteral();
 	}
 
 	@Override
