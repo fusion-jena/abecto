@@ -274,17 +274,17 @@ public class PopulationComparisonProcessorTest {
 		assertEquals(3, countMeasurement(AV.count, outputMetaModelDataset3));
 
 		// check completeness
-		assertEquals(0.57, getQualityMeasurement(AV.marCompletenessThomas08, dataset(1), null,
+		assertEquals(0.5714285714285714, getQualityMeasurement(AV.marCompletenessThomas08, dataset(1), null,
 				Arrays.asList(dataset(2), dataset(3)), aspect(1), outputMetaModelDataset1).value.doubleValue());
-		assertEquals(0.57, getQualityMeasurement(AV.marCompletenessThomas08, dataset(1), null,
+		assertEquals(0.5714285714285714, getQualityMeasurement(AV.marCompletenessThomas08, dataset(1), null,
 				Arrays.asList(dataset(2), dataset(3)), aspect(2), outputMetaModelDataset1).value.doubleValue());
-		assertEquals(0.29, getQualityMeasurement(AV.marCompletenessThomas08, dataset(2), null,
+		assertEquals(0.2857142857142857, getQualityMeasurement(AV.marCompletenessThomas08, dataset(2), null,
 				Arrays.asList(dataset(1), dataset(3)), aspect(1), outputMetaModelDataset2).value.doubleValue());
-		assertEquals(0.29, getQualityMeasurement(AV.marCompletenessThomas08, dataset(2), null,
+		assertEquals(0.2857142857142857, getQualityMeasurement(AV.marCompletenessThomas08, dataset(2), null,
 				Arrays.asList(dataset(1), dataset(3)), aspect(2), outputMetaModelDataset2).value.doubleValue());
-		assertEquals(0.14, getQualityMeasurement(AV.marCompletenessThomas08, dataset(3), null,
+		assertEquals(0.1428571428571429, getQualityMeasurement(AV.marCompletenessThomas08, dataset(3), null,
 				Arrays.asList(dataset(1), dataset(2)), aspect(1), outputMetaModelDataset3).value.doubleValue());
-		assertEquals(0.14, getQualityMeasurement(AV.marCompletenessThomas08, dataset(3), null,
+		assertEquals(0.1428571428571429, getQualityMeasurement(AV.marCompletenessThomas08, dataset(3), null,
 				Arrays.asList(dataset(1), dataset(2)), aspect(2), outputMetaModelDataset3).value.doubleValue());
 
 		assertThrows(NoSuchElementException.class, () -> getQualityMeasurement(AV.marCompletenessThomas08, dataset(1),

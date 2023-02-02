@@ -48,6 +48,11 @@ public class PopulationComparisonProcessor extends Processor<PopulationCompariso
 	final static Logger log = LoggerFactory.getLogger(PopulationComparisonProcessor.class);
 
 	/**
+	 * Digits to preserve when rounding after division in measurement calculations.
+	 */
+	public final static int SCALE = 16;
+
+	/**
 	 * The {@link Aspect Aspects} to process.
 	 */
 	@Parameter
@@ -203,7 +208,7 @@ public class PopulationComparisonProcessor extends Processor<PopulationCompariso
 				// calculate & store completeness:
 				if (totalPairwiseOverlap.get() != 0) {
 					/** Ratio of resources in an estimated population covered by this dataset */
-					BigDecimal completeness = BigDecimal.valueOf(count.get(dataset)).divide(populationSize, 2,
+					BigDecimal completeness = BigDecimal.valueOf(count.get(dataset)).divide(populationSize, SCALE,
 							RoundingMode.HALF_UP);
 					Collection<Resource> otherDatasets = new HashSet<>(datasetsCoveringTheAspekt);
 					otherDatasets.remove(dataset);
@@ -219,7 +224,7 @@ public class PopulationComparisonProcessor extends Processor<PopulationCompariso
 						if (countComparedTo != 0) {
 							int overlap = absoluteCoverage.get(dataset).get(datasetComparedTo);
 							relativeCoverage.get(dataset).put(datasetComparedTo, BigDecimal.valueOf(overlap)
-									.divide(BigDecimal.valueOf(countComparedTo), 2, RoundingMode.HALF_UP));
+									.divide(BigDecimal.valueOf(countComparedTo), SCALE, RoundingMode.HALF_UP));
 						}
 					}
 				}

@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 * renamed `CompletenessProcessor` into `PopulationComparisonProcessor`: deprecated dummy `CompletenessProcessor` class remains to avoid a breaking change
 * change `CompletenessProcessor`/`PopulationComparisonProcessor`: avoid relativeCoverage measurement in case of no values in other dataset
+* change `CompletenessProcessor`/`PopulationComparisonProcessor`: increase precision of measurement results from 2 to 16 digits
 
 ## [1.0.1] - 2022-08-18
 

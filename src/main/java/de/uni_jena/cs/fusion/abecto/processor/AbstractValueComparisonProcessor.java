@@ -84,6 +84,9 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 	 */
 	private Map<String, BigDecimal> populationSize = new HashMap<>();
 
+	/**
+	 * Digits to preserve when rounding after division in measurement calculations.
+	 */
 	public final static int SCALE = 16;
 
 	/**
