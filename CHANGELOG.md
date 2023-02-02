@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [1.1.0] - 2023-02-02
+
 ### Added
 * extend `LiteralValueComparisonProcessor`: add calculation of measurement count, absolute coverage, relative coverage and estimated completeness per variable
 * extend `ResourceValueComparisonProcessor`: add calculation of measurement count, absolute coverage, relative coverage and estimated completeness per variable
@@ -239,7 +241,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * add `ManualCategoryProcessor`: Enables users to manually define resource categories and their properties.
 * add `ResourceDeviationProcessor`: Detects deviations between the resource references of mapped resources as defined in the categories.
 
-[Unreleased]: https://github.com/fusion-jena/abecto/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/fusion-jena/abecto/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/fusion-jena/abecto/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/fusion-jena/abecto/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/fusion-jena/abecto/compare/v0.10.0...v1.0.0
 [0.10.0]: https://github.com/fusion-jena/abecto/compare/v0.9.1...v0.10.0
