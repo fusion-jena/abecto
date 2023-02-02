@@ -9,12 +9,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * extend `LiteralValueComparisonProcessor`: add calculation of measurement count, absolute coverage, relative coverage and estimated completeness per variable
 * extend `ResourceValueComparisonProcessor`: add calculation of measurement count, absolute coverage, relative coverage and estimated completeness per variable
 * extend `measurementsMarkdown` export: add support for measurements with affected variable
+* extend `wdMismatchFinder` export: enable reporting of missing values
 
 ### Fixed
 * fix `LiteralValueComparisonProcessor`: possibly missing value deviations or value omissions in case of duplicated resources in other dataset
 * fix `ResourceValueComparisonProcessor`: possibly missing value deviations or value omissions in case of duplicated resources in other dataset
 * fix `LiteralValueComparisonProcessor`: possibly additional value deviations or value omissions in case of duplicated resources in the dataset
 * fix `ResourceValueComparisonProcessor`: possibly additional value deviations or value omissions in case of duplicated resources in the dataset
+* fix `wdMismatchFinder` export: adjust to format changes ([T288511](https://phabricator.wikimedia.org/T288511), [T313468](https://phabricator.wikimedia.org/T313468))
 
 ### Changed
 * renamed `CompletenessProcessor` into `PopulationComparisonProcessor`: deprecated dummy `CompletenessProcessor` class remains to avoid a breaking change

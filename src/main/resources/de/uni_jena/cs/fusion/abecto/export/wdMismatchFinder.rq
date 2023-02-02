@@ -1,14 +1,34 @@
 PREFIX av: <http://w3id.org/abecto/vocabulary#>
 PREFIX dqv: <http://www.w3.org/ns/dqv#>
 PREFIX oa: <http://www.w3.org/ns/oa#>
+PREFIX wikibase: <http://wikiba.se/ontology#>
 
 SELECT
-	# expected format https://github.com/wmde/wikidata-mismatch-finder/blob/main/docs/UserGuide.md
-	?statement_guid # Represents that unique id of the statement on wikidata that contains the mismatching data.
-	?property_id # The id of the wikidata property defining the wikidata value of the mismatch.
-	(STR(?wikidata_valueX) AS ?wikidata_value) # The value on wikidata that mismatches an external database.
-	(STR(?external_valueX) AS ?external_value) # The value in the external database that mismatches a wikidata value.
-	(STR(?external_urlX) AS ?external_url) # (Optional) A url or uri to the mismatching entity in the external database.
+	# expected format: https://github.com/wmde/wikidata-mismatch-finder/blob/main/docs/UserGuide.md
+
+	(strAfter(str(?internal_url),"http://www.wikidata.org/entity/") AS ?item_id)
+		# The item ID of the Wikidata item containing the mismatching statement.
+
+	(replace(str(?statement),"http://www.wikidata.org/entity/statement/([0-9a-zA-Z]*)-(.*)","$1\\$$2") AS ?statement_guid)
+		# (Optional) Represents that unique id of the statement on wikidata that contains the mismatching data.
+		# If present, must be consistent with the item_id.
+		# Can be empty to signify that no matching value was found on Wikidata, in which case the wikidata_value must also be empty.
+
+	?property_id
+		# The id of the wikidata property defining the wikidata value of the mismatch.
+
+	(REPLACE(STR(?wikidata_valueX),"http://www.wikidata.org/entity/(Q\\d*)","$1") AS ?wikidata_value)
+		# (Optional) The value on wikidata that mismatches an external database. Can be empty (see statement_guid).
+
+	(REPLACE(STR(?meta_wikidata_valueX),"http://www.wikidata.org/entity/(Q\\d*)","$1") AS ?meta_wikidata_value)
+		# (Optional) The value on wikidata that represents property calendar/time type.
+
+	(STR(?external_valueX) AS ?external_value)
+		# The value in the external database that mismatches a wikidata value.
+
+	(STR(?external_urlX) AS ?external_url)
+		# (Optional) A url or uri to the mismatching entity in the external database.
+
 WHERE {
 	BIND (<http://www.wikidata.org/> AS ?dataset)
 	[	a						av:AspectPattern ;
@@ -17,6 +37,9 @@ WHERE {
 		av:hasVariablePath		[ av:variableName ?variable ; av:propertyPath ?propertyPath ]
 	]
 	BIND (replace(str(?propertyPath),"<http://www.wikidata.org/prop/direct/(P\\d*)>","$1") AS ?property_id)
+	BIND (IRI(CONCAT("http://www.wikidata.org/prop/",?property_id)) AS ?p)
+	BIND (IRI(CONCAT("http://www.wikidata.org/prop/statement/",?property_id)) AS ?ps)
+	BIND (IRI(CONCAT("http://www.wikidata.org/prop/statement/value/",?property_id)) AS ?psv)
 	?issueGraph dqv:computedOn ?dataset .
 	{
 		GRAPH ?issueGraph {
@@ -28,37 +51,33 @@ WHERE {
 				av:comparedToValue		?external_valueX ;
 				av:comparedToResource	?external_urlX .
 		}
-		BIND (IRI(CONCAT("http://www.wikidata.org/prop/",?property_id)) AS ?p)
-		BIND (IRI(CONCAT("http://www.wikidata.org/prop/statement/",?property_id)) AS ?ps)
-# TODO: add if https://phabricator.wikimedia.org/T312767 is fixed
-#		OPTIONAL{
-			GRAPH ?sourceGraph {
-				?internal_url	?p	?statement .
-				?statement		?ps	?wikidata_valueX .
-				FILTER(regex(str(?statement),"http://www.wikidata.org/entity/statement/([0-9a-zA-Z]*)-(.*)"))
+# TODO: adapt if https://phabricator.wikimedia.org/T313467 (ability to report mismatches on qualifiers) is done
+# TODO: adapt if https://phabricator.wikimedia.org/T313469 (allow reporting of mismatches for labels, descriptions and aliases) is done
+		GRAPH ?sourceGraph {
+			?internal_url	?p	?statement .
+			
+			# value
+			?statement		?ps	?wikidata_valueX .
+			FILTER(regex(str(?statement),"http://www.wikidata.org/entity/statement/([0-9a-zA-Z]*)-(.*)"))
+			
+			# time value meta data
+			OPTIONAL {
+				?statement ?psv [ wikibase:timeCalendarModel ?meta_wikidata_valueX ] .
 			}
-			?sourceGraph a av:PrimaryDataGraph ;
-						 av:associatedDataset ?dataset .
-# TODO: add if https://phabricator.wikimedia.org/T312767 is fixed
-#		}
-#	} UNION {
-#		GRAPH ?issueGraph {
-#			[]	a						av:ValueOmission ;
-#				^oa:hasBody				[ oa:hasTarget ?internal_url ];
-#				av:affectedAspect		?aspect ;
-#				av:affectedVariableName	?variable;
-#				av:comparedToValue		?external_valueX ;
-#				av:comparedToResource	?external_urlX .
-#		}
+		}
+		?sourceGraph a av:PrimaryDataGraph ;
+					 av:associatedDataset ?dataset .
+	} UNION {
+		GRAPH ?issueGraph {
+			[]	a						av:ValueOmission ;
+				^oa:hasBody				[ oa:hasTarget ?internal_url ];
+				av:affectedAspect		?aspect ;
+				av:affectedVariableName	?variable;
+				av:comparedToValue		?external_valueX ;
+				av:comparedToResource	?external_urlX .
+		}
 	}
-# TODO: remove workaround for https://phabricator.wikimedia.org/T312767
-	BIND (replace(str(?statement),"http://www.wikidata.org/entity/statement/([0-9a-zA-Z]*)-(.*)","$1\\$$2") AS ?statement_guid)
-# TODO: add if https://phabricator.wikimedia.org/T312767 is fixed
-#	BIND (coalesce(
-#		replace(str(?statement),"http://www.wikidata.org/entity/statement/([0-9a-zA-Z]*)-(.*)","$1\\$$2"),
-#		strAfter(str(?internal_url),"http://www.wikidata.org/entity/") # fallback to entity id 
-#	) AS ?statement_guid)
-# TODO: replace if https://phabricator.wikimedia.org/T312851 is fixed
+# TODO: adapt if https://phabricator.wikimedia.org/T313467 (ability to report mismatches on qualifiers) is done
 	FILTER REGEX(?property_id, "^P\\d*$", "i")
 }
 ORDER BY ?statement_guid ?property_id
