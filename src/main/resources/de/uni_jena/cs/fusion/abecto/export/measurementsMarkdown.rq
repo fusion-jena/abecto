@@ -4,13 +4,14 @@ PREFIX oa: <http://www.w3.org/ns/oa#>
 PREFIX om: <http://www.ontology-of-units-of-measure.org/resource/om-2/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX sdmx-attribute: <http://purl.org/linked-data/sdmx/2009/attribute#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
 SELECT
 	(STR(SAMPLE(?measurementTypeLabel)) AS ?measurementTypeName)
 	(SAMPLE(?affectedAspectX) AS ?affectedAspect)
 	(SAMPLE(?affectedVariableNameX) AS ?affectedVariableName)
 	(SAMPLE(?computedOnDatasetX) AS ?computedOnDataset)
-	(STR(SAMPLE(?valueX)) AS ?value)
+	(STR(IF(DATATYPE(SAMPLE(?valueX))=xsd:decimal, ROUND(SAMPLE(?valueX)*100)/100, SAMPLE(?valueX))) AS ?value)
 	(STR(SAMPLE(?unitSymbolX)) AS ?unitSymbol)
 	(GROUP_CONCAT(?comparedToDataset;separator=", ") AS ?comparedToDatasets)
 	(STR(COUNT(DISTINCT ?comparedToDataset)) AS ?comparedToDatasetsCount)
