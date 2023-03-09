@@ -14,9 +14,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * fix `PopulationComparisonProcessor`: report count value instead of deduplicated count value for count measure
 
 ### Added
-* fix `LiteralValueComparisonProcessor`: report deduplicated count measure
-* fix `ResourceValueComparisonProcessor`: report deduplicated count measure
-* fix `PopulationComparisonProcessor`: report deduplicated count measure
+* extend `LiteralValueComparisonProcessor`: report deduplicated count measure
+* extend `ResourceValueComparisonProcessor`: report deduplicated count measure
+* extend `PopulationComparisonProcessor`: report deduplicated count measure
 
 ## [1.1.0] - 2023-02-02
 
