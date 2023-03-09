@@ -234,12 +234,16 @@ public class PopulationComparisonProcessor extends Processor<PopulationCompariso
 			for (Resource dataset : datasetsCoveringTheAspekt) {
 				for (Resource datasetComparedTo : datasetsCoveringTheAspekt) {
 					if (!dataset.equals(datasetComparedTo)) {
-						Metadata.addQualityMeasurement(AV.relativeCoverage,
-								relativeCoverage.get(dataset).get(datasetComparedTo), OM.one, dataset,
-								datasetComparedTo, aspect.getIri(), this.getOutputMetaModel(dataset));
-						Metadata.addQualityMeasurement(AV.absoluteCoverage,
-								absoluteCoverage.get(dataset).get(datasetComparedTo), OM.one, dataset,
-								datasetComparedTo, aspect.getIri(), this.getOutputMetaModel(dataset));
+						if (relativeCoverage.get(dataset).get(datasetComparedTo) != null) {
+							Metadata.addQualityMeasurement(AV.relativeCoverage,
+									relativeCoverage.get(dataset).get(datasetComparedTo), OM.one, dataset,
+									datasetComparedTo, aspect.getIri(), this.getOutputMetaModel(dataset));
+						}
+						if (absoluteCoverage.get(dataset).get(datasetComparedTo) != null) {
+							Metadata.addQualityMeasurement(AV.absoluteCoverage,
+									absoluteCoverage.get(dataset).get(datasetComparedTo), OM.one, dataset,
+									datasetComparedTo, aspect.getIri(), this.getOutputMetaModel(dataset));
+						}
 					}
 				}
 			}

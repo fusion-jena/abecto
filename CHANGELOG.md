@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Fixed
 * fix `LiteralValueComparisonProcessor`: add handling for datasets not covering a compared variable
 * fix `ResourceValueComparisonProcessor`: add handling for datasets not covering a compared variable
+* fix `PopulationComparisonProcessor`: add handling for datasets not containing any resource for a compared aspect
 
 ## [1.1.0] - 2023-02-02
 
