@@ -45,6 +45,7 @@ public class AV {
 	public static final Property correspondsToResource = ResourceFactory.createProperty(namespace,
 			"correspondsToResource");
 	public static final Resource count = ResourceFactory.createResource(namespace + "count");
+	public static final Resource deduplicatedCount = ResourceFactory.createResource(namespace + "deduplicatedCount");
 	public static final Property definingQuery = ResourceFactory.createProperty(namespace, "definingQuery");
 	public static final Resource Deviation = ResourceFactory.createResource(namespace + "Deviation");
 	public static final Property hasParameter = ResourceFactory.createProperty(namespace, "hasParameter");

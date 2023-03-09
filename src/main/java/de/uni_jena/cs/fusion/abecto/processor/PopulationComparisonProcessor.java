@@ -180,9 +180,13 @@ public class PopulationComparisonProcessor extends Processor<PopulationCompariso
 
 			// adjust and store resource count by duplicates count
 			for (Resource dataset : datasetsCoveringTheAspekt) {
-				count.merge(dataset, -duplicates.getOrDefault(dataset, 0), Integer::sum);
-
+				// store count
 				Metadata.addQualityMeasurement(AV.count, count.get(dataset), OM.one, dataset, aspect.getIri(),
+						this.getOutputMetaModel(dataset));
+				// subtract duplicates
+				count.merge(dataset, -duplicates.getOrDefault(dataset, 0), Integer::sum);
+				// store deduplicated count
+				Metadata.addQualityMeasurement(AV.deduplicatedCount, count.get(dataset), OM.one, dataset, aspect.getIri(),
 						this.getOutputMetaModel(dataset));
 			}
 

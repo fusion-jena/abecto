@@ -36,9 +36,10 @@
     ] ;
     dcterms:license <http://creativecommons.org/licenses/by/4.0/> ;
     dcterms:created "2022-08-17"^^xsd:date ;
-    owl:versionInfo "1.0.0" ;
-    owl:versionIRI <http://w3id.org/abecto/vocabulary/1.0.0> ;
-    owl:priorVersion <http://w3id.org/abecto/vocabulary/0.2.0> ;
+    dcterms:modified "2023-03-09"^^xsd:date ;
+    owl:versionInfo "1.1.0" ;
+    owl:versionIRI <http://w3id.org/abecto/vocabulary/1.1.0> ;
+    owl:priorVersion <http://w3id.org/abecto/vocabulary/1.0.0> ;
     .
 
 av:Plan a rdfs:Class ;
@@ -299,7 +300,13 @@ av:absoluteCoverage a dqv:Metric ;
     .
 av:count a dqv:Metric ;
     rdfs:label "count"@en ;
-    rdfs:comment "The number of resources of a certain aspect in a dataset."@en ;
+    rdfs:comment "The number of resources or property values of a certain aspect in a dataset."@en ;
+    dqv:inDimension ldqd:completeness ;
+    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+    .
+av:deduplicatedCount a dqv:Metric ;
+    rdfs:label "deduplicated count"@en ;
+    rdfs:comment "The number of deduplicated resources or deduplicated property values of a certain aspect in a dataset."@en ;
     dqv:inDimension ldqd:completeness ;
     rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
     .

@@ -250,28 +250,28 @@ public class PopulationComparisonProcessorTest {
 		assertEquals(0, countResource(AV.Issue, outputMetaModelDataset3));
 
 		// check count
-		assertEquals(4, getQualityMeasurement(AV.count, dataset(1), null, Collections.emptyList(), aspect(1),
+		assertEquals(4, getQualityMeasurement(AV.deduplicatedCount, dataset(1), null, Collections.emptyList(), aspect(1),
 				outputMetaModelDataset1).value.intValue());
-		assertEquals(4, getQualityMeasurement(AV.count, dataset(1), null, Collections.emptyList(), aspect(2),
+		assertEquals(4, getQualityMeasurement(AV.deduplicatedCount, dataset(1), null, Collections.emptyList(), aspect(2),
 				outputMetaModelDataset1).value.intValue());
-		assertEquals(1, getQualityMeasurement(AV.count, dataset(1), null, Collections.emptyList(), aspect(3),
+		assertEquals(1, getQualityMeasurement(AV.deduplicatedCount, dataset(1), null, Collections.emptyList(), aspect(3),
 				outputMetaModelDataset1).value.intValue());
-		assertEquals(2, getQualityMeasurement(AV.count, dataset(2), null, Collections.emptyList(), aspect(1),
+		assertEquals(2, getQualityMeasurement(AV.deduplicatedCount, dataset(2), null, Collections.emptyList(), aspect(1),
 				outputMetaModelDataset2).value.intValue());
-		assertEquals(2, getQualityMeasurement(AV.count, dataset(2), null, Collections.emptyList(), aspect(2),
+		assertEquals(2, getQualityMeasurement(AV.deduplicatedCount, dataset(2), null, Collections.emptyList(), aspect(2),
 				outputMetaModelDataset2).value.intValue());
-		assertEquals(1, getQualityMeasurement(AV.count, dataset(2), null, Collections.emptyList(), aspect(3),
+		assertEquals(1, getQualityMeasurement(AV.deduplicatedCount, dataset(2), null, Collections.emptyList(), aspect(3),
 				outputMetaModelDataset2).value.intValue());
-		assertEquals(1, getQualityMeasurement(AV.count, dataset(3), null, Collections.emptyList(), aspect(1),
+		assertEquals(1, getQualityMeasurement(AV.deduplicatedCount, dataset(3), null, Collections.emptyList(), aspect(1),
 				outputMetaModelDataset3).value.intValue());
-		assertEquals(1, getQualityMeasurement(AV.count, dataset(3), null, Collections.emptyList(), aspect(2),
+		assertEquals(1, getQualityMeasurement(AV.deduplicatedCount, dataset(3), null, Collections.emptyList(), aspect(2),
 				outputMetaModelDataset3).value.intValue());
-		assertEquals(1, getQualityMeasurement(AV.count, dataset(3), null, Collections.emptyList(), aspect(3),
+		assertEquals(1, getQualityMeasurement(AV.deduplicatedCount, dataset(3), null, Collections.emptyList(), aspect(3),
 				outputMetaModelDataset3).value.intValue());
 
-		assertEquals(3, countMeasurement(AV.count, outputMetaModelDataset1));
-		assertEquals(3, countMeasurement(AV.count, outputMetaModelDataset2));
-		assertEquals(3, countMeasurement(AV.count, outputMetaModelDataset3));
+		assertEquals(3, countMeasurement(AV.deduplicatedCount, outputMetaModelDataset1));
+		assertEquals(3, countMeasurement(AV.deduplicatedCount, outputMetaModelDataset2));
+		assertEquals(3, countMeasurement(AV.deduplicatedCount, outputMetaModelDataset3));
 
 		// check completeness
 		assertEquals(0.5714285714285714, getQualityMeasurement(AV.marCompletenessThomas08, dataset(1), null,

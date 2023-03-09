@@ -73,7 +73,7 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 	 * 
 	 * Index: variable, affectedDataset
 	 */
-	private Map<String, Map<Resource, Integer>> countDistinct = new HashMap<>();
+	private Map<String, Map<Resource, Integer>> deduplicatedCount = new HashMap<>();
 	/**
 	 * Number of overlaps between all pairs of dataset by dataset compared to by
 	 * multiplied by 2.
@@ -209,7 +209,7 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 		// init count and countDistinct
 		for (String variable : variables) {
 			this.count.put(variable, new HashMap<>());
-			this.countDistinct.put(variable, new HashMap<>());
+			this.deduplicatedCount.put(variable, new HashMap<>());
 		}
 
 		for (Resource dataset : aspect.getDatasets()) {
@@ -226,7 +226,7 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 							valuesByVariable.getOrDefault(variable, Collections.emptySet()).size(), Integer::sum);
 
 					// measure count of non equivalent values per resource
-					this.countDistinct.get(variable).merge(dataset,
+					this.deduplicatedCount.get(variable).merge(dataset,
 							countDistinct(valuesByVariable.getOrDefault(variable, Collections.emptySet())),
 							Integer::sum);
 				}
@@ -250,7 +250,7 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 							.forEach(valuesOfCorrespondingResources::addAll);
 
 					// measure count of non equivalent values per corresponding resources
-					this.countDistinct.get(variable).merge(dataset1,
+					this.deduplicatedCount.get(variable).merge(dataset1,
 							countDistinct(valuesOfCorrespondingResources) - valuesOfCorrespondingResources.size(),
 							Integer::sum);
 				}
@@ -289,8 +289,8 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 							continue;
 						}
 						populationSize.merge(variable,
-								BigDecimal.valueOf(countDistinct.get(variable).get(affectedDataset)).multiply(
-										BigDecimal.valueOf(countDistinct.get(variable).get(comparedToDataset))),
+								BigDecimal.valueOf(deduplicatedCount.get(variable).get(affectedDataset)).multiply(
+										BigDecimal.valueOf(deduplicatedCount.get(variable).get(comparedToDataset))),
 								BigDecimal::add);
 					}
 				}
@@ -306,7 +306,7 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 				if (totalPairwiseOverlapByVariable.containsKey(variable) // variable covered by more than 1 dataset
 						&& totalPairwiseOverlapByVariable.get(variable) != 0) {
 					/** Ratio of values in an estimated population covered by this dataset */
-					BigDecimal completeness = BigDecimal.valueOf(countDistinct.get(variable).get(affectedDataset))
+					BigDecimal completeness = BigDecimal.valueOf(deduplicatedCount.get(variable).get(affectedDataset))
 							.divide(populationSize.get(variable), SCALE, RoundingMode.HALF_UP);
 					Collection<Resource> otherDatasets = new HashSet<>(aspect.getDatasets());
 					otherDatasets.remove(affectedDataset);
@@ -365,7 +365,9 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 				}
 				Metadata.addQualityMeasurement(AV.count, count.get(variable).getOrDefault(affectedDataset, 0), OM.one,
 						affectedDataset, variable, aspect.getIri(), this.getOutputMetaModel(affectedDataset));
-				// TODO add reporting of count distinct
+				Metadata.addQualityMeasurement(AV.deduplicatedCount,
+						deduplicatedCount.get(variable).getOrDefault(affectedDataset, 0), OM.one, affectedDataset, variable,
+						aspect.getIri(), this.getOutputMetaModel(affectedDataset));
 			}
 		}
 	}
