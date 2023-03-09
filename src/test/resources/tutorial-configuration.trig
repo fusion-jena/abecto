@@ -104,7 +104,7 @@ GRAPH <manualMappings>
 
 <completeness> a av:Step ;
     p-plan:isStepOfPlan <plan> ;
-    av:processorClass abecto:CompletenessProcessor ;
+    av:processorClass abecto:PopulationComparisonProcessor ;
     p-plan:isPrecededBy <jaroWinklerMapping> ;
     av:hasParameter
         [av:key "aspects" ; av:value <aspectPerson> ] ;
