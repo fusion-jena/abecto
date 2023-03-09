@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Fixed
+* fix `LiteralValueComparisonProcessor`: add handling for datasets not covering a compared variable
+* fix `ResourceValueComparisonProcessor`: add handling for datasets not covering a compared variable
+
 ## [1.1.0] - 2023-02-02
 
 ### Added

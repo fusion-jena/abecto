@@ -265,8 +265,11 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 							.selectResourceValues(correspondingResources, dataset2, variables, model2);
 					filterValues(valuesByVariableByResource2, dataset2);
 					for (String variable : variables) {
-						this.compareVariableValues(variable, dataset1, valuesByVariableByResource1, dataset2,
-								valuesByVariableByResource2);
+						if (aspect.getPattern(dataset1).getResultVars().contains(variable)
+								&& aspect.getPattern(dataset2).getResultVars().contains(variable)) {
+							this.compareVariableValues(variable, dataset1, valuesByVariableByResource1, dataset2,
+									valuesByVariableByResource2);
+						}
 					}
 				}
 
@@ -276,7 +279,8 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 		// calculate value population size per variable
 		for (String variable : variables) {
 			populationSize.put(variable, BigDecimal.ZERO);
-			if (totalPairwiseOverlapByVariable.get(variable) != 0) {
+			if (totalPairwiseOverlapByVariable.containsKey(variable) // variable covered by more than 1 dataset
+					&& totalPairwiseOverlapByVariable.get(variable) != 0) {
 				for (Resource affectedDataset : aspect.getDatasets()) {
 					for (Resource comparedToDataset : aspect.getDatasets()) {
 						if (affectedDataset.hashCode() >= comparedToDataset.hashCode()) {
@@ -299,7 +303,8 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 			for (Resource affectedDataset : aspect.getDatasets()) {
 
 				// calculate & store completeness:
-				if (totalPairwiseOverlapByVariable.get(variable) != 0) {
+				if (totalPairwiseOverlapByVariable.containsKey(variable) // variable covered by more than 1 dataset
+						&& totalPairwiseOverlapByVariable.get(variable) != 0) {
 					/** Ratio of values in an estimated population covered by this dataset */
 					BigDecimal completeness = BigDecimal.valueOf(countDistinct.get(variable).get(affectedDataset))
 							.divide(populationSize.get(variable), SCALE, RoundingMode.HALF_UP);
@@ -332,7 +337,15 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 		// store measurements
 		for (String variable : variables) {
 			for (Resource affectedDataset : aspect.getDatasets()) {
+				if (!aspect.getPattern(affectedDataset).getResultVars().contains(variable)) {
+					// variable not covered by affectedDataset
+					continue;
+				}
 				for (Resource comparedToDataset : aspect.getDatasets()) {
+					if (!aspect.getPattern(comparedToDataset).getResultVars().contains(variable)) {
+						// variable not covered by comparedToDataset
+						continue;
+					}
 					if (!affectedDataset.equals(comparedToDataset)) {
 						BigDecimal relativeCoverageValue = relativeCoverage
 								.getOrDefault(variable, Collections.emptyMap())
@@ -352,6 +365,7 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 				}
 				Metadata.addQualityMeasurement(AV.count, count.get(variable).getOrDefault(affectedDataset, 0), OM.one,
 						affectedDataset, variable, aspect.getIri(), this.getOutputMetaModel(affectedDataset));
+				// TODO add reporting of count distinct
 			}
 		}
 	}

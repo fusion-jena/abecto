@@ -53,30 +53,31 @@ class ResourceValueComparisonProcessorTest extends AbstractValueComparisonProces
 	@Test
 	void computeResultModel() throws Exception {
 
-		assertSame(resource(10), resource(20));
+		assertSame(this.aspect1, resource(10), resource(20));
 
-		assertDeviation(resource(10), resource(21));
+		assertDeviation(this.aspect1, resource(10), resource(21));
 
-		assertUnexpectedValueType(resource(10), ResourceFactory.createTypedLiteral("value1", null),
+		assertUnexpectedValueType(this.aspect1, resource(10), ResourceFactory.createTypedLiteral("value1", null),
 				"Should be a resource.");
-		assertUnexpectedValueType(resource(10), ResourceFactory.createTypedLiteral("true", XSDDatatype.XSDboolean),
-				"Should be a resource.");
-		assertUnexpectedValueType(resource(10), ResourceFactory.createTypedLiteral("-4", XSDDatatype.XSDinteger),
-				"Should be a resource.");
-		assertUnexpectedValueType(resource(10), ResourceFactory.createTypedLiteral("-4.0", XSDDatatype.XSDdecimal),
-				"Should be a resource.");
-		assertUnexpectedValueType(resource(10), ResourceFactory.createTypedLiteral("3.2E9", XSDDatatype.XSDfloat),
-				"Should be a resource.");
-		assertUnexpectedValueType(resource(10), ResourceFactory.createTypedLiteral("3.2E9", XSDDatatype.XSDdouble),
-				"Should be a resource.");
+		assertUnexpectedValueType(this.aspect1, resource(10),
+				ResourceFactory.createTypedLiteral("true", XSDDatatype.XSDboolean), "Should be a resource.");
+		assertUnexpectedValueType(this.aspect1, resource(10),
+				ResourceFactory.createTypedLiteral("-4", XSDDatatype.XSDinteger), "Should be a resource.");
+		assertUnexpectedValueType(this.aspect1, resource(10),
+				ResourceFactory.createTypedLiteral("-4.0", XSDDatatype.XSDdecimal), "Should be a resource.");
+		assertUnexpectedValueType(this.aspect1, resource(10),
+				ResourceFactory.createTypedLiteral("3.2E9", XSDDatatype.XSDfloat), "Should be a resource.");
+		assertUnexpectedValueType(this.aspect1, resource(10),
+				ResourceFactory.createTypedLiteral("3.2E9", XSDDatatype.XSDdouble), "Should be a resource.");
 
-		assertMissing(Arrays.asList(resource(11)), Arrays.asList(), Arrays.asList(), Arrays.asList(resource(11)),0);
-		assertMissing(Arrays.asList(resource(11), resource(12)), Arrays.asList(), Arrays.asList(),
-				Arrays.asList(resource(11), resource(12)),0);
-		assertMissing(Arrays.asList(resource(11), resource(12)), Arrays.asList(resource(21)), Arrays.asList(),
-				Arrays.asList(resource(12)), 1);
+		assertMissing(this.aspect1, Arrays.asList(resource(11)), Arrays.asList(), Arrays.asList(),
+				Arrays.asList(resource(11)), 0);
+		assertMissing(this.aspect1, Arrays.asList(resource(11), resource(12)), Arrays.asList(), Arrays.asList(),
+				Arrays.asList(resource(11), resource(12)), 0);
+		assertMissing(this.aspect1, Arrays.asList(resource(11), resource(12)), Arrays.asList(resource(21)),
+				Arrays.asList(), Arrays.asList(resource(12)), 1);
 
-		assertDeviation(Arrays.asList(resource(11), resource(12)), Arrays.asList(resource(21), resource(23)),
-				Arrays.asList(resource(11)), Arrays.asList(resource(21)), 1);
+		assertDeviation(this.aspect1, Arrays.asList(resource(11), resource(12)),
+				Arrays.asList(resource(21), resource(23)), Arrays.asList(resource(11)), Arrays.asList(resource(21)), 1);
 	}
 }

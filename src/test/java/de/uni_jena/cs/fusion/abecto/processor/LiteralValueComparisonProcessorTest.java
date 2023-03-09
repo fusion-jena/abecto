@@ -149,291 +149,294 @@ class LiteralValueComparisonProcessorTest extends AbstractValueComparisonProcess
 
 	@Test
 	void computeResultModel() throws Exception {
-		assertSame(//
+		assertSame(this.aspect1, //
 				ResourceFactory.createTypedLiteral("value", null), //
 				ResourceFactory.createTypedLiteral("value", null));
 
-		assertSame(//
+		assertSame(this.aspect1, //
 				ResourceFactory.createTypedLiteral("true", XSDDatatype.XSDboolean),
 				ResourceFactory.createTypedLiteral("true", XSDDatatype.XSDboolean));
 
-		assertSame(//
+		assertSame(this.aspect1, //
 				ResourceFactory.createTypedLiteral("-5", XSDDatatype.XSDinteger),
 				ResourceFactory.createTypedLiteral("-5", XSDDatatype.XSDinteger));
-		assertSame(//
+		assertSame(this.aspect1, //
 				ResourceFactory.createTypedLiteral("-5", XSDDatatype.XSDinteger),
 				ResourceFactory.createTypedLiteral("-5", XSDDatatype.XSDdecimal));
-		assertSame(//
+		assertSame(this.aspect1, //
 				ResourceFactory.createTypedLiteral("-5", XSDDatatype.XSDinteger),
 				ResourceFactory.createTypedLiteral("-5", XSDDatatype.XSDfloat));
-		assertSame(//
+		assertSame(this.aspect1, //
 				ResourceFactory.createTypedLiteral("-5", XSDDatatype.XSDinteger),
 				ResourceFactory.createTypedLiteral("-5", XSDDatatype.XSDdouble));
 
-		assertSame(//
+		assertSame(this.aspect1, //
 				ResourceFactory.createTypedLiteral("-5.0", XSDDatatype.XSDdecimal),
 				ResourceFactory.createTypedLiteral("-5.0", XSDDatatype.XSDdecimal));
-		assertSame(//
+		assertSame(this.aspect1, //
 				ResourceFactory.createTypedLiteral("-5.0", XSDDatatype.XSDdecimal),
 				ResourceFactory.createTypedLiteral("-5.0", XSDDatatype.XSDfloat));
-		assertSame(//
+		assertSame(this.aspect1, //
 				ResourceFactory.createTypedLiteral("-5.0", XSDDatatype.XSDdecimal),
 				ResourceFactory.createTypedLiteral("-5.0", XSDDatatype.XSDdouble));
 
-		assertSame(//
+		assertSame(this.aspect1, //
 				ResourceFactory.createTypedLiteral("4.2E9", XSDDatatype.XSDfloat),
 				ResourceFactory.createTypedLiteral("4.2E9", XSDDatatype.XSDfloat));
-		assertSame(//
+		assertSame(this.aspect1, //
 				ResourceFactory.createTypedLiteral("4.2e9", XSDDatatype.XSDfloat),
 				ResourceFactory.createTypedLiteral("4.2E9", XSDDatatype.XSDfloat));
-		assertSame(//
+		assertSame(this.aspect1, //
 				ResourceFactory.createTypedLiteral("4.2e9", XSDDatatype.XSDfloat),
 				ResourceFactory.createTypedLiteral("4.2e9", XSDDatatype.XSDfloat));
-		assertSame(//
+		assertSame(this.aspect1, //
 				ResourceFactory.createTypedLiteral("4.2E0", XSDDatatype.XSDfloat),
 				ResourceFactory.createTypedLiteral("4.2E0", XSDDatatype.XSDfloat));
-		assertSame(//
+		assertSame(this.aspect1, //
 				ResourceFactory.createTypedLiteral("4.2e0", XSDDatatype.XSDfloat),
 				ResourceFactory.createTypedLiteral("4.2E0", XSDDatatype.XSDfloat));
-		assertSame(//
+		assertSame(this.aspect1, //
 				ResourceFactory.createTypedLiteral("4.2e0", XSDDatatype.XSDfloat),
 				ResourceFactory.createTypedLiteral("4.2e0", XSDDatatype.XSDfloat));
-		assertSame(//
+		assertSame(this.aspect1, //
 				ResourceFactory.createTypedLiteral("4.2E-9", XSDDatatype.XSDfloat),
 				ResourceFactory.createTypedLiteral("4.2E-9", XSDDatatype.XSDfloat));
-		assertSame(//
+		assertSame(this.aspect1, //
 				ResourceFactory.createTypedLiteral("4.2e-9", XSDDatatype.XSDfloat),
 				ResourceFactory.createTypedLiteral("4.2E-9", XSDDatatype.XSDfloat));
-		assertSame(//
+		assertSame(this.aspect1, //
 				ResourceFactory.createTypedLiteral("4.2e-9", XSDDatatype.XSDfloat),
 				ResourceFactory.createTypedLiteral("4.2e-9", XSDDatatype.XSDfloat));
-		assertSame(//
+		assertSame(this.aspect1, //
 				ResourceFactory.createTypedLiteral("0.0042", XSDDatatype.XSDfloat),
 				ResourceFactory.createTypedLiteral("0.0042E0", XSDDatatype.XSDfloat));
-		assertSame(//
+		assertSame(this.aspect1, //
 				ResourceFactory.createTypedLiteral("0.0042", XSDDatatype.XSDfloat),
 				ResourceFactory.createTypedLiteral("0.0042e0", XSDDatatype.XSDfloat));
-		assertSame(//
+		assertSame(this.aspect1, //
 				ResourceFactory.createTypedLiteral("0.0042", XSDDatatype.XSDfloat),
 				ResourceFactory.createTypedLiteral("4.2e-3", XSDDatatype.XSDfloat));
 
-		assertSame(//
+		assertSame(this.aspect1, //
 				ResourceFactory.createTypedLiteral("4.2E9", XSDDatatype.XSDfloat),
 				ResourceFactory.createTypedLiteral("4.2E9", XSDDatatype.XSDdouble));
 
-		assertSame(//
+		assertSame(this.aspect1, //
 				ResourceFactory.createTypedLiteral("4.2E9", XSDDatatype.XSDdouble),
 				ResourceFactory.createTypedLiteral("4.2E9", XSDDatatype.XSDdouble));
 
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("value1", null), ResourceFactory.createTypedLiteral("value2", null));
 
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("true", XSDDatatype.XSDboolean),
 				ResourceFactory.createTypedLiteral("false", XSDDatatype.XSDboolean));
 
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("-4", XSDDatatype.XSDinteger),
 				ResourceFactory.createTypedLiteral("-5", XSDDatatype.XSDinteger));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("-4", XSDDatatype.XSDinteger),
 				ResourceFactory.createTypedLiteral("-5", XSDDatatype.XSDdecimal));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("-4", XSDDatatype.XSDinteger),
 				ResourceFactory.createTypedLiteral("-5", XSDDatatype.XSDfloat));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("-4", XSDDatatype.XSDinteger),
 				ResourceFactory.createTypedLiteral("-5", XSDDatatype.XSDdouble));
 
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("-4.0", XSDDatatype.XSDdecimal),
 				ResourceFactory.createTypedLiteral("-5.0", XSDDatatype.XSDdecimal));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("-4.0", XSDDatatype.XSDdecimal),
 				ResourceFactory.createTypedLiteral("-5.0", XSDDatatype.XSDfloat));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("-4.0", XSDDatatype.XSDdecimal),
 				ResourceFactory.createTypedLiteral("-5.0", XSDDatatype.XSDdouble));
 
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("3.2E9", XSDDatatype.XSDfloat),
 				ResourceFactory.createTypedLiteral("4.2E9", XSDDatatype.XSDfloat));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("3.2e9", XSDDatatype.XSDfloat),
 				ResourceFactory.createTypedLiteral("4.2E9", XSDDatatype.XSDfloat));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("3.2e9", XSDDatatype.XSDfloat),
 				ResourceFactory.createTypedLiteral("4.2e9", XSDDatatype.XSDfloat));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("3.2E0", XSDDatatype.XSDfloat),
 				ResourceFactory.createTypedLiteral("4.2E0", XSDDatatype.XSDfloat));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("3.2e0", XSDDatatype.XSDfloat),
 				ResourceFactory.createTypedLiteral("4.2E0", XSDDatatype.XSDfloat));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("3.2e0", XSDDatatype.XSDfloat),
 				ResourceFactory.createTypedLiteral("4.2e0", XSDDatatype.XSDfloat));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("3.2E-9", XSDDatatype.XSDfloat),
 				ResourceFactory.createTypedLiteral("4.2E-9", XSDDatatype.XSDfloat));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("3.2e-9", XSDDatatype.XSDfloat),
 				ResourceFactory.createTypedLiteral("4.2E-9", XSDDatatype.XSDfloat));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("3.2e-9", XSDDatatype.XSDfloat),
 				ResourceFactory.createTypedLiteral("4.2e-9", XSDDatatype.XSDfloat));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("0.0032", XSDDatatype.XSDfloat),
 				ResourceFactory.createTypedLiteral("0.0042E0", XSDDatatype.XSDfloat));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("0.0032", XSDDatatype.XSDfloat),
 				ResourceFactory.createTypedLiteral("0.0042e0", XSDDatatype.XSDfloat));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("0.0032", XSDDatatype.XSDfloat),
 				ResourceFactory.createTypedLiteral("4.2e-3", XSDDatatype.XSDfloat));
 
 		// float and double
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("3.2E9", XSDDatatype.XSDfloat),
 				ResourceFactory.createTypedLiteral("4.2E9", XSDDatatype.XSDdouble));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("3.2e9", XSDDatatype.XSDfloat),
 				ResourceFactory.createTypedLiteral("4.2E9", XSDDatatype.XSDdouble));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("3.2e9", XSDDatatype.XSDfloat),
 				ResourceFactory.createTypedLiteral("4.2e9", XSDDatatype.XSDdouble));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("3.2E0", XSDDatatype.XSDfloat),
 				ResourceFactory.createTypedLiteral("4.2E0", XSDDatatype.XSDdouble));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("3.2e0", XSDDatatype.XSDfloat),
 				ResourceFactory.createTypedLiteral("4.2E0", XSDDatatype.XSDdouble));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("3.2e0", XSDDatatype.XSDfloat),
 				ResourceFactory.createTypedLiteral("4.2e0", XSDDatatype.XSDdouble));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("3.2E-9", XSDDatatype.XSDfloat),
 				ResourceFactory.createTypedLiteral("4.2E-9", XSDDatatype.XSDdouble));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("3.2e-9", XSDDatatype.XSDfloat),
 				ResourceFactory.createTypedLiteral("4.2E-9", XSDDatatype.XSDdouble));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("3.2e-9", XSDDatatype.XSDfloat),
 				ResourceFactory.createTypedLiteral("4.2e-9", XSDDatatype.XSDdouble));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("0.0032", XSDDatatype.XSDfloat),
 				ResourceFactory.createTypedLiteral("0.0042E0", XSDDatatype.XSDdouble));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("0.0032", XSDDatatype.XSDfloat),
 				ResourceFactory.createTypedLiteral("0.0042e0", XSDDatatype.XSDdouble));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("0.0032", XSDDatatype.XSDfloat),
 				ResourceFactory.createTypedLiteral("4.2e-3", XSDDatatype.XSDdouble));
 
 		// double and float
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("3.2E9", XSDDatatype.XSDdouble),
 				ResourceFactory.createTypedLiteral("4.2E9", XSDDatatype.XSDfloat));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("3.2e9", XSDDatatype.XSDdouble),
 				ResourceFactory.createTypedLiteral("4.2E9", XSDDatatype.XSDfloat));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("3.2e9", XSDDatatype.XSDdouble),
 				ResourceFactory.createTypedLiteral("4.2e9", XSDDatatype.XSDfloat));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("3.2E0", XSDDatatype.XSDdouble),
 				ResourceFactory.createTypedLiteral("4.2E0", XSDDatatype.XSDfloat));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("3.2e0", XSDDatatype.XSDdouble),
 				ResourceFactory.createTypedLiteral("4.2E0", XSDDatatype.XSDfloat));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("3.2e0", XSDDatatype.XSDdouble),
 				ResourceFactory.createTypedLiteral("4.2e0", XSDDatatype.XSDfloat));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("3.2E-9", XSDDatatype.XSDdouble),
 				ResourceFactory.createTypedLiteral("4.2E-9", XSDDatatype.XSDfloat));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("3.2e-9", XSDDatatype.XSDdouble),
 				ResourceFactory.createTypedLiteral("4.2E-9", XSDDatatype.XSDfloat));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("3.2e-9", XSDDatatype.XSDdouble),
 				ResourceFactory.createTypedLiteral("4.2e-9", XSDDatatype.XSDfloat));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("0.0032", XSDDatatype.XSDdouble),
 				ResourceFactory.createTypedLiteral("0.0042E0", XSDDatatype.XSDfloat));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("0.0032", XSDDatatype.XSDdouble),
 				ResourceFactory.createTypedLiteral("0.0042e0", XSDDatatype.XSDfloat));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("0.0032", XSDDatatype.XSDdouble),
 				ResourceFactory.createTypedLiteral("4.2e-3", XSDDatatype.XSDfloat));
 
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("3.2E9", XSDDatatype.XSDdouble),
 				ResourceFactory.createTypedLiteral("4.2E9", XSDDatatype.XSDdouble));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("3.2e9", XSDDatatype.XSDdouble),
 				ResourceFactory.createTypedLiteral("4.2E9", XSDDatatype.XSDdouble));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("3.2e9", XSDDatatype.XSDdouble),
 				ResourceFactory.createTypedLiteral("4.2e9", XSDDatatype.XSDdouble));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("3.2E0", XSDDatatype.XSDdouble),
 				ResourceFactory.createTypedLiteral("4.2E0", XSDDatatype.XSDdouble));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("3.2e0", XSDDatatype.XSDdouble),
 				ResourceFactory.createTypedLiteral("4.2E0", XSDDatatype.XSDdouble));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("3.2e0", XSDDatatype.XSDdouble),
 				ResourceFactory.createTypedLiteral("4.2e0", XSDDatatype.XSDdouble));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("3.2E-9", XSDDatatype.XSDdouble),
 				ResourceFactory.createTypedLiteral("4.2E-9", XSDDatatype.XSDdouble));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("3.2e-9", XSDDatatype.XSDdouble),
 				ResourceFactory.createTypedLiteral("4.2E-9", XSDDatatype.XSDdouble));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("3.2e-9", XSDDatatype.XSDdouble),
 				ResourceFactory.createTypedLiteral("4.2e-9", XSDDatatype.XSDdouble));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("0.0032", XSDDatatype.XSDdouble),
 				ResourceFactory.createTypedLiteral("0.0042E0", XSDDatatype.XSDdouble));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("0.0032", XSDDatatype.XSDdouble),
 				ResourceFactory.createTypedLiteral("0.0042e0", XSDDatatype.XSDdouble));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("0.0032", XSDDatatype.XSDdouble),
 				ResourceFactory.createTypedLiteral("4.2e-3", XSDDatatype.XSDdouble));
 
-		assertUnexpectedValueType(ResourceFactory.createStringLiteral("value1"), resource("otherEntity"),
+		assertUnexpectedValueType(this.aspect1, ResourceFactory.createStringLiteral("value1"), resource("otherEntity"),
 				"Should be a literal.");
-		assertUnexpectedValueType(ResourceFactory.createTypedLiteral("true", XSDDatatype.XSDboolean),
+		assertUnexpectedValueType(this.aspect1, ResourceFactory.createTypedLiteral("true", XSDDatatype.XSDboolean),
 				resource("otherEntity"), "Should be a literal.");
-		assertUnexpectedValueType(ResourceFactory.createTypedLiteral("-4", XSDDatatype.XSDinteger),
+		assertUnexpectedValueType(this.aspect1, ResourceFactory.createTypedLiteral("-4", XSDDatatype.XSDinteger),
 				resource("otherEntity"), "Should be a literal.");
-		assertUnexpectedValueType(ResourceFactory.createTypedLiteral("-4.0", XSDDatatype.XSDdecimal),
+		assertUnexpectedValueType(this.aspect1, ResourceFactory.createTypedLiteral("-4.0", XSDDatatype.XSDdecimal),
 				resource("otherEntity"), "Should be a literal.");
-		assertUnexpectedValueType(ResourceFactory.createTypedLiteral("3.2E9", XSDDatatype.XSDfloat),
+		assertUnexpectedValueType(this.aspect1, ResourceFactory.createTypedLiteral("3.2E9", XSDDatatype.XSDfloat),
 				resource("otherEntity"), "Should be a literal.");
-		assertUnexpectedValueType(ResourceFactory.createTypedLiteral("3.2E9", XSDDatatype.XSDdouble),
+		assertUnexpectedValueType(this.aspect1, ResourceFactory.createTypedLiteral("3.2E9", XSDDatatype.XSDdouble),
 				resource("otherEntity"), "Should be a literal.");
 
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("0.001", XSDDatatype.XSDfloat),
 				ResourceFactory.createTypedLiteral("0.001e0", XSDDatatype.XSDdouble));
-		assertDeviation(//
+		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("0.001", XSDDatatype.XSDdouble),
 				ResourceFactory.createTypedLiteral("0.001e0", XSDDatatype.XSDfloat));
 
 		Literal one = ResourceFactory.createTypedLiteral("1", XSDDatatype.XSDinteger);
 		Literal two = ResourceFactory.createTypedLiteral("2", XSDDatatype.XSDinteger);
 		Literal three = ResourceFactory.createTypedLiteral("3", XSDDatatype.XSDinteger);
-		assertMissing(Arrays.asList(one), Arrays.asList(), Arrays.asList(), Arrays.asList(one), 0);
-		assertMissing(Arrays.asList(one, two), Arrays.asList(), Arrays.asList(), Arrays.asList(one, two), 0);
-		assertMissing(Arrays.asList(one, two), Arrays.asList(one), Arrays.asList(), Arrays.asList(two), 1);
+		assertMissing(this.aspect1, Arrays.asList(one), Arrays.asList(), Arrays.asList(), Arrays.asList(one), 0);
+		assertMissing(this.aspect1, Arrays.asList(one, two), Arrays.asList(), Arrays.asList(), Arrays.asList(one, two),
+				0);
+		assertMissing(this.aspect1, Arrays.asList(one, two), Arrays.asList(one), Arrays.asList(), Arrays.asList(two),
+				1);
 
 		// deviation if same present
-		assertDeviation(Arrays.asList(one, two), Arrays.asList(one, three), Arrays.asList(one), Arrays.asList(one), 1);
+		assertDeviation(this.aspect1, Arrays.asList(one, two), Arrays.asList(one, three), Arrays.asList(one),
+				Arrays.asList(one), 1);
 
 	}
 }
