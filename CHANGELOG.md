@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [1.2.0] - 2023-03-09
+
 ### Fixed
 * fix `LiteralValueComparisonProcessor`: add handling for datasets not covering a compared variable
 * fix `ResourceValueComparisonProcessor`: add handling for datasets not covering a compared variable
@@ -252,7 +254,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * add `ManualCategoryProcessor`: Enables users to manually define resource categories and their properties.
 * add `ResourceDeviationProcessor`: Detects deviations between the resource references of mapped resources as defined in the categories.
 
-[Unreleased]: https://github.com/fusion-jena/abecto/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/fusion-jena/abecto/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/fusion-jena/abecto/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/fusion-jena/abecto/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/fusion-jena/abecto/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/fusion-jena/abecto/compare/v0.10.0...v1.0.0
