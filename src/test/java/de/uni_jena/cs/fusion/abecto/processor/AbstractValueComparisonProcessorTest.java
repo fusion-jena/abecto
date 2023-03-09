@@ -1403,7 +1403,7 @@ public abstract class AbstractValueComparisonProcessorTest {
 	}
 
 	@Test
-	public void countsAtsingleDatasetWithVariable() throws Exception {
+	public void countsAtSingleDatasetWithVariable() throws Exception {
 		// check counts if one variable is covered by only one dataset (dataset 1)
 		Query patternWithoutValue = QueryFactory
 				.create("SELECT ?key ?dummy WHERE { ?key <" + property(2) + "> ?dummy}");
