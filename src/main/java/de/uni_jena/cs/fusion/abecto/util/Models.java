@@ -16,10 +16,8 @@
 package de.uni_jena.cs.fusion.abecto.util;
 
 import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpClient.Redirect;
@@ -43,8 +41,6 @@ import org.apache.jena.ontology.OntModelSpec;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.riot.Lang;
-import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.RDFParser;
 import org.apache.jena.riot.system.ErrorHandlerFactory;
 
@@ -56,9 +52,9 @@ public class Models {
 	/**
 	 * The maximum size of array to allocate.
 	 * 
-	 * @see {@link BufferedInputStream#MAX_BUFFER_SIZE}
+	 * @see BufferedInputStream#MAX_BUFFER_SIZE
 	 */
-	private static int MAX_BUFFER_SIZE = Integer.MAX_VALUE - 8;
+	private static final int MAX_BUFFER_SIZE = Integer.MAX_VALUE - 8;
 
 	public static OntModel getEmptyOntModel() {
 		return ModelFactory.createOntologyModel(OntModelSpec.OWL_MEM);
@@ -84,7 +80,6 @@ public class Models {
 			} catch (Throwable t) {
 				throwables.put(lang, t);
 				in.reset();
-				continue;
 			}
 		}
 		throw new IllegalArgumentException(
@@ -148,20 +143,6 @@ public class Models {
 
 	public static Model union(Model baseModel, Model... models) {
 		return union(baseModel, Arrays.stream(models));
-	}
-
-	public static void write(OutputStream out, Model model, Lang lang) throws IOException {
-		if (lang.equals(Lang.JSONLD)) {
-			RDFDataMgr.write(out, model, RDFFormat.JSONLD_PRETTY);
-		} else {
-			RDFDataMgr.write(out, model, lang);
-		}
-	}
-
-	public static byte[] writeBytes(Model model, Lang lang) throws IOException {
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		Models.write(out, model, lang);
-		return out.toByteArray();
 	}
 
 	public static <T> Optional<T> assertOneOptional(Iterator<T> iterator) throws ToManyElementsException {

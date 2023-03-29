@@ -125,8 +125,8 @@ public class LiteralValueComparisonProcessor extends AbstractValueComparisonProc
 			} else if (type1 instanceof XSDDouble) {
 				double value1Double = literal1.getDouble();
 				// handle special cases
-				if (value1Double == Double.NaN) {
-					return type2 instanceof XSDFloat && literal2.getFloat() == Float.NaN;
+				if (Double.isNaN(value1Double)) {
+					return type2 instanceof XSDFloat && Float.isNaN(literal2.getFloat());
 				} else if (value1Double == Double.NEGATIVE_INFINITY) {
 					return type2 instanceof XSDFloat && literal2.getFloat() == Float.NEGATIVE_INFINITY;
 				} else if (value1Double == Double.POSITIVE_INFINITY) {
@@ -142,8 +142,8 @@ public class LiteralValueComparisonProcessor extends AbstractValueComparisonProc
 			} else if (type1 instanceof XSDFloat) {
 				float value1Float = literal1.getFloat();
 				// handle special cases
-				if (value1Float == Double.NaN) {
-					return type2 instanceof XSDDouble && literal2.getDouble() == Double.NaN;
+				if (Float.isNaN(value1Float)) {
+					return type2 instanceof XSDDouble && Double.isNaN(literal2.getDouble());
 				} else if (value1Float == Double.NEGATIVE_INFINITY) {
 					return type2 instanceof XSDDouble && literal2.getDouble() == Double.NEGATIVE_INFINITY;
 				} else if (value1Float == Double.POSITIVE_INFINITY) {
@@ -166,7 +166,7 @@ public class LiteralValueComparisonProcessor extends AbstractValueComparisonProc
 			} else if (type2 instanceof XSDDouble) {
 				double value2Double = literal2.getDouble();
 				// handle special cases
-				if (value2Double == Double.NaN || value2Double == Double.NEGATIVE_INFINITY
+				if (Double.isNaN(value2Double) || value2Double == Double.NEGATIVE_INFINITY
 						|| value2Double == Double.POSITIVE_INFINITY) {
 					return false;
 				}
@@ -180,7 +180,7 @@ public class LiteralValueComparisonProcessor extends AbstractValueComparisonProc
 			} else if (type2 instanceof XSDFloat) {
 				float value2Float = literal2.getFloat();
 				// handle special cases
-				if (value2Float == Float.NaN || value2Float == Float.NEGATIVE_INFINITY
+				if (Float.isNaN(value2Float) || value2Float == Float.NEGATIVE_INFINITY
 						|| value2Float == Float.POSITIVE_INFINITY) {
 					return false;
 				}

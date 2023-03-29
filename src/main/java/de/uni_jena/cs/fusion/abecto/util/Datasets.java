@@ -26,17 +26,13 @@ import java.util.stream.Collectors;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class Datasets {
-
-	final static Logger log = LoggerFactory.getLogger(Datasets.class);
 
 	/**
 	 * The maximum size of array to allocate.
 	 * 
-	 * @see {@link BufferedInputStream#MAX_BUFFER_SIZE}
+	 * @see BufferedInputStream#MAX_BUFFER_SIZE
 	 */
 	private static final int MAX_BUFFER_SIZE = Integer.MAX_VALUE - 8;
 	/**
@@ -53,17 +49,16 @@ public class Datasets {
 		}
 		in.mark(MAX_BUFFER_SIZE);
 		// try each known language
-		InputStream unclosableIn = new UncloseableInputStream(in);
+		InputStream uncloseableIn = new UncloseableInputStream(in);
 		LinkedHashMap<Lang, Throwable> throwables = new LinkedHashMap<>();
 		for (Lang lang : supportedLanguages) {
 			try {
-				RDFDataMgr.read(dataset, unclosableIn, lang);
+				RDFDataMgr.read(dataset, uncloseableIn, lang);
 				in.close();
 				return;
 			} catch (Throwable e) {
 				throwables.put(lang, e);
 				in.reset();
-				continue;
 			}
 		}
 		throw new IllegalArgumentException(

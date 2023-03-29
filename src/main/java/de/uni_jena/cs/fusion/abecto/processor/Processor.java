@@ -52,7 +52,7 @@ import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 
 /**
  * Provides an abstraction of step processors that generate new primary data or
- * meta data graphs based on its input primary data, meta data graphs and
+ * metadata graphs based on its input primary data, metadata graphs and
  * processor parameters.
  */
 public abstract class Processor<P extends Processor<P>> implements Runnable {
@@ -72,7 +72,7 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 	private Optional<Resource> associatedDataset = Optional.empty();
 
 	/**
-	 * The primary data output model of this {@link Processor}. Might be replaces
+	 * The primary data output model of this {@link Processor}. Might be replaced
 	 * during processing using {@link #replaceOutputPrimaryModel(Model)}.
 	 */
 	private Optional<Model> outputPrimaryModel = Optional.empty();
@@ -105,7 +105,7 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 
 	public final P addInputProcessor(Processor<?> inputProcessor) {
 		inputProcessor.inputMetaModelsByDataset.forEach((d, ms) -> ms.forEach(m -> this.addInputMetaModel(d, m)));
-		inputProcessor.outputMetaModelsByDataset.forEach((d, m) -> this.addInputMetaModel(d, m));
+		inputProcessor.outputMetaModelsByDataset.forEach(this::addInputMetaModel);
 		inputProcessor.inputPrimaryModelsByDataset.forEach((d, ms) -> ms.forEach(m -> this.addInputPrimaryModel(d, m)));
 		if (inputProcessor.associatedDataset.isPresent() && inputProcessor.outputPrimaryModel.isPresent()) {
 			this.addInputPrimaryModel(inputProcessor.associatedDataset.get(), inputProcessor.outputPrimaryModel.get());
@@ -164,7 +164,6 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 	 * 
 	 * @param resource1 first resource to check
 	 * @param resource2 second resource to check
-	 * @param aspect1   aspect affected by the correspondence
 	 * @return {@code true}, if resources correspond to each, otherwise
 	 *         {@code false}
 	 */
@@ -179,8 +178,8 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 	 * given aspect already exist.
 	 * <p>
 	 * <strong>Note:<strong> The use of this method is not mandatory, as it will
-	 * also be called by {@link #addCorrespondence(Resource, Resource, Aspect)} and
-	 * {@link #addIncorrespondence(Resource, Resource, Aspect)}.
+	 * also be called by {@link MappingProcessor#addCorrespondence(Resource, Resource...)} and
+	 * {@link MappingProcessor#addIncorrespondence(Resource, Resource, Resource...)}.
 	 * 
 	 * @param resource1 first resource to check
 	 * @param resource2 second resource to check
@@ -267,13 +266,13 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 	}
 
 	/**
-	 * Returns the output meta model of a dataset, or the general output meta model,
+	 * Returns the output metamodel of a dataset, or the general output metamodel,
 	 * if {@code dataset} is {@code null}. If not present, a new model will be
 	 * created.
 	 * 
-	 * @param datasetthe assigned dataset the output meta models or {@code null} for
-	 *                   the general meta models.
-	 * @return the output meta model
+	 * @param dataset the assigned dataset the output metamodels or {@code null} for
+	 *                   the general metamodels.
+	 * @return the output metamodel
 	 */
 	public final Model getOutputMetaModel(@Nullable Resource dataset) {
 		return this.outputMetaModelsByDataset.computeIfAbsent(dataset,
@@ -340,7 +339,7 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 	 */
 	protected final P replaceOutputPrimaryModel(Model outputPrimaryModel) {
 		if (this.associatedDataset.isEmpty()) {
-			throw new IllegalStateException("Operation only permited, if step is associated with a dataset.");
+			throw new IllegalStateException("Operation only permitted, if step is associated with a dataset.");
 		}
 		this.outputPrimaryModel = Optional.of(outputPrimaryModel);
 		return self();
@@ -354,8 +353,6 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 	/**
 	 * Sets the associated dataset of the processor, which is the dataset the output
 	 * primary model will belong to.
-	 * 
-	 * @param dataset
 	 */
 	public final P setAssociatedDataset(Resource dataset) {
 		this.associatedDataset = Optional.of(dataset);

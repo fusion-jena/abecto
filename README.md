@@ -5,11 +5,23 @@
 
 ABECTO is an ABox Evaluation and Comparison Tool for Ontologies.
 
+<!-- TOC -->
+* [ABECTO](#abecto)
+  * [Building](#building)
+  * [Configuration](#configuration)
+    * [How to write an ABECTO plan?](#how-to-write-an-abecto-plan)
+  * [Execution](#execution)
+  * [CI Usage with Docker](#ci-usage-with-docker)
+  * [Project Examples](#project-examples)
+  * [License](#license)
+  * [Publications](#publications)
+<!-- TOC -->
+
 ## Building
 
 To use ABECTO, first checkout the project and compile ABECTO using Maven:
 
-```
+```shell
 mvn -B -Dmaven.test.skip=true package
 ```
 
@@ -23,7 +35,7 @@ The execution of ABECTO is configured in a plan file, which is a RDF dataset fil
 
 1. **Namespace:** To ease writing add a base declaration for the IRIs of your plan and some prefix declarations. A good start is the following example. You might adapt the base IRI and add further prefixes related to the compared knowledge graphs.
 
-   ```
+   ```turtle
    @base                     <http://example.org/> .
    @prefix abecto:           <java:de.uni_jena.cs.fusion.abecto.processor.> .
    @prefix av:               <http://w3id.org/abecto/vocabulary#> .
@@ -35,14 +47,14 @@ The execution of ABECTO is configured in a plan file, which is a RDF dataset fil
 
 2. **Plan:** Declare the plan
 
-   ```
+   ```turtle
    <plan> a av:Plan ;
-    .
-    ```
+       .
+   ```
 
 3. **Aspects:** Specify the resources to compare by adding at least one aspect declaration. The following example declares the aspect `<aspectPerson>` with the key variable `person` covered by three datasets (`<dataset1>`, `<dataset2>`, `<dataset3>`). For each dataset a defining SPARQL select query is declared that returns the key variable and further variables to compare.
 
-   ```
+   ```turtle
    <aspectPerson> a av:Aspect ;
        av:keyVariableName "person" ;
        .
@@ -84,7 +96,7 @@ The execution of ABECTO is configured in a plan file, which is a RDF dataset fil
 
 4. **Source Steps:** Specify plan steps that load the sources of the primary data of the datasets. The following example declares steps to load primary data of three dataset from four files. Each source step is an independent starting point of the plan without preceding steps. Providing `rdfs:label` to the steps will ease reading the execution logs and reports.
 
-   ```
+   ```turtle
    <source1> a av:Step ;
        rdfs:label "Load Dataset 1"@en;
        p-plan:isStepOfPlan <plan> ;
@@ -112,7 +124,7 @@ The execution of ABECTO is configured in a plan file, which is a RDF dataset fil
 
 5. **Transformation, Mapping, and Comparison/Evaluation Steps:** Specify further steps for transforming, mapping and comparing the primary data. Each step will have at least one preceding steps specified using `p-plan:isPrecededBy`. With `av:predefinedMetaDataGraph` steps you can manually add mappings, mapping exclusions or annotations into the process. The following example declares a mapping step `<jaroWinklerMapping>` to map resources based on string similarity and a comparison step `<literalValueComparison>` to compare literal values. At the mapping step, an predefined metadata graph `<manualMappings>` is introduced to prevent the mapping of two resources. The mapping step is preceded by all three source steps. The comparison step is only directly preceded by the mapping step. But the data returned by all indirect preceding steps are also available. 
 
-   ```
+   ```turtle
    GRAPH <manualMappings>
    {
        <http://example.org/b/william> av:correspondsNotToResource <http://example.org/c/P004> .
@@ -141,7 +153,7 @@ The execution of ABECTO is configured in a plan file, which is a RDF dataset fil
            [av:key "aspect" ; av:value <aspectPerson> ] ,
            [av:key "variables" ; av:value "label", "pnr" ] ;
        .
-    ```
+   ```
 
 ## Execution
 
@@ -189,15 +201,15 @@ Compares and evaluates several RDF datasets.
 
 Examples:
 * show the help message:
-  ```
+  ```shell
   java -jar target/abecto.jar --help
   ```
 * run the tutorial plan and store the result:
-  ```
+  ```shell
   java -jar target/abecto.jar --trig result.trig src/test/resources/tutorial-configuration.trig
   ```
 * create an deviations report for a specific dataset and without re-running the plan:
-  ```
+  ```shell
   java -jar target/abecto.jar --loadOnly --reportOn "http://example.org/dataset1" --export deviations=deviations.csv result.trig
   ```
 

@@ -7,9 +7,5 @@
 /.project
 /.settings
 
-## Jupyter Notebook
-\.ipynb_checkpoints
-/__pycache__
-
-# ABECTO
-/.abecto
+## IntelliJ
+/.idea

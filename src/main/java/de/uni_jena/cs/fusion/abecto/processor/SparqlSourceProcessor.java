@@ -198,20 +198,14 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 	 * <a href="https://github.com/openlink/virtuoso-opensource/issues/921">not
 	 * supported by Virtuoso</a>.
 	 * </ul>
-	 * 
-	 * @param service
-	 * @param resourcesToLoad
-	 * @param resultModel
-	 * @param loadInverse
-	 * @param chunkSize
 	 */
 	private void loadResources(QueryExecutionBuilder service, Collection<Resource> resourcesToLoad, Model resultModel,
 			boolean loadInverse) {
 
 		// initialize queries
 		Query[] queriesToExecute;
-		List<Binding> currentChunck = new ArrayList<Binding>(chunkSize);
-		ElementData values = new ElementData(valueVars, currentChunck);
+		List<Binding> currentChunk = new ArrayList<>(chunkSize);
+		ElementData values = new ElementData(valueVars, currentChunk);
 
 		BasicPattern pattern = BasicPattern
 				.wrap(Collections.singletonList(new Triple(resourceToLoadVar, predicateVar, objectVar)));
@@ -242,19 +236,19 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 			ListIterator<Resource> resourcesToLoadIterator = new ArrayList<>(resourcesToLoad).listIterator();
 			while (resourcesToLoadIterator.hasNext()) {
 
-				// add resource to current chunck
-				currentChunck.add(BindingFactory.binding(resourceToLoadVar, resourcesToLoadIterator.next().asNode()));
+				// add resource to current chunk
+				currentChunk.add(BindingFactory.binding(resourceToLoadVar, resourcesToLoadIterator.next().asNode()));
 
 				// execute chunk if necessary
-				if (currentChunck.size() == currentChunkSize || // chunk full or
+				if (currentChunk.size() == currentChunkSize || // chunk full or
 						!resourcesToLoadIterator.hasNext()) { // last resource
 					try {
 
 						// reuse prefixes returned by the service to shorten query
 						queryToExecute.setPrefixMapping(resultModel);
-						log.debug(String.format("Fetching %d resources: %s", currentChunck.size(), queryToExecute));
+						log.debug(String.format("Fetching %d resources: %s", currentChunk.size(), queryToExecute));
 						service.query(queryToExecute).build().execConstruct(resultModel);
-						// increase chunk size if less then chunkSize
+						// increase chunk size if less than chunkSize
 						currentChunkSize = Math.min(this.chunkSize,
 								(int) (currentChunkSize * this.chunkSizeIncreaseFactor));
 
@@ -264,7 +258,7 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 							this.maxRetries--;
 							// reduce chunk size
 							currentChunkSize = Math.max(1, (int) (currentChunkSize * this.chunkSizeDecreaseFactor));
-							for (int i = 0; i < currentChunck.size(); i++) {
+							for (int i = 0; i < currentChunk.size(); i++) {
 								// redo resources of current chunk
 								resourcesToLoadIterator.previous();
 							}
@@ -277,7 +271,7 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 						}
 					} finally {
 						// reset chunk
-						currentChunck.clear();
+						currentChunk.clear();
 					}
 				}
 			}
@@ -288,8 +282,8 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 			Collection<Resource> list, Collection<Property> followInverse, Collection<Property> followUnlimited,
 			Collection<Property> followInverseUnlimited) {
 
-		Set<Resource> resourcesLoaded = new HashSet<Resource>();
-		Set<Resource> resourcesToLoad = new HashSet<Resource>();
+		Set<Resource> resourcesLoaded = new HashSet<>();
+		Set<Resource> resourcesToLoad = new HashSet<>();
 
 		// get list of relevant resources using parameter `query`
 		if (query.isPresent()) {

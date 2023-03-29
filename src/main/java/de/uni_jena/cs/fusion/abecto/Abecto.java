@@ -23,15 +23,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -88,7 +81,7 @@ public class Abecto implements Callable<Integer> {
 
 	final static Logger log = LoggerFactory.getLogger(Abecto.class);
 
-	public static void main(String... args) throws Exception {
+	public static void main(String... args) {
 		int exitCode = new CommandLine(new Abecto()).execute(args);
 		System.exit(exitCode);
 	}
@@ -239,7 +232,7 @@ public class Abecto implements Callable<Integer> {
 	}
 
 	public void loadDataset(File configurationFile)
-			throws IllegalArgumentException, FileNotFoundException, IOException {
+			throws IllegalArgumentException, IOException {
 
 		// derive relative base path
 		this.relativeBasePath = configurationFile.getParentFile();
@@ -248,8 +241,7 @@ public class Abecto implements Callable<Integer> {
 		Datasets.read(this.dataset, new FileInputStream(configurationFile));
 	}
 
-	public void export(String exportType, File outputFile, Dataset reportOn) throws TemplateNotFoundException,
-			MalformedTemplateNameException, ParseException, IOException, TemplateException {
+	public void export(String exportType, File outputFile, Dataset reportOn) throws IOException, TemplateException {
 		Template template = this.freemarker.getTemplate(exportType + ".ftl");
 		String queryStr = new String(
 				this.getClass().getResourceAsStream(TEMPLATE_FOLDER + "/" + exportType + ".rq").readAllBytes(),
@@ -283,7 +275,7 @@ public class Abecto implements Callable<Integer> {
 		Resource plan = Plans.getPlan(configurationModel, planIri);
 
 		// get aspects
-		Aspect[] aspects = Aspect.getAspects(configurationModel).toArray(l -> new Aspect[l]);
+		Aspect[] aspects = Aspect.getAspects(configurationModel).toArray(Aspect[]::new);
 
 		// write aspect variable paths into configuration model
 		for (Aspect aspect : aspects) {
@@ -296,7 +288,7 @@ public class Abecto implements Callable<Integer> {
 		// get execution order
 		List<Resource> stepOrder = new ArrayList<>(predecessors.keySet());
 		// sort by number of (transitive) dependencies to ensure
-		Collections.sort(stepOrder, (x, y) -> Integer.compare(predecessors.get(x).size(), predecessors.get(y).size()));
+		Collections.sort(stepOrder, Comparator.comparingInt(x -> predecessors.get(x).size()));
 
 		// setup and run pipeline
 		Executor executor = Executors.newCachedThreadPool();

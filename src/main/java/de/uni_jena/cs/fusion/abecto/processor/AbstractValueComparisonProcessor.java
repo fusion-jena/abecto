@@ -24,7 +24,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -52,25 +51,25 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 
 	/**
 	 * Number of covered values of another dataset, per variable.
-	 * 
+	 * <p>
 	 * Index: variable, affectedDataset, comparedToDataset
 	 */
 	private Map<String, Map<Resource, Map<Resource, Integer>>> absoluteCoverage = new HashMap<>();
 	/**
 	 * Ratio of covered values of another dataset, per variable.
-	 * 
+	 * <p>
 	 * Index: variable, affectedDataset, comparedToDataset
 	 */
 	private Map<String, Map<Resource, Map<Resource, BigDecimal>>> relativeCoverage = new HashMap<>();
 	/**
 	 * Number of values in this dataset, per variable.
-	 * 
+	 * <p>
 	 * Index: variable, affectedDataset
 	 */
 	private Map<String, Map<Resource, Integer>> count = new HashMap<>();
 	/**
 	 * Number of distinct values in this dataset, per variable.
-	 * 
+	 * <p>
 	 * Index: variable, affectedDataset
 	 */
 	private Map<String, Map<Resource, Integer>> deduplicatedCount = new HashMap<>();
@@ -91,14 +90,12 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 
 	/**
 	 * Returns the number of given non equivalent values.
-	 * 
-	 * @param values
-	 * @return
+	 *
 	 */
 	private int countDistinct(Iterable<RDFNode> values) {
 		ArrayList<RDFNode> distinctValues = new ArrayList<>();
 		for (RDFNode value : values) {
-			if (!distinctValues.stream().anyMatch(v -> equivalentValues(v, value))) {
+			if (distinctValues.stream().noneMatch(v -> equivalentValues(v, value))) {
 				distinctValues.add(value);
 			}
 		}
@@ -134,10 +131,10 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 		// use set of resource sets for mapping values
 		// NOTE: equivalent values use the same set, so get distinct set instances
 		for (Set<Resource> resourceSet : distinctByIdentity(resourcesByMappedValues.values())) {
-			if (!resources1.stream().anyMatch(resourceSet::contains)) {
+			if (resources1.stream().noneMatch(resourceSet::contains)) {
 				continue;
 			}
-			if (!resources2.stream().anyMatch(resourceSet::contains)) {
+			if (resources2.stream().noneMatch(resourceSet::contains)) {
 				continue;
 			}
 			pairwiseOverlap++;
@@ -149,9 +146,7 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 	/**
 	 * Removes all values that do not match to {@link #isValidValue(RDFNode)},
 	 * {@link #useValue(RDFNode)}, or are known wrong values.
-	 * 
-	 * @param valuesByVariableByResource
-	 * @param dataset
+	 *
 	 */
 	private void filterValues(Map<Resource, Map<String, Set<RDFNode>>> valuesByVariableByResource, Resource dataset) {
 		for (Resource resource : valuesByVariableByResource.keySet()) {
@@ -162,10 +157,7 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 	/**
 	 * Removes all values that do not match to {@link #isValidValue(RDFNode)},
 	 * {@link #useValue(RDFNode)}, or are known wrong values.
-	 * 
-	 * @param valuesByVariableByResource
-	 * @param resource
-	 * @param dataset
+	 *
 	 */
 	private void filterValues(Map<String, Set<RDFNode>> valuesByVariable, Resource resource, Resource dataset) {
 		Model inputMetaModel = this.getInputMetaModelUnion(dataset);
@@ -179,19 +171,15 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 
 	/**
 	 * Store an invalid value issue for each value that does not match to
-	 * {@link #isValidValue(RDFNode)} in the according output meta model.
-	 * 
-	 * @param valuesByVariableByResource
-	 * @param dataset
+	 * {@link #isValidValue(RDFNode)} in the according output metamodel.
+	 *
 	 */
 	private void reportInvalidValues(Map<Resource, Map<String, Set<RDFNode>>> valuesByVariableByResource,
 			Resource dataset) {
 		for (Resource resource : valuesByVariableByResource.keySet()) {
 			Map<String, Set<RDFNode>> valuesByVariable = valuesByVariableByResource.get(resource);
 			for (String variable : valuesByVariable.keySet()) {
-				Iterator<RDFNode> values = valuesByVariable.get(variable).iterator();
-				while (values.hasNext()) {
-					RDFNode value = values.next();
+				for (RDFNode value : valuesByVariable.get(variable)) {
 					if (!this.isValidValue(value)) {
 						// report invalid value
 						Metadata.addIssue(resource, variable, value, aspect, "Invalid Value",
@@ -305,7 +293,7 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 				// calculate & store completeness:
 				if (totalPairwiseOverlapByVariable.containsKey(variable) // variable covered by more than 1 dataset
 						&& totalPairwiseOverlapByVariable.get(variable) != 0) {
-					/** Ratio of values in an estimated population covered by this dataset */
+					// calculate ratio of values in an estimated population covered by this dataset
 					BigDecimal completeness = BigDecimal.valueOf(deduplicatedCount.get(variable).get(affectedDataset))
 							.divide(populationSize.get(variable), SCALE, RoundingMode.HALF_UP);
 					Collection<Resource> otherDatasets = new HashSet<>(aspect.getDatasets());
@@ -377,8 +365,6 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 	 * Note: Not the most efficient way to do this, but there is no
 	 * {@link Comparator} available to use {@link TreeMap#TreeMap(Comparator)}.
 	 *
-	 * @param valuesByVariableByResource
-	 * @param values
 	 */
 	private void mapResources(String variable, Map<RDFNode, Set<Resource>> resourcesByMappedValues,
 			Map<Resource, Map<String, Set<RDFNode>>> valuesByVariableByResource) {
@@ -410,10 +396,8 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 	 * 
 	 * @param variable                    Name of the compared variable
 	 * @param dataset1                    IRI of the first dataset
-	 * @param correspondingResource1      IRI of the first datasets resources
 	 * @param valuesByVariableByResource1 Values of the first datasets resources
 	 * @param dataset2                    IRI of the second datasets dataset
-	 * @param correspondingResource1      IRI of the second resources
 	 * @param valuesByVariableByResource2 Values of the second datasets resources
 	 */
 	public void compareVariableValues(String variable, Resource dataset1,
@@ -424,16 +408,16 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 		mapResources(variable, resourcesByMappedValues, valuesByVariableByResource1);
 		mapResources(variable, resourcesByMappedValues, valuesByVariableByResource2);
 
-		// deviation: pair of resources with each having a value not present in the
+		// deviation: a pair of resources with each having a value not present in the
 		// other resource
-		// omission: pair of resources with one having a value not present in the other,
+		// omission: a pair of resources with one having a value not present in the other,
 		// but not vice versa
 		for (Resource resource1 : valuesByVariableByResource1.keySet()) {
 			var values1 = valuesByVariableByResource1.get(resource1).getOrDefault(variable, Collections.emptySet())
-					.stream().filter(v -> isValidValue(v)).collect(Collectors.toSet());
+					.stream().filter(this::isValidValue).collect(Collectors.toSet());
 			for (Resource resource2 : valuesByVariableByResource2.keySet()) {
 				var values2 = valuesByVariableByResource2.get(resource2).getOrDefault(variable, Collections.emptySet())
-						.stream().filter(v -> isValidValue(v)).collect(Collectors.toSet());
+						.stream().filter(this::isValidValue).collect(Collectors.toSet());
 				var notMatchingValues1 = values1.stream().filter(value1 -> !resourcesByMappedValues
 						.getOrDefault(value1, Collections.emptySet()).contains(resource2)).collect(Collectors.toList());
 				var notMatchingValues2 = values2.stream().filter(value2 -> !resourcesByMappedValues
@@ -477,10 +461,7 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 
 	/**
 	 * Checks if a value is valid.
-	 * 
-	 * @param variable the variable the value belongs to
-	 * @param dataset  the dataset the value belongs to
-	 * @param resource the resource the value belongs to
+	 *
 	 * @param value    the value to check
 	 * @return {@code true}, if the value is valid, otherwise {@code false}
 	 */
