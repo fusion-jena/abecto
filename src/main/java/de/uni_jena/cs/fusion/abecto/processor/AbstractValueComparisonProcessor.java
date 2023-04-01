@@ -89,17 +89,16 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 	public final static int SCALE = 16;
 
 	/**
-	 * Returns the number of given non equivalent values.
-	 *
+	 * Returns a duplicate free list of the given values by removing all values equivalent to an earlier value.
 	 */
-	private int countDistinct(Iterable<RDFNode> values) {
+	private List<RDFNode> deduplicate(Iterable<RDFNode> values) {
 		ArrayList<RDFNode> distinctValues = new ArrayList<>();
 		for (RDFNode value : values) {
 			if (distinctValues.stream().noneMatch(v -> equivalentValues(v, value))) {
 				distinctValues.add(value);
 			}
 		}
-		return distinctValues.size();
+		return distinctValues;
 	}
 
 	private void calculateAbsoluteCoverage(String variable, Resource dataset1, Resource dataset2,
@@ -215,7 +214,7 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 
 					// measure count of non equivalent values per resource
 					this.deduplicatedCount.get(variable).merge(dataset,
-							countDistinct(valuesByVariable.getOrDefault(variable, Collections.emptySet())),
+							deduplicate(valuesByVariable.getOrDefault(variable, Collections.emptySet())).size(),
 							Integer::sum);
 				}
 
@@ -223,35 +222,39 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 		}
 
 		getCorrespondenceGroups(aspect.getIri()).forEach(correspondingResources -> {
-			for (Resource dataset1 : aspect.getDatasets()) {
-				Model model1 = this.getInputPrimaryModelUnion(dataset1);
-				Map<Resource, Map<String, Set<RDFNode>>> valuesByVariableByResource1 = aspect
-						.selectResourceValues(correspondingResources, dataset1, variables, model1);
-				reportInvalidValues(valuesByVariableByResource1, dataset1);
-				filterValues(valuesByVariableByResource1, dataset1);
-
+			// get values for all corresponding resources in all datasets
+			Map<Resource,Map<Resource, Map<String, Set<RDFNode>>>> valuesByVariableByResourceByDataset = new HashMap<>();
+			for (Resource dataset : aspect.getDatasets()) {
+				Model model = this.getInputPrimaryModelUnion(dataset);
+				valuesByVariableByResourceByDataset.put(dataset, aspect
+						.selectResourceValues(correspondingResources, dataset, variables, model));
+				reportInvalidValues(valuesByVariableByResourceByDataset.get(dataset), dataset);
+				filterValues(valuesByVariableByResourceByDataset.get(dataset), dataset);
+				// update deduplicated counts
 				for (String variable : variables) {
 					// get values of all corresponding resources
 					var valuesOfCorrespondingResources = new ArrayList<RDFNode>();
-					valuesByVariableByResource1.values().stream()
+					valuesByVariableByResourceByDataset.get(dataset).values().stream()
 							.map(m -> m.getOrDefault(variable, Collections.emptySet()))
+							.map(this::deduplicate) // avoid correction of count twice?
 							.forEach(valuesOfCorrespondingResources::addAll);
 
 					// measure count of non equivalent values per corresponding resources
-					this.deduplicatedCount.get(variable).merge(dataset1,
-							countDistinct(valuesOfCorrespondingResources) - valuesOfCorrespondingResources.size(),
+					this.deduplicatedCount.get(variable).merge(dataset,
+							deduplicate(valuesOfCorrespondingResources).size() - valuesOfCorrespondingResources.size(),
 							Integer::sum);
 				}
+			}
+
+			for (Resource dataset1 : aspect.getDatasets()) {
+				Map<Resource, Map<String, Set<RDFNode>>> valuesByVariableByResource1 = valuesByVariableByResourceByDataset.get(dataset1);
 
 				for (Resource dataset2 : aspect.getDatasets()) {
 					if (dataset1.hashCode() < dataset2.hashCode()) {
 						// do not do work twice
 						continue;
 					}
-					Model model2 = this.getInputPrimaryModelUnion(dataset2);
-					Map<Resource, Map<String, Set<RDFNode>>> valuesByVariableByResource2 = aspect
-							.selectResourceValues(correspondingResources, dataset2, variables, model2);
-					filterValues(valuesByVariableByResource2, dataset2);
+					Map<Resource, Map<String, Set<RDFNode>>> valuesByVariableByResource2 = valuesByVariableByResourceByDataset.get(dataset2);
 					for (String variable : variables) {
 						if (aspect.getPattern(dataset1).getResultVars().contains(variable)
 								&& aspect.getPattern(dataset2).getResultVars().contains(variable)) {
