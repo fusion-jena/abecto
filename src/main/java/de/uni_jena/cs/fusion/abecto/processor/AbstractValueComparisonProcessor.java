@@ -56,12 +56,6 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 	 */
 	private Map<String, Map<Resource, Map<Resource, Integer>>> absoluteCoverage = new HashMap<>();
 	/**
-	 * Ratio of covered values of another dataset, per variable.
-	 * <p>
-	 * Index: variable, affectedDataset, comparedToDataset
-	 */
-	private Map<String, Map<Resource, Map<Resource, BigDecimal>>> relativeCoverage = new HashMap<>();
-	/**
 	 * Number of values in this dataset, per variable.
 	 * <p>
 	 * Index: variable, affectedDataset
@@ -267,11 +261,13 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 			}
 		});
 
-		// calculate value population size per variable
+		// calculate estimated value population size and estimated completeness per variable
 		for (String variable : variables) {
 			populationSize.put(variable, BigDecimal.ZERO);
 			if (totalPairwiseOverlapByVariable.containsKey(variable) // variable covered by more than 1 dataset
 					&& totalPairwiseOverlapByVariable.get(variable) != 0) {
+
+				// calculate estimated value population size per variable
 				for (Resource affectedDataset : aspect.getDatasets()) {
 					for (Resource comparedToDataset : aspect.getDatasets()) {
 						if (affectedDataset.hashCode() >= comparedToDataset.hashCode()) {
@@ -287,15 +283,9 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 				}
 				populationSize.merge(variable, BigDecimal.valueOf(totalPairwiseOverlapByVariable.get(variable)),
 						(x, y) -> x.divide(y, SCALE, RoundingMode.HALF_UP));
-			}
-		}
 
-		for (String variable : variables) {
-			for (Resource affectedDataset : aspect.getDatasets()) {
-
-				// calculate & store completeness:
-				if (totalPairwiseOverlapByVariable.containsKey(variable) // variable covered by more than 1 dataset
-						&& totalPairwiseOverlapByVariable.get(variable) != 0) {
+				// calculate & store estimated completeness
+				for (Resource affectedDataset : aspect.getDatasets()) {
 					// calculate ratio of values in an estimated population covered by this dataset
 					BigDecimal completeness = BigDecimal.valueOf(deduplicatedCount.get(variable).get(affectedDataset))
 							.divide(populationSize.get(variable), SCALE, RoundingMode.HALF_UP);
@@ -304,61 +294,49 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 					Metadata.addQualityMeasurement(AV.marCompletenessThomas08, completeness, OM.one, affectedDataset,
 							variable, otherDatasets, aspect.getIri(), this.getOutputMetaModel(affectedDataset));
 				}
-
-				// calculate relative coverage
-				for (Resource comparedToDataset : aspect.getDatasets()) {
-					if (affectedDataset.equals(comparedToDataset)) {
-						continue;
-					}
-					int countComparedTo = count.getOrDefault(variable, Collections.emptyMap())
-							.getOrDefault(comparedToDataset, 0);
-					if (countComparedTo != 0) {
-						int overlap = absoluteCoverage.getOrDefault(variable, Collections.emptyMap())
-								.getOrDefault(affectedDataset, Collections.emptyMap())
-								.getOrDefault(comparedToDataset, 0);
-						relativeCoverage.computeIfAbsent(variable, v -> new HashMap<>())
-								.computeIfAbsent(affectedDataset, v -> new HashMap<>())
-								.put(comparedToDataset, BigDecimal.valueOf(overlap)
-										.divide(BigDecimal.valueOf(countComparedTo), SCALE, RoundingMode.HALF_UP));
-					}
-				}
 			}
 		}
 
 		// store measurements
 		for (String variable : variables) {
+
 			for (Resource affectedDataset : aspect.getDatasets()) {
-				if (!aspect.getPattern(affectedDataset).getResultVars().contains(variable)) {
-					// variable not covered by affectedDataset
-					continue;
-				}
+				// skip if variable not covered by affected dataset
+				if (!aspect.getPattern(affectedDataset).getResultVars().contains(variable)) continue;
+
+				// store count
+				Metadata.addQualityMeasurement(AV.count, count.get(variable).getOrDefault(affectedDataset, 0), OM.one,
+						affectedDataset, variable, aspect.getIri(), this.getOutputMetaModel(affectedDataset));
+				// store deduplicated count
+				Metadata.addQualityMeasurement(AV.deduplicatedCount,
+						deduplicatedCount.get(variable).getOrDefault(affectedDataset, 0), OM.one, affectedDataset, variable,
+						aspect.getIri(), this.getOutputMetaModel(affectedDataset));
+
+				// calculate relative coverage
 				for (Resource comparedToDataset : aspect.getDatasets()) {
-					if (!aspect.getPattern(comparedToDataset).getResultVars().contains(variable)) {
-						// variable not covered by comparedToDataset
-						continue;
-					}
-					if (!affectedDataset.equals(comparedToDataset)) {
-						BigDecimal relativeCoverageValue = relativeCoverage
-								.getOrDefault(variable, Collections.emptyMap())
-								.getOrDefault(affectedDataset, Collections.emptyMap()).get(comparedToDataset);
-						if (relativeCoverageValue != null) {
-							Metadata.addQualityMeasurement(AV.relativeCoverage, relativeCoverageValue, OM.one,
-									affectedDataset, variable, comparedToDataset, aspect.getIri(),
-									this.getOutputMetaModel(affectedDataset));
-						}
-						Metadata.addQualityMeasurement(AV.absoluteCoverage,
-								absoluteCoverage.getOrDefault(variable, Collections.emptyMap())
-										.getOrDefault(affectedDataset, Collections.emptyMap())
-										.getOrDefault(comparedToDataset, 0),
+					if (affectedDataset.equals(comparedToDataset)) continue;
+
+					// skip if variable not covered by dataset compared to
+					if (!aspect.getPattern(comparedToDataset).getResultVars().contains(variable)) continue;
+
+					// store absolute coverage
+					int overlap = absoluteCoverage.getOrDefault(variable, Collections.emptyMap())
+							.getOrDefault(affectedDataset, Collections.emptyMap())
+							.getOrDefault(comparedToDataset, 0);
+					Metadata.addQualityMeasurement(AV.absoluteCoverage, overlap,
+							OM.one, affectedDataset, variable, comparedToDataset, aspect.getIri(),
+							this.getOutputMetaModel(affectedDataset));
+
+					// calculate & store relative coverage
+					int countComparedTo = count.getOrDefault(variable, Collections.emptyMap())
+							.getOrDefault(comparedToDataset, 0);
+					if (countComparedTo != 0) {
+						Metadata.addQualityMeasurement(AV.relativeCoverage, BigDecimal.valueOf(overlap)
+										.divide(BigDecimal.valueOf(countComparedTo), SCALE, RoundingMode.HALF_UP),
 								OM.one, affectedDataset, variable, comparedToDataset, aspect.getIri(),
 								this.getOutputMetaModel(affectedDataset));
 					}
 				}
-				Metadata.addQualityMeasurement(AV.count, count.get(variable).getOrDefault(affectedDataset, 0), OM.one,
-						affectedDataset, variable, aspect.getIri(), this.getOutputMetaModel(affectedDataset));
-				Metadata.addQualityMeasurement(AV.deduplicatedCount,
-						deduplicatedCount.get(variable).getOrDefault(affectedDataset, 0), OM.one, affectedDataset, variable,
-						aspect.getIri(), this.getOutputMetaModel(affectedDataset));
 			}
 		}
 	}
