@@ -457,7 +457,7 @@ public abstract class AbstractValueComparisonProcessorTest {
 		return compare(aspect, getInstance(Collections.singletonList("value"), aspect(1)), model1, model2);
 	}
 
-	Model[] compare(Aspect aspect, Processor<?> processor, Model model1, Model model2) throws Exception {
+	Model[] compare(Aspect aspect, Processor<?> processor, Model model1, Model model2) {
 		processor.addInputPrimaryModel(dataset(1), model1).addInputPrimaryModel(dataset(2), model2)
 				.addInputMetaModel(null, MappingProcessor.inferTransitiveCorrespondences(mappingModel))
 				.addAspects(aspect);

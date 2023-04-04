@@ -56,7 +56,7 @@ public class EquivalentValueMappingProcessor extends MappingProcessor<Equivalent
 			try {
 				Collection<String> patternVariables = aspect.getPattern(dataset).getResultVars();
 				if (!patternVariables.containsAll(variables)) {
-					ArrayList<String> missingVariables = new ArrayList<String>(variables);
+					ArrayList<String> missingVariables = new ArrayList<>(variables);
 					missingVariables.removeAll(patternVariables);
 					log.warn("Missing variable(s) in pattern of aspect {} and dataset {}: {}", aspect, dataset,
 							missingVariables);

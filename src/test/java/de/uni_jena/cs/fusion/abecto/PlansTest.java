@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Comparator;
 import java.util.Map;
 import java.util.Set;
 
@@ -42,26 +43,18 @@ public class PlansTest {
 		String plan2Iri = "http://example.org/plan2";
 		Resource plan2 = ResourceFactory.createResource(plan2Iri);
 
-		assertThrows(IllegalArgumentException.class, () -> {
-			Plans.getPlan(configurationModel, null);
-		});
-		assertThrows(IllegalArgumentException.class, () -> {
-			Plans.getPlan(configurationModel, plan1Iri);
-		});
+		assertThrows(IllegalArgumentException.class, () -> Plans.getPlan(configurationModel, null));
+		assertThrows(IllegalArgumentException.class, () -> Plans.getPlan(configurationModel, plan1Iri));
 
 		configurationModel.createResource(plan1Iri, AV.Plan);
 
 		assertEquals(plan1, Plans.getPlan(configurationModel, null));
 		assertEquals(plan1, Plans.getPlan(configurationModel, plan1Iri));
-		assertThrows(IllegalArgumentException.class, () -> {
-			Plans.getPlan(configurationModel, plan2Iri);
-		});
+		assertThrows(IllegalArgumentException.class, () -> Plans.getPlan(configurationModel, plan2Iri));
 
 		configurationModel.createResource(plan2Iri, AV.Plan);
 
-		assertThrows(IllegalArgumentException.class, () -> {
-			Plans.getPlan(configurationModel, null);
-		});
+		assertThrows(IllegalArgumentException.class, () -> Plans.getPlan(configurationModel, null));
 		assertEquals(plan1, Plans.getPlan(configurationModel, plan1Iri));
 		assertEquals(plan2, Plans.getPlan(configurationModel, plan2Iri));
 	}
@@ -93,17 +86,17 @@ public class PlansTest {
 
 		assertFalse(stepPredecessors.isEmpty());
 		assertArrayEquals(new Resource[] {}, stepPredecessors.get(step1).stream()
-				.sorted((a, b) -> a.getURI().compareTo(b.getURI())).toArray(l -> new Resource[l]));
+				.sorted(Comparator.comparing(Resource::getURI)).toArray(Resource[]::new));
 		assertArrayEquals(new Resource[] { step1 }, stepPredecessors.get(step2).stream()
-				.sorted((a, b) -> a.getURI().compareTo(b.getURI())).toArray(l -> new Resource[l]));
+				.sorted(Comparator.comparing(Resource::getURI)).toArray(Resource[]::new));
 		assertArrayEquals(new Resource[] {}, stepPredecessors.get(step3).stream()
-				.sorted((a, b) -> a.getURI().compareTo(b.getURI())).toArray(l -> new Resource[l]));
+				.sorted(Comparator.comparing(Resource::getURI)).toArray(Resource[]::new));
 		assertArrayEquals(new Resource[] { step3 }, stepPredecessors.get(step4).stream()
-				.sorted((a, b) -> a.getURI().compareTo(b.getURI())).toArray(l -> new Resource[l]));
+				.sorted(Comparator.comparing(Resource::getURI)).toArray(Resource[]::new));
 		assertArrayEquals(new Resource[] { step1, step2, step3, step4 }, stepPredecessors.get(step5).stream()
-				.sorted((a, b) -> a.getURI().compareTo(b.getURI())).toArray(l -> new Resource[l]));
+				.sorted(Comparator.comparing(Resource::getURI)).toArray(Resource[]::new));
 		assertArrayEquals(new Resource[] { step1, step2, step3, step4, step5 }, stepPredecessors.get(step6).stream()
-				.sorted((a, b) -> a.getURI().compareTo(b.getURI())).toArray(l -> new Resource[l]));
+				.sorted(Comparator.comparing(Resource::getURI)).toArray(Resource[]::new));
 
 		assertTrue(Plans.getStepPredecessors(configurationModel, plan2).isEmpty());
 

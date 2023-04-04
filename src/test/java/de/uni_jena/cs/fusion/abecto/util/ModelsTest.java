@@ -44,7 +44,7 @@ public class ModelsTest {
 	}
 
 	@Test
-	public void readUrl() throws IllegalArgumentException, MalformedURLException, IOException, InterruptedException,
+	public void readUrl() throws IllegalArgumentException, IOException, InterruptedException,
 			URISyntaxException {
 		StdErrLog logger = new StdErrLog();
 		logger.setLevel(StdErrLog.LEVEL_OFF);

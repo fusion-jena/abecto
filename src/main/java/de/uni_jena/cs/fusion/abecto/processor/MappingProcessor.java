@@ -70,7 +70,7 @@ public abstract class MappingProcessor<P extends Processor<P>> extends Processor
 	 * Adds correspondences of several resources affecting a certain aspect and
 	 * thereby transitive implied correspondence. If the correspondences are already
 	 * known or contradict an existing incorrespondence, the correspondences will be
-	 * discard silently.
+	 * discarded silently.
 	 * 
 	 * @param resources the corresponding resources
 	 * @param aspect    aspect affected by the correspondence
@@ -85,7 +85,7 @@ public abstract class MappingProcessor<P extends Processor<P>> extends Processor
 	/**
 	 * Add correspondences of several resources belonging to a certain aspect. If
 	 * all correspondences are already known or any correspondence contradict an
-	 * existing incorrespondence, all correspondences will be discard silently.
+	 * existing incorrespondence, all correspondences will be discarded silently.
 	 * 
 	 * @param resources the corresponding resources
 	 * @param aspect    aspect the corresponding resources belong to
@@ -107,7 +107,7 @@ public abstract class MappingProcessor<P extends Processor<P>> extends Processor
 	/**
 	 * Adds incorrespondences of resources to one resource affecting a certain
 	 * aspect. If the incorrespondence is already known or contradicts an existing
-	 * correspondence, the correspondence will be discard silently.
+	 * correspondence, the correspondence will be discarded silently.
 	 * 
 	 * @param aspect                   aspect affected by the incorrespondence
 	 * @param resource                 first resource

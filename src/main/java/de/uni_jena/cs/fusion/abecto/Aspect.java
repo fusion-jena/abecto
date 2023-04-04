@@ -75,7 +75,7 @@ public class Aspect {
 	}
 
 	/**
-	 * Returns an {@link Aspect} determined by an given IRI in the given
+	 * Returns an {@link Aspect} determined by a given IRI in the given
 	 * configuration {@link Model}.
 	 * 
 	 * @param configurationModel the configuration {@link Model} containing the
@@ -131,13 +131,6 @@ public class Aspect {
 	}
 
 	/**
-	 * 
-	 * @param aspect
-	 * @param dataset
-	 * @param keyValue
-	 * @param datasetModels
-	 * @return
-	 * 
 	 * @throws NullPointerException if no pattern is defined for the given dataset
 	 */
 	public static Optional<Map<String, Set<RDFNode>>> getResource(Aspect aspect, Resource dataset, Resource keyValue,
@@ -259,12 +252,6 @@ public class Aspect {
 	/**
 	 * Returns a hash index on multiple variables for {@link Resource Resources} of
 	 * a given {@link Aspect}. Resources with unbound variables are omitted.
-	 * 
-	 * @param aspect
-	 * @param dataset
-	 * @param variables
-	 * @param datasetModels
-	 * @return
 	 */
 	public static Map<Values, Set<Resource>> getResourceHashIndex(Aspect aspect, Resource dataset,
 			List<String> variables, Model datasetModels) {
@@ -274,7 +261,7 @@ public class Aspect {
 		List<String> resultVars = query.getResultVars();
 		if (!resultVars.containsAll(variables)) { // skip if unknown variable
 			log.warn("Failed to create resources hash index of aspect {} and dataset {}: Unknown variable(s): {}",
-					aspect.getIri(), dataset, variables.stream().filter(v -> resultVars.contains(v)).toArray());
+					aspect.getIri(), dataset, variables.stream().filter(resultVars::contains).toArray());
 			return index;
 		}
 
@@ -285,38 +272,13 @@ public class Aspect {
 		while (results.hasNext()) {
 			QuerySolution result = results.next();
 			Resource keyValue = result.getResource(aspect.getKeyVariableName());
-			if (variables.stream().allMatch(var -> result.contains(var))) { // skip resources with unbound variables
+			if (variables.stream().allMatch(result::contains)) { // skip resources with unbound variables
 				Values valueArray = new Values(
-						variables.stream().map(var -> result.get(var)).toArray(l -> new RDFNode[l]));
+						variables.stream().map(result::get).toArray(RDFNode[]::new));
 				index.computeIfAbsent(valueArray, k -> new HashSet<>()).add(keyValue);
 			}
 		}
 		return index;
-	}
-
-	@Deprecated
-	public static Map<Resource, Map<String, Set<RDFNode>>> getResources(Aspect aspect, Resource dataset,
-			List<String> variables, Model datasetModels) {
-		Map<Resource, Map<String, Set<RDFNode>>> resources = new HashMap<>();
-
-		if (aspect.patternByDataset.containsKey(dataset)) {
-			Query query = aspect.getPattern(dataset);
-			// remove not needed variables from query
-			query = retainVariables(query, aspect.keyVariable, variables);
-
-			ResultSet results = QueryExecutionFactory.create(query, datasetModels).execSelect();
-			while (results.hasNext()) {
-				QuerySolution result = results.next();
-				Resource keyValue = result.getResource(aspect.getKeyVariableName());
-				Map<String, Set<RDFNode>> resourceValues = resources.computeIfAbsent(keyValue, k -> new HashMap<>());
-				for (String variable : variables) {
-					if (result.contains(variable)) {
-						resourceValues.computeIfAbsent(variable, k -> new HashSet<>()).add(result.get(variable));
-					}
-				}
-			}
-		}
-		return resources;
 	}
 
 	/**
@@ -325,11 +287,6 @@ public class Aspect {
 	 * aspect does not cover the given dataset an empty result is returned. If the
 	 * model does not contain any value for a given resource, the resource is mapped
 	 * to {@code null}.
-	 * 
-	 * @param resource
-	 * @param dataset
-	 * @param model
-	 * @return
 	 */
 	public Map<Resource, Map<String, Set<RDFNode>>> selectResourceValues(Collection<Resource> resources,
 			Resource dataset, List<String> variables, Model model) {
@@ -378,11 +335,6 @@ public class Aspect {
 	 * pattern of the given dataset in the given {@link Model}. If this aspect does
 	 * not cover the given dataset or the model does not contain values for the
 	 * given resource, {@code null} is returned.
-	 * 
-	 * @param resource
-	 * @param dataset
-	 * @param model
-	 * @return
 	 */
 	public Map<String, Set<RDFNode>> selectResourceValues(Resource resource, Query pattern,
 			Collection<String> variables, Model model) {
@@ -394,7 +346,7 @@ public class Aspect {
 			return null;
 		}
 
-		Map<String, Set<RDFNode>> values = new HashMap<String, Set<RDFNode>>();
+		Map<String, Set<RDFNode>> values = new HashMap<>();
 		for (String variable : variables) {
 			values.put(variable, new HashSet<>());
 		}
@@ -424,7 +376,7 @@ public class Aspect {
 		if (!this.patternByDataset.containsKey(dataset)) {
 			return Collections.emptySet();
 		}
-		Collection<Resource> intersection = new ArrayList<Resource>();
+		Collection<Resource> intersection = new ArrayList<>();
 
 		Query pattern = this.getPattern(dataset);
 		for (Resource resource : resources) {
@@ -523,7 +475,7 @@ public class Aspect {
 	}
 
 	public Set<Resource> getDatasets() {
-		return new HashSet<Resource>(patternByDataset.keySet());
+		return new HashSet<>(patternByDataset.keySet());
 	}
 
 	public boolean coversDataset(Resource dataset) {
@@ -628,7 +580,7 @@ public class Aspect {
 				list.addAll(pathSeq2List(((P_Seq) path).getRight()));
 				return list;
 			} else {
-				LinkedList<Path> list = new LinkedList<Path>();
+				LinkedList<Path> list = new LinkedList<>();
 				list.add(path);
 				return list;
 			}

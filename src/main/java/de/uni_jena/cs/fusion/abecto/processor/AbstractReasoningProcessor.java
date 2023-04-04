@@ -21,7 +21,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.reasoner.Reasoner;
 
 /**
- * Provides an skeleton for reasoning {@link Processor Processors} that takes
+ * Provides a skeleton for reasoning {@link Processor Processors} that takes
  * care of the execution and inference output storing of a reasoner provided by
  * the method {@link #getReasoner()}.
  */

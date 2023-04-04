@@ -203,9 +203,7 @@ public class TestUtil {
 		builder.addWhere(qualityMeasurement, RDF.type, AV.QualityMeasurement);
 		builder.addWhere(qualityMeasurement, DQV.isMeasurementOf, measure);
 		builder.addWhere(qualityMeasurement, DQV.computedOn, computedOnDataset);
-		if (value != null) {
-			builder.addWhere(qualityMeasurement, DQV.value, value);
-		}
+		builder.addWhere(qualityMeasurement, DQV.value, value);
 		builder.addWhere(qualityMeasurement, SdmxAttribute.unitMeasure, unit);
 		builder.addWhere(qualityMeasurement, AV.affectedAspect, affectedAspect);
 		if (affectedVariableName != null) {

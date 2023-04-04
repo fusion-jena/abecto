@@ -54,7 +54,7 @@ public class JaroWinklerMappingProcessor extends MappingProcessor<JaroWinklerMap
 			return;
 		}
 
-		// make index case insensitive, if requested
+		// make index case-insensitive, if requested
 		Function<RDFNode, String> modifier;
 		if (this.caseSensitive) {
 			modifier = t -> t != null ? t.asLiteral().getString() : null;

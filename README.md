@@ -29,7 +29,7 @@ This will create a stand alone .jar file at [target/abecto.jar](target).
 
 ## Configuration
 
-The execution of ABECTO is configured in a plan file, which is a RDF dataset file ([TriG](https://www.w3.org/TR/trig/), [N-Quads](https://www.w3.org/TR/n-quads/), …), using the [ABECTO Vocabulary](http://w3id.org/abecto/vocabulary). For an example see the [tutorial configuration](src/test/resources/tutorial-configuration.trig). Further build in processors can be found in [src/main/java/de/uni_jena/cs/fusion/abecto/processor/](src/main/java/de/uni_jena/cs/fusion/abecto/processor/).
+The execution of ABECTO is configured in a plan file, which is an RDF dataset file ([TriG](https://www.w3.org/TR/trig/), [N-Quads](https://www.w3.org/TR/n-quads/), …), using the [ABECTO Vocabulary](http://w3id.org/abecto/vocabulary). For an example see the [tutorial configuration](src/test/resources/tutorial-configuration.trig). Further build in processors can be found in [src/main/java/de/uni_jena/cs/fusion/abecto/processor/](src/main/java/de/uni_jena/cs/fusion/abecto/processor/).
 
 ### How to write an ABECTO plan?
 
@@ -122,7 +122,7 @@ The execution of ABECTO is configured in a plan file, which is a RDF dataset fil
        .
    ```
 
-5. **Transformation, Mapping, and Comparison/Evaluation Steps:** Specify further steps for transforming, mapping and comparing the primary data. Each step will have at least one preceding steps specified using `p-plan:isPrecededBy`. With `av:predefinedMetaDataGraph` steps you can manually add mappings, mapping exclusions or annotations into the process. The following example declares a mapping step `<jaroWinklerMapping>` to map resources based on string similarity and a comparison step `<literalValueComparison>` to compare literal values. At the mapping step, an predefined metadata graph `<manualMappings>` is introduced to prevent the mapping of two resources. The mapping step is preceded by all three source steps. The comparison step is only directly preceded by the mapping step. But the data returned by all indirect preceding steps are also available. 
+5. **Transformation, Mapping, and Comparison/Evaluation Steps:** Specify further steps for transforming, mapping and comparing the primary data. Each step will have at least one preceding steps specified using `p-plan:isPrecededBy`. With `av:predefinedMetaDataGraph` steps you can manually add mappings, mapping exclusions or annotations into the process. The following example declares a mapping step `<jaroWinklerMapping>` to map resources based on string similarity and a comparison step `<literalValueComparison>` to compare literal values. At the mapping step, a predefined metadata graph `<manualMappings>` is introduced to prevent the mapping of two resources. The mapping step is preceded by all three source steps. The comparison step is only directly preceded by the mapping step. But the data returned by all indirect preceding steps are also available. 
 
    ```turtle
    GRAPH <manualMappings>
@@ -208,7 +208,7 @@ Examples:
   ```shell
   java -jar target/abecto.jar --trig result.trig src/test/resources/tutorial-configuration.trig
   ```
-* create an deviations report for a specific dataset and without re-running the plan:
+* create a deviations report for a specific dataset and without re-running the plan:
   ```shell
   java -jar target/abecto.jar --loadOnly --reportOn "http://example.org/dataset1" --export deviations=deviations.csv result.trig
   ```

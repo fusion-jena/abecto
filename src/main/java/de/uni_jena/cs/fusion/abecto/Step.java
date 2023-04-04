@@ -117,7 +117,7 @@ public class Step implements Runnable {
 			List<Object> values = new ArrayList<>();
 			parameter.listProperties(AV.value).mapWith(Statement::getObject)
 					.mapWith(o -> o.isLiteral() ? o.asLiteral().getValue() : o.asResource())
-					.forEach(v -> values.add(v));
+					.forEach(values::add);
 			parameters.put(key, values);
 		}
 		Parameters.setParameters(processor, parameters);
@@ -138,7 +138,7 @@ public class Step implements Runnable {
 	 * <strong>Note:</strong> This method might run concurrently. Therefore,
 	 * <a href=
 	 * "http://jena.apache.org/documentation/notes/concurrency-howto.html">locks on
-	 * the configuration model</a> are used to to avoid dangerous concurrent
+	 * the configuration model</a> are used to avoid dangerous concurrent
 	 * updates.
 	 */
 	@Override
@@ -174,11 +174,9 @@ public class Step implements Runnable {
 				stepExecutionIri.addProperty(PROV.used, inputModelIri);
 			}
 
-			// set associated dataset and prepare associated output meta model, if needed
+			// set associated dataset and prepare associated output metamodel, if needed
 			Models.assertOneOptional(configurationModel.listObjectsOfProperty(stepIri, AV.associatedDataset))
-					.map(RDFNode::asResource).ifPresent(datasetIri -> {
-						processor.setAssociatedDataset(datasetIri);
-					});
+					.map(RDFNode::asResource).ifPresent(processor::setAssociatedDataset);
 
 			// run the processor
 			stepExecutionIri.addLiteral(PROV.startedAtTime, new GregorianCalendar());
@@ -215,7 +213,7 @@ public class Step implements Runnable {
 					dataset.addNamedModel(outputModelIri, outputModel);
 				}
 			}
-			// set metadata for general meta model
+			// set metadata for general metamodel
 			Model outputModel = processor.getOutputMetaModel(null);
 			if (!outputModel.isEmpty()) {
 				Resource outputModelIri = configurationModel.createResource(AV.MetaDataGraph);

@@ -48,10 +48,10 @@ public class Plans {
 			try {
 				return Models.assertOne(configurationModel.listSubjectsWithProperty(RDF.type, AV.Plan));
 			} catch (NoSuchElementException e) {
-				throw new IllegalArgumentException(String.format("Configuration does not contain a plan."));
+				throw new IllegalArgumentException("Configuration does not contain a plan.");
 			} catch (ToManyElementsException e) {
 				throw new IllegalArgumentException(
-						String.format("Configuration contains more than one plan, but no plan was selected."));
+						"Configuration contains more than one plan, but no plan was selected.");
 			}
 		}
 	}
@@ -66,14 +66,14 @@ public class Plans {
 						.filterKeep(RDFNode::isResource).mapWith(RDFNode::asResource).toSet()));
 		// get transitive predecessors
 		for (Resource step : stepPredecessors.keySet()) {
-			Queue<Resource> queue = new LinkedList<Resource>(stepPredecessors.get(step));
+			Queue<Resource> queue = new LinkedList<>(stepPredecessors.get(step));
 			while (!queue.isEmpty()) {
 				Resource predecessor = queue.poll();
 				stepPredecessors.get(step).add(predecessor);
 				if (stepPredecessors.containsKey(predecessor)) {
 					queue.addAll(stepPredecessors.get(predecessor));
 				} else {
-					throw new NoSuchElementException(String.format("Prodecessor %s not defined.", predecessor));
+					throw new NoSuchElementException(String.format("Predecessor %s not defined.", predecessor));
 				}
 			}
 		}

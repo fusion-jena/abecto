@@ -64,15 +64,15 @@ public class ParametersTest {
 		{
 			EmptyCollectionProcessor processor = new EmptyCollectionProcessor();
 			Parameters.setParameters(processor, Collections.singletonMap("parameter", expectedOne));
-			assertArrayEquals(expectedOne.toArray(l -> new Temporal[l]),
-					processor.parameter.toArray(l -> new Temporal[l]));
+			assertArrayEquals(expectedOne.toArray(Temporal[]::new),
+					processor.parameter.toArray(Temporal[]::new));
 		}
 		// collection: multiple values
 		{
 			EmptyCollectionProcessor processor = new EmptyCollectionProcessor();
 			Parameters.setParameters(processor, Collections.singletonMap("parameter", expectedMultiple));
-			assertArrayEquals(expectedMultiple.toArray(l -> new Temporal[l]),
-					processor.parameter.toArray(l -> new Temporal[l]));
+			assertArrayEquals(expectedMultiple.toArray(Temporal[]::new),
+					processor.parameter.toArray(Temporal[]::new));
 		}
 
 		// default collection: null value
@@ -91,15 +91,15 @@ public class ParametersTest {
 		{
 			DefaultCollectionProcessor processor = new DefaultCollectionProcessor();
 			Parameters.setParameters(processor, Collections.singletonMap("parameter", expectedOne));
-			assertArrayEquals(expectedOne.toArray(l -> new Temporal[l]),
-					processor.parameter.toArray(l -> new Temporal[l]));
+			assertArrayEquals(expectedOne.toArray(Temporal[]::new),
+					processor.parameter.toArray(Temporal[]::new));
 		}
 		// default collection: multiple values
 		{
 			DefaultCollectionProcessor processor = new DefaultCollectionProcessor();
 			Parameters.setParameters(processor, Collections.singletonMap("parameter", expectedMultiple));
-			assertArrayEquals(expectedMultiple.toArray(l -> new Temporal[l]),
-					processor.parameter.toArray(l -> new Temporal[l]));
+			assertArrayEquals(expectedMultiple.toArray(Temporal[]::new),
+					processor.parameter.toArray(Temporal[]::new));
 		}
 
 		// uninitialized collection: null value
@@ -118,15 +118,15 @@ public class ParametersTest {
 		{
 			UninitializedCollectionProcessor processor = new UninitializedCollectionProcessor();
 			Parameters.setParameters(processor, Collections.singletonMap("parameter", expectedOne));
-			assertArrayEquals(expectedOne.toArray(l -> new Temporal[l]),
-					processor.parameter.toArray(l -> new Temporal[l]));
+			assertArrayEquals(expectedOne.toArray(Temporal[]::new),
+					processor.parameter.toArray(Temporal[]::new));
 		}
 		// uninitialized collection: multiple values
 		{
 			UninitializedCollectionProcessor processor = new UninitializedCollectionProcessor();
 			Parameters.setParameters(processor, Collections.singletonMap("parameter", expectedMultiple));
-			assertArrayEquals(expectedMultiple.toArray(l -> new Temporal[l]),
-					processor.parameter.toArray(l -> new Temporal[l]));
+			assertArrayEquals(expectedMultiple.toArray(Temporal[]::new),
+					processor.parameter.toArray(Temporal[]::new));
 		}
 
 		// optional: null value
