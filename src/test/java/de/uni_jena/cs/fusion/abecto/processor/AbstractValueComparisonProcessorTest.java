@@ -172,6 +172,8 @@ public abstract class AbstractValueComparisonProcessorTest {
 		// assert measurements
 		BigDecimal expectedCount1 = new BigDecimal(values1.size());
 		BigDecimal expectedCount2 = new BigDecimal(values2.size());
+		BigDecimal expectedDeduplicatedCount1 = new BigDecimal(values1.size());
+		BigDecimal expectedDeduplicatedCount2 = new BigDecimal(values2.size());
 		BigDecimal expectedAbsoluteCoverage1 = new BigDecimal(notDeviatingValues1.size());
 		BigDecimal expectedAbsoluteCoverage2 = new BigDecimal(notDeviatingValues2.size());
 		BigDecimal expectedRelativeCoverage1 = (expectedCount2.equals(BigDecimal.ZERO)) ? null
@@ -187,12 +189,14 @@ public abstract class AbstractValueComparisonProcessorTest {
 		BigDecimal expectedCompleteness2 = (overlapD.equals(BigDecimal.ZERO)) ? null
 				: expectedCount2.divide(expectedCount1.multiply(expectedCount2).divide(overlapD,
 						AbstractValueComparisonProcessor.SCALE, RoundingMode.HALF_UP));
-		assertMeasurements(expectedCount1, expectedCount2, expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+		assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2, 
+				expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
 				expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
 				dataset(1), dataset(2), aspect(1), outputMetaModels[0], outputMetaModels[1]);
 	}
 
 	private void assertMeasurements(BigDecimal expectedCount1, BigDecimal expectedCount2,
+									BigDecimal expectedDeduplicatedCount1, BigDecimal expectedDeduplicatedCount2,
 			BigDecimal expectedAbsoluteCoverage1, BigDecimal expectedAbsoluteCoverage2,
 			@Nullable BigDecimal expectedRelativeCoverage1, @Nullable BigDecimal expectedRelativeCoverage2,
 			@Nullable BigDecimal expectedCompleteness1, @Nullable BigDecimal expectedCompleteness2, Resource dataset1,
@@ -207,6 +211,16 @@ public abstract class AbstractValueComparisonProcessorTest {
 			assertEquals(expectedCount2,
 					getMeasurement(AV.count, OM.one, dataset(2), "value", null, aspect(1), outputMetaModel2),
 					"Wrong count for dataset 2.");
+		}
+		if (expectedDeduplicatedCount1 != null) {
+			assertEquals(expectedDeduplicatedCount1,
+					getMeasurement(AV.deduplicatedCount, OM.one, dataset(1), "value", null, aspect(1), outputMetaModel1),
+					"Wrong deduplicated count for dataset 1.");
+		}
+		if (expectedDeduplicatedCount2 != null) {
+			assertEquals(expectedDeduplicatedCount2,
+					getMeasurement(AV.deduplicatedCount, OM.one, dataset(2), "value", null, aspect(1), outputMetaModel2),
+					"Wrong deduplicated count for dataset 2.");
 		}
 		if (expectedAbsoluteCoverage1 != null) {
 			assertEquals(
@@ -305,6 +319,8 @@ public abstract class AbstractValueComparisonProcessorTest {
 		// assert measurements
 		BigDecimal expectedCount1 = new BigDecimal(values1.size());
 		BigDecimal expectedCount2 = new BigDecimal(values2.size());
+		BigDecimal expectedDeduplicatedCount1 = new BigDecimal(values1.size());
+		BigDecimal expectedDeduplicatedCount2 = new BigDecimal(values2.size());
 		BigDecimal expectedAbsoluteCoverage1 = new BigDecimal(values2.size() - missingValues1.size());
 		BigDecimal expectedAbsoluteCoverage2 = new BigDecimal(values1.size() - missingValues2.size());
 		BigDecimal expectedRelativeCoverage1 = (expectedCount2.equals(BigDecimal.ZERO)) ? null
@@ -320,7 +336,8 @@ public abstract class AbstractValueComparisonProcessorTest {
 		BigDecimal expectedCompleteness2 = (overlapD.equals(BigDecimal.ZERO)) ? null
 				: expectedCount2.divide(expectedCount1.multiply(expectedCount2).divide(overlapD,
 						AbstractValueComparisonProcessor.SCALE, RoundingMode.HALF_UP));
-		assertMeasurements(expectedCount1, expectedCount2, expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+		assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2, 
+				expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
 				expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
 				dataset(1), dataset(2), aspect(1), outputMetaModels[0], outputMetaModels[1]);
 	}
@@ -364,13 +381,16 @@ public abstract class AbstractValueComparisonProcessorTest {
 		// assert measurements
 		BigDecimal expectedCount1 = BigDecimal.ONE;
 		BigDecimal expectedCount2 = BigDecimal.ONE;
+		BigDecimal expectedDeduplicatedCount1 = BigDecimal.ONE;
+		BigDecimal expectedDeduplicatedCount2 = BigDecimal.ONE;
 		BigDecimal expectedAbsoluteCoverage1 = BigDecimal.ONE;
 		BigDecimal expectedAbsoluteCoverage2 = BigDecimal.ONE;
 		BigDecimal expectedRelativeCoverage1 = BigDecimal.ONE;
 		BigDecimal expectedRelativeCoverage2 = BigDecimal.ONE;
 		BigDecimal expectedCompleteness1 = BigDecimal.ONE;
 		BigDecimal expectedCompleteness2 = BigDecimal.ONE;
-		assertMeasurements(expectedCount1, expectedCount2, expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+		assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2,
+				expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
 				expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
 				dataset(1), dataset(2), aspect(1), outputMetaModels[0], outputMetaModels[1]);
 	}
@@ -396,13 +416,16 @@ public abstract class AbstractValueComparisonProcessorTest {
 		// assert measurements first direction
 		BigDecimal expectedCount1 = BigDecimal.ONE;
 		BigDecimal expectedCount2 = BigDecimal.ONE;
+		BigDecimal expectedDeduplicatedCount1 = BigDecimal.ONE;
+		BigDecimal expectedDeduplicatedCount2 = BigDecimal.ONE;
 		BigDecimal expectedAbsoluteCoverage1 = BigDecimal.ZERO;
 		BigDecimal expectedAbsoluteCoverage2 = BigDecimal.ZERO;
 		BigDecimal expectedRelativeCoverage1 = BigDecimal.ZERO;
 		BigDecimal expectedRelativeCoverage2 = BigDecimal.ZERO;
 		BigDecimal expectedCompleteness1 = null;
 		BigDecimal expectedCompleteness2 = null;
-		assertMeasurements(expectedCount1, expectedCount2, expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+		assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2,
+				expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
 				expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
 				dataset(1), dataset(2), aspect(1), outputMetaModels[0], outputMetaModels[1]);
 
@@ -424,7 +447,8 @@ public abstract class AbstractValueComparisonProcessorTest {
 
 		// assert measurements second direction
 		// some expected values as for first direction
-		assertMeasurements(expectedCount1, expectedCount2, expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+		assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2,
+				expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
 				expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
 				dataset(1), dataset(2), aspect(1), outputMetaModels[0], outputMetaModels[1]);
 	}
@@ -535,13 +559,16 @@ public abstract class AbstractValueComparisonProcessorTest {
 		// assert measurements
 		BigDecimal expectedCount1 = new BigDecimal(4);
 		BigDecimal expectedCount2 = new BigDecimal(4);
-		BigDecimal expectedAbsoluteCoverage1 = new BigDecimal(4);
-		BigDecimal expectedAbsoluteCoverage2 = new BigDecimal(4);
+		BigDecimal expectedDeduplicatedCount1 = new BigDecimal(2);
+		BigDecimal expectedDeduplicatedCount2 = new BigDecimal(2);
+		BigDecimal expectedAbsoluteCoverage1 = new BigDecimal(2);
+		BigDecimal expectedAbsoluteCoverage2 = new BigDecimal(2);
 		BigDecimal expectedRelativeCoverage1 = new BigDecimal(1);
 		BigDecimal expectedRelativeCoverage2 = new BigDecimal(1);
 		BigDecimal expectedCompleteness1 = new BigDecimal(1);
 		BigDecimal expectedCompleteness2 = new BigDecimal(1);
-		assertMeasurements(expectedCount1, expectedCount2, expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+		assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2,
+				expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
 				expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
 				dataset(1), dataset(2), aspect(1), outputMetaModel1, outputMetaModel2);
 	}
@@ -639,13 +666,16 @@ public abstract class AbstractValueComparisonProcessorTest {
 		// assert measurements
 		BigDecimal expectedCount1 = new BigDecimal(2);
 		BigDecimal expectedCount2 = new BigDecimal(1);
+		BigDecimal expectedDeduplicatedCount1 = new BigDecimal(1);
+		BigDecimal expectedDeduplicatedCount2 = new BigDecimal(1);
 		BigDecimal expectedAbsoluteCoverage1 = new BigDecimal(1);
-		BigDecimal expectedAbsoluteCoverage2 = new BigDecimal(2);
+		BigDecimal expectedAbsoluteCoverage2 = new BigDecimal(1);
 		BigDecimal expectedRelativeCoverage1 = new BigDecimal(1);
 		BigDecimal expectedRelativeCoverage2 = new BigDecimal(1);
 		BigDecimal expectedCompleteness1 = new BigDecimal(1);
 		BigDecimal expectedCompleteness2 = new BigDecimal(1);
-		assertMeasurements(expectedCount1, expectedCount2, expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+		assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2,
+				expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
 				expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
 				dataset(1), dataset(2), aspect(1), outputMetaModel1, outputMetaModel2);
 	}
@@ -743,13 +773,16 @@ public abstract class AbstractValueComparisonProcessorTest {
 		// assert measurements
 		BigDecimal expectedCount1 = new BigDecimal(2);
 		BigDecimal expectedCount2 = new BigDecimal(4);
-		BigDecimal expectedAbsoluteCoverage1 = new BigDecimal(4);
+		BigDecimal expectedDeduplicatedCount1 = new BigDecimal(2);
+		BigDecimal expectedDeduplicatedCount2 = new BigDecimal(2);
+		BigDecimal expectedAbsoluteCoverage1 = new BigDecimal(2);
 		BigDecimal expectedAbsoluteCoverage2 = new BigDecimal(2);
 		BigDecimal expectedRelativeCoverage1 = new BigDecimal(1);
 		BigDecimal expectedRelativeCoverage2 = new BigDecimal(1);
 		BigDecimal expectedCompleteness1 = new BigDecimal(1);
 		BigDecimal expectedCompleteness2 = new BigDecimal(1);
-		assertMeasurements(expectedCount1, expectedCount2, expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+		assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2,
+				expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
 				expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
 				dataset(1), dataset(2), aspect(1), outputMetaModel1, outputMetaModel2);
 	}
@@ -847,13 +880,16 @@ public abstract class AbstractValueComparisonProcessorTest {
 		// assert measurements
 		BigDecimal expectedCount1 = new BigDecimal(2);
 		BigDecimal expectedCount2 = new BigDecimal(2);
+		BigDecimal expectedDeduplicatedCount1 = new BigDecimal(2);
+		BigDecimal expectedDeduplicatedCount2 = new BigDecimal(2);
 		BigDecimal expectedAbsoluteCoverage1 = new BigDecimal(2);
 		BigDecimal expectedAbsoluteCoverage2 = new BigDecimal(2);
 		BigDecimal expectedRelativeCoverage1 = new BigDecimal(1);
 		BigDecimal expectedRelativeCoverage2 = new BigDecimal(1);
 		BigDecimal expectedCompleteness1 = new BigDecimal(1);
 		BigDecimal expectedCompleteness2 = new BigDecimal(1);
-		assertMeasurements(expectedCount1, expectedCount2, expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+		assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2,
+				expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
 				expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
 				dataset(1), dataset(2), aspect(1), outputMetaModel1, outputMetaModel2);
 	}
@@ -951,13 +987,16 @@ public abstract class AbstractValueComparisonProcessorTest {
 		// assert measurements
 		BigDecimal expectedCount1 = new BigDecimal(2);
 		BigDecimal expectedCount2 = new BigDecimal(4);
-		BigDecimal expectedAbsoluteCoverage1 = new BigDecimal(2);
-		BigDecimal expectedAbsoluteCoverage2 = new BigDecimal(2);
+		BigDecimal expectedDeduplicatedCount1 = new BigDecimal(1);
+		BigDecimal expectedDeduplicatedCount2 = new BigDecimal(2);
+		BigDecimal expectedAbsoluteCoverage1 = new BigDecimal(1);
+		BigDecimal expectedAbsoluteCoverage2 = new BigDecimal(1);
 		BigDecimal expectedRelativeCoverage1 = new BigDecimal(0.5);
 		BigDecimal expectedRelativeCoverage2 = new BigDecimal(1);
 		BigDecimal expectedCompleteness1 = new BigDecimal(0.5);
 		BigDecimal expectedCompleteness2 = new BigDecimal(1);
-		assertMeasurements(expectedCount1, expectedCount2, expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+		assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2,
+				expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
 				expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
 				dataset(1), dataset(2), aspect(1), outputMetaModel1, outputMetaModel2);
 	}
@@ -1055,13 +1094,16 @@ public abstract class AbstractValueComparisonProcessorTest {
 		// assert measurements
 		BigDecimal expectedCount1 = new BigDecimal(1);
 		BigDecimal expectedCount2 = new BigDecimal(2);
+		BigDecimal expectedDeduplicatedCount1 = new BigDecimal(1);
+		BigDecimal expectedDeduplicatedCount2 = new BigDecimal(2);
 		BigDecimal expectedAbsoluteCoverage1 = new BigDecimal(1);
 		BigDecimal expectedAbsoluteCoverage2 = new BigDecimal(1);
 		BigDecimal expectedRelativeCoverage1 = new BigDecimal(0.5);
 		BigDecimal expectedRelativeCoverage2 = new BigDecimal(1);
 		BigDecimal expectedCompleteness1 = new BigDecimal(0.5);
 		BigDecimal expectedCompleteness2 = new BigDecimal(1);
-		assertMeasurements(expectedCount1, expectedCount2, expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+		assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2,
+				expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
 				expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
 				dataset(1), dataset(2), aspect(1), outputMetaModel1, outputMetaModel2);
 	}
@@ -1183,13 +1225,16 @@ public abstract class AbstractValueComparisonProcessorTest {
 		// assert measurements
 		BigDecimal expectedCount1 = new BigDecimal(1);
 		BigDecimal expectedCount2 = new BigDecimal(1);
+		BigDecimal expectedDeduplicatedCount1 = new BigDecimal(1);
+		BigDecimal expectedDeduplicatedCount2 = new BigDecimal(1);
 		BigDecimal expectedAbsoluteCoverage1 = new BigDecimal(1);
 		BigDecimal expectedAbsoluteCoverage2 = new BigDecimal(1);
 		BigDecimal expectedRelativeCoverage1 = new BigDecimal(1);
 		BigDecimal expectedRelativeCoverage2 = new BigDecimal(1);
 		BigDecimal expectedCompleteness1 = new BigDecimal(1);
 		BigDecimal expectedCompleteness2 = new BigDecimal(1);
-		assertMeasurements(expectedCount1, expectedCount2, expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+		assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2,
+				expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
 				expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
 				dataset(1), dataset(2), aspect(1), outputMetaModel1, outputMetaModel2);
 	}
@@ -1287,13 +1332,16 @@ public abstract class AbstractValueComparisonProcessorTest {
 		// assert measurements
 		BigDecimal expectedCount1 = new BigDecimal(1);
 		BigDecimal expectedCount2 = new BigDecimal(1);
+		BigDecimal expectedDeduplicatedCount1 = new BigDecimal(1);
+		BigDecimal expectedDeduplicatedCount2 = new BigDecimal(1);
 		BigDecimal expectedAbsoluteCoverage1 = new BigDecimal(0);
 		BigDecimal expectedAbsoluteCoverage2 = new BigDecimal(0);
 		BigDecimal expectedRelativeCoverage1 = new BigDecimal(0);
 		BigDecimal expectedRelativeCoverage2 = new BigDecimal(0);
 		BigDecimal expectedCompleteness1 = null;
 		BigDecimal expectedCompleteness2 = null;
-		assertMeasurements(expectedCount1, expectedCount2, expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+		assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2,
+				expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
 				expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
 				dataset(1), dataset(2), aspect(1), outputMetaModel1, outputMetaModel2);
 	}
@@ -1391,13 +1439,16 @@ public abstract class AbstractValueComparisonProcessorTest {
 		// assert measurements
 		BigDecimal expectedCount1 = new BigDecimal(0);
 		BigDecimal expectedCount2 = new BigDecimal(1);
+		BigDecimal expectedDeduplicatedCount1 = new BigDecimal(0);
+		BigDecimal expectedDeduplicatedCount2 = new BigDecimal(1);
 		BigDecimal expectedAbsoluteCoverage1 = new BigDecimal(0);
 		BigDecimal expectedAbsoluteCoverage2 = new BigDecimal(0);
 		BigDecimal expectedRelativeCoverage1 = new BigDecimal(0);
 		BigDecimal expectedRelativeCoverage2 = null;
 		BigDecimal expectedCompleteness1 = null;
 		BigDecimal expectedCompleteness2 = null;
-		assertMeasurements(expectedCount1, expectedCount2, expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+		assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2,
+				expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
 				expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
 				dataset(1), dataset(2), aspect(1), outputMetaModel1, outputMetaModel2);
 	}
@@ -1500,15 +1551,17 @@ public abstract class AbstractValueComparisonProcessorTest {
 		// assert measurements
 		BigDecimal expectedCount1 = new BigDecimal(1);
 		BigDecimal expectedCount2 = null;
+		BigDecimal expectedDeduplicatedCount1 = new BigDecimal(1);
+		BigDecimal expectedDeduplicatedCount2 = null;
 		BigDecimal expectedAbsoluteCoverage1 = null;
 		BigDecimal expectedAbsoluteCoverage2 = null;
 		BigDecimal expectedRelativeCoverage1 = null;
 		BigDecimal expectedRelativeCoverage2 = null;
 		BigDecimal expectedCompleteness1 = null;
 		BigDecimal expectedCompleteness2 = null;
-		assertMeasurements(expectedCount1, expectedCount2, expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+		assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2,
+				expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
 				expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
 				dataset(1), dataset(2), aspect(1), outputMetaModel1, outputMetaModel2);
-
 	}
 }

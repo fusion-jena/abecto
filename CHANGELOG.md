@@ -7,20 +7,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 * fix `LiteralValueComparisonProcessor`: fix handling for NaN values
-* fix `LiteralValueComparisonProcessor`: fix deduplicated count measure
-* fix `ResourceValueComparisonProcessor`: fix deduplicated count measure
+* fix `LiteralValueComparisonProcessor` and `ResourceValueComparisonProcessor`: fix deduplicated count measure to not substract duplicated values from count twice
+
+### Changed
+* change `LiteralValueComparisonProcessor` and `ResourceValueComparisonProcessor`: changed absolute coverage measure and relative coverage measure to fully base on deduplicated values
+* change `LiteralValueComparisonProcessor` and `ResourceValueComparisonProcessor`: changed count measure, deduplicated count measure, absolute coverage measure and relative coverage measure to ignoring excluded values
 
 ## [1.2.0] - 2023-03-09
 
 ### Fixed
-* fix `LiteralValueComparisonProcessor`: add handling for datasets not covering a compared variable
-* fix `ResourceValueComparisonProcessor`: add handling for datasets not covering a compared variable
+* fix `LiteralValueComparisonProcessor` and `ResourceValueComparisonProcessor`: add handling for datasets not covering a compared variable
 * fix `PopulationComparisonProcessor`: add handling for datasets not containing any resource for a compared aspect
 * fix `PopulationComparisonProcessor`: report count value instead of deduplicated count value for count measure
 
 ### Added
-* extend `LiteralValueComparisonProcessor`: report deduplicated count measure
-* extend `ResourceValueComparisonProcessor`: report deduplicated count measure
+* extend `LiteralValueComparisonProcessor` and `ResourceValueComparisonProcessor`: report deduplicated count measure
 * extend `PopulationComparisonProcessor`: report deduplicated count measure
 
 ## [1.1.0] - 2023-02-02

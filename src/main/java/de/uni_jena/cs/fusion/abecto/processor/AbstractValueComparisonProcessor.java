@@ -95,31 +95,14 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 		return distinctValues;
 	}
 
-	private void calculateAbsoluteCoverage(String variable, Resource dataset1, Resource dataset2,
-			Collection<Resource> resources1, Map<RDFNode, Set<Resource>> resourcesByMappedValues,
-			Map<Resource, Map<String, Set<RDFNode>>> valuesByVariableByResource1) {
-		int absoluteCoverageCount = 0;
-		for (Resource resource1 : resources1) {
-			for (RDFNode value1 : valuesByVariableByResource1.get(resource1).getOrDefault(variable,
-					Collections.emptySet())) {
-				if (// value not only from this dataset
-				!resources1.containsAll(resourcesByMappedValues.getOrDefault(value1, Collections.emptySet()))) {
-					absoluteCoverageCount++;
-				}
-			}
-		}
-		absoluteCoverage.computeIfAbsent(variable, v -> new HashMap<>()).computeIfAbsent(dataset2, v -> new HashMap<>())
-				.merge(dataset1, absoluteCoverageCount, Integer::sum);
-	}
-
 	private <T> Set<T> distinctByIdentity(Collection<T> items) {
 		Set<T> distinctItems = Collections.newSetFromMap(new IdentityHashMap<>());
 		distinctItems.addAll(items);
 		return distinctItems;
 	}
 
-	private void updateTotalPairwiseOverlap(String variable, Collection<Resource> resources1,
-			Collection<Resource> resources2, Map<RDFNode, Set<Resource>> resourcesByMappedValues) {
+	private int getPairwiseOverlap(Collection<Resource> resources1,
+									Collection<Resource> resources2, Map<RDFNode, Set<Resource>> resourcesByMappedValues) {
 		int pairwiseOverlap = 0;
 		// use set of resource sets for mapping values
 		// NOTE: equivalent values use the same set, so get distinct set instances
@@ -132,8 +115,7 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 			}
 			pairwiseOverlap++;
 		}
-
-		totalPairwiseOverlapByVariable.merge(variable, pairwiseOverlap, Integer::sum);
+		return pairwiseOverlap;
 	}
 
 	/**
@@ -157,7 +139,6 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 		for (String variable : valuesByVariable.keySet()) {
 			Set<RDFNode> values = valuesByVariable.get(variable);
 			values.removeIf(value -> !isValidValue(value));
-			values.removeIf(value -> !useValue(value));
 			values.removeIf(value -> Metadata.isWrongValue(resource, variable, value, aspect, inputMetaModel));
 		}
 	}
@@ -201,6 +182,9 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 				Map<String, Set<RDFNode>> valuesByVariable = aspect.selectResourceValues(resource, dataset, variables,
 						model);
 
+				// removeExcludedValues
+				valuesByVariable.forEach((k,v) -> v.removeIf(this::isExcludedValue));
+
 				for (String variable : variables) {
 					// measure count of values
 					this.count.get(variable).merge(dataset,
@@ -224,6 +208,8 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 						.selectResourceValues(correspondingResources, dataset, variables, model));
 				reportInvalidValues(valuesByVariableByResourceByDataset.get(dataset), dataset);
 				filterValues(valuesByVariableByResourceByDataset.get(dataset), dataset);
+				// removeExcludedValues
+				valuesByVariableByResourceByDataset.forEach((k3,v3) -> v3.forEach((k2,v2) -> v2.forEach((k,v) -> v.removeIf(this::isExcludedValue))));
 				// update deduplicated counts
 				for (String variable : variables) {
 					// get values of all corresponding resources
@@ -244,10 +230,9 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 				Map<Resource, Map<String, Set<RDFNode>>> valuesByVariableByResource1 = valuesByVariableByResourceByDataset.get(dataset1);
 
 				for (Resource dataset2 : aspect.getDatasets()) {
-					if (dataset1.hashCode() < dataset2.hashCode()) {
-						// do not do work twice
-						continue;
-					}
+					// do not do work twice
+					if (dataset1.hashCode() < dataset2.hashCode()) continue;
+
 					Map<Resource, Map<String, Set<RDFNode>>> valuesByVariableByResource2 = valuesByVariableByResourceByDataset.get(dataset2);
 					for (String variable : variables) {
 						if (aspect.getPattern(dataset1).getResultVars().contains(variable)
@@ -270,11 +255,11 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 				// calculate estimated value population size per variable
 				for (Resource affectedDataset : aspect.getDatasets()) {
 					for (Resource comparedToDataset : aspect.getDatasets()) {
-						if (affectedDataset.hashCode() >= comparedToDataset.hashCode()) {
-							// only once per pair
-							// do not use Resource#getURI() as it might be null for blank nodes
-							continue;
-						}
+
+						// only once per pair
+						// do not use Resource#getURI() as it might be null for blank nodes
+						if (affectedDataset.hashCode() >= comparedToDataset.hashCode()) continue;
+
 						populationSize.merge(variable,
 								BigDecimal.valueOf(deduplicatedCount.get(variable).get(affectedDataset)).multiply(
 										BigDecimal.valueOf(deduplicatedCount.get(variable).get(comparedToDataset))),
@@ -291,6 +276,7 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 							.divide(populationSize.get(variable), SCALE, RoundingMode.HALF_UP);
 					Collection<Resource> otherDatasets = new HashSet<>(aspect.getDatasets());
 					otherDatasets.remove(affectedDataset);
+					// TODO add value exclusion filter description to measurement description
 					Metadata.addQualityMeasurement(AV.marCompletenessThomas08, completeness, OM.one, affectedDataset,
 							variable, otherDatasets, aspect.getIri(), this.getOutputMetaModel(affectedDataset));
 				}
@@ -305,9 +291,11 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 				if (!aspect.getPattern(affectedDataset).getResultVars().contains(variable)) continue;
 
 				// store count
+				// TODO add value exclusion filter description to measurement description
 				Metadata.addQualityMeasurement(AV.count, count.get(variable).getOrDefault(affectedDataset, 0), OM.one,
 						affectedDataset, variable, aspect.getIri(), this.getOutputMetaModel(affectedDataset));
 				// store deduplicated count
+				// TODO add value exclusion filter description to measurement description
 				Metadata.addQualityMeasurement(AV.deduplicatedCount,
 						deduplicatedCount.get(variable).getOrDefault(affectedDataset, 0), OM.one, affectedDataset, variable,
 						aspect.getIri(), this.getOutputMetaModel(affectedDataset));
@@ -323,14 +311,16 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 					int overlap = absoluteCoverage.getOrDefault(variable, Collections.emptyMap())
 							.getOrDefault(affectedDataset, Collections.emptyMap())
 							.getOrDefault(comparedToDataset, 0);
+					// TODO add value exclusion filter description to measurement description
 					Metadata.addQualityMeasurement(AV.absoluteCoverage, overlap,
 							OM.one, affectedDataset, variable, comparedToDataset, aspect.getIri(),
 							this.getOutputMetaModel(affectedDataset));
 
 					// calculate & store relative coverage
-					int countComparedTo = count.getOrDefault(variable, Collections.emptyMap())
+					int countComparedTo = deduplicatedCount.getOrDefault(variable, Collections.emptyMap())
 							.getOrDefault(comparedToDataset, 0);
 					if (countComparedTo != 0) {
+						// TODO add value exclusion filter description to measurement description
 						Metadata.addQualityMeasurement(AV.relativeCoverage, BigDecimal.valueOf(overlap)
 										.divide(BigDecimal.valueOf(countComparedTo), SCALE, RoundingMode.HALF_UP),
 								OM.one, affectedDataset, variable, comparedToDataset, aspect.getIri(),
@@ -385,6 +375,7 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 			Map<Resource, Map<String, Set<RDFNode>>> valuesByVariableByResource1, Resource dataset2,
 			Map<Resource, Map<String, Set<RDFNode>>> valuesByVariableByResource2) {
 
+		// create common value-resource look-up
 		Map<RDFNode, Set<Resource>> resourcesByMappedValues = new HashMap<>();
 		mapResources(variable, resourcesByMappedValues, valuesByVariableByResource1);
 		mapResources(variable, resourcesByMappedValues, valuesByVariableByResource2);
@@ -393,12 +384,12 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 		// other resource
 		// omission: a pair of resources with one having a value not present in the other,
 		// but not vice versa
+
 		for (Resource resource1 : valuesByVariableByResource1.keySet()) {
-			var values1 = valuesByVariableByResource1.get(resource1).getOrDefault(variable, Collections.emptySet())
-					.stream().filter(this::isValidValue).collect(Collectors.toSet());
+			var values1 = valuesByVariableByResource1.get(resource1).getOrDefault(variable, Collections.emptySet());
 			for (Resource resource2 : valuesByVariableByResource2.keySet()) {
-				var values2 = valuesByVariableByResource2.get(resource2).getOrDefault(variable, Collections.emptySet())
-						.stream().filter(this::isValidValue).collect(Collectors.toSet());
+				var values2 = valuesByVariableByResource2.get(resource2).getOrDefault(variable, Collections.emptySet());
+
 				var notMatchingValues1 = values1.stream().filter(value1 -> !resourcesByMappedValues
 						.getOrDefault(value1, Collections.emptySet()).contains(resource2)).collect(Collectors.toList());
 				var notMatchingValues2 = values2.stream().filter(value2 -> !resourcesByMappedValues
@@ -430,13 +421,13 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 		}
 
 		// update measurements
-		calculateAbsoluteCoverage(variable, dataset1, dataset2, valuesByVariableByResource1.keySet(),
-				resourcesByMappedValues, valuesByVariableByResource1);
-		calculateAbsoluteCoverage(variable, dataset2, dataset1, valuesByVariableByResource2.keySet(),
-				resourcesByMappedValues, valuesByVariableByResource2);
 		if (!dataset1.equals(dataset2)) {
-			updateTotalPairwiseOverlap(variable, valuesByVariableByResource1.keySet(),
-					valuesByVariableByResource2.keySet(), resourcesByMappedValues);
+			int pairwiseOverlap = getPairwiseOverlap(valuesByVariableByResource1.keySet(), valuesByVariableByResource2.keySet(), resourcesByMappedValues);
+			totalPairwiseOverlapByVariable.merge(variable, pairwiseOverlap, Integer::sum);
+			absoluteCoverage.computeIfAbsent(variable, v -> new HashMap<>()).computeIfAbsent(dataset1, v -> new HashMap<>())
+					.merge(dataset2, pairwiseOverlap, Integer::sum);
+			absoluteCoverage.computeIfAbsent(variable, v -> new HashMap<>()).computeIfAbsent(dataset2, v -> new HashMap<>())
+					.merge(dataset1, pairwiseOverlap, Integer::sum);
 		}
 	}
 
@@ -467,5 +458,9 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 	 */
 	public boolean useValue(RDFNode value) {
 		return true;
+	}
+
+	public final boolean isExcludedValue(RDFNode value) {
+		return !useValue(value);
 	}
 }
