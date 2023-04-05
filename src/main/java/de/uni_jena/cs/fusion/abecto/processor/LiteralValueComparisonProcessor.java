@@ -18,6 +18,7 @@ package de.uni_jena.cs.fusion.abecto.processor;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.xsd.XSDDateTime;
@@ -38,14 +39,15 @@ import de.uni_jena.cs.fusion.abecto.Parameter;
 
 public class LiteralValueComparisonProcessor extends AbstractValueComparisonProcessor<LiteralValueComparisonProcessor> {
 
+	private final Collection<String> LANGUAGE_FILTER_PATTERN_DEFAULT = List.of("","*");
 	/**
-	 * Language patterns to filter compared literals. If not empty, only string
+	 * Language patterns to filter compared literals. Only string
 	 * literals will be loaded, that match at least on of these patterns. String
 	 * literals without language tag will match with "", all string literals with
-	 * language tag match with "*". Default: empty
+	 * language tag match with "*". Default: "","*" (all match)
 	 */
 	@Parameter
-	public Collection<String> languageFilterPatterns = new ArrayList<>();
+	public Collection<String> languageFilterPatterns = LANGUAGE_FILTER_PATTERN_DEFAULT;
 	/**
 	 * If true, a literal of the type xsd:date and a literal of the type
 	 * xsd:dateTime with equal year, month and day part will match.
@@ -61,7 +63,7 @@ public class LiteralValueComparisonProcessor extends AbstractValueComparisonProc
 
 	@Override
 	public boolean useValue(RDFNode value) {
-		if (languageFilterPatterns.isEmpty()) {
+		if (languageFilterPatterns == LANGUAGE_FILTER_PATTERN_DEFAULT) {
 			return true;
 		} else {
 			String langStr = value.asLiteral().getLanguage();

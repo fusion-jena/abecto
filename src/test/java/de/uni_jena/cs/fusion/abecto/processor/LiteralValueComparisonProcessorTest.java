@@ -97,8 +97,7 @@ class LiteralValueComparisonProcessorTest extends AbstractValueComparisonProcess
 		LiteralValueComparisonProcessor processor = new LiteralValueComparisonProcessor();
 		String lex = "";
 
-		// empty
-		processor.languageFilterPatterns = Arrays.asList();
+		// default
 		assertTrue(processor.useValue(ResourceFactory.createStringLiteral(lex)));
 		assertTrue(processor.useValue(ResourceFactory.createLangLiteral(lex, "")));
 		assertTrue(processor.useValue(ResourceFactory.createLangLiteral(lex, "en")));
