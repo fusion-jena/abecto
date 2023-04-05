@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QueryFactory;
+import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
@@ -52,7 +53,7 @@ public class AspectTest {
 	}
 
 	@Test
-	public void contructor() {
+	public void constructor() {
 		Resource aspectIri = ResourceFactory.createResource("http://example.org/aspect");
 		Aspect aspect = new Aspect(aspectIri, "key");
 		assertEquals(aspectIri, aspect.getIri());
@@ -73,13 +74,13 @@ public class AspectTest {
 		aspectPattern1Resource.addProperty(AV.ofAspect, aspect1Resource);
 		aspectPattern1Resource.addProperty(AV.associatedDataset, dataset1);
 		Query pattern1 = QueryFactory.create("SELECT ?key ?value WHERE {?key <http://example.org/property1> ?value .}");
-		aspectPattern1Resource.addLiteral(AV.definingQuery, pattern1);
+		aspectPattern1Resource.addLiteral(AV.definingQuery, pattern1.toString(Syntax.syntaxSPARQL_11));
 		Resource aspectPattern2Resource = configurationModel.createResource("http://example.org/aspectPattern2",
 				AV.Aspect);
 		aspectPattern2Resource.addProperty(AV.ofAspect, aspect1Resource);
 		aspectPattern2Resource.addProperty(AV.associatedDataset, dataset2);
 		Query pattern2 = QueryFactory.create("SELECT ?key ?value WHERE {?key <http://example.org/property2> ?value .}");
-		aspectPattern2Resource.addLiteral(AV.definingQuery, pattern2);
+		aspectPattern2Resource.addLiteral(AV.definingQuery, pattern2.toString(Syntax.syntaxSPARQL_11));
 
 		Resource aspect2Resource = configurationModel.createResource("http://example.org/aspect2", AV.Aspect);
 		aspect2Resource.addLiteral(AV.keyVariableName, "key");
@@ -88,13 +89,13 @@ public class AspectTest {
 		aspectPattern3Resource.addProperty(AV.ofAspect, aspect2Resource);
 		aspectPattern3Resource.addProperty(AV.associatedDataset, dataset1);
 		Query pattern3 = QueryFactory.create("SELECT ?key ?value WHERE {?key <http://example.org/property3> ?value .}");
-		aspectPattern3Resource.addLiteral(AV.definingQuery, pattern3);
+		aspectPattern3Resource.addLiteral(AV.definingQuery, pattern3.toString(Syntax.syntaxSPARQL_11));
 		Resource aspectPattern4Resource = configurationModel.createResource("http://example.org/aspectPattern4",
 				AV.Aspect);
 		aspectPattern4Resource.addProperty(AV.ofAspect, aspect2Resource);
 		aspectPattern4Resource.addProperty(AV.associatedDataset, dataset2);
 		Query pattern4 = QueryFactory.create("SELECT ?key ?value WHERE {?key <http://example.org/property4> ?value .}");
-		aspectPattern4Resource.addLiteral(AV.definingQuery, pattern4);
+		aspectPattern4Resource.addLiteral(AV.definingQuery, pattern4.toString(Syntax.syntaxSPARQL_11));
 
 		Aspect aspect1 = Aspect.getAspect(configurationModel, aspect1Resource);
 		Aspect aspect2 = Aspect.getAspect(configurationModel, aspect2Resource);
@@ -124,13 +125,13 @@ public class AspectTest {
 		aspectPattern1Resource.addProperty(AV.ofAspect, aspect1Resource);
 		aspectPattern1Resource.addProperty(AV.associatedDataset, dataset1);
 		Query pattern1 = QueryFactory.create("SELECT ?key ?value WHERE {?key <http://example.org/property1> ?value .}");
-		aspectPattern1Resource.addLiteral(AV.definingQuery, pattern1);
+		aspectPattern1Resource.addLiteral(AV.definingQuery, pattern1.toString(Syntax.syntaxSPARQL_11));
 		Resource aspectPattern2Resource = configurationModel.createResource("http://example.org/aspectPattern2",
 				AV.AspectPattern);
 		aspectPattern2Resource.addProperty(AV.ofAspect, aspect1Resource);
 		aspectPattern2Resource.addProperty(AV.associatedDataset, dataset2);
 		Query pattern2 = QueryFactory.create("SELECT ?key ?value WHERE {?key <http://example.org/property2> ?value .}");
-		aspectPattern2Resource.addLiteral(AV.definingQuery, pattern2);
+		aspectPattern2Resource.addLiteral(AV.definingQuery, pattern2.toString(Syntax.syntaxSPARQL_11));
 
 		Resource aspect2Resource = configurationModel.createResource("http://example.org/aspect2", AV.Aspect);
 		aspect2Resource.addLiteral(AV.keyVariableName, "key");
@@ -139,13 +140,13 @@ public class AspectTest {
 		aspectPattern3Resource.addProperty(AV.ofAspect, aspect2Resource);
 		aspectPattern3Resource.addProperty(AV.associatedDataset, dataset1);
 		Query pattern3 = QueryFactory.create("SELECT ?key ?value WHERE {?key <http://example.org/property3> ?value .}");
-		aspectPattern3Resource.addLiteral(AV.definingQuery, pattern3);
+		aspectPattern3Resource.addLiteral(AV.definingQuery, pattern3.toString(Syntax.syntaxSPARQL_11));
 		Resource aspectPattern4Resource = configurationModel.createResource("http://example.org/aspectPattern4",
 				AV.AspectPattern);
 		aspectPattern4Resource.addProperty(AV.ofAspect, aspect2Resource);
 		aspectPattern4Resource.addProperty(AV.associatedDataset, dataset2);
 		Query pattern4 = QueryFactory.create("SELECT ?key ?value WHERE {?key <http://example.org/property4> ?value .}");
-		aspectPattern4Resource.addLiteral(AV.definingQuery, pattern4);
+		aspectPattern4Resource.addLiteral(AV.definingQuery, pattern4.toString(Syntax.syntaxSPARQL_11));
 
 		Collection<Aspect> aspects = Aspect.getAspects(configurationModel);
 		aspects.stream().anyMatch(aspect -> aspect1Resource.equals(aspect.getIri()));
@@ -245,10 +246,10 @@ public class AspectTest {
 		Map<String, Map<RDFNode, Set<Resource>>> index1 = Aspect.getResourceIndex(aspect, dataset,
 				Collections.singleton("value"), primaryDataModel);
 
-		assertTrue(index1.get("value").keySet().contains(ResourceFactory.createTypedLiteral(1)));
-		assertTrue(index1.get("value").keySet().contains(ResourceFactory.createTypedLiteral(2)));
-		assertTrue(index1.get("value").keySet().contains(ResourceFactory.createTypedLiteral(3)));
-		assertTrue(index1.get("value").keySet().contains(ResourceFactory.createTypedLiteral(4)));
+		assertTrue(index1.get("value").containsKey(ResourceFactory.createTypedLiteral(1)));
+		assertTrue(index1.get("value").containsKey(ResourceFactory.createTypedLiteral(2)));
+		assertTrue(index1.get("value").containsKey(ResourceFactory.createTypedLiteral(3)));
+		assertTrue(index1.get("value").containsKey(ResourceFactory.createTypedLiteral(4)));
 
 		for (RDFNode value : index1.get("value").keySet()) {
 			switch (value.asLiteral().getInt()) {
@@ -278,11 +279,11 @@ public class AspectTest {
 		Map<String, Map<Integer, Set<Resource>>> index2 = Aspect.getResourceIndex(aspect, dataset,
 				Collections.singleton("value"), primaryDataModel, l -> (l.asLiteral().getInt() % 2));
 
-		assertTrue(index2.get("value").keySet().contains(0));
-		assertTrue(index2.get("value").keySet().contains(1));
+		assertTrue(index2.get("value").containsKey(0));
+		assertTrue(index2.get("value").containsKey(1));
 
 		for (Integer value : index2.get("value").keySet()) {
-			switch (value.intValue()) {
+			switch (value) {
 			case 0:
 				assertTrue(index2.get("value").get(value).contains(resource2));
 				assertTrue(index2.get("value").get(value).contains(resource4));
@@ -378,7 +379,7 @@ public class AspectTest {
 	}
 
 	/**
-	 * For https://issues.apache.org/jira/browse/JENA-2335
+	 * For <a href="https://issues.apache.org/jira/browse/JENA-2335">JENA-2335</a>
 	 */
 	@Test
 	public void retainVariables() {

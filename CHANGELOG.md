@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Fixed
 * fix `LiteralValueComparisonProcessor`: fix handling for NaN values
 * fix `LiteralValueComparisonProcessor` and `ResourceValueComparisonProcessor`: fix deduplicated count measure to not substract duplicated values from count twice
+* **Breaking Change**: use `av:associatedDataset` instead of `dqv:computedOn` for `av:MetaDataGraph` (exports for existing results will not work anymore)
 
 ### Changed
 * change `LiteralValueComparisonProcessor` and `ResourceValueComparisonProcessor`: changed absolute coverage measure and relative coverage measure to fully base on deduplicated values

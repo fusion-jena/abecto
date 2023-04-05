@@ -23,7 +23,7 @@ WHERE {
       oa:hasTarget ?affectedResource
     ] .
   }
-  ?qualityAnnotationGraph dqv:computedOn ?affectedGraph .
+  ?qualityAnnotationGraph av:associatedDataset ?affectedGraph .
   ?aspectResource av:keyVariableName ?aspectKeyVar .
   OPTIONAL { ?aspectResource rdfs:label ?aspectLabel .}
   BIND(COALESCE(?aspectLabel, ?aspectKeyVar) AS ?aspect)

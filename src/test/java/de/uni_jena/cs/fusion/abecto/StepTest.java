@@ -260,11 +260,9 @@ public class StepTest {
 				.listResourcesWithProperty(PROV.wasGeneratedBy, execution)
 				.filterKeep(r -> r.hasProperty(RDF.type, outputModelType));
 		if (dataset == null) {
-			iterator = iterator.filterDrop(r -> r
-					.hasProperty(AV.MetaDataGraph.equals(outputModelType) ? DQV.computedOn : AV.associatedDataset));
+			iterator = iterator.filterDrop(r -> r.hasProperty(AV.associatedDataset));
 		} else {
-			iterator = iterator.filterKeep(r -> r.hasProperty(
-					AV.MetaDataGraph.equals(outputModelType) ? DQV.computedOn : AV.associatedDataset, dataset));
+			iterator = iterator.filterKeep(r -> r.hasProperty(AV.associatedDataset, dataset));
 		}
 		Model outputMetaModel = graphs.getNamedModel(iterator.next());
 

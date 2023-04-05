@@ -160,7 +160,7 @@ public class Step implements Runnable {
 						Model inputMetaModel = MappingProcessor
 								.inferTransitiveCorrespondences(dataset.getNamedModel(inputMetaModelIri));
 						ExtendedIterator<Resource> computedOnDatasetIterator = configurationModel
-								.listObjectsOfProperty(inputMetaModelIri, DQV.computedOn)
+								.listObjectsOfProperty(inputMetaModelIri, AV.associatedDataset)
 								.filterKeep(RDFNode::isResource).mapWith(RDFNode::asResource);
 						if (computedOnDatasetIterator.hasNext()) {
 							computedOnDatasetIterator
@@ -209,7 +209,7 @@ public class Step implements Runnable {
 				if (!outputModel.isEmpty()) {
 					Resource outputModelIri = configurationModel.createResource(AV.MetaDataGraph);
 					outputModelIri.addProperty(PROV.wasGeneratedBy, stepExecutionIri);
-					outputModelIri.addProperty(DQV.computedOn, datasetIri);
+					outputModelIri.addProperty(AV.associatedDataset, datasetIri);
 					dataset.addNamedModel(outputModelIri, outputModel);
 				}
 			}

@@ -40,7 +40,7 @@ WHERE {
 	BIND (IRI(CONCAT("http://www.wikidata.org/prop/",?property_id)) AS ?p)
 	BIND (IRI(CONCAT("http://www.wikidata.org/prop/statement/",?property_id)) AS ?ps)
 	BIND (IRI(CONCAT("http://www.wikidata.org/prop/statement/value/",?property_id)) AS ?psv)
-	?issueGraph dqv:computedOn ?dataset .
+	?issueGraph av:associatedDataset ?dataset .
 	{
 		GRAPH ?issueGraph {
 			[]	a						av:Deviation ;

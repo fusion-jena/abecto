@@ -210,8 +210,8 @@ public class Abecto implements Callable<Integer> {
 		allModels.listModelNames().forEachRemaining(modelResource -> {
 			if (configurationModel.contains(modelResource, RDF.type, AV.PrimaryDataGraph)
 					|| (configurationModel.contains(modelResource, RDF.type, AV.MetaDataGraph)
-							&& (!configurationModel.contains(modelResource, DQV.computedOn) || configurationModel
-									.contains(modelResource, DQV.computedOn, datasetToReportOnResource)))) {
+							&& (!configurationModel.contains(modelResource, AV.associatedDataset) || configurationModel
+									.contains(modelResource, AV.associatedDataset, datasetToReportOnResource)))) {
 				modelsForDataset.addNamedModel(modelResource, allModels.getNamedModel(modelResource));
 			}
 		});
