@@ -15,20 +15,20 @@
  */
 package de.uni_jena.cs.fusion.abecto.processor;
 
-import static de.uni_jena.cs.fusion.abecto.TestUtil.aspect;
-import static de.uni_jena.cs.fusion.abecto.TestUtil.containsDeviation;
-import static de.uni_jena.cs.fusion.abecto.TestUtil.containsIssue;
-import static de.uni_jena.cs.fusion.abecto.TestUtil.containsMeasurement;
-import static de.uni_jena.cs.fusion.abecto.TestUtil.containsValuesOmission;
-import static de.uni_jena.cs.fusion.abecto.TestUtil.dataset;
-import static de.uni_jena.cs.fusion.abecto.TestUtil.getMeasurement;
-import static de.uni_jena.cs.fusion.abecto.TestUtil.property;
-import static de.uni_jena.cs.fusion.abecto.TestUtil.resource;
-import static de.uni_jena.cs.fusion.abecto.TestUtil.subject;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import com.github.jsonldjava.shaded.com.google.common.base.Objects;
+import de.uni_jena.cs.fusion.abecto.Aspect;
+import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
+import de.uni_jena.cs.fusion.abecto.vocabulary.OM;
+import org.apache.jena.datatypes.xsd.XSDDatatype;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryFactory;
+import org.apache.jena.rdf.model.*;
+import org.apache.jena.sys.JenaSystem;
+import org.apache.jena.vocabulary.RDF;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
+import javax.annotation.Nullable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Arrays;
@@ -36,28 +36,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import javax.annotation.Nullable;
+import static de.uni_jena.cs.fusion.abecto.TestUtil.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryFactory;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.jena.vocabulary.RDF;
-import org.junit.jupiter.api.Test;
+public class PropertyComparisonProcessorTest {
 
-import com.github.jsonldjava.shaded.com.google.common.base.Objects;
-
-import de.uni_jena.cs.fusion.abecto.Aspect;
-import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
-import de.uni_jena.cs.fusion.abecto.vocabulary.OM;
-
-public abstract class AbstractValueComparisonProcessorTest {
-
-	private static class TestValueComparisonProcessor
-			extends AbstractValueComparisonProcessor<TestValueComparisonProcessor> {
+	private static class TestValueComparisonProcessor extends PropertyComparisonProcessor {
 
 		public static TestValueComparisonProcessor getInstance() {
 			TestValueComparisonProcessor processor = new TestValueComparisonProcessor();
@@ -70,16 +54,6 @@ public abstract class AbstractValueComparisonProcessorTest {
 		public boolean equivalentValues(RDFNode value1, RDFNode value2) {
 			return Objects.equal(value1, value2);
 		}
-
-		@Override
-		public String invalidValueComment() {
-			return "";
-		}
-
-		@Override
-		public boolean isValidValue(RDFNode value) {
-			return true;
-		}
 	}
 
 	Query pattern = QueryFactory.create("SELECT ?key ?value ?dummy WHERE { ?key <" + property(2)
@@ -89,6 +63,12 @@ public abstract class AbstractValueComparisonProcessorTest {
 
 	{
 		addMapping(subject(1), subject(2), subject(3), subject(4));
+	}
+
+	@BeforeAll
+	public static void initJena() {
+		JenaSystem.init();
+
 	}
 
 	public void addMapping(Resource... resources) {
@@ -177,18 +157,18 @@ public abstract class AbstractValueComparisonProcessorTest {
 		BigDecimal expectedAbsoluteCoverage1 = new BigDecimal(notDeviatingValues1.size());
 		BigDecimal expectedAbsoluteCoverage2 = new BigDecimal(notDeviatingValues2.size());
 		BigDecimal expectedRelativeCoverage1 = (expectedCount2.equals(BigDecimal.ZERO)) ? null
-				: expectedAbsoluteCoverage1.divide(expectedCount2, AbstractValueComparisonProcessor.SCALE,
+				: expectedAbsoluteCoverage1.divide(expectedCount2, PropertyComparisonProcessor.SCALE,
 						RoundingMode.HALF_UP);
 		BigDecimal expectedRelativeCoverage2 = (expectedCount1.equals(BigDecimal.ZERO)) ? null
-				: expectedAbsoluteCoverage2.divide(expectedCount1, AbstractValueComparisonProcessor.SCALE,
+				: expectedAbsoluteCoverage2.divide(expectedCount1, PropertyComparisonProcessor.SCALE,
 						RoundingMode.HALF_UP);
 		BigDecimal overlapD = new BigDecimal(overlap);
 		BigDecimal expectedCompleteness1 = (overlapD.equals(BigDecimal.ZERO)) ? null
 				: expectedCount1.divide(expectedCount1.multiply(expectedCount2).divide(overlapD,
-						AbstractValueComparisonProcessor.SCALE, RoundingMode.HALF_UP));
+						PropertyComparisonProcessor.SCALE, RoundingMode.HALF_UP));
 		BigDecimal expectedCompleteness2 = (overlapD.equals(BigDecimal.ZERO)) ? null
 				: expectedCount2.divide(expectedCount1.multiply(expectedCount2).divide(overlapD,
-						AbstractValueComparisonProcessor.SCALE, RoundingMode.HALF_UP));
+						PropertyComparisonProcessor.SCALE, RoundingMode.HALF_UP));
 		assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2, 
 				expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
 				expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
@@ -324,18 +304,18 @@ public abstract class AbstractValueComparisonProcessorTest {
 		BigDecimal expectedAbsoluteCoverage1 = new BigDecimal(values2.size() - missingValues1.size());
 		BigDecimal expectedAbsoluteCoverage2 = new BigDecimal(values1.size() - missingValues2.size());
 		BigDecimal expectedRelativeCoverage1 = (expectedCount2.equals(BigDecimal.ZERO)) ? null
-				: expectedAbsoluteCoverage1.divide(expectedCount2, AbstractValueComparisonProcessor.SCALE,
+				: expectedAbsoluteCoverage1.divide(expectedCount2, PropertyComparisonProcessor.SCALE,
 						RoundingMode.HALF_UP);
 		BigDecimal expectedRelativeCoverage2 = (expectedCount1.equals(BigDecimal.ZERO)) ? null
-				: expectedAbsoluteCoverage2.divide(expectedCount1, AbstractValueComparisonProcessor.SCALE,
+				: expectedAbsoluteCoverage2.divide(expectedCount1, PropertyComparisonProcessor.SCALE,
 						RoundingMode.HALF_UP);
 		BigDecimal overlapD = new BigDecimal(overlap);
 		BigDecimal expectedCompleteness1 = (overlapD.equals(BigDecimal.ZERO)) ? null
 				: expectedCount1.divide(expectedCount1.multiply(expectedCount2).divide(overlapD,
-						AbstractValueComparisonProcessor.SCALE, RoundingMode.HALF_UP));
+						PropertyComparisonProcessor.SCALE, RoundingMode.HALF_UP));
 		BigDecimal expectedCompleteness2 = (overlapD.equals(BigDecimal.ZERO)) ? null
 				: expectedCount2.divide(expectedCount1.multiply(expectedCount2).divide(overlapD,
-						AbstractValueComparisonProcessor.SCALE, RoundingMode.HALF_UP));
+						PropertyComparisonProcessor.SCALE, RoundingMode.HALF_UP));
 		assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2, 
 				expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
 				expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
@@ -395,66 +375,11 @@ public abstract class AbstractValueComparisonProcessorTest {
 				dataset(1), dataset(2), aspect(1), outputMetaModels[0], outputMetaModels[1]);
 	}
 
-	void assertUnexpectedValueType(Aspect aspect, RDFNode expectedValue, RDFNode unexpectedValue, String issueComment)
-			throws Exception {
-		// first direction
-		Model model1 = ModelFactory.createDefaultModel().add(subject(1), property(1), unexpectedValue);
-		Model model2 = ModelFactory.createDefaultModel().add(subject(2), property(1), expectedValue);
-		model1.add(subject(1), property(2), resource("alwaysPresent"));
-		model2.add(subject(2), property(2), resource("alwaysPresent"));
-		Model[] outputMetaModels = compare(aspect, model1, model2);
-		assertFalse(outputMetaModels[0].contains(null, RDF.type, AV.Deviation));
-		assertFalse(outputMetaModels[1].contains(null, RDF.type, AV.Deviation));
-		assertTrue(outputMetaModels[0].contains(null, RDF.type, AV.ValueOmission));
-		assertFalse(outputMetaModels[1].contains(null, RDF.type, AV.ValueOmission));
-
-		assertTrue(containsIssue(subject(1), "value", unexpectedValue, aspect(1), "Invalid Value", issueComment,
-				outputMetaModels[0]));
-		assertEquals(1, outputMetaModels[0].listStatements(null, RDF.type, AV.Issue).toList().size());
-		assertEquals(0, outputMetaModels[1].listStatements(null, RDF.type, AV.Issue).toList().size());
-
-		// assert measurements first direction
-		BigDecimal expectedCount1 = BigDecimal.ONE;
-		BigDecimal expectedCount2 = BigDecimal.ONE;
-		BigDecimal expectedDeduplicatedCount1 = BigDecimal.ONE;
-		BigDecimal expectedDeduplicatedCount2 = BigDecimal.ONE;
-		BigDecimal expectedAbsoluteCoverage1 = BigDecimal.ZERO;
-		BigDecimal expectedAbsoluteCoverage2 = BigDecimal.ZERO;
-		BigDecimal expectedRelativeCoverage1 = BigDecimal.ZERO;
-		BigDecimal expectedRelativeCoverage2 = BigDecimal.ZERO;
-		BigDecimal expectedCompleteness1 = null;
-		BigDecimal expectedCompleteness2 = null;
-		assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2,
-				expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
-				expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
-				dataset(1), dataset(2), aspect(1), outputMetaModels[0], outputMetaModels[1]);
-
-		// second direction
-		model1 = ModelFactory.createDefaultModel().add(subject(1), property(1), expectedValue);
-		model2 = ModelFactory.createDefaultModel().add(subject(2), property(1), unexpectedValue);
-		model1.add(subject(1), property(2), resource("alwaysPresent"));
-		model2.add(subject(2), property(2), resource("alwaysPresent"));
-		outputMetaModels = compare(aspect, model1, model2);
-		assertFalse(outputMetaModels[0].contains(null, RDF.type, AV.Deviation));
-		assertFalse(outputMetaModels[1].contains(null, RDF.type, AV.Deviation));
-		assertFalse(outputMetaModels[0].contains(null, RDF.type, AV.ValueOmission));
-		assertTrue(outputMetaModels[1].contains(null, RDF.type, AV.ValueOmission));
-
-		assertTrue(containsIssue(subject(2), "value", unexpectedValue, aspect(1), "Invalid Value", issueComment,
-				outputMetaModels[1]));
-		assertEquals(0, outputMetaModels[0].listStatements(null, RDF.type, AV.Issue).toList().size());
-		assertEquals(1, outputMetaModels[1].listStatements(null, RDF.type, AV.Issue).toList().size());
-
-		// assert measurements second direction
-		// some expected values as for first direction
-		assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2,
-				expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
-				expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
-				dataset(1), dataset(2), aspect(1), outputMetaModels[0], outputMetaModels[1]);
-	}
-
 	Model[] compare(Aspect aspect, Model model1, Model model2) throws Exception {
-		return compare(aspect, getInstance(Collections.singletonList("value"), aspect(1)), model1, model2);
+		PropertyComparisonProcessor processor = new PropertyComparisonProcessor();
+		processor.variables = Collections.singletonList("value");
+		processor.aspect = aspect(1);
+		return compare(aspect, processor, model1, model2);
 	}
 
 	Model[] compare(Aspect aspect, Processor<?> processor, Model model1, Model model2) {
@@ -575,8 +500,8 @@ public abstract class AbstractValueComparisonProcessorTest {
 
 	@Test
 	public void duplicatesWithAllValuesComparedToSingleWithAllValues() throws Exception {
-		Model[] outputMetaModels = prepareAndRunComparison(aspect1, Arrays.asList("value1"), Arrays.asList("value1"),
-				true, Arrays.asList("value1"), Arrays.asList(), false);
+		Model[] outputMetaModels = prepareAndRunComparison(aspect1, List.of("value1"), List.of("value1"),
+				true, List.of("value1"), List.of(), false);
 		Model outputMetaModel1 = outputMetaModels[0];
 		Model outputMetaModel2 = outputMetaModels[1];
 
@@ -682,7 +607,7 @@ public abstract class AbstractValueComparisonProcessorTest {
 
 	@Test
 	public void duplicatesWithComplementaryValuesComparedToDuplicatesWithAllValues() throws Exception {
-		Model[] outputMetaModels = prepareAndRunComparison(aspect1, Arrays.asList("value1"), Arrays.asList("value2"),
+		Model[] outputMetaModels = prepareAndRunComparison(aspect1, List.of("value1"), List.of("value2"),
 				true, Arrays.asList("value1", "value2"), Arrays.asList("value1", "value2"), true);
 		Model outputMetaModel1 = outputMetaModels[0];
 		Model outputMetaModel2 = outputMetaModels[1];
@@ -789,8 +714,8 @@ public abstract class AbstractValueComparisonProcessorTest {
 
 	@Test
 	public void duplicatesWithComplementaryValuesComparedToSingleWithAllValues() throws Exception {
-		Model[] outputMetaModels = prepareAndRunComparison(aspect1, Arrays.asList("value1"), Arrays.asList("value2"),
-				true, Arrays.asList("value1", "value2"), Arrays.asList(), false);
+		Model[] outputMetaModels = prepareAndRunComparison(aspect1, List.of("value1"), List.of("value2"),
+				true, Arrays.asList("value1", "value2"), List.of(), false);
 		Model outputMetaModel1 = outputMetaModels[0];
 		Model outputMetaModel2 = outputMetaModels[1];
 
@@ -896,7 +821,7 @@ public abstract class AbstractValueComparisonProcessorTest {
 
 	@Test
 	public void duplicatesWithMissingValuesComparedToDuplicatesWithAllValues() throws Exception {
-		Model[] outputMetaModels = prepareAndRunComparison(aspect1, Arrays.asList("value1"), Arrays.asList("value1"),
+		Model[] outputMetaModels = prepareAndRunComparison(aspect1, List.of("value1"), List.of("value1"),
 				true, Arrays.asList("value1", "value2"), Arrays.asList("value1", "value2"), true);
 		Model outputMetaModel1 = outputMetaModels[0];
 		Model outputMetaModel2 = outputMetaModels[1];
@@ -1003,8 +928,8 @@ public abstract class AbstractValueComparisonProcessorTest {
 
 	@Test
 	public void duplicatesWithMissingValuesComparedToSingleWithAllValues() throws Exception {
-		Model[] outputMetaModels = prepareAndRunComparison(aspect1, Arrays.asList("value1"), Arrays.asList(), true,
-				Arrays.asList("value1", "value2"), Arrays.asList(), false);
+		Model[] outputMetaModels = prepareAndRunComparison(aspect1, List.of("value1"), List.of(), true,
+				Arrays.asList("value1", "value2"), List.of(), false);
 		Model outputMetaModel1 = outputMetaModels[0];
 		Model outputMetaModel2 = outputMetaModels[1];
 
@@ -1108,8 +1033,6 @@ public abstract class AbstractValueComparisonProcessorTest {
 				dataset(1), dataset(2), aspect(1), outputMetaModel1, outputMetaModel2);
 	}
 
-	public abstract Processor<?> getInstance(List<String> variables, Resource aspect);
-
 	private Model[] prepareAndRunComparison(Aspect aspect, Collection<String> valuesR1D1, Collection<String> valuesR2D1,
 			boolean presentR2D1, Collection<String> valuesR1D2, Collection<String> valuesR2D2, boolean presentR2D2)
 			throws Exception {
@@ -1134,8 +1057,8 @@ public abstract class AbstractValueComparisonProcessorTest {
 
 	@Test
 	public void singleToSingleAllValues() throws Exception {
-		Model[] outputMetaModels = prepareAndRunComparison(aspect1, Arrays.asList("value1"), Arrays.asList(), false,
-				Arrays.asList("value1"), Arrays.asList(), false);
+		Model[] outputMetaModels = prepareAndRunComparison(aspect1, List.of("value1"), List.of(), false,
+				List.of("value1"), List.of(), false);
 		Model outputMetaModel1 = outputMetaModels[0];
 		Model outputMetaModel2 = outputMetaModels[1];
 
@@ -1241,8 +1164,8 @@ public abstract class AbstractValueComparisonProcessorTest {
 
 	@Test
 	public void singleToSingleDifferentValues() throws Exception {
-		Model[] outputMetaModels = prepareAndRunComparison(aspect1, Arrays.asList("value1"), Arrays.asList(), false,
-				Arrays.asList("value2"), Arrays.asList(), false);
+		Model[] outputMetaModels = prepareAndRunComparison(aspect1, List.of("value1"), List.of(), false,
+				List.of("value2"), List.of(), false);
 		Model outputMetaModel1 = outputMetaModels[0];
 		Model outputMetaModel2 = outputMetaModels[1];
 
@@ -1348,8 +1271,8 @@ public abstract class AbstractValueComparisonProcessorTest {
 
 	@Test
 	public void singleToSingleMissingValues() throws Exception {
-		Model[] outputMetaModels = prepareAndRunComparison(aspect1, Arrays.asList(), Arrays.asList(), false,
-				Arrays.asList("value1"), Arrays.asList(), false);
+		Model[] outputMetaModels = prepareAndRunComparison(aspect1, List.of(), List.of(), false,
+				List.of("value1"), List.of(), false);
 		Model outputMetaModel1 = outputMetaModels[0];
 		Model outputMetaModel2 = outputMetaModels[1];
 
@@ -1460,8 +1383,8 @@ public abstract class AbstractValueComparisonProcessorTest {
 				.create("SELECT ?key ?dummy WHERE { ?key <" + property(2) + "> ?dummy}");
 		Aspect aspectWithIncompleteVarCoverage = new Aspect(aspect(1), "key").setPattern(dataset(1), pattern)
 				.setPattern(dataset(2), patternWithoutValue);
-		Model[] outputMetaModels = prepareAndRunComparison(aspectWithIncompleteVarCoverage, Arrays.asList("value1"),
-				Arrays.asList(), false, Arrays.asList(), Arrays.asList(), false);
+		Model[] outputMetaModels = prepareAndRunComparison(aspectWithIncompleteVarCoverage, List.of("value1"),
+				List.of(), false, List.of(), List.of(), false);
 		Model outputMetaModel1 = outputMetaModels[0];
 		Model outputMetaModel2 = outputMetaModels[1];
 
@@ -1563,5 +1486,418 @@ public abstract class AbstractValueComparisonProcessorTest {
 				expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
 				expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
 				dataset(1), dataset(2), aspect(1), outputMetaModel1, outputMetaModel2);
+	}
+
+	@Test
+	public void allowLangTagSkip() {
+		PropertyComparisonProcessor processor = new PropertyComparisonProcessor();
+		String lex = "lex";
+
+		assertTrue(processor.equivalentValues(ResourceFactory.createStringLiteral(lex),
+				ResourceFactory.createStringLiteral(lex)));
+		assertTrue(processor.equivalentValues(ResourceFactory.createStringLiteral(lex),
+				ResourceFactory.createLangLiteral(lex, "")));
+		assertFalse(processor.equivalentValues(ResourceFactory.createStringLiteral(lex),
+				ResourceFactory.createLangLiteral(lex, "en")));
+		assertTrue(processor.equivalentValues(ResourceFactory.createLangLiteral(lex, ""),
+				ResourceFactory.createStringLiteral(lex)));
+		assertTrue(processor.equivalentValues(ResourceFactory.createLangLiteral(lex, ""),
+				ResourceFactory.createLangLiteral(lex, "")));
+		assertFalse(processor.equivalentValues(ResourceFactory.createLangLiteral(lex, ""),
+				ResourceFactory.createLangLiteral(lex, "en")));
+		assertFalse(processor.equivalentValues(ResourceFactory.createLangLiteral(lex, "en"),
+				ResourceFactory.createStringLiteral(lex)));
+		assertFalse(processor.equivalentValues(ResourceFactory.createLangLiteral(lex, "en"),
+				ResourceFactory.createLangLiteral(lex, "")));
+		assertTrue(processor.equivalentValues(ResourceFactory.createLangLiteral(lex, "en"),
+				ResourceFactory.createLangLiteral(lex, "en")));
+
+		processor.allowLangTagSkip = true;
+
+		assertTrue(processor.equivalentValues(ResourceFactory.createStringLiteral(lex),
+				ResourceFactory.createStringLiteral(lex)));
+		assertTrue(processor.equivalentValues(ResourceFactory.createStringLiteral(lex),
+				ResourceFactory.createLangLiteral(lex, "")));
+		assertTrue(processor.equivalentValues(ResourceFactory.createStringLiteral(lex),
+				ResourceFactory.createLangLiteral(lex, "en")));
+		assertTrue(processor.equivalentValues(ResourceFactory.createLangLiteral(lex, ""),
+				ResourceFactory.createStringLiteral(lex)));
+		assertTrue(processor.equivalentValues(ResourceFactory.createLangLiteral(lex, ""),
+				ResourceFactory.createLangLiteral(lex, "")));
+		assertTrue(processor.equivalentValues(ResourceFactory.createLangLiteral(lex, ""),
+				ResourceFactory.createLangLiteral(lex, "en")));
+		assertTrue(processor.equivalentValues(ResourceFactory.createLangLiteral(lex, "en"),
+				ResourceFactory.createStringLiteral(lex)));
+		assertTrue(processor.equivalentValues(ResourceFactory.createLangLiteral(lex, "en"),
+				ResourceFactory.createLangLiteral(lex, "")));
+		assertTrue(processor.equivalentValues(ResourceFactory.createLangLiteral(lex, "en"),
+				ResourceFactory.createLangLiteral(lex, "en")));
+
+	}
+
+	@Test
+	void isExcludedValue() {
+		PropertyComparisonProcessor processor = new PropertyComparisonProcessor();
+		String lex = "";
+
+		// default
+		assertFalse(processor.isExcludedValue(ResourceFactory.createStringLiteral(lex)));
+		assertFalse(processor.isExcludedValue(ResourceFactory.createLangLiteral(lex, "")));
+		assertFalse(processor.isExcludedValue(ResourceFactory.createLangLiteral(lex, "en")));
+		assertFalse(processor.isExcludedValue(ResourceFactory.createLangLiteral(lex, "en-us")));
+		assertFalse(processor.isExcludedValue(ResourceFactory.createLangLiteral(lex, "de")));
+		assertFalse(processor.isExcludedValue(ResourceFactory.createLangLiteral(lex, "de-de")));
+		assertFalse(processor.isExcludedValue(ResourceFactory.createResource()));
+		assertFalse(processor.isExcludedValue(ResourceFactory.createTypedLiteral(1)));
+
+		// none
+		processor.languageFilterPatterns = List.of("");
+		assertFalse(processor.isExcludedValue(ResourceFactory.createStringLiteral(lex)));
+		assertTrue(processor.isExcludedValue(ResourceFactory.createLangLiteral(lex, "en")));
+		assertTrue(processor.isExcludedValue(ResourceFactory.createLangLiteral(lex, "en-us")));
+		assertTrue(processor.isExcludedValue(ResourceFactory.createLangLiteral(lex, "de")));
+		assertTrue(processor.isExcludedValue(ResourceFactory.createLangLiteral(lex, "de-de")));
+		assertFalse(processor.isExcludedValue(ResourceFactory.createResource()));
+		assertFalse(processor.isExcludedValue(ResourceFactory.createTypedLiteral(1)));
+
+		// any
+		processor.languageFilterPatterns = List.of("*");
+		assertTrue(processor.isExcludedValue(ResourceFactory.createStringLiteral(lex)));
+		assertFalse(processor.isExcludedValue(ResourceFactory.createLangLiteral(lex, "en")));
+		assertFalse(processor.isExcludedValue(ResourceFactory.createLangLiteral(lex, "en-us")));
+		assertFalse(processor.isExcludedValue(ResourceFactory.createLangLiteral(lex, "de")));
+		assertFalse(processor.isExcludedValue(ResourceFactory.createLangLiteral(lex, "de-de")));
+		assertFalse(processor.isExcludedValue(ResourceFactory.createResource()));
+		assertFalse(processor.isExcludedValue(ResourceFactory.createTypedLiteral(1)));
+
+		// en
+		processor.languageFilterPatterns = List.of("en");
+		assertTrue(processor.isExcludedValue(ResourceFactory.createStringLiteral(lex)));
+		assertFalse(processor.isExcludedValue(ResourceFactory.createLangLiteral(lex, "en")));
+		assertFalse(processor.isExcludedValue(ResourceFactory.createLangLiteral(lex, "en-us")));
+		assertTrue(processor.isExcludedValue(ResourceFactory.createLangLiteral(lex, "de")));
+		assertTrue(processor.isExcludedValue(ResourceFactory.createLangLiteral(lex, "de-de")));
+		assertFalse(processor.isExcludedValue(ResourceFactory.createResource()));
+		assertFalse(processor.isExcludedValue(ResourceFactory.createTypedLiteral(1)));
+
+		// en or de
+		processor.languageFilterPatterns = Arrays.asList("en", "de");
+		assertTrue(processor.isExcludedValue(ResourceFactory.createStringLiteral(lex)));
+		assertFalse(processor.isExcludedValue(ResourceFactory.createLangLiteral(lex, "en")));
+		assertFalse(processor.isExcludedValue(ResourceFactory.createLangLiteral(lex, "en-us")));
+		assertFalse(processor.isExcludedValue(ResourceFactory.createLangLiteral(lex, "de")));
+		assertFalse(processor.isExcludedValue(ResourceFactory.createLangLiteral(lex, "de-de")));
+		assertFalse(processor.isExcludedValue(ResourceFactory.createResource()));
+		assertFalse(processor.isExcludedValue(ResourceFactory.createTypedLiteral(1)));
+
+		// en or none
+		processor.languageFilterPatterns = Arrays.asList("en", "");
+		assertFalse(processor.isExcludedValue(ResourceFactory.createStringLiteral(lex)));
+		assertFalse(processor.isExcludedValue(ResourceFactory.createLangLiteral(lex, "en")));
+		assertFalse(processor.isExcludedValue(ResourceFactory.createLangLiteral(lex, "en-us")));
+		assertTrue(processor.isExcludedValue(ResourceFactory.createLangLiteral(lex, "de")));
+		assertTrue(processor.isExcludedValue(ResourceFactory.createLangLiteral(lex, "de-de")));
+		assertFalse(processor.isExcludedValue(ResourceFactory.createResource()));
+		assertFalse(processor.isExcludedValue(ResourceFactory.createTypedLiteral(1)));
+	}
+
+	@Test
+	void compareLiterals() throws Exception {
+		assertSame(this.aspect1, //
+				ResourceFactory.createTypedLiteral("value", null), //
+				ResourceFactory.createTypedLiteral("value", null));
+
+		assertSame(this.aspect1, //
+				ResourceFactory.createTypedLiteral("true", XSDDatatype.XSDboolean),
+				ResourceFactory.createTypedLiteral("true", XSDDatatype.XSDboolean));
+
+		assertSame(this.aspect1, //
+				ResourceFactory.createTypedLiteral("-5", XSDDatatype.XSDinteger),
+				ResourceFactory.createTypedLiteral("-5", XSDDatatype.XSDinteger));
+		assertSame(this.aspect1, //
+				ResourceFactory.createTypedLiteral("-5", XSDDatatype.XSDinteger),
+				ResourceFactory.createTypedLiteral("-5", XSDDatatype.XSDdecimal));
+		assertSame(this.aspect1, //
+				ResourceFactory.createTypedLiteral("-5", XSDDatatype.XSDinteger),
+				ResourceFactory.createTypedLiteral("-5", XSDDatatype.XSDfloat));
+		assertSame(this.aspect1, //
+				ResourceFactory.createTypedLiteral("-5", XSDDatatype.XSDinteger),
+				ResourceFactory.createTypedLiteral("-5", XSDDatatype.XSDdouble));
+
+		assertSame(this.aspect1, //
+				ResourceFactory.createTypedLiteral("-5.0", XSDDatatype.XSDdecimal),
+				ResourceFactory.createTypedLiteral("-5.0", XSDDatatype.XSDdecimal));
+		assertSame(this.aspect1, //
+				ResourceFactory.createTypedLiteral("-5.0", XSDDatatype.XSDdecimal),
+				ResourceFactory.createTypedLiteral("-5.0", XSDDatatype.XSDfloat));
+		assertSame(this.aspect1, //
+				ResourceFactory.createTypedLiteral("-5.0", XSDDatatype.XSDdecimal),
+				ResourceFactory.createTypedLiteral("-5.0", XSDDatatype.XSDdouble));
+
+		assertSame(this.aspect1, //
+				ResourceFactory.createTypedLiteral("4.2E9", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("4.2E9", XSDDatatype.XSDfloat));
+		assertSame(this.aspect1, //
+				ResourceFactory.createTypedLiteral("4.2e9", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("4.2E9", XSDDatatype.XSDfloat));
+		assertSame(this.aspect1, //
+				ResourceFactory.createTypedLiteral("4.2e9", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("4.2e9", XSDDatatype.XSDfloat));
+		assertSame(this.aspect1, //
+				ResourceFactory.createTypedLiteral("4.2E0", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("4.2E0", XSDDatatype.XSDfloat));
+		assertSame(this.aspect1, //
+				ResourceFactory.createTypedLiteral("4.2e0", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("4.2E0", XSDDatatype.XSDfloat));
+		assertSame(this.aspect1, //
+				ResourceFactory.createTypedLiteral("4.2e0", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("4.2e0", XSDDatatype.XSDfloat));
+		assertSame(this.aspect1, //
+				ResourceFactory.createTypedLiteral("4.2E-9", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("4.2E-9", XSDDatatype.XSDfloat));
+		assertSame(this.aspect1, //
+				ResourceFactory.createTypedLiteral("4.2e-9", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("4.2E-9", XSDDatatype.XSDfloat));
+		assertSame(this.aspect1, //
+				ResourceFactory.createTypedLiteral("4.2e-9", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("4.2e-9", XSDDatatype.XSDfloat));
+		assertSame(this.aspect1, //
+				ResourceFactory.createTypedLiteral("0.0042", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("0.0042E0", XSDDatatype.XSDfloat));
+		assertSame(this.aspect1, //
+				ResourceFactory.createTypedLiteral("0.0042", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("0.0042e0", XSDDatatype.XSDfloat));
+		assertSame(this.aspect1, //
+				ResourceFactory.createTypedLiteral("0.0042", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("4.2e-3", XSDDatatype.XSDfloat));
+
+		assertSame(this.aspect1, //
+				ResourceFactory.createTypedLiteral("4.2E9", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("4.2E9", XSDDatatype.XSDdouble));
+
+		assertSame(this.aspect1, //
+				ResourceFactory.createTypedLiteral("4.2E9", XSDDatatype.XSDdouble),
+				ResourceFactory.createTypedLiteral("4.2E9", XSDDatatype.XSDdouble));
+
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("value1", null), ResourceFactory.createTypedLiteral("value2", null));
+
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("true", XSDDatatype.XSDboolean),
+				ResourceFactory.createTypedLiteral("false", XSDDatatype.XSDboolean));
+
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("-4", XSDDatatype.XSDinteger),
+				ResourceFactory.createTypedLiteral("-5", XSDDatatype.XSDinteger));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("-4", XSDDatatype.XSDinteger),
+				ResourceFactory.createTypedLiteral("-5", XSDDatatype.XSDdecimal));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("-4", XSDDatatype.XSDinteger),
+				ResourceFactory.createTypedLiteral("-5", XSDDatatype.XSDfloat));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("-4", XSDDatatype.XSDinteger),
+				ResourceFactory.createTypedLiteral("-5", XSDDatatype.XSDdouble));
+
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("-4.0", XSDDatatype.XSDdecimal),
+				ResourceFactory.createTypedLiteral("-5.0", XSDDatatype.XSDdecimal));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("-4.0", XSDDatatype.XSDdecimal),
+				ResourceFactory.createTypedLiteral("-5.0", XSDDatatype.XSDfloat));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("-4.0", XSDDatatype.XSDdecimal),
+				ResourceFactory.createTypedLiteral("-5.0", XSDDatatype.XSDdouble));
+
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("3.2E9", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("4.2E9", XSDDatatype.XSDfloat));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("3.2e9", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("4.2E9", XSDDatatype.XSDfloat));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("3.2e9", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("4.2e9", XSDDatatype.XSDfloat));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("3.2E0", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("4.2E0", XSDDatatype.XSDfloat));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("3.2e0", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("4.2E0", XSDDatatype.XSDfloat));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("3.2e0", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("4.2e0", XSDDatatype.XSDfloat));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("3.2E-9", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("4.2E-9", XSDDatatype.XSDfloat));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("3.2e-9", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("4.2E-9", XSDDatatype.XSDfloat));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("3.2e-9", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("4.2e-9", XSDDatatype.XSDfloat));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("0.0032", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("0.0042E0", XSDDatatype.XSDfloat));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("0.0032", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("0.0042e0", XSDDatatype.XSDfloat));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("0.0032", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("4.2e-3", XSDDatatype.XSDfloat));
+
+		// float and double
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("3.2E9", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("4.2E9", XSDDatatype.XSDdouble));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("3.2e9", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("4.2E9", XSDDatatype.XSDdouble));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("3.2e9", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("4.2e9", XSDDatatype.XSDdouble));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("3.2E0", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("4.2E0", XSDDatatype.XSDdouble));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("3.2e0", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("4.2E0", XSDDatatype.XSDdouble));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("3.2e0", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("4.2e0", XSDDatatype.XSDdouble));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("3.2E-9", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("4.2E-9", XSDDatatype.XSDdouble));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("3.2e-9", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("4.2E-9", XSDDatatype.XSDdouble));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("3.2e-9", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("4.2e-9", XSDDatatype.XSDdouble));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("0.0032", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("0.0042E0", XSDDatatype.XSDdouble));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("0.0032", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("0.0042e0", XSDDatatype.XSDdouble));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("0.0032", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("4.2e-3", XSDDatatype.XSDdouble));
+
+		// double and float
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("3.2E9", XSDDatatype.XSDdouble),
+				ResourceFactory.createTypedLiteral("4.2E9", XSDDatatype.XSDfloat));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("3.2e9", XSDDatatype.XSDdouble),
+				ResourceFactory.createTypedLiteral("4.2E9", XSDDatatype.XSDfloat));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("3.2e9", XSDDatatype.XSDdouble),
+				ResourceFactory.createTypedLiteral("4.2e9", XSDDatatype.XSDfloat));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("3.2E0", XSDDatatype.XSDdouble),
+				ResourceFactory.createTypedLiteral("4.2E0", XSDDatatype.XSDfloat));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("3.2e0", XSDDatatype.XSDdouble),
+				ResourceFactory.createTypedLiteral("4.2E0", XSDDatatype.XSDfloat));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("3.2e0", XSDDatatype.XSDdouble),
+				ResourceFactory.createTypedLiteral("4.2e0", XSDDatatype.XSDfloat));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("3.2E-9", XSDDatatype.XSDdouble),
+				ResourceFactory.createTypedLiteral("4.2E-9", XSDDatatype.XSDfloat));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("3.2e-9", XSDDatatype.XSDdouble),
+				ResourceFactory.createTypedLiteral("4.2E-9", XSDDatatype.XSDfloat));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("3.2e-9", XSDDatatype.XSDdouble),
+				ResourceFactory.createTypedLiteral("4.2e-9", XSDDatatype.XSDfloat));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("0.0032", XSDDatatype.XSDdouble),
+				ResourceFactory.createTypedLiteral("0.0042E0", XSDDatatype.XSDfloat));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("0.0032", XSDDatatype.XSDdouble),
+				ResourceFactory.createTypedLiteral("0.0042e0", XSDDatatype.XSDfloat));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("0.0032", XSDDatatype.XSDdouble),
+				ResourceFactory.createTypedLiteral("4.2e-3", XSDDatatype.XSDfloat));
+
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("3.2E9", XSDDatatype.XSDdouble),
+				ResourceFactory.createTypedLiteral("4.2E9", XSDDatatype.XSDdouble));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("3.2e9", XSDDatatype.XSDdouble),
+				ResourceFactory.createTypedLiteral("4.2E9", XSDDatatype.XSDdouble));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("3.2e9", XSDDatatype.XSDdouble),
+				ResourceFactory.createTypedLiteral("4.2e9", XSDDatatype.XSDdouble));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("3.2E0", XSDDatatype.XSDdouble),
+				ResourceFactory.createTypedLiteral("4.2E0", XSDDatatype.XSDdouble));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("3.2e0", XSDDatatype.XSDdouble),
+				ResourceFactory.createTypedLiteral("4.2E0", XSDDatatype.XSDdouble));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("3.2e0", XSDDatatype.XSDdouble),
+				ResourceFactory.createTypedLiteral("4.2e0", XSDDatatype.XSDdouble));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("3.2E-9", XSDDatatype.XSDdouble),
+				ResourceFactory.createTypedLiteral("4.2E-9", XSDDatatype.XSDdouble));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("3.2e-9", XSDDatatype.XSDdouble),
+				ResourceFactory.createTypedLiteral("4.2E-9", XSDDatatype.XSDdouble));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("3.2e-9", XSDDatatype.XSDdouble),
+				ResourceFactory.createTypedLiteral("4.2e-9", XSDDatatype.XSDdouble));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("0.0032", XSDDatatype.XSDdouble),
+				ResourceFactory.createTypedLiteral("0.0042E0", XSDDatatype.XSDdouble));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("0.0032", XSDDatatype.XSDdouble),
+				ResourceFactory.createTypedLiteral("0.0042e0", XSDDatatype.XSDdouble));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("0.0032", XSDDatatype.XSDdouble),
+				ResourceFactory.createTypedLiteral("4.2e-3", XSDDatatype.XSDdouble));
+
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("0.001", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("0.001e0", XSDDatatype.XSDdouble));
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("0.001", XSDDatatype.XSDdouble),
+				ResourceFactory.createTypedLiteral("0.001e0", XSDDatatype.XSDfloat));
+
+		Literal one = ResourceFactory.createTypedLiteral("1", XSDDatatype.XSDinteger);
+		Literal two = ResourceFactory.createTypedLiteral("2", XSDDatatype.XSDinteger);
+		Literal three = ResourceFactory.createTypedLiteral("3", XSDDatatype.XSDinteger);
+		assertMissing(this.aspect1, Collections.singletonList(one), List.of(), List.of(), Collections.singletonList(one), 0);
+		assertMissing(this.aspect1, Arrays.asList(one, two), List.of(), List.of(), Arrays.asList(one, two),
+				0);
+		assertMissing(this.aspect1, Arrays.asList(one, two), Collections.singletonList(one), List.of(), Collections.singletonList(two),
+				1);
+
+		// deviation if same present
+		assertDeviation(this.aspect1, Arrays.asList(one, two), Arrays.asList(one, three), Collections.singletonList(one),
+				Collections.singletonList(one), 1);
+	}
+	@Test
+	void compareResources() throws Exception {
+
+		for (int i = 0; i < 10; i++) {
+			this.addMapping(resource(i + 10), resource(i + 20));
+		}
+
+		assertSame(this.aspect1, resource(10), resource(20));
+
+		assertDeviation(this.aspect1, resource(10), resource(21));
+
+		assertMissing(this.aspect1, Collections.singletonList(resource(11)), List.of(), List.of(),
+				Collections.singletonList(resource(11)), 0);
+		assertMissing(this.aspect1, Arrays.asList(resource(11), resource(12)), List.of(), List.of(),
+				Arrays.asList(resource(11), resource(12)), 0);
+		assertMissing(this.aspect1, Arrays.asList(resource(11), resource(12)), Collections.singletonList(resource(21)),
+				List.of(), Collections.singletonList(resource(12)), 1);
+
+		assertDeviation(this.aspect1, Arrays.asList(resource(11), resource(12)),
+				Arrays.asList(resource(21), resource(23)), Collections.singletonList(resource(11)), Collections.singletonList(resource(21)), 1);
 	}
 }

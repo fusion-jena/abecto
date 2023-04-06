@@ -84,22 +84,13 @@ GRAPH <manualMappings>
         [av:key "variables" ; av:value "label" ] ;
     .
 
-<literalValueComparison> a av:Step ;
+<propertyComparison> a av:Step ;
     p-plan:isStepOfPlan <plan> ;
-    av:processorClass abecto:LiteralValueComparisonProcessor ;
+    av:processorClass abecto:PropertyComparisonProcessor ;
     p-plan:isPrecededBy <jaroWinklerMapping> ;
     av:hasParameter
         [av:key "aspect" ; av:value <aspectPerson> ] ,
-        [av:key "variables" ; av:value "label", "pnr" ] ;
-    .
-
-<resourceValueComparison> a av:Step ;
-    p-plan:isStepOfPlan <plan> ;
-    av:processorClass abecto:ResourceValueComparisonProcessor ;
-    p-plan:isPrecededBy <jaroWinklerMapping> ;
-    av:hasParameter
-        [av:key "aspect" ; av:value <aspectPerson> ] ,
-        [av:key "variables" ; av:value "boss" ] ;
+        [av:key "variables" ; av:value "boss", "label", "pnr" ] ;
     .
 
 <completeness> a av:Step ;

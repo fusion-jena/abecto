@@ -30,6 +30,11 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+import com.github.jsonldjava.shaded.com.google.common.base.Objects;
+import org.apache.jena.datatypes.RDFDatatype;
+import org.apache.jena.datatypes.xsd.XSDDateTime;
+import org.apache.jena.datatypes.xsd.impl.*;
+import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
@@ -39,8 +44,11 @@ import de.uni_jena.cs.fusion.abecto.Metadata;
 import de.uni_jena.cs.fusion.abecto.Parameter;
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 import de.uni_jena.cs.fusion.abecto.vocabulary.OM;
+import org.apache.jena.sparql.expr.nodevalue.NodeFunctions;
 
-public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> extends Processor<P> {
+public class PropertyComparisonProcessor extends Processor<PropertyComparisonProcessor> {
+
+	private final Collection<String> LANGUAGE_FILTER_PATTERN_DEFAULT = List.of("","*");
 
 	/** Aspect to process. */
 	@Parameter
@@ -48,6 +56,26 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 	/** Variables to process. */
 	@Parameter
 	public List<String> variables;
+	/**
+	 * Language patterns to filter compared literals. Literals of datatype xsd:string and
+	 * rdf:langString will be considered only, if they match at least on of these patterns.
+	 * String literals without language tag will match with "", all string literals with
+	 * language tag match with "*". Default: "","*" (all match)
+	 */
+	@Parameter
+	public Collection<String> languageFilterPatterns = LANGUAGE_FILTER_PATTERN_DEFAULT;
+	/**
+	 * If true, a literal of the type xsd:date and a literal of the type
+	 * xsd:dateTime with equal year, month and day part will match.
+	 */
+	@Parameter
+	public boolean allowTimeSkip;
+	/**
+	 * If true, literals of the type xsd:string or rdf:langString with equal lexical
+	 * value but different language tag will match.
+	 */
+	@Parameter
+	public boolean allowLangTagSkip;
 
 	/**
 	 * Number of covered values of another dataset, per variable.
@@ -118,49 +146,19 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 		return pairwiseOverlap;
 	}
 
-	/**
-	 * Removes all values that do not match to {@link #isValidValue(RDFNode)},
-	 * {@link #useValue(RDFNode)}, or are known wrong values.
-	 *
-	 */
-	private void filterValues(Map<Resource, Map<String, Set<RDFNode>>> valuesByVariableByResource, Resource dataset) {
+	/** Removes all values that are known wrong values. */
+	private void removeKnownWrongValues(Map<Resource, Map<String, Set<RDFNode>>> valuesByVariableByResource, Resource dataset) {
 		for (Resource resource : valuesByVariableByResource.keySet()) {
-			filterValues(valuesByVariableByResource.get(resource), resource, dataset);
+			removeKnownWrongValues(valuesByVariableByResource.get(resource), resource, dataset);
 		}
 	}
 
-	/**
-	 * Removes all values that do not match to {@link #isValidValue(RDFNode)},
-	 * {@link #useValue(RDFNode)}, or are known wrong values.
-	 *
-	 */
-	private void filterValues(Map<String, Set<RDFNode>> valuesByVariable, Resource resource, Resource dataset) {
+	/** Removes all values that are known wrong values. */
+	private void removeKnownWrongValues(Map<String, Set<RDFNode>> valuesByVariable, Resource resource, Resource dataset) {
 		Model inputMetaModel = this.getInputMetaModelUnion(dataset);
 		for (String variable : valuesByVariable.keySet()) {
 			Set<RDFNode> values = valuesByVariable.get(variable);
-			values.removeIf(value -> !isValidValue(value));
 			values.removeIf(value -> Metadata.isWrongValue(resource, variable, value, aspect, inputMetaModel));
-		}
-	}
-
-	/**
-	 * Store an invalid value issue for each value that does not match to
-	 * {@link #isValidValue(RDFNode)} in the according output metamodel.
-	 *
-	 */
-	private void reportInvalidValues(Map<Resource, Map<String, Set<RDFNode>>> valuesByVariableByResource,
-			Resource dataset) {
-		for (Resource resource : valuesByVariableByResource.keySet()) {
-			Map<String, Set<RDFNode>> valuesByVariable = valuesByVariableByResource.get(resource);
-			for (String variable : valuesByVariable.keySet()) {
-				for (RDFNode value : valuesByVariable.get(variable)) {
-					if (!this.isValidValue(value)) {
-						// report invalid value
-						Metadata.addIssue(resource, variable, value, aspect, "Invalid Value",
-								this.invalidValueComment(), this.getOutputMetaModel(dataset));
-					}
-				}
-			}
 		}
 	}
 
@@ -206,8 +204,7 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 				Model model = this.getInputPrimaryModelUnion(dataset);
 				valuesByVariableByResourceByDataset.put(dataset, aspect
 						.selectResourceValues(correspondingResources, dataset, variables, model));
-				reportInvalidValues(valuesByVariableByResourceByDataset.get(dataset), dataset);
-				filterValues(valuesByVariableByResourceByDataset.get(dataset), dataset);
+				removeKnownWrongValues(valuesByVariableByResourceByDataset.get(dataset), dataset);
 				// removeExcludedValues
 				valuesByVariableByResourceByDataset.forEach((k3,v3) -> v3.forEach((k2,v2) -> v2.forEach((k,v) -> v.removeIf(this::isExcludedValue))));
 				// update deduplicated counts
@@ -432,35 +429,151 @@ public abstract class AbstractValueComparisonProcessor<P extends Processor<P>> e
 	}
 
 	/**
-	 * Checks if a value is valid.
-	 *
-	 * @param value    the value to check
-	 * @return {@code true}, if the value is valid, otherwise {@code false}
-	 */
-	public abstract boolean isValidValue(RDFNode value);
-
-	public abstract String invalidValueComment();
-
-	/**
 	 * Checks if two values are equivalent.
 	 * 
 	 * @param value1 the first value to compare
 	 * @param value2 the second value to compare
 	 * @return {@code true}, if the values are equivalent, otherwise {@code false}
 	 */
-	public abstract boolean equivalentValues(RDFNode value1, RDFNode value2);
+	public boolean equivalentValues(RDFNode value1, RDFNode value2) {
+		if (value1.isResource() && value2.isResource()) {
+			return correspond(value1.asResource(), value2.asResource());
+		} else if (value1.isLiteral() && value2.isLiteral()) {
+			Literal literal1 = value1.asLiteral();
+			Literal literal2 = value2.asLiteral();
 
-	/**
-	 * Checks if a valid value should be used for comparison.
-	 * 
-	 * @param value the value to check
-	 * @return {@code true}, if the value should be used, otherwise {@code false}
-	 */
-	public boolean useValue(RDFNode value) {
-		return true;
+			// same type/subtype check
+			if (literal1.sameValueAs(literal2)) {
+				return true;
+			}
+
+			RDFDatatype type1 = literal1.getDatatype();
+			RDFDatatype type2 = literal2.getDatatype();
+
+			// comparison of xsd:date and xsd:dateTime
+			if (allowTimeSkip && (type1 instanceof XSDDateType && type2 instanceof XSDDateTimeType
+					|| type1 instanceof XSDDateTimeType && type2 instanceof XSDDateType)) {
+				XSDDateTime date1 = ((XSDDateTime) literal1.getValue());
+				XSDDateTime date2 = ((XSDDateTime) literal2.getValue());
+				return date1.getDays() == date2.getDays() //
+						&& date1.getMonths() == date2.getMonths() //
+						&& date1.getYears() == date2.getYears();
+			}
+
+			// ignore lang tags
+			if (allowLangTagSkip && (type1 instanceof XSDBaseStringType || type1 instanceof RDFLangString)
+					&& (type2 instanceof XSDBaseStringType || type2 instanceof RDFLangString)) {
+				String string1 = literal1.getString();
+				String string2 = literal2.getString();
+				return Objects.equal(string1, string2);
+			}
+
+			// comparison of different number types
+			try {
+				BigDecimal decimal1, decimal2;
+
+				// get precise BigDecimal of literal 1 and handle special cases of float/double
+				if (type1 instanceof XSDBaseNumericType) {
+					decimal1 = new BigDecimal(literal1.getLexicalForm());
+				} else if (type1 instanceof XSDDouble) {
+					double value1Double = literal1.getDouble();
+					// handle special cases
+					if (Double.isNaN(value1Double)) {
+						return type2 instanceof XSDFloat && Float.isNaN(literal2.getFloat());
+					} else if (value1Double == Double.NEGATIVE_INFINITY) {
+						return type2 instanceof XSDFloat && literal2.getFloat() == Float.NEGATIVE_INFINITY;
+					} else if (value1Double == Double.POSITIVE_INFINITY) {
+						return type2 instanceof XSDFloat && literal2.getFloat() == Float.POSITIVE_INFINITY;
+					}
+					// get value as BigDecimal
+					decimal1 = new BigDecimal(value1Double);
+					/*
+					 * NOTE: don't use BigDecimal#valueOf(value1Double) or new
+					 * BigDecimal(literal1.getLexicalForm()) to represented value from the double
+					 * value space, not the double lexical space
+					 */
+				} else if (type1 instanceof XSDFloat) {
+					float value1Float = literal1.getFloat();
+					// handle special cases
+					if (Float.isNaN(value1Float)) {
+						return type2 instanceof XSDDouble && Double.isNaN(literal2.getDouble());
+					} else if (value1Float == Double.NEGATIVE_INFINITY) {
+						return type2 instanceof XSDDouble && literal2.getDouble() == Double.NEGATIVE_INFINITY;
+					} else if (value1Float == Double.POSITIVE_INFINITY) {
+						return type2 instanceof XSDDouble && literal2.getDouble() == Double.POSITIVE_INFINITY;
+					}
+					// get value as BigDecimal
+					decimal1 = new BigDecimal(value1Float);
+					/*
+					 * NOTE: don't use BigDecimal#valueOf(value1Float) or new
+					 * BigDecimal(literal1.getLexicalForm()) to represented value from the float
+					 * value space, not the float lexical space
+					 */
+				} else {
+					return false;
+				}
+
+				// get precise BigDecimal of literal 2
+				if (type2 instanceof XSDBaseNumericType) {
+					decimal2 = new BigDecimal(literal2.getLexicalForm());
+				} else if (type2 instanceof XSDDouble) {
+					double value2Double = literal2.getDouble();
+					// handle special cases
+					if (Double.isNaN(value2Double) || value2Double == Double.NEGATIVE_INFINITY
+							|| value2Double == Double.POSITIVE_INFINITY) {
+						return false;
+					}
+					// get value as BigDecimal
+					decimal2 = new BigDecimal(value2Double);
+					/*
+					 * NOTE: don't use BigDecimal#valueOf(value2Double) or new
+					 * BigDecimal(literal2.getLexicalForm()) to represented value from the double
+					 * value space, not the double lexical space
+					 */
+				} else if (type2 instanceof XSDFloat) {
+					float value2Float = literal2.getFloat();
+					// handle special cases
+					if (Float.isNaN(value2Float) || value2Float == Float.NEGATIVE_INFINITY
+							|| value2Float == Float.POSITIVE_INFINITY) {
+						return false;
+					}
+					// get value as BigDecimal
+					decimal2 = new BigDecimal(value2Float);
+					/*
+					 * NOTE: don't use BigDecimal#valueOf(value2Float) or new
+					 * BigDecimal(literal2.getLexicalForm()) to represented value from the float
+					 * value space, not the float lexical space
+					 */
+				} else {
+					return false;
+				}
+
+				// compare BigDecimals
+				return decimal1.compareTo(decimal2) == 0;
+			} catch (NumberFormatException e) {
+				return false;
+			}
+		} else {
+			return false;
+		}
 	}
 
-	public final boolean isExcludedValue(RDFNode value) {
-		return !useValue(value);
+	/**
+	 * Checks if a value should be excluded from the comparison.
+	 * 
+	 * @param value the value to check
+	 * @return {@code true}, if the value should not be used, otherwise {@code false}
+	 */
+	public boolean isExcludedValue(RDFNode value) {
+		if (languageFilterPatterns == LANGUAGE_FILTER_PATTERN_DEFAULT ||
+				!value.isLiteral() ||
+				!(value.asLiteral().getDatatype() instanceof XSDBaseStringType) &&
+						!(value.asLiteral().getDatatype() instanceof RDFLangString)) {
+			return false;
+		} else {
+			String langStr = value.asLiteral().getLanguage();
+			return languageFilterPatterns.stream()
+					.noneMatch(languageFilterPattern -> NodeFunctions.langMatches(langStr, languageFilterPattern));
+		}
 	}
 }

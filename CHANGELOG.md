@@ -5,14 +5,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Changed
+* **Breaking Change**: merge `LiteralValueComparisonProcessor` and `ResourceValueComparisonProcessor` into `PropertyComparisonProcessor` to enable comparison of variables permitting literal and non-literal values
+* change `PropertyComparisonProcessor`: changed absolute coverage measure and relative coverage measure to fully base on deduplicated values
+* change `PropertyComparisonProcessor`: changed count measure, deduplicated count measure, absolute coverage measure and relative coverage measure to ignoring excluded values
+
 ### Fixed
-* fix `LiteralValueComparisonProcessor`: fix handling for NaN values
-* fix `LiteralValueComparisonProcessor` and `ResourceValueComparisonProcessor`: fix deduplicated count measure to not substract duplicated values from count twice
+* fix `PropertyComparisonProcessor`: fix handling for NaN values
+* fix `PropertyComparisonProcessor`: fix deduplicated count measure to not substract duplicated values from count twice
 * **Breaking Change**: use `av:associatedDataset` instead of `dqv:computedOn` for `av:MetaDataGraph` (exports for existing results will not work anymore)
 
-### Changed
-* change `LiteralValueComparisonProcessor` and `ResourceValueComparisonProcessor`: changed absolute coverage measure and relative coverage measure to fully base on deduplicated values
-* change `LiteralValueComparisonProcessor` and `ResourceValueComparisonProcessor`: changed count measure, deduplicated count measure, absolute coverage measure and relative coverage measure to ignoring excluded values
+### Removed
+* **Breaking Change**: removed reporting of unexpected type issues by `PropertyComparisonProcessor`
 
 ## [1.2.0] - 2023-03-09
 

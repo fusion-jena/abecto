@@ -143,15 +143,15 @@ The execution of ABECTO is configured in a plan file, which is an RDF dataset fi
            [av:key "aspect" ; av:value <aspectPerson> ] ,
            [av:key "variables" ; av:value "label" ] ;
        .
-
-   <literalValueComparison> a av:Step ;
-       rdfs:label "Comparison of Persons Name and PNR"@en;
+    .
+   <propertyComparison> a av:Step ;
+       rdfs:label "Comparison of Persons Boss, Name and PNR"@en;
        p-plan:isStepOfPlan <plan> ;
-       av:processorClass abecto:LiteralValueComparisonProcessor ;
+       av:processorClass abecto:PropertyComparisonProcessor ;
        p-plan:isPrecededBy <jaroWinklerMapping> ;
        av:hasParameter
            [av:key "aspect" ; av:value <aspectPerson> ] ,
-           [av:key "variables" ; av:value "label", "pnr" ] ;
+           [av:key "variables" ; av:value "boss", "label", "pnr" ] ;
        .
    ```
 
