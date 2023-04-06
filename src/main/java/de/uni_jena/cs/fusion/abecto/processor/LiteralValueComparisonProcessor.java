@@ -55,7 +55,7 @@ public class LiteralValueComparisonProcessor extends AbstractValueComparisonProc
 	@Parameter
 	public boolean allowTimeSkip;
 	/**
-	 * If true, literals of the type xsd:string or xsd:dateTime with equal lexical
+	 * If true, literals of the type xsd:string or rdf:langString with equal lexical
 	 * value but different language tag will match.
 	 */
 	@Parameter
