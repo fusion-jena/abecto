@@ -39,8 +39,8 @@ import de.uni_jena.cs.fusion.abecto.vocabulary.OM;
  * <strong>completeness</strong> per aspect (estimated using the mark and
  * recapture method as defined in
  * <a href="https://doi.org/10.1145/1390334.1390531">Thomas 2008</a>), as well
- * as <strong>resource omission</strong> and <strong>duplicate</strong>
- * annotations.
+ * as <strong>deviation</strong>, <strong>resource omission</strong> and
+ * <strong>duplicate</strong> annotations.
  */
 public class PopulationComparisonProcessor extends Processor<PopulationComparisonProcessor> {
 
