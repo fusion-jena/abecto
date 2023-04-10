@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.apache.jena.rdf.model.Resource;
@@ -65,8 +64,6 @@ public class PopulationComparisonProcessor extends Processor<PopulationCompariso
 			Map<Resource, Integer> count = new HashMap<>();
 			// Number of resources in this dataset, excluding duplicates.
 			Map<Resource, Integer> deduplicatedCount = new HashMap<>();
-			// Number of overlaps between all pairs of dataset, excluding duplicates.
-			AtomicInteger totalPairwiseOverlap = new AtomicInteger(0);
 
 			Aspect aspect = this.getAspects().get(aspectIri);
 
@@ -121,15 +118,11 @@ public class PopulationComparisonProcessor extends Processor<PopulationCompariso
 						for (Resource datasetComparedTo : datasetsCoveringTheAspect) {
 							if (!occurrencesByDataset.get(datasetComparedTo).isEmpty()) {
 								// do not use Resource#getURI() as it might be null for blank nodes
-								if (dataset.hashCode() < datasetComparedTo.hashCode()) {
-									// only once per pair
+								if (dataset.hashCode() < datasetComparedTo.hashCode()) { // only once per pair
 
 									// count covered resources of the compared dataset (both directions)
 									absoluteCoverage.get(dataset).merge(datasetComparedTo, 1, Integer::sum);
 									absoluteCoverage.get(datasetComparedTo).merge(dataset, 1, Integer::sum);
-
-									// count total pairwise overlap
-									totalPairwiseOverlap.incrementAndGet();
 								}
 							}
 						}
@@ -157,7 +150,16 @@ public class PopulationComparisonProcessor extends Processor<PopulationCompariso
 				}
 			});
 
-			if (totalPairwiseOverlap.get() != 0) {
+			int totalPairwiseOverlap = 0;
+			for (Resource dataset : datasetsCoveringTheAspect) {
+				for (Resource datasetComparedTo : datasetsCoveringTheAspect) {
+					if (dataset.hashCode() < datasetComparedTo.hashCode()) { // only once per pair
+						totalPairwiseOverlap += absoluteCoverage.get(dataset).get(datasetComparedTo);
+					}
+				}
+			}
+
+			if (totalPairwiseOverlap != 0) {
 				// calculate estimated population size
 				BigDecimal populationSize = BigDecimal.ZERO;
 				for (Resource dataset : datasetsCoveringTheAspect) {
@@ -169,7 +171,7 @@ public class PopulationComparisonProcessor extends Processor<PopulationCompariso
 						}
 					}
 				}
-				populationSize = populationSize.divide(BigDecimal.valueOf(totalPairwiseOverlap.get()), 0,
+				populationSize = populationSize.divide(BigDecimal.valueOf(totalPairwiseOverlap), 0,
 						RoundingMode.HALF_UP);
 
 				// calculate & store estimated population completeness
