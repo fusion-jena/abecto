@@ -150,6 +150,7 @@ public class PopulationComparisonProcessor extends Processor<PopulationCompariso
 				}
 			});
 
+			// calculate total pairwise overlap
 			int totalPairwiseOverlap = 0;
 			for (Resource dataset : datasetsCoveringTheAspect) {
 				for (Resource datasetComparedTo : datasetsCoveringTheAspect) {

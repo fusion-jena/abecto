@@ -243,6 +243,22 @@ public class PropertyComparisonProcessor extends Processor<PropertyComparisonPro
 			}
 		});
 
+		// calculate total pairwise overlaps
+		for (String variable : variables) {
+			int totalPairwiseOverlap = 0;
+			for (Resource dataset : aspect.getDatasets()) {
+				for (Resource datasetComparedTo : aspect.getDatasets()) {
+					if (dataset.hashCode() < datasetComparedTo.hashCode()) { // only once per pair
+						totalPairwiseOverlap += absoluteCoverage
+								.getOrDefault(variable,Collections.emptyMap())
+								.getOrDefault(dataset,Collections.emptyMap())
+								.getOrDefault(datasetComparedTo,0);
+					}
+				}
+			}
+			totalPairwiseOverlapByVariable.put(variable, totalPairwiseOverlap);
+		}
+
 		// calculate estimated value population size and estimated completeness per variable
 		for (String variable : variables) {
 			populationSize.put(variable, BigDecimal.ZERO);
@@ -420,7 +436,6 @@ public class PropertyComparisonProcessor extends Processor<PropertyComparisonPro
 		// update measurements
 		if (!dataset1.equals(dataset2)) {
 			int pairwiseOverlap = getPairwiseOverlap(valuesByVariableByResource1.keySet(), valuesByVariableByResource2.keySet(), resourcesByMappedValues);
-			totalPairwiseOverlapByVariable.merge(variable, pairwiseOverlap, Integer::sum);
 			absoluteCoverage.computeIfAbsent(variable, v -> new HashMap<>()).computeIfAbsent(dataset1, v -> new HashMap<>())
 					.merge(dataset2, pairwiseOverlap, Integer::sum);
 			absoluteCoverage.computeIfAbsent(variable, v -> new HashMap<>()).computeIfAbsent(dataset2, v -> new HashMap<>())
