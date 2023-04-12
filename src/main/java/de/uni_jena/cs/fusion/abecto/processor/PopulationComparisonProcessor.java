@@ -93,13 +93,10 @@ public class PopulationComparisonProcessor extends Processor<PopulationCompariso
 				// count resources of the dataset in the correspondence set
 				for (Resource dataset : datasetsCoveringTheAspect) {
 					Set<Resource> uncoveredResourcesOfDataset = uncoveredResourcesByDataset.get(dataset);
-					Set<Resource> occurrencesOfDataset = occurrencesByDataset.computeIfAbsent(dataset,
-							r -> new HashSet<>());
-					for (Resource correspondingResource : correspondingResources) {
-						if (uncoveredResourcesOfDataset.contains(correspondingResource)) {
-							occurrencesOfDataset.add(correspondingResource);
-						}
-					}
+					Set<Resource> occurrencesOfDataset = correspondingResources.stream()
+							.filter(uncoveredResourcesOfDataset::remove) // remove corresponding resources from uncovered resources
+							.collect(Collectors.toSet()); // get corresponding resources of the dataset
+					occurrencesByDataset.put(dataset,occurrencesOfDataset);
 				}
 				for (Resource dataset : datasetsCoveringTheAspect) {
 					int occurrences = occurrencesByDataset.containsKey(dataset)
@@ -142,11 +139,6 @@ public class PopulationComparisonProcessor extends Processor<PopulationCompariso
 
 						}
 					}
-				}
-
-				// remove covered resources
-				for (Resource dataset : datasetsCoveringTheAspect) {
-					correspondingResources.forEach(uncoveredResourcesByDataset.get(dataset)::remove);
 				}
 			});
 

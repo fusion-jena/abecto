@@ -1679,6 +1679,86 @@ public class PropertyComparisonProcessorTest {
 				ResourceFactory.createTypedLiteral("4.2E9", XSDDatatype.XSDdouble),
 				ResourceFactory.createTypedLiteral("4.2E9", XSDDatatype.XSDdouble));
 
+		assertSame(this.aspect1, //
+				ResourceFactory.createTypedLiteral("NaN", XSDDatatype.XSDdouble),
+				ResourceFactory.createTypedLiteral("NaN", XSDDatatype.XSDdouble));
+
+		assertSame(this.aspect1, //
+				ResourceFactory.createTypedLiteral("NaN", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("NaN", XSDDatatype.XSDdouble));
+
+		assertSame(this.aspect1, //
+				ResourceFactory.createTypedLiteral("NaN", XSDDatatype.XSDdouble),
+				ResourceFactory.createTypedLiteral("NaN", XSDDatatype.XSDfloat));
+
+		assertSame(this.aspect1, //
+				ResourceFactory.createTypedLiteral("NaN", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("NaN", XSDDatatype.XSDfloat));
+
+		assertSame(this.aspect1, //
+				ResourceFactory.createTypedLiteral("-INF", XSDDatatype.XSDdouble),
+				ResourceFactory.createTypedLiteral("-INF", XSDDatatype.XSDdouble));
+
+		assertSame(this.aspect1, //
+				ResourceFactory.createTypedLiteral("-INF", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("-INF", XSDDatatype.XSDdouble));
+
+		assertSame(this.aspect1, //
+				ResourceFactory.createTypedLiteral("-INF", XSDDatatype.XSDdouble),
+				ResourceFactory.createTypedLiteral("-INF", XSDDatatype.XSDfloat));
+
+		assertSame(this.aspect1, //
+				ResourceFactory.createTypedLiteral("-INF", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("-INF", XSDDatatype.XSDfloat));
+
+		assertSame(this.aspect1, //
+				ResourceFactory.createTypedLiteral("INF", XSDDatatype.XSDdouble),
+				ResourceFactory.createTypedLiteral("INF", XSDDatatype.XSDdouble));
+
+		assertSame(this.aspect1, //
+				ResourceFactory.createTypedLiteral("INF", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("INF", XSDDatatype.XSDdouble));
+
+		assertSame(this.aspect1, //
+				ResourceFactory.createTypedLiteral("INF", XSDDatatype.XSDdouble),
+				ResourceFactory.createTypedLiteral("INF", XSDDatatype.XSDfloat));
+
+		assertSame(this.aspect1, //
+				ResourceFactory.createTypedLiteral("INF", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("INF", XSDDatatype.XSDfloat));
+
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("INF", XSDDatatype.XSDdouble),
+				ResourceFactory.createTypedLiteral("-INF", XSDDatatype.XSDdouble));
+
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("INF", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("-INF", XSDDatatype.XSDdouble));
+
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("INF", XSDDatatype.XSDdouble),
+				ResourceFactory.createTypedLiteral("-INF", XSDDatatype.XSDfloat));
+
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("INF", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("-INF", XSDDatatype.XSDfloat));
+
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("-INF", XSDDatatype.XSDdouble),
+				ResourceFactory.createTypedLiteral("INF", XSDDatatype.XSDdouble));
+
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("-INF", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("INF", XSDDatatype.XSDdouble));
+
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("-INF", XSDDatatype.XSDdouble),
+				ResourceFactory.createTypedLiteral("INF", XSDDatatype.XSDfloat));
+
+		assertDeviation(this.aspect1, //
+				ResourceFactory.createTypedLiteral("-INF", XSDDatatype.XSDfloat),
+				ResourceFactory.createTypedLiteral("INF", XSDDatatype.XSDfloat));
+
 		assertDeviation(this.aspect1, //
 				ResourceFactory.createTypedLiteral("value1", null), ResourceFactory.createTypedLiteral("value2", null));
 
