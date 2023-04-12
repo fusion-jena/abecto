@@ -67,22 +67,19 @@ public class PopulationComparisonProcessor extends Processor<PopulationCompariso
 
 			Aspect aspect = this.getAspects().get(aspectIri);
 
-			Set<Resource> datasetsCoveringTheAspect = aspect.getDatasets();
+			Set<Resource> datasets = aspect.getDatasets();
 
-			// get resources by dataset and aspect
 			Map<Resource, Set<Resource>> uncoveredResourcesByDataset = new HashMap<>();
-			for (Resource dataset : datasetsCoveringTheAspect) {
+			for (Resource dataset : datasets) {
+				// get resources by dataset and aspect
 				uncoveredResourcesByDataset.put(dataset,
 						Aspect.getResourceKeys(aspect, dataset, this.getInputPrimaryModelUnion(dataset))
 								.collect(Collectors.toSet()));
 				// store count and initial deduplicated count
 				count.put(dataset, uncoveredResourcesByDataset.get(dataset).size());
 				deduplicatedCount.put(dataset, uncoveredResourcesByDataset.get(dataset).size());
-			}
-
-			// prepare measurements
-			for (Resource dataset : datasetsCoveringTheAspect) {
-				for (Resource datasetComparedTo : datasetsCoveringTheAspect) {
+				// initialize absolute coverage
+				for (Resource datasetComparedTo : datasets) {
 					absoluteCoverage.computeIfAbsent(dataset, x -> new HashMap<>()).put(datasetComparedTo, 0);
 				}
 			}
@@ -90,21 +87,20 @@ public class PopulationComparisonProcessor extends Processor<PopulationCompariso
 			// process correspondence sets of aspect
 			getCorrespondenceGroups(aspectIri).forEach(correspondingResources -> {
 				Map<Resource, Set<Resource>> occurrencesByDataset = new HashMap<>();
-				// count resources of the dataset in the correspondence set
-				for (Resource dataset : datasetsCoveringTheAspect) {
-					Set<Resource> uncoveredResourcesOfDataset = uncoveredResourcesByDataset.get(dataset);
-					Set<Resource> occurrencesOfDataset = correspondingResources.stream()
-							.filter(uncoveredResourcesOfDataset::remove) // remove corresponding resources from uncovered resources
-							.collect(Collectors.toSet()); // get corresponding resources of the dataset
-					occurrencesByDataset.put(dataset,occurrencesOfDataset);
+				// get corresponding resources per dataset, update uncovered resources
+				for (Resource dataset : datasets) {
+					Set<Resource> uncoveredResources = uncoveredResourcesByDataset.get(dataset);
+					occurrencesByDataset.put(dataset,correspondingResources.stream()
+							.filter(uncoveredResources::remove) // remove corresponding resources from uncovered resources
+							.collect(Collectors.toSet())); // get corresponding resources of the dataset
 				}
-				for (Resource dataset : datasetsCoveringTheAspect) {
+				for (Resource dataset : datasets) {
 					int occurrences = occurrencesByDataset.containsKey(dataset)
 							? occurrencesByDataset.get(dataset).size()
 							: 0;
 					if (occurrences == 0) {
 						// report resource omission for resources in correspondence sets
-						for (Resource datasetComparedTo : datasetsCoveringTheAspect) {
+						for (Resource datasetComparedTo : datasets) {
 							for (Resource resourceComparedTo : occurrencesByDataset.get(datasetComparedTo)) {
 								Metadata.addResourceOmission(dataset, datasetComparedTo, resourceComparedTo,
 										aspect.getIri(), this.getOutputMetaModel(dataset));
@@ -112,7 +108,7 @@ public class PopulationComparisonProcessor extends Processor<PopulationCompariso
 						}
 					}
 					if (occurrences > 0) {
-						for (Resource datasetComparedTo : datasetsCoveringTheAspect) {
+						for (Resource datasetComparedTo : datasets) {
 							if (!occurrencesByDataset.get(datasetComparedTo).isEmpty()) {
 								// do not use Resource#getURI() as it might be null for blank nodes
 								if (dataset.hashCode() < datasetComparedTo.hashCode()) { // only once per pair
@@ -144,8 +140,8 @@ public class PopulationComparisonProcessor extends Processor<PopulationCompariso
 
 			// calculate total pairwise overlap
 			int totalPairwiseOverlap = 0;
-			for (Resource dataset : datasetsCoveringTheAspect) {
-				for (Resource datasetComparedTo : datasetsCoveringTheAspect) {
+			for (Resource dataset : datasets) {
+				for (Resource datasetComparedTo : datasets) {
 					if (dataset.hashCode() < datasetComparedTo.hashCode()) { // only once per pair
 						totalPairwiseOverlap += absoluteCoverage.get(dataset).get(datasetComparedTo);
 					}
@@ -155,8 +151,8 @@ public class PopulationComparisonProcessor extends Processor<PopulationCompariso
 			if (totalPairwiseOverlap != 0) {
 				// calculate estimated population size
 				BigDecimal populationSize = BigDecimal.ZERO;
-				for (Resource dataset : datasetsCoveringTheAspect) {
-					for (Resource datasetComparedTo : datasetsCoveringTheAspect) {
+				for (Resource dataset : datasets) {
+					for (Resource datasetComparedTo : datasets) {
 						// do not use Resource#getURI() as it might be null for blank nodes
 						if (dataset.hashCode() < datasetComparedTo.hashCode()) {
 							populationSize = populationSize.add(BigDecimal.valueOf(deduplicatedCount.get(dataset))
@@ -168,12 +164,12 @@ public class PopulationComparisonProcessor extends Processor<PopulationCompariso
 						RoundingMode.HALF_UP);
 
 				// calculate & store estimated population completeness
-				for (Resource dataset : datasetsCoveringTheAspect) {
+				for (Resource dataset : datasets) {
 
 					// ratio of resources in an estimated population covered by this dataset
 					BigDecimal completeness = BigDecimal.valueOf(deduplicatedCount.get(dataset)).divide(populationSize, SCALE,
 							RoundingMode.HALF_UP);
-					Collection<Resource> otherDatasets = new HashSet<>(datasetsCoveringTheAspect);
+					Collection<Resource> otherDatasets = new HashSet<>(datasets);
 					otherDatasets.remove(dataset);
 					Metadata.addQualityMeasurement(AV.marCompletenessThomas08, completeness, OM.one, dataset,
 							otherDatasets, aspect.getIri(), this.getOutputMetaModel(dataset));
@@ -181,14 +177,14 @@ public class PopulationComparisonProcessor extends Processor<PopulationCompariso
 			}
 
 			// measures
-			for (Resource dataset : datasetsCoveringTheAspect) {
+			for (Resource dataset : datasets) {
 				// store count
 				Metadata.addQualityMeasurement(AV.count, count.get(dataset), OM.one, dataset, aspect.getIri(),
 						this.getOutputMetaModel(dataset));
 				// store deduplicated count
 				Metadata.addQualityMeasurement(AV.deduplicatedCount, deduplicatedCount.get(dataset), OM.one, dataset, aspect.getIri(),
 						this.getOutputMetaModel(dataset));
-				for (Resource datasetComparedTo : datasetsCoveringTheAspect) {
+				for (Resource datasetComparedTo : datasets) {
 					if (!dataset.equals(datasetComparedTo)) {
 						// store absolute coverage
 						if (absoluteCoverage.get(dataset).get(datasetComparedTo) != null) {
