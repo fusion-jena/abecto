@@ -77,33 +77,7 @@ public class PropertyComparisonProcessor extends Processor<PropertyComparisonPro
 	@Parameter
 	public boolean allowLangTagSkip;
 
-	/**
-	 * Number of covered values of another dataset, per variable.
-	 * <p>
-	 * Index: variable, affectedDataset, comparedToDataset
-	 */
-	private Map<String, Map<Resource, Map<Resource, Integer>>> absoluteCoverage = new HashMap<>();
-	/**
-	 * Number of values in this dataset, per variable.
-	 * <p>
-	 * Index: variable, affectedDataset
-	 */
-	private Map<String, Map<Resource, Integer>> count = new HashMap<>();
-	/**
-	 * Number of distinct values in this dataset, per variable.
-	 * <p>
-	 * Index: variable, affectedDataset
-	 */
-	private Map<String, Map<Resource, Integer>> deduplicatedCount = new HashMap<>();
-	/**
-	 * Number of overlaps between all pairs of dataset by dataset compared to by
-	 * multiplied by 2.
-	 */
-	private Map<String, Integer> totalPairwiseOverlapByVariable = new HashMap<>();
-	/**
-	 * Estimated population site of values, per variable.
-	 */
-	private Map<String, BigDecimal> populationSize = new HashMap<>();
+
 
 	/**
 	 * Digits to preserve when rounding after division in measurement calculations.
@@ -164,12 +138,23 @@ public class PropertyComparisonProcessor extends Processor<PropertyComparisonPro
 
 	@Override
 	public final void run() {
+		// Number of covered values of another dataset, per variable. Index: variable, affectedDataset, comparedToDataset
+		Map<String, Map<Resource, Map<Resource, Integer>>> absoluteCoverage = new HashMap<>();
+		// Number of values in this dataset, per variable. Index: variable, affectedDataset
+		Map<String, Map<Resource, Integer>> count = new HashMap<>();
+		// Number of distinct values in this dataset, per variable. Index: variable, affectedDataset
+		Map<String, Map<Resource, Integer>> deduplicatedCount = new HashMap<>();
+		// Number of overlaps between all pairs of dataset by dataset compared to by multiplied by 2.
+		Map<String, Integer> totalPairwiseOverlapByVariable = new HashMap<>();
+		// Estimated population site of values, per variable.
+		Map<String, BigDecimal> populationSize = new HashMap<>();
+
 		Aspect aspect = this.getAspects().get(this.aspect);
 
 		// init count and countDistinct
 		for (String variable : variables) {
-			this.count.put(variable, new HashMap<>());
-			this.deduplicatedCount.put(variable, new HashMap<>());
+			count.put(variable, new HashMap<>());
+			deduplicatedCount.put(variable, new HashMap<>());
 		}
 
 		for (Resource dataset : aspect.getDatasets()) {
@@ -185,11 +170,11 @@ public class PropertyComparisonProcessor extends Processor<PropertyComparisonPro
 
 				for (String variable : variables) {
 					// measure count of values
-					this.count.get(variable).merge(dataset,
+					count.get(variable).merge(dataset,
 							valuesByVariable.getOrDefault(variable, Collections.emptySet()).size(), Integer::sum);
 
 					// measure count of non equivalent values per resource
-					this.deduplicatedCount.get(variable).merge(dataset,
+					deduplicatedCount.get(variable).merge(dataset,
 							deduplicate(valuesByVariable.getOrDefault(variable, Collections.emptySet())).size(),
 							Integer::sum);
 				}
@@ -217,7 +202,7 @@ public class PropertyComparisonProcessor extends Processor<PropertyComparisonPro
 							.forEach(valuesOfCorrespondingResources::addAll);
 
 					// measure count of non equivalent values per corresponding resources
-					this.deduplicatedCount.get(variable).merge(dataset,
+					deduplicatedCount.get(variable).merge(dataset,
 							deduplicate(valuesOfCorrespondingResources).size() - valuesOfCorrespondingResources.size(),
 							Integer::sum);
 				}
@@ -235,7 +220,7 @@ public class PropertyComparisonProcessor extends Processor<PropertyComparisonPro
 						if (aspect.getPattern(dataset1).getResultVars().contains(variable)
 								&& aspect.getPattern(dataset2).getResultVars().contains(variable)) {
 							this.compareVariableValues(variable, dataset1, valuesByVariableByResource1, dataset2,
-									valuesByVariableByResource2);
+									valuesByVariableByResource2, absoluteCoverage);
 						}
 					}
 				}
@@ -377,7 +362,7 @@ public class PropertyComparisonProcessor extends Processor<PropertyComparisonPro
 	 * outputMetaModels (derived by {@link #getOutputMetaModel(Resource)}). Either
 	 * the corresponding resources or the datasets might be equal, but not both at
 	 * once.
-	 * 
+	 *
 	 * @param variable                    Name of the compared variable
 	 * @param dataset1                    IRI of the first dataset
 	 * @param valuesByVariableByResource1 Values of the first datasets resources
@@ -385,8 +370,8 @@ public class PropertyComparisonProcessor extends Processor<PropertyComparisonPro
 	 * @param valuesByVariableByResource2 Values of the second datasets resources
 	 */
 	public void compareVariableValues(String variable, Resource dataset1,
-			Map<Resource, Map<String, Set<RDFNode>>> valuesByVariableByResource1, Resource dataset2,
-			Map<Resource, Map<String, Set<RDFNode>>> valuesByVariableByResource2) {
+									  Map<Resource, Map<String, Set<RDFNode>>> valuesByVariableByResource1, Resource dataset2,
+									  Map<Resource, Map<String, Set<RDFNode>>> valuesByVariableByResource2, Map<String, Map<Resource, Map<Resource, Integer>>> absoluteCoverage) {
 
 		// create common value-resource look-up
 		Map<RDFNode, Set<Resource>> resourcesByMappedValues = new HashMap<>();
