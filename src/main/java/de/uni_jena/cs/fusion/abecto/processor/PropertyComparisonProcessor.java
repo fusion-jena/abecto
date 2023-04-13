@@ -393,6 +393,15 @@ public class PropertyComparisonProcessor extends Processor<PropertyComparisonPro
 		mapResources(variable, resourcesByMappedValues, valuesByVariableByResource1);
 		mapResources(variable, resourcesByMappedValues, valuesByVariableByResource2);
 
+		// update measurements
+		if (!dataset1.equals(dataset2)) {
+			int pairwiseOverlap = getPairwiseOverlap(valuesByVariableByResource1.keySet(), valuesByVariableByResource2.keySet(), resourcesByMappedValues);
+			absoluteCoverage.computeIfAbsent(variable, v -> new HashMap<>()).computeIfAbsent(dataset1, v -> new HashMap<>())
+					.merge(dataset2, pairwiseOverlap, Integer::sum);
+			absoluteCoverage.computeIfAbsent(variable, v -> new HashMap<>()).computeIfAbsent(dataset2, v -> new HashMap<>())
+					.merge(dataset1, pairwiseOverlap, Integer::sum);
+		}
+
 		// deviation: a pair of resources with each having a value not present in the
 		// other resource
 		// omission: a pair of resources with one having a value not present in the other,
@@ -431,15 +440,6 @@ public class PropertyComparisonProcessor extends Processor<PropertyComparisonPro
 					}
 				}
 			}
-		}
-
-		// update measurements
-		if (!dataset1.equals(dataset2)) {
-			int pairwiseOverlap = getPairwiseOverlap(valuesByVariableByResource1.keySet(), valuesByVariableByResource2.keySet(), resourcesByMappedValues);
-			absoluteCoverage.computeIfAbsent(variable, v -> new HashMap<>()).computeIfAbsent(dataset1, v -> new HashMap<>())
-					.merge(dataset2, pairwiseOverlap, Integer::sum);
-			absoluteCoverage.computeIfAbsent(variable, v -> new HashMap<>()).computeIfAbsent(dataset2, v -> new HashMap<>())
-					.merge(dataset1, pairwiseOverlap, Integer::sum);
 		}
 	}
 
