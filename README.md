@@ -283,7 +283,7 @@ jobs:
 
 # ABECTO Processors
 
-ABECTO has a couple of build-in processors.
+ABECTO has a couple of built-in processors.
 In the pipeline description, processors get denoted by an IRI of the unofficial scheme `java` and a path equal to the canonical name of the processors class.
 This way to represent Java classes is used also in Apache Jena.
 We use the following prefix to abbreviate the namespace in the processor IRIs:
