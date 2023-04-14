@@ -48,8 +48,6 @@ import org.apache.jena.sparql.expr.nodevalue.NodeFunctions;
 
 public class PropertyComparisonProcessor extends Processor<PropertyComparisonProcessor> {
 
-	private final Collection<String> LANGUAGE_FILTER_PATTERN_DEFAULT = List.of("","*");
-
 	/** Aspect to process. */
 	@Parameter
 	public Resource aspect;
@@ -63,7 +61,7 @@ public class PropertyComparisonProcessor extends Processor<PropertyComparisonPro
 	 * language tag match with "*". Default: "","*" (all match)
 	 */
 	@Parameter
-	public Collection<String> languageFilterPatterns = LANGUAGE_FILTER_PATTERN_DEFAULT;
+	public Collection<String> languageFilterPatterns = new ArrayList<>(List.of("","*"));
 	/**
 	 * If true, a literal of the type xsd:date and a literal of the type
 	 * xsd:dateTime with equal year, month and day part will match.
@@ -565,8 +563,7 @@ public class PropertyComparisonProcessor extends Processor<PropertyComparisonPro
 	 * @return {@code true}, if the value should not be used, otherwise {@code false}
 	 */
 	public boolean isExcludedValue(RDFNode value) {
-		if (languageFilterPatterns == LANGUAGE_FILTER_PATTERN_DEFAULT ||
-				!value.isLiteral() ||
+		if (!value.isLiteral() ||
 				!(value.asLiteral().getDatatype() instanceof XSDBaseStringType) &&
 						!(value.asLiteral().getDatatype() instanceof RDFLangString)) {
 			return false;
