@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [2.0.1] - 2023-04-15
+
 ### Fixed
 * fix `measurementsMarkdown` report: restore `dqv:computedOn` erroneously replaced by `av:associatedDataset` 
 
@@ -272,7 +274,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * add `ManualCategoryProcessor`: Enables users to manually define resource categories and their properties.
 * add `ResourceDeviationProcessor`: Detects deviations between the resource references of mapped resources as defined in the categories.
 
-[Unreleased]: https://github.com/fusion-jena/abecto/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/fusion-jena/abecto/compare/v2.0.1...HEAD
+[2.0.1]: https://github.com/fusion-jena/abecto/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/fusion-jena/abecto/compare/v1.2.0...v2.0.0
 [1.2.0]: https://github.com/fusion-jena/abecto/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/fusion-jena/abecto/compare/v1.0.1...v1.1.0
