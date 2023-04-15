@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * fix `PropertyComparisonProcessor`: fix handling for NaN values
 * fix `PropertyComparisonProcessor`: fix deduplicated count measure to not substract duplicated values from count twice
 * **Breaking Change**: use `av:associatedDataset` instead of `dqv:computedOn` for `av:MetaDataGraph` (exports for existing results will not work anymore)
+* hotfix `SparqlSourceProcessor`: filter statements containing IRIs with Newline (U+000A) character to work around [DBpedia extraction framework Issue 748](https://github.com/dbpedia/extraction-framework/issues/748) and [JENA-2351](https://issues.apache.org/jira/browse/JENA-2351)
 
 ### Removed
 * **Breaking Change**: removed reporting of unexpected type issues by `PropertyComparisonProcessor`

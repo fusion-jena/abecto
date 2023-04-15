@@ -33,12 +33,7 @@ import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionBuilder;
 import org.apache.jena.query.ResultSet;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.Property;
-import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.*;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
@@ -158,6 +153,34 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 						.collect(Collectors.toList()),
 				this.followInverseUnlimited.stream().map(r -> ResourceFactory.createProperty(r.getURI()))
 						.collect(Collectors.toList()));
+
+		// hotfix for https://github.com/dbpedia/extraction-framework/issues/748 & https://issues.apache.org/jira/browse/JENA-2351
+		Selector withIriWithNewline = new Selector() {
+			@Override
+			public boolean isSimple() {return false;}
+
+			@Override
+			public Resource getSubject() {return null;}
+
+			@Override
+			public Property getPredicate() {return null;}
+
+			@Override
+			public RDFNode getObject() {return null;}
+
+			@Override
+			public boolean test(Statement statement) {
+				return statement.getSubject().isURIResource() && statement.getSubject().getURI().contains("\n") ||
+						statement.getPredicate().getURI().contains("\n") ||
+						statement.getObject().isURIResource() && statement.getObject().asResource().getURI().contains("\n");
+			}
+		};
+		StmtIterator statements = this.getOutputPrimaryModel().get().listStatements(withIriWithNewline);
+		while (statements.hasNext()) {
+			log.warn("Skipped statement due to Newline (U+000A) in IRI: " + statements.next());
+			statements.remove();
+		}
+
 	}
 
 	private static ElementGroup createElementGroup(Element... elements) {
