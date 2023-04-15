@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Fixed
+* fix `measurementsMarkdown` report: restore `dqv:computedOn` erroneously replaced by `av:associatedDataset` 
+
 ## [2.0.0] - 2023-04-15
 
 ### Changed

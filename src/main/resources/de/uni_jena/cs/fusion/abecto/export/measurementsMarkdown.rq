@@ -20,7 +20,7 @@ WHERE {
 	GRAPH ?graph {
 		?measurement a av:QualityMeasurement ;
 					 dqv:isMeasurementOf ?measurementType ;
-					 av:associatedDataset ?computedOnDatasetX ;
+					 dqv:computedOn ?computedOnDatasetX ;
 					 av:affectedAspect ?affectedAspectResource ;
 					 dqv:value ?valueX ;
 					 sdmx-attribute:unitMeasure ?unit .
