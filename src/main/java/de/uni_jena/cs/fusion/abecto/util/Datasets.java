@@ -62,7 +62,7 @@ public class Datasets {
 			}
 		}
 		throw new IllegalArgumentException(
-				"Unknown RDF language.\\n  "
+				"Unknown RDF language.\n  "
 						+ throwables
 								.entrySet().stream().map(e -> String.format("Failed to parse %s: %s",
 										e.getKey().getName(), e.getValue().getMessage().replaceFirst("\n\\s+", " ")
