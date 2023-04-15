@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Removed
 * **Breaking Change**: removed reporting of unexpected type issues by `PropertyComparisonProcessor`
+* **Breaking Change**: removed deprecated `CompletenessProcessor` (replaced by `PopulationComparisonProcessor`)
 
 ## [1.2.0] - 2023-03-09
 
