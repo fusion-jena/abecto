@@ -154,7 +154,7 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 				this.followInverseUnlimited.stream().map(r -> ResourceFactory.createProperty(r.getURI()))
 						.collect(Collectors.toList()));
 
-		// hotfix for https://github.com/dbpedia/extraction-framework/issues/748 & https://issues.apache.org/jira/browse/JENA-2351
+		// TODO hotfix for https://github.com/dbpedia/extraction-framework/issues/748 & https://issues.apache.org/jira/browse/JENA-2351
 		Selector withIriWithNewline = new Selector() {
 			@Override
 			public boolean isSimple() {return false;}
