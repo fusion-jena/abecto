@@ -31,6 +31,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import org.apache.jena.query.Dataset;
@@ -68,7 +69,7 @@ public class Abecto implements Callable<Integer> {
 	static {
 		// configure logging
 		System.setProperty("java.util.logging.SimpleFormatter.format", "[%1$tF %1$tT] %4$-7s [%3$s] %5$s %6$s%n");
-		java.util.logging.Logger.getLogger("org.apache.jena.riot").setLevel(java.util.logging.Level.OFF);
+		java.util.logging.Logger.getLogger("org.apache.jena.riot").setLevel(Level.WARNING);
 		java.util.logging.Logger.getLogger("").setLevel(java.util.logging.Level.ALL);
 
 		// init Apache Jena
