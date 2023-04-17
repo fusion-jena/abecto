@@ -45,7 +45,6 @@ WHERE {
   } UNION {
     GRAPH ?stepGraph { ?resource1 av:correspondsToResource ?resource2 . }
     FILTER (?resource1 != ?resource2)
-    GRAPH ?otherGraph { ?aspectResource av:relevantResource ?resource1, ?resource2 . }
     ?primaryDataGraph1 a av:PrimaryDataGraph ;
                        av:associatedDataset ?dataset1 .
     ?primaryDataGraph2 a av:PrimaryDataGraph ;

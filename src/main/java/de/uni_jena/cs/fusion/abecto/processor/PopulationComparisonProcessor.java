@@ -85,7 +85,7 @@ public class PopulationComparisonProcessor extends Processor<PopulationCompariso
 			}
 
 			// process correspondence sets of aspect
-			getCorrespondenceGroups(aspectIri).forEach(correspondingResources -> {
+			getCorrespondenceGroups().forEach(correspondingResources -> {
 				Map<Resource, Set<Resource>> occurrencesByDataset = new HashMap<>();
 				// get corresponding resources per dataset, update uncovered resources
 				for (Resource dataset : datasets) {

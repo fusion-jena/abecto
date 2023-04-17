@@ -54,7 +54,7 @@ public class FunctionalMappingProcessor extends MappingProcessor<FunctionalMappi
 	@Override
 	public void run() {
 		Aspect referringAspect = this.getAspects().get(this.referringAspect);
-		getCorrespondenceGroups(referringAspect.getIri()).forEach(referringResources -> {
+		getCorrespondenceGroups().forEach(referringResources -> {
 			Collection<Resource> referredResources = new ArrayList<>();
 			for (Resource referringResource : referringResources) {
 				for (Resource dataset : this.getDatasets()) {
@@ -75,7 +75,7 @@ public class FunctionalMappingProcessor extends MappingProcessor<FunctionalMappi
 					}
 				}
 			}
-			addCorrespondence(this.referredAspect, referredResources);
+			addCorrespondence(referredResources);
 		});
 	}
 }

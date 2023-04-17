@@ -94,32 +94,14 @@ class FunctionalMappingProcessorTest {
 
 		// prepare mapping
 		Model mappingModel = ModelFactory.createDefaultModel();
-		mappingModel.add(aspect(1), AV.relevantResource, resource(111));
-		mappingModel.add(aspect(1), AV.relevantResource, resource(211));
 		mappingModel.add(resource(111), AV.correspondsToResource, resource(211));
-		mappingModel.add(aspect(1), AV.relevantResource, resource(121));
-		mappingModel.add(aspect(1), AV.relevantResource, resource(212));
 		mappingModel.add(resource(121), AV.correspondsToResource, resource(212));
-		mappingModel.add(aspect(1), AV.relevantResource, resource(131));
-		mappingModel.add(aspect(1), AV.relevantResource, resource(213));
 		mappingModel.add(resource(131), AV.correspondsToResource, resource(213));
-		mappingModel.add(aspect(1), AV.relevantResource, resource(112));
-		mappingModel.add(aspect(1), AV.relevantResource, resource(221));
 		mappingModel.add(resource(112), AV.correspondsToResource, resource(221));
-		mappingModel.add(aspect(1), AV.relevantResource, resource(122));
-		mappingModel.add(aspect(1), AV.relevantResource, resource(222));
 		mappingModel.add(resource(122), AV.correspondsToResource, resource(222));
-		mappingModel.add(aspect(1), AV.relevantResource, resource(132));
-		mappingModel.add(aspect(1), AV.relevantResource, resource(223));
 		mappingModel.add(resource(132), AV.correspondsToResource, resource(223));
-		mappingModel.add(aspect(1), AV.relevantResource, resource(113));
-		mappingModel.add(aspect(1), AV.relevantResource, resource(231));
 		mappingModel.add(resource(113), AV.correspondsToResource, resource(231));
-		mappingModel.add(aspect(1), AV.relevantResource, resource(123));
-		mappingModel.add(aspect(1), AV.relevantResource, resource(232));
 		mappingModel.add(resource(123), AV.correspondsToResource, resource(232));
-		mappingModel.add(aspect(1), AV.relevantResource, resource(133));
-		mappingModel.add(aspect(1), AV.relevantResource, resource(233));
 		mappingModel.add(resource(133), AV.correspondsToResource, resource(233));
 
 		// run processor

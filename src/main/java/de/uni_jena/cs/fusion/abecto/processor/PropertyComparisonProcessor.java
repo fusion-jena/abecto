@@ -180,7 +180,7 @@ public class PropertyComparisonProcessor extends Processor<PropertyComparisonPro
 			});
 		}
 
-		getCorrespondenceGroups(aspect.getIri()).forEach(correspondingResources -> {
+		getCorrespondenceGroups().forEach(correspondingResources -> {
 			// get values for all corresponding resources in all datasets
 			Map<Resource,Map<Resource, Map<String, Set<RDFNode>>>> valuesByVariableByResourceByDataset = new HashMap<>();
 			for (Resource dataset : aspect.getDatasets()) {

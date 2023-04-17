@@ -71,34 +71,30 @@ public abstract class MappingProcessor<P extends Processor<P>> extends Processor
 	 * thereby transitive implied correspondence. If the correspondences are already
 	 * known or contradict an existing incorrespondence, the correspondences will be
 	 * discarded silently.
-	 * 
+	 *
 	 * @param resources the corresponding resources
-	 * @param aspect    aspect affected by the correspondence
 	 */
-	public void addCorrespondence(Resource aspect, Collection<Resource> resources, Resource... moreResources) {
+	public void addCorrespondence(Collection<Resource> resources, Resource... moreResources) {
 		Resource[] allResource = new Resource[resources.size() + moreResources.length];
 		resources.toArray(allResource);
 		System.arraycopy(moreResources, 0, allResource, resources.size(), moreResources.length);
-		addCorrespondence(aspect, allResource);
+		addCorrespondence(allResource);
 	}
 
 	/**
 	 * Add correspondences of several resources belonging to a certain aspect. If
 	 * all correspondences are already known or any correspondence contradict an
 	 * existing incorrespondence, all correspondences will be discarded silently.
-	 * 
+	 *
 	 * @param resources the corresponding resources
-	 * @param aspect    aspect the corresponding resources belong to
 	 */
-	public void addCorrespondence(Resource aspect, Resource... resources) {
+	public void addCorrespondence(Resource... resources) {
 		if (resources.length < 2) {
 			return;
 		}
 		Model correspondencesModel = getCorrespondencesModel();
 		if (!anyIncorrespondend(resources) && !allCorrespondend(resources)) {
-			addIfAbsent(correspondencesModel, aspect, AV.relevantResource, resources[0]);
 			for (int i = 1; i < resources.length; i++) {
-				addIfAbsent(correspondencesModel, aspect, AV.relevantResource, resources[i]);
 				addIfAbsent(correspondencesModel, resources[0], AV.correspondsToResource, resources[i]);
 			}
 		}
@@ -108,18 +104,15 @@ public abstract class MappingProcessor<P extends Processor<P>> extends Processor
 	 * Adds incorrespondences of resources to one resource affecting a certain
 	 * aspect. If the incorrespondence is already known or contradicts an existing
 	 * correspondence, the correspondence will be discarded silently.
-	 * 
-	 * @param aspect                   aspect affected by the incorrespondence
+	 *
 	 * @param resource                 first resource
 	 * @param incorrespondentResources resources not corresponding to the first
 	 *                                 resource
 	 */
-	public void addIncorrespondence(Resource aspect, Resource resource, Resource... incorrespondentResources) {
+	public void addIncorrespondence(Resource resource, Resource... incorrespondentResources) {
 		Model correspondencesModel = getCorrespondencesModel();
-		addIfAbsent(correspondencesModel, aspect, AV.relevantResource, resource);
 		for (Resource incorrespondentResource : incorrespondentResources) {
 			if (!correspondentOrIncorrespondent(resource, incorrespondentResource)) {
-				addIfAbsent(correspondencesModel, aspect, AV.relevantResource, incorrespondentResource);
 				addIfAbsent(correspondencesModel, resource, AV.correspondsNotToResource, incorrespondentResource);
 			}
 		}

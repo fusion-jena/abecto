@@ -70,23 +70,11 @@ public class PopulationComparisonProcessorTest {
 				.add(subject(333), property(3), object(3));
 
 		Model inputGeneralMetaModel = ModelFactory.createDefaultModel();
-		inputGeneralMetaModel.add(aspect(1), AV.relevantResource, subject(111));
-		inputGeneralMetaModel.add(aspect(1), AV.relevantResource, subject(211));
 		inputGeneralMetaModel.add(subject(111), AV.correspondsToResource, subject(211));
-		inputGeneralMetaModel.add(aspect(1), AV.relevantResource, subject(112));
-		inputGeneralMetaModel.add(aspect(1), AV.relevantResource, subject(212));
 		inputGeneralMetaModel.add(subject(112), AV.correspondsToResource, subject(212));
-		inputGeneralMetaModel.add(aspect(2), AV.relevantResource, subject(121));
-		inputGeneralMetaModel.add(aspect(2), AV.relevantResource, subject(221));
 		inputGeneralMetaModel.add(subject(121), AV.correspondsToResource, subject(221));
-		inputGeneralMetaModel.add(aspect(2), AV.relevantResource, subject(121));
-		inputGeneralMetaModel.add(aspect(2), AV.relevantResource, subject(2211));
 		inputGeneralMetaModel.add(subject(121), AV.correspondsToResource, subject(2211));
-		inputGeneralMetaModel.add(aspect(2), AV.relevantResource, subject(122));
-		inputGeneralMetaModel.add(aspect(2), AV.relevantResource, subject(222));
 		inputGeneralMetaModel.add(subject(122), AV.correspondsToResource, subject(222));
-		inputGeneralMetaModel.add(aspect(2), AV.relevantResource, subject(221));
-		inputGeneralMetaModel.add(aspect(2), AV.relevantResource, subject(2211));
 		inputGeneralMetaModel.add(subject(221), AV.correspondsToResource, subject(2211));
 
 		Query query1 = QueryFactory.create("SELECT ?key {?key <" + property(1) + "> <" + object(1) + ">}");

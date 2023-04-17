@@ -55,35 +55,26 @@ public class MappingProcessorTest {
 
 	Resource resource7 = ResourceFactory.createResource(resourceBase + "7");
 
-	Resource aspect1 = ResourceFactory.createResource("http://example.org/aspect1");
-	Resource aspect2 = ResourceFactory.createResource("http://example.org/aspect2");
-	Resource aspectBlankNode = ResourceFactory.createResource();
-
 	@Test
 	public void addCorrespondence() {
-		processor.addCorrespondence(aspect1);
+		processor.addCorrespondence();
 		assertTrue(outputModel.isEmpty());
 		inputModel.removeAll();
 		outputModel.removeAll();
 
-		processor.addCorrespondence(aspect1, resource1);
+		processor.addCorrespondence(resource1);
 		assertTrue(outputModel.isEmpty());
 		inputModel.removeAll();
 		outputModel.removeAll();
 
-		processor.addCorrespondence(aspect1, resource1, resource2);
+		processor.addCorrespondence(resource1, resource2);
 		assertTrue(processor.allCorrespondend(resource1, resource2));
-		assertTrue(outputModel.contains(aspect1, AV.relevantResource, resource1));
-		assertTrue(outputModel.contains(aspect1, AV.relevantResource, resource2));
 		assertFalse(outputModel.contains(resource1, AV.correspondsToResource, resource1));
 		assertFalse(outputModel.contains(resource2, AV.correspondsToResource, resource2));
 		inputModel.removeAll();
 		outputModel.removeAll();
 
-		processor.addCorrespondence(aspect1, resource1, resource2, resource3);
-		assertTrue(outputModel.contains(aspect1, AV.relevantResource, resource1));
-		assertTrue(outputModel.contains(aspect1, AV.relevantResource, resource2));
-		assertTrue(outputModel.contains(aspect1, AV.relevantResource, resource3));
+		processor.addCorrespondence(resource1, resource2, resource3);
 		assertFalse(outputModel.contains(resource1, AV.correspondsToResource, resource1));
 		assertFalse(outputModel.contains(resource2, AV.correspondsToResource, resource2));
 		assertFalse(outputModel.contains(resource3, AV.correspondsToResource, resource3));
@@ -92,10 +83,7 @@ public class MappingProcessorTest {
 		outputModel.removeAll();
 
 		// collection
-		processor.addCorrespondence(aspect1, Arrays.asList(resource1, resource2, resource3));
-		assertTrue(outputModel.contains(aspect1, AV.relevantResource, resource1));
-		assertTrue(outputModel.contains(aspect1, AV.relevantResource, resource2));
-		assertTrue(outputModel.contains(aspect1, AV.relevantResource, resource3));
+		processor.addCorrespondence(Arrays.asList(resource1, resource2, resource3));
 		assertFalse(outputModel.contains(resource1, AV.correspondsToResource, resource1));
 		assertFalse(outputModel.contains(resource2, AV.correspondsToResource, resource2));
 		assertFalse(outputModel.contains(resource3, AV.correspondsToResource, resource3));
@@ -104,10 +92,7 @@ public class MappingProcessorTest {
 		outputModel.removeAll();
 
 		// collection and array
-		processor.addCorrespondence(aspect1, Arrays.asList(resource1), resource2, resource3);
-		assertTrue(outputModel.contains(aspect1, AV.relevantResource, resource1));
-		assertTrue(outputModel.contains(aspect1, AV.relevantResource, resource2));
-		assertTrue(outputModel.contains(aspect1, AV.relevantResource, resource3));
+		processor.addCorrespondence(Arrays.asList(resource1), resource2, resource3);
 		assertFalse(outputModel.contains(resource1, AV.correspondsToResource, resource1));
 		assertFalse(outputModel.contains(resource2, AV.correspondsToResource, resource2));
 		assertFalse(outputModel.contains(resource3, AV.correspondsToResource, resource3));
@@ -118,7 +103,7 @@ public class MappingProcessorTest {
 		// assert nothing insert if all exist
 		inputModel.add(resource1, AV.correspondsToResource, resource2);
 		inputModel.add(resource1, AV.correspondsToResource, resource3);
-		processor.addCorrespondence(aspect1, resource1, resource2, resource3);
+		processor.addCorrespondence(resource1, resource2, resource3);
 		assertTrue(outputModel.isEmpty());
 		inputModel.removeAll();
 		outputModel.removeAll();
@@ -126,45 +111,29 @@ public class MappingProcessorTest {
 		// assert contradictions not inserted
 		inputModel.add(resource1, AV.correspondsNotToResource, resource2);
 		inputModel.add(resource2, AV.correspondsNotToResource, resource1);
-		processor.addCorrespondence(aspect1, resource1, resource2, resource3);
+		processor.addCorrespondence(resource1, resource2, resource3);
 		assertTrue(outputModel.isEmpty());
-		inputModel.removeAll();
-		outputModel.removeAll();
-
-		// assert identity preservation of aspect with blank node identifier
-		processor.addCorrespondence(aspectBlankNode, resource1, resource2);
-		assertEquals(aspectBlankNode, outputModel.listSubjectsWithProperty(AV.relevantResource, resource1).next());
 		inputModel.removeAll();
 		outputModel.removeAll();
 	}
 
 	@Test
 	public void addIncorrespondence() {
-		processor.addIncorrespondence(aspect1, resource1, resource2);
+		processor.addIncorrespondence(resource1, resource2);
 		assertTrue(processor.anyIncorrespondend(resource1, resource2));
 		outputModel.removeAll();
 
 		// assert statements not inserted again
-		inputModel.add(aspect1, AV.relevantResource, resource1);
-		inputModel.add(aspect1, AV.relevantResource, resource2);
 		inputModel.add(resource1, AV.correspondsNotToResource, resource2);
-		processor.addIncorrespondence(aspect1, resource1, resource2);
+		processor.addIncorrespondence(resource1, resource2);
 		assertTrue(outputModel.isEmpty());
 		inputModel.removeAll();
 		outputModel.removeAll();
 
 		// assert contradictions not inserted
-		inputModel.add(aspect1, AV.relevantResource, resource1);
-		inputModel.add(aspect1, AV.relevantResource, resource2);
 		inputModel.add(resource1, AV.correspondsToResource, resource2);
-		processor.addIncorrespondence(aspect1, resource1, resource2);
+		processor.addIncorrespondence(resource1, resource2);
 		assertTrue(outputModel.isEmpty());
-		inputModel.removeAll();
-		outputModel.removeAll();
-
-		// assert identity preservation of aspect with blank node identifier
-		processor.addIncorrespondence(aspectBlankNode, resource1, resource2);
-		assertEquals(aspectBlankNode, outputModel.listSubjectsWithProperty(AV.relevantResource, resource1).next());
 		inputModel.removeAll();
 		outputModel.removeAll();
 	}
@@ -200,8 +169,8 @@ public class MappingProcessorTest {
 
 	@Test
 	public void getCorrespondenceGroup() {
-		processor.addCorrespondence(aspect1, resource1, resource2, resource3);
-		processor.addCorrespondence(aspect2, resource4, resource5);
+		processor.addCorrespondence(resource1, resource2, resource3);
+		processor.addCorrespondence(resource4, resource5);
 
 		assertEquals(new HashSet<>(processor.getCorrespondenceGroup(resource1)),
 				new HashSet<>(Arrays.asList(resource1, resource2, resource3)));
@@ -219,23 +188,26 @@ public class MappingProcessorTest {
 
 	@Test
 	public void getCorrespondenceGroups() {
-		processor.addCorrespondence(aspect1, resource1, resource2, resource3);
-		processor.addCorrespondence(aspect1, resource4, resource5);
-		processor.addCorrespondence(aspect2, resource6, resource7);
+		processor.addCorrespondence(resource1, resource2, resource3);
+		processor.addCorrespondence(resource4, resource5);
+		processor.addCorrespondence(resource6, resource7);
 
-		List<List<Resource>> correspondenceSets = processor.getCorrespondenceGroups(aspect1)
+		List<List<Resource>> correspondenceSets = processor.getCorrespondenceGroups()
 				.collect(Collectors.toList());
-		assertEquals(2, correspondenceSets.size());
+		assertEquals(3, correspondenceSets.size());
 		for (List<Resource> correspondenceSet : correspondenceSets) {
 			int min = correspondenceSet.stream()
 					.mapToInt(r -> Integer.parseInt(r.getURI().substring(resourceBase.length()))).min().getAsInt();
 			switch (min) {
-			case 1:
-				assertArrayEquals(new Resource[] { resource1, resource2, resource3 }, correspondenceSet.toArray());
-				break;
-			case 4:
-				assertArrayEquals(new Resource[] { resource4, resource5 }, correspondenceSet.toArray());
-				break;
+				case 1:
+					assertArrayEquals(new Resource[] { resource1, resource2, resource3 }, correspondenceSet.toArray());
+					break;
+				case 4:
+					assertArrayEquals(new Resource[] { resource4, resource5 }, correspondenceSet.toArray());
+					break;
+				case 6:
+					assertArrayEquals(new Resource[] { resource6, resource7 }, correspondenceSet.toArray());
+					break;
 			default:
 				fail("Resource \"" + resourceBase + min + "\" found as first resource in set.");
 			}
@@ -245,36 +217,36 @@ public class MappingProcessorTest {
 	@Test
 	public void inferences() {
 		// assert correspondence inverse statement inference
-		processor.addCorrespondence(aspect1, resource1, resource2);
+		processor.addCorrespondence(resource1, resource2);
 		assertTrue(processor.allCorrespondend(resource2, resource1));
 		outputModel.removeAll();
 
 		// assert correspondence transitive statement inference (insert order 1)
-		processor.addCorrespondence(aspect1, resource1, resource2);
-		processor.addCorrespondence(aspect1, resource2, resource3);
+		processor.addCorrespondence(resource1, resource2);
+		processor.addCorrespondence(resource2, resource3);
 		assertTrue(processor.allCorrespondend(resource1, resource3));
 		outputModel.removeAll();
 
 		// assert correspondence transitive statement inference (insert order 2)
-		processor.addCorrespondence(aspect1, resource2, resource3);
-		processor.addCorrespondence(aspect1, resource1, resource2);
+		processor.addCorrespondence(resource2, resource3);
+		processor.addCorrespondence(resource1, resource2);
 		assertTrue(processor.allCorrespondend(resource1, resource3));
 		outputModel.removeAll();
 
 		// assert incorrespondence inverse statement inference
-		processor.addIncorrespondence(aspect1, resource1, resource2);
+		processor.addIncorrespondence(resource1, resource2);
 		assertTrue(processor.anyIncorrespondend(resource2, resource1));
 		outputModel.removeAll();
 
 		// assert incorrespondence-correspondence chain inference (insert order 1)
-		processor.addCorrespondence(aspect1, resource1, resource2);
-		processor.addIncorrespondence(aspect1, resource2, resource3);
+		processor.addCorrespondence(resource1, resource2);
+		processor.addIncorrespondence(resource2, resource3);
 		assertTrue(processor.anyIncorrespondend(resource1, resource3));
 		outputModel.removeAll();
 
 		// assert incorrespondence-correspondence chain inference (insert order 2)
-		processor.addIncorrespondence(aspect1, resource2, resource3);
-		processor.addCorrespondence(aspect1, resource1, resource2);
+		processor.addIncorrespondence(resource2, resource3);
+		processor.addCorrespondence(resource1, resource2);
 		assertTrue(processor.anyIncorrespondend(resource1, resource3));
 		outputModel.removeAll();
 	}

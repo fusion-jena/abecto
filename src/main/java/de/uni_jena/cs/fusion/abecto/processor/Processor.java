@@ -178,8 +178,8 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 	 * given aspect already exist.
 	 * <p>
 	 * <strong>Note:<strong> The use of this method is not mandatory, as it will
-	 * also be called by {@link MappingProcessor#addCorrespondence(Resource, Resource...)} and
-	 * {@link MappingProcessor#addIncorrespondence(Resource, Resource, Resource...)}.
+	 * also be called by {@link MappingProcessor#addCorrespondence(Resource...)} and
+	 * {@link MappingProcessor#addIncorrespondence(Resource, Resource...)}.
 	 * 
 	 * @param resource1 first resource to check
 	 * @param resource2 second resource to check
@@ -202,18 +202,14 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 	}
 
 	/**
-	 * Returns groups of {@link Resource Resources} that belong to a given aspect
-	 * and correspond to each other.
-	 * 
-	 * @param aspect the aspect all returned {@link Resource Resources} belong to
+	 * Returns groups of {@link Resource Resources} that correspond to each other.
+	 *
 	 * @return the groups of corresponding {@link Resource Resources}
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public Stream<List<Resource>> getCorrespondenceGroups(Resource aspect) {
+	public Stream<List<Resource>> getCorrespondenceGroups() {
 		Model correspondencesModel = getCorrespondencesModel();
 		Query query = new SelectBuilder().addVar(RESOURCE_1).addVar(RESOURCE_2)
-				.addWhere(aspect, AV.relevantResource, RESOURCE_1)//
-				.addWhere(aspect, AV.relevantResource, RESOURCE_2)//
 				.addWhere(new TriplePath(RESOURCE_1,
 						PathFactory.pathZeroOrOne(PathFactory.pathLink(AV.correspondsToResource.asNode())), RESOURCE_2))
 				.addFilter(exprFactory

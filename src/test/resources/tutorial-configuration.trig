@@ -69,7 +69,6 @@
 GRAPH <manualMappings>
 {
     <http://example.org/b/william> av:correspondsNotToResource <http://example.org/c/P004> .
-    <aspectPerson> av:relevantResource <http://example.org/b/william>, <http://example.org/c/P004> .
 }
 
 <jaroWinklerMapping> a av:Step ;

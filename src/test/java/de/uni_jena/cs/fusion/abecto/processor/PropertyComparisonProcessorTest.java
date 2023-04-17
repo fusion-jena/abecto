@@ -72,9 +72,7 @@ public class PropertyComparisonProcessorTest {
 	}
 
 	public void addMapping(Resource... resources) {
-		mappingModel.add(aspect(1), AV.relevantResource, resources[0]);
 		for (Resource resource : Arrays.copyOfRange(resources, 1, resources.length)) {
-			mappingModel.add(aspect(1), AV.relevantResource, resource);
 			mappingModel.add(resources[0], AV.correspondsToResource, resource);
 		}
 	}

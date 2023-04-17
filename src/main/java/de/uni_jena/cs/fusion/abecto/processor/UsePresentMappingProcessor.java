@@ -68,7 +68,7 @@ public class UsePresentMappingProcessor extends MappingProcessor<UsePresentMappi
 				RDFNode variableValue = entry.getKey();
 				Set<Resource> affectedResources = entry.getValue();
 				if (variableValue.isResource()) {
-					addCorrespondence(this.aspect, affectedResources, variableValue.asResource());
+					addCorrespondence(affectedResources, variableValue.asResource());
 				} else {
 					for (Resource affectedResource : entry.getValue())
 						Metadata.addIssue(affectedResource, variable, variableValue, this.aspect, "Invalid Value",

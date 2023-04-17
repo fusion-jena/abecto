@@ -36,10 +36,10 @@
     ] ;
     dcterms:license <http://creativecommons.org/licenses/by/4.0/> ;
     dcterms:created "2022-08-17"^^xsd:date ;
-    dcterms:modified "2023-03-09"^^xsd:date ;
-    owl:versionInfo "1.1.0" ;
-    owl:versionIRI <http://w3id.org/abecto/vocabulary/1.1.0> ;
-    owl:priorVersion <http://w3id.org/abecto/vocabulary/1.0.0> ;
+    dcterms:modified "2023-04-17"^^xsd:date ;
+    owl:versionInfo "1.2.0" ;
+    owl:versionIRI <http://w3id.org/abecto/vocabulary/1.2.0> ;
+    owl:priorVersion <http://w3id.org/abecto/vocabulary/1.1.0> ;
     .
 
 av:Plan a rdfs:Class ;
@@ -57,7 +57,7 @@ av:Step a rdfs:Class ;
 av:StepExecution a rdfs:Class ;
     rdfs:subClassOf p-plan:Activity ;
     rdfs:label "step execution"@en ;
-    rdfs:comment "An activity that executes a single step of a plan. It is determined by the correspnding step (p-plan:corresondsToStep), start and end date time (prov:startedAtTime, prov:endedAtTime), and the used primary and meta data graphs (prov:used)."@en ;
+    rdfs:comment "An activity that executes a single step of a plan. It is determined by the corresponding step (p-plan:correspondsToStep), start and end date time (prov:startedAtTime, prov:endedAtTime), and the used primary and meta data graphs (prov:used)."@en ;
     rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
     .
 av:Parameter a rdfs:Class ;
@@ -185,11 +185,7 @@ av:correspondsNotToResource a owl:ObjectProperty, owl:SymmetricProperty ;
     rdfs:comment "A resource that not corresponds to this resource."@en ;
     rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
     .
-av:relevantResource a owl:ObjectProperty ;
-    rdfs:label "relevant resource"@en ;
-    rdfs:comment "A resource that is relevant for an aspekt."@en ;
-    rdfs:domain av:Aspect ;
-    rdfs:isDefinedBy <http://w3id.org/abecto/vocabulary> ;
+av:relevantResource owl:deprecated "true"^^xsd:boolean ;
     .
 av:predefinedMetaDataGraph a owl:ObjectProperty ;
     rdfs:label "predefined meta data graph"@en ;

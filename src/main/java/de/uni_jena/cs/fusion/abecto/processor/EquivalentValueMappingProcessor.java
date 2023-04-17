@@ -104,7 +104,7 @@ public class EquivalentValueMappingProcessor extends MappingProcessor<Equivalent
 			}
 
 			// add found correspondences
-			addCorrespondence(this.aspect, correspondingResources);
+			addCorrespondence(correspondingResources);
 		}
 
 	}

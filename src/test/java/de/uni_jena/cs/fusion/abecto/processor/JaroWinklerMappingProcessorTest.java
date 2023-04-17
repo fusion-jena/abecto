@@ -67,8 +67,7 @@ public class JaroWinklerMappingProcessorTest {
 		processor.run();
 		assertTrue(processor.allCorrespondend(resource("entity1"), resource("entity4")));
 		assertTrue(processor.allCorrespondend(resource("entity2"), resource("entity5")));
-		assertEquals(2, processor.getCorrespondenceGroups(aspect(1)).count());
-		assertEquals(0, processor.getCorrespondenceGroups(aspect(2)).count());
+		assertEquals(2, processor.getCorrespondenceGroups().count());
 	}
 
 	@Test
@@ -95,7 +94,7 @@ public class JaroWinklerMappingProcessorTest {
 		processor.aspect = aspect(1);
 		processor.variables = Collections.singleton("label");
 		processor.run();
-		assertEquals(0, processor.getCorrespondenceGroups(aspect(1)).count());
+		assertEquals(0, processor.getCorrespondenceGroups().count());
 	}
 
 	@Test
@@ -112,7 +111,7 @@ public class JaroWinklerMappingProcessorTest {
 		processor.aspect = aspect(1);
 		processor.variables = Collections.singleton("label");
 		processor.run();
-		assertEquals(0, processor.getCorrespondenceGroups(aspect(1)).count());
+		assertEquals(0, processor.getCorrespondenceGroups().count());
 
 		// direction 2
 		processor = new JaroWinklerMappingProcessor().addInputPrimaryModel(dataset(1), model2)
@@ -122,7 +121,7 @@ public class JaroWinklerMappingProcessorTest {
 		processor.aspect = aspect(1);
 		processor.variables = Collections.singleton("label");
 		processor.run();
-		assertEquals(0, processor.getCorrespondenceGroups(aspect(1)).count());
+		assertEquals(0, processor.getCorrespondenceGroups().count());
 	}
 
 	@Test
@@ -138,7 +137,7 @@ public class JaroWinklerMappingProcessorTest {
 		processor.aspect = aspect(1);
 		processor.variables = Collections.singleton("label");
 		processor.run();
-		assertEquals(0, processor.getCorrespondenceGroups(aspect(1)).count());
+		assertEquals(0, processor.getCorrespondenceGroups().count());
 	}
 
 	@Test
@@ -159,7 +158,7 @@ public class JaroWinklerMappingProcessorTest {
 		processor.variables = Collections.singleton("label");
 		processor.run();
 		assertTrue(processor.allCorrespondend(resource("entity1"), resource("entity3")));
-		assertEquals(1, processor.getCorrespondenceGroups(aspect(1)).count());
+		assertEquals(1, processor.getCorrespondenceGroups().count());
 
 		// direction 2
 		processor = new JaroWinklerMappingProcessor().addInputPrimaryModel(dataset(1), model2)
@@ -170,7 +169,7 @@ public class JaroWinklerMappingProcessorTest {
 		processor.variables = Collections.singleton("label");
 		processor.run();
 		assertTrue(processor.allCorrespondend(resource("entity1"), resource("entity3")));
-		assertEquals(1, processor.getCorrespondenceGroups(aspect(1)).count());
+		assertEquals(1, processor.getCorrespondenceGroups().count());
 
 	}
 
@@ -190,7 +189,7 @@ public class JaroWinklerMappingProcessorTest {
 		processor.variables = Collections.singleton("label");
 		processor.run();
 		assertTrue(processor.allCorrespondend(resource("entity1"), resource("entity2")));
-		assertEquals(1, processor.getCorrespondenceGroups(aspect(1)).count());
+		assertEquals(1, processor.getCorrespondenceGroups().count());
 
 		// case-sensitive
 		processor = new JaroWinklerMappingProcessor().addInputPrimaryModel(dataset(1), model1)
@@ -200,6 +199,6 @@ public class JaroWinklerMappingProcessorTest {
 		processor.aspect = aspect(1);
 		processor.variables = Collections.singleton("label");
 		processor.run();
-		assertEquals(0, processor.getCorrespondenceGroups(aspect(1)).count());
+		assertEquals(0, processor.getCorrespondenceGroups().count());
 	}
 }

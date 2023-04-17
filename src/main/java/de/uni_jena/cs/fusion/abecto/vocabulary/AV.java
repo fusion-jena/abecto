@@ -69,6 +69,7 @@ public class AV {
 			.createResource(namespace + "QualityAnnotationBody");
 	public static final Resource QualityMeasurement = ResourceFactory.createResource(namespace + "QualityMeasurement");
 	public static final Resource relativeCoverage = ResourceFactory.createResource(namespace + "relativeCoverage");
+	@Deprecated
 	public static final Property relevantResource = ResourceFactory.createProperty(namespace, "relevantResource");
 	public static final Resource ResourceOmission = ResourceFactory.createResource(namespace + "ResourceOmission");
 	public static final Resource Step = ResourceFactory.createResource(namespace + "Step");

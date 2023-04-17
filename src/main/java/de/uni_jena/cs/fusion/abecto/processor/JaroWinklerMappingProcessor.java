@@ -96,7 +96,7 @@ public class JaroWinklerMappingProcessor extends MappingProcessor<JaroWinklerMap
 							// convert match into mappings
 							for (Resource resource1 : values1.get(value1)) {
 								for (Resource resource2 : values2.get(value2)) {
-									this.addCorrespondence(aspect.getIri(), resource1, resource2);
+									this.addCorrespondence(resource1, resource2);
 								}
 							}
 						}
