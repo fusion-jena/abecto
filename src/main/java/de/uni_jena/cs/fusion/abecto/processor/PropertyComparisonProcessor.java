@@ -46,7 +46,7 @@ import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 import de.uni_jena.cs.fusion.abecto.vocabulary.OM;
 import org.apache.jena.sparql.expr.nodevalue.NodeFunctions;
 
-public class PropertyComparisonProcessor extends Processor<PropertyComparisonProcessor> {
+public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyComparisonProcessor> {
 
 	/** Aspect to process. */
 	@Parameter
@@ -158,7 +158,7 @@ public class PropertyComparisonProcessor extends Processor<PropertyComparisonPro
 		for (Resource dataset : aspect.getDatasets()) {
 			Model model = this.getInputPrimaryModelUnion(dataset);
 
-			Aspect.getResourceKeys(aspect, dataset, model).forEach(resource -> {
+			getResourceKeys(aspect, dataset, model).forEach(resource -> {
 				// get resource values
 				Map<String, Set<RDFNode>> valuesByVariable = aspect.selectResourceValues(resource, dataset, variables,
 						model);

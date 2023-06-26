@@ -41,7 +41,7 @@ import de.uni_jena.cs.fusion.abecto.vocabulary.OM;
  * as <strong>deviation</strong>, <strong>resource omission</strong> and
  * <strong>duplicate</strong> annotations.
  */
-public class PopulationComparisonProcessor extends Processor<PopulationComparisonProcessor> {
+public class PopulationComparisonProcessor extends ComparisonProcessor<PopulationComparisonProcessor> {
 
 	/**
 	 * Digits to preserve when rounding after division in measurement calculations.
@@ -73,7 +73,7 @@ public class PopulationComparisonProcessor extends Processor<PopulationCompariso
 			for (Resource dataset : datasets) {
 				// get resources by dataset and aspect
 				uncoveredResourcesByDataset.put(dataset,
-						Aspect.getResourceKeys(aspect, dataset, this.getInputPrimaryModelUnion(dataset))
+						getResourceKeys(aspect, dataset, this.getInputPrimaryModelUnion(dataset))
 								.collect(Collectors.toSet()));
 				// store count and initial deduplicated count
 				count.put(dataset, uncoveredResourcesByDataset.get(dataset).size());
