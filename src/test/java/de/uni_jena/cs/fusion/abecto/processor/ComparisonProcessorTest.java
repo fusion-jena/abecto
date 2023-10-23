@@ -32,7 +32,8 @@ public class ComparisonProcessorTest {
         Query pattern = QueryFactory.create("SELECT ?key ?value WHERE {?key <" + property.getURI() + "> ?value .}");
         aspect.setPattern(dataset, pattern);
 
-        Set<Resource> resources = new DummyComparisonProcessor().getResourceKeys(aspect, dataset, primaryDataModel).collect(Collectors.toSet()	);
+        Set<Resource> resources = new DummyComparisonProcessor().addInputPrimaryModel(dataset, primaryDataModel)
+                .getResourceKeys(aspect, dataset).collect(Collectors.toSet());
 
         assertEquals(4, resources.size());
         assertTrue(resources.contains(resource1));

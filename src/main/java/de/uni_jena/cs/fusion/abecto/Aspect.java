@@ -281,87 +281,8 @@ public class Aspect {
 		return index;
 	}
 
-	/**
-	 * Returns the values of the given {@link Resource Resources} that are covered
-	 * by the pattern of the given dataset in the given {@link Model}. If this
-	 * aspect does not cover the given dataset an empty result is returned. If the
-	 * model does not contain any value for a given resource, the resource is mapped
-	 * to {@code null}.
-	 */
-	public Map<Resource, Map<String, Set<RDFNode>>> selectResourceValues(Collection<Resource> resources,
-			Resource dataset, List<String> variables, Model model) {
-		if (!this.patternByDataset.containsKey(dataset)) {
-			return Collections.emptyMap();
-		}
 
-		Query pattern = this.getPattern(dataset);
 
-		Map<Resource, Map<String, Set<RDFNode>>> valuesByResource = new HashMap<>();
-
-		for (Resource resource : resources) {
-			Map<String, Set<RDFNode>> resourceValues = selectResourceValues(resource, pattern, variables, model);
-			if (resourceValues != null) {
-				valuesByResource.put(resource, resourceValues);
-			}
-		}
-
-		return valuesByResource;
-	}
-
-	/**
-	 * Returns the values of the given {@link Resource} that are covered by the
-	 * pattern of the given dataset in the given {@link Model}. If this aspect does
-	 * not cover the given dataset or the model does not contain values for the
-	 * given resource, {@code null} is returned.
-	 * 
-	 * @param resource
-	 * @param dataset
-	 * @param model
-	 * @return
-	 */
-	public Map<String, Set<RDFNode>> selectResourceValues(Resource resource, Resource dataset,
-			Collection<String> variables, Model model) {
-		if (!this.patternByDataset.containsKey(dataset)) {
-			return Collections.emptyMap();
-		}
-
-		Query pattern = this.getPattern(dataset);
-
-		return this.selectResourceValues(resource, pattern, variables, model);
-	}
-
-	/**
-	 * Returns the values of the given {@link Resource} that are covered by the
-	 * pattern of the given dataset in the given {@link Model}. If this aspect does
-	 * not cover the given dataset or the model does not contain values for the
-	 * given resource, {@code null} is returned.
-	 */
-	public Map<String, Set<RDFNode>> selectResourceValues(Resource resource, Query pattern,
-			Collection<String> variables, Model model) {
-		Query query = SelectBuilder.rewrite(pattern.cloneQuery(),
-				Collections.singletonMap(this.keyVariable, resource.asNode()));
-		ResultSet results = QueryExecutionFactory.create(query, model).execSelect();
-
-		if (!results.hasNext()) {
-			return null;
-		}
-
-		Map<String, Set<RDFNode>> values = new HashMap<>();
-		for (String variable : variables) {
-			values.put(variable, new HashSet<>());
-		}
-		while (results.hasNext()) {
-			QuerySolution result = results.next();
-			for (String variable : variables) {
-				if (result.contains(variable)) {
-					RDFNode value = result.get(variable);
-					values.get(variable).add(value);
-				}
-			}
-		}
-
-		return values;
-	}
 
 	/**
 	 * Returns a new {@link Collection} instance containing the given resources that

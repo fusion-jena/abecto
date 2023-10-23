@@ -127,11 +127,16 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
 
 	/** Removes all values that are known wrong values. */
 	private void removeKnownWrongValues(Map<String, Set<RDFNode>> valuesByVariable, Resource resource, Resource dataset) {
-		Model inputMetaModel = this.getInputMetaModelUnion(dataset);
 		for (String variable : valuesByVariable.keySet()) {
 			Set<RDFNode> values = valuesByVariable.get(variable);
-			values.removeIf(value -> Metadata.isWrongValue(resource, variable, value, aspect, inputMetaModel));
+			values.removeIf(value -> this.isWrongValue(resource, variable, value, aspect, dataset));
 		}
+	}
+
+	protected boolean isWrongValue(Resource affectedResource, String affectedVariableName, RDFNode affectedValue,
+													Resource affectedAspect, Resource affectedDataset) {
+		return Metadata.isWrongValue(affectedResource, affectedVariableName, affectedValue, aspect,
+				this.getInputMetaModelUnion(affectedDataset));
 	}
 
 	@Override
@@ -156,12 +161,9 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
 		}
 
 		for (Resource dataset : aspect.getDatasets()) {
-			Model model = this.getInputPrimaryModelUnion(dataset);
-
-			getResourceKeys(aspect, dataset, model).forEach(resource -> {
+			getResourceKeys(aspect, dataset).forEach(resource -> {
 				// get resource values
-				Map<String, Set<RDFNode>> valuesByVariable = aspect.selectResourceValues(resource, dataset, variables,
-						model);
+				Map<String, Set<RDFNode>> valuesByVariable = selectResourceValues(resource, dataset, aspect, variables);
 
 				// removeExcludedValues
 				valuesByVariable.forEach((k,v) -> v.removeIf(this::isExcludedValue));
@@ -184,9 +186,7 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
 			// get values for all corresponding resources in all datasets
 			Map<Resource,Map<Resource, Map<String, Set<RDFNode>>>> valuesByVariableByResourceByDataset = new HashMap<>();
 			for (Resource dataset : aspect.getDatasets()) {
-				Model model = this.getInputPrimaryModelUnion(dataset);
-				valuesByVariableByResourceByDataset.put(dataset, aspect
-						.selectResourceValues(correspondingResources, dataset, variables, model));
+				valuesByVariableByResourceByDataset.put(dataset, selectResourceValues(correspondingResources, dataset, aspect, variables));
 				removeKnownWrongValues(valuesByVariableByResourceByDataset.get(dataset), dataset);
 				// removeExcludedValues
 				valuesByVariableByResourceByDataset.forEach((k3,v3) -> v3.forEach((k2,v2) -> v2.forEach((k,v) -> v.removeIf(this::isExcludedValue))));

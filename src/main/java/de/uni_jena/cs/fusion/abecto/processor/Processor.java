@@ -238,7 +238,7 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 		}
 	}
 
-	public final Set<Resource> getDatasets() {
+	public Set<Resource> getDatasets() {
 		Set<Resource> inputDatasets = new HashSet<>();
 		inputDatasets.addAll(this.inputMetaModelsByDataset.keySet());
 		inputDatasets.addAll(this.inputPrimaryModelsByDataset.keySet());

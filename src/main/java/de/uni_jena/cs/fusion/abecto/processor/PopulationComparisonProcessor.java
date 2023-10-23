@@ -73,8 +73,7 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
 			for (Resource dataset : datasets) {
 				// get resources by dataset and aspect
 				uncoveredResourcesByDataset.put(dataset,
-						getResourceKeys(aspect, dataset, this.getInputPrimaryModelUnion(dataset))
-								.collect(Collectors.toSet()));
+						getResourceKeys(aspect, dataset).collect(Collectors.toSet()));
 				// store count and initial deduplicated count
 				count.put(dataset, uncoveredResourcesByDataset.get(dataset).size());
 				deduplicatedCount.put(dataset, uncoveredResourcesByDataset.get(dataset).size());
