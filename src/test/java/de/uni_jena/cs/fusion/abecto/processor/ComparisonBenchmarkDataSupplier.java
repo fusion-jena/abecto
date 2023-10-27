@@ -1,7 +1,21 @@
+/**
+ * Copyright © 2019 Heinz Nixdorf Chair for Distributed Information Systems, Friedrich Schiller University Jena (http://www.fusion.uni-jena.de/)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package de.uni_jena.cs.fusion.abecto.processor;
 
 import com.google.common.collect.Streams;
-import de.uni_jena.cs.fusion.abecto.Aspect;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
@@ -12,11 +26,11 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-public class ComparisonBenchmarkDataSupplier extends PopulationComparisonProcessor {
+public class ComparisonBenchmarkDataSupplier {
 
+    protected static final RDFNode correctValue = ResourceFactory.createTypedLiteral(-1);
     private final int populationSize, totalDatasetCount;
     private final double coverage, errorRate;
-    private final RDFNode correctValue;
     private final RDFNode[] wrongValues;
 
     public ComparisonBenchmarkDataSupplier(int populationSize, int datasetCount, double coverage, double errorRate) {
@@ -24,8 +38,7 @@ public class ComparisonBenchmarkDataSupplier extends PopulationComparisonProcess
         this.totalDatasetCount = datasetCount;
         this.coverage = coverage;
         this.errorRate = errorRate;
-        // generate correct and wrong values per dataset
-        this.correctValue = ResourceFactory.createTypedLiteral(-1);
+        // generate wrong values per dataset
         // wrongValues[0] should not be used and exists to improve code readability by avoiding -1 shifts later on
         this.wrongValues = new RDFNode[datasetCount + 1];
         for (int i = 0; i <= datasetCount; i++) {
@@ -37,19 +50,17 @@ public class ComparisonBenchmarkDataSupplier extends PopulationComparisonProcess
         return IntStream.range(0, totalDatasetCount).mapToObj(i -> ResourceFactory.createResource(Integer.toString(i))).collect(Collectors.toSet());
     }
 
-    public Stream<Resource> getResourceKeys(@SuppressWarnings("unused") Aspect aspect, Resource dataset) throws NullPointerException {
+    public Stream<Resource> getResourceKeys(Resource dataset) throws NullPointerException {
         int datasetNumber = Integer.parseInt(dataset.getURI());
         return IntStream.range(0, populationSize).map(i -> i + datasetNumber * populationSize).mapToObj(i -> ResourceFactory.createResource(Integer.toString(i)));
     }
 
     public Map<String, Set<RDFNode>> selectResourceValues(Resource resource, Resource dataset,
-                                                          @SuppressWarnings("unused") Aspect aspect,
                                                           Collection<String> variables) {
 
         int resourceNumber = Integer.parseInt(resource.getURI());
         if (resourceNumber % populationSize >= populationSize * errorRate) {
-            return Collections.singletonMap(variables.iterator().next(),
-                    Collections.singleton(this.correctValue));
+            return Collections.singletonMap(variables.iterator().next(), Collections.singleton(this.correctValue));
         } else {
             int datasetNumber = Integer.parseInt(dataset.getURI());
             return Collections.singletonMap(variables.iterator().next(),
@@ -58,8 +69,7 @@ public class ComparisonBenchmarkDataSupplier extends PopulationComparisonProcess
     }
 
     public Map<Resource, Map<String, Set<RDFNode>>> selectResourceValues(Collection<Resource> resources,
-                                                                         Resource dataset,
-                                                                         @SuppressWarnings("unused") Aspect aspect, List<String> variables) {
+                                                                         Resource dataset, List<String> variables) {
         int datasetNumber = Integer.parseInt(dataset.getURI());
 
         Map<Resource, Map<String, Set<RDFNode>>> resourceValues = new HashMap<>();
@@ -68,7 +78,7 @@ public class ComparisonBenchmarkDataSupplier extends PopulationComparisonProcess
             int resourceNumber = Integer.parseInt(resource.getURI());
             if (resourceNumber % populationSize >= populationSize * errorRate) {
                 resourceValues.put(resource, Collections.singletonMap(variables.iterator().next(),
-                        Collections.singleton(this.correctValue)));
+                        Collections.singleton(correctValue)));
             } else {
                 resourceValues.put(resource, Collections.singletonMap(variables.iterator().next(),
                         Collections.singleton(this.wrongValues[datasetNumber])));
@@ -78,7 +88,8 @@ public class ComparisonBenchmarkDataSupplier extends PopulationComparisonProcess
     }
 
     private double overlapShare(int overlappingDatasetCount, int totalDatasetCount, double coverage) {
-        return Math.pow(coverage, overlappingDatasetCount - 1) * Math.pow(1 - coverage, totalDatasetCount - overlappingDatasetCount);
+        return Math.pow(coverage, overlappingDatasetCount - 1) * Math.pow(1 - coverage,
+                totalDatasetCount - overlappingDatasetCount);
     }
 
 
@@ -97,8 +108,7 @@ public class ComparisonBenchmarkDataSupplier extends PopulationComparisonProcess
                 (int) (populationSize * errorRate), (int) (populationSize * (1 - errorRate)));
 
         // join cases streams
-        @SuppressWarnings("unchecked")
-        Stream<List<Resource>>[] casesStreams = new Stream[(1 << totalDatasetCount) * 2];
+        @SuppressWarnings("unchecked") Stream<List<Resource>>[] casesStreams = new Stream[(1 << totalDatasetCount) * 2];
         System.arraycopy(errorCasesStreams, 0, casesStreams, 0, 1 << totalDatasetCount);
         System.arraycopy(correctCasesStreams, 0, casesStreams, 1 << totalDatasetCount, 1 << totalDatasetCount);
         return Streams.concat(casesStreams);
@@ -119,19 +129,17 @@ public class ComparisonBenchmarkDataSupplier extends PopulationComparisonProcess
         int[] nextId = new int[totalDatasetCount];
         Arrays.fill(nextId, idOffset);
 
-        @SuppressWarnings("unchecked")
-        Stream<List<Resource>>[] casesStreams = new Stream[1 << totalDatasetCount];
+        @SuppressWarnings("unchecked") Stream<List<Resource>>[] casesStreams = new Stream[1 << totalDatasetCount];
         // iterate through all subsets represented by the bits of an int, 0 = not contained, 1 = contained
-        for (int coveredDatasetsBits = 0; coveredDatasetsBits < 1 << totalDatasetCount /* = 2^{datasetCount}
-         */; coveredDatasetsBits++) {
+        int subsetCount = 1 << totalDatasetCount; // = 2^{datasetCount}
+        for (int coveredDatasetsBits = 0; coveredDatasetsBits < subsetCount; coveredDatasetsBits++) {
             int coveredDatasetsCount = Integer.bitCount(coveredDatasetsBits);
 
 
             if (coveredDatasetsCount >= 2) {
-                // get array of numbers of covered datasets
+                // get array of covered datasets ids
                 int[] coveredDatasets = new int[coveredDatasetsCount];
-                int i = 0;
-                for (int dataset = 0; dataset < totalDatasetCount; dataset++) {
+                for (int dataset = 0, i = 0; dataset < totalDatasetCount; dataset++) {
                     if ((coveredDatasetsBits & (1 << dataset  /* = 2^{dataset} */)) != 0) {
                         coveredDatasets[i++] = dataset;
                     }
@@ -140,7 +148,8 @@ public class ComparisonBenchmarkDataSupplier extends PopulationComparisonProcess
                 // calculate number of cases with covered datasets
                 int cases = (int) (overlapShare[coveredDatasetsCount] * totalCases);
                 // generate stream of cases with covered datasets
-                casesStreams[coveredDatasetsBits] = Stream.generate(new CorrespondenceGroupSupplier(coveredDatasets, nextId)).limit(cases);
+                casesStreams[coveredDatasetsBits] = Stream.generate(new CorrespondenceGroupSupplier(coveredDatasets,
+                        nextId)).limit(cases);
             } else {
                 // empty stream for combinations without correspondences
                 casesStreams[coveredDatasetsBits] = Stream.empty();
@@ -163,7 +172,8 @@ public class ComparisonBenchmarkDataSupplier extends PopulationComparisonProcess
             List<Resource> resources = Arrays.asList(new Resource[coveredDatasets.length]);
             for (int i = 0; i < coveredDatasets.length; i++) {
                 int coveredDataset = coveredDatasets[i];
-                resources.set(i, ResourceFactory.createResource(Integer.toString(nextId[coveredDataset]++ + coveredDataset * populationSize)));
+                resources.set(i,
+                        ResourceFactory.createResource(Integer.toString(nextId[coveredDataset]++ + coveredDataset * populationSize)));
             }
             return resources;
         }
