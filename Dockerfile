@@ -20,4 +20,4 @@ RUN mvn package
 
 FROM openjdk:11-jre-slim
 RUN echo '#!/bin/sh\nexec java -jar /opt/abecto.jar "$@"' >> /bin/abecto && chmod +x /bin/abecto
-COPY --from=builder target/abecto.jar /opt/abecto.jar
+COPY --from=builder abecto-core/target/abecto-exec.jar /opt/abecto.jar

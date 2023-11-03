@@ -51,10 +51,10 @@ This sections provides an overview about the use of ABECTO.
 To use ABECTO, first checkout the project and compile ABECTO using Maven:
 
 ```shell
-mvn -B -Dmaven.test.skip=true package
+mvn -Dmaven.test.skip=true package
 ```
 
-This will create a stand alone .jar file at [target/abecto.jar](target).
+This will create a stand alone .jar file at [abecto-core/target/abecto-exec.jar](target).
 
 ## Configuration
 
