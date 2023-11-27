@@ -57,31 +57,35 @@ public class ComparisonBenchmarkDataSupplier {
 
     public Map<String, Set<RDFNode>> selectResourceValues(Resource resource, Resource dataset,
                                                           Collection<String> variables) {
-
         int resourceNumber = Integer.parseInt(resource.getURI());
-        if (resourceNumber % populationSize >= populationSize * errorRate) {
-            return Collections.singletonMap(variables.iterator().next(), Collections.singleton(this.correctValue));
+        int datasetNumber = Integer.parseInt(dataset.getURI());
+        if (resourceNumber / populationSize == datasetNumber) {
+            return selectResourceValues(resourceNumber, datasetNumber, variables.iterator().next());
         } else {
-            int datasetNumber = Integer.parseInt(dataset.getURI());
-            return Collections.singletonMap(variables.iterator().next(),
-                    Collections.singleton(this.wrongValues[datasetNumber]));
+            return null;
         }
+    }
+
+    public Map<String, Set<RDFNode>> selectResourceValues(int resourceNumber, int datasetNumber,
+                                                          String variable) {
+        Set<RDFNode> valuesSet = new HashSet<>(1); // Note: must be mutable
+        if (resourceNumber % populationSize >= populationSize * errorRate) {
+            valuesSet.add(correctValue);
+        } else {
+            valuesSet.add(this.wrongValues[datasetNumber]);
+        }
+        return Collections.singletonMap(variable, valuesSet);
     }
 
     public Map<Resource, Map<String, Set<RDFNode>>> selectResourceValues(Collection<Resource> resources,
                                                                          Resource dataset, List<String> variables) {
         int datasetNumber = Integer.parseInt(dataset.getURI());
-
+        String variable = variables.iterator().next();
         Map<Resource, Map<String, Set<RDFNode>>> resourceValues = new HashMap<>();
-
         for (Resource resource : resources) {
             int resourceNumber = Integer.parseInt(resource.getURI());
-            if (resourceNumber % populationSize >= populationSize * errorRate) {
-                resourceValues.put(resource, Collections.singletonMap(variables.iterator().next(),
-                        Collections.singleton(correctValue)));
-            } else {
-                resourceValues.put(resource, Collections.singletonMap(variables.iterator().next(),
-                        Collections.singleton(this.wrongValues[datasetNumber])));
+            if (resourceNumber / populationSize == datasetNumber) {
+                resourceValues.put(resource, selectResourceValues(resourceNumber, datasetNumber, variable));
             }
         }
         return resourceValues;

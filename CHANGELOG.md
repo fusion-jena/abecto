@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+* add benchmarks for `PopulationComparisonProcessor` and `PropertyComparisonProcessor`
+* split project into subprojects `abecto-core` and `abecto-benchmark`
+
 ## [2.1.0] - 2023-04-17
 
 ### Changed
