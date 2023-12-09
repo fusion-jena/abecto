@@ -7,7 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [2.1.1] - 2023-12-09
 
+### Added
 * add benchmarks for `PopulationComparisonProcessor` and `PropertyComparisonProcessor`
+
+### Changed
 * split project into subprojects `abecto-core` and `abecto-benchmark`
 
 ## [2.1.0] - 2023-04-17
