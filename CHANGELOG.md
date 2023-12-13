@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Fixed
+* fix docker build
+
 ## [2.1.1] - 2023-12-09
 
 ### Added

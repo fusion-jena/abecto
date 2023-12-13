@@ -15,9 +15,9 @@
 #
 
 FROM maven:3.8.4-openjdk-11 AS builder
-COPY . .
-RUN mvn package
+COPY . /var/abecto/
+RUN mvn -B -f /var/abecto/pom.xml package
 
 FROM openjdk:11-jre-slim
 RUN echo '#!/bin/sh\nexec java -jar /opt/abecto.jar "$@"' >> /bin/abecto && chmod +x /bin/abecto
-COPY --from=builder abecto-core/target/abecto-exec.jar /opt/abecto.jar
+COPY --from=builder /var/abecto/abecto-core/target/abecto-exec.jar /opt/abecto.jar
