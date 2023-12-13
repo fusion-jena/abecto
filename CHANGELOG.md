@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [2.1.2] - 2023-12-13
+
 ### Fixed
 * fix docker build
 
@@ -290,7 +292,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * add `ManualCategoryProcessor`: Enables users to manually define resource categories and their properties.
 * add `ResourceDeviationProcessor`: Detects deviations between the resource references of mapped resources as defined in the categories.
 
-[Unreleased]: https://github.com/fusion-jena/abecto/compare/v2.1.1...HEAD
+[Unreleased]: https://github.com/fusion-jena/abecto/compare/v2.1.2...HEAD
+[2.1.2]: https://github.com/fusion-jena/abecto/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/fusion-jena/abecto/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/fusion-jena/abecto/compare/v2.0.1...v2.1.0
 [2.0.1]: https://github.com/fusion-jena/abecto/compare/v2.0.0...v2.0.1
