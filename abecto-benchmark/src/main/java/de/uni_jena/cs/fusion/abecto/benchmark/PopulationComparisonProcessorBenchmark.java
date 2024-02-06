@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -50,11 +50,13 @@ public class PopulationComparisonProcessorBenchmark {
         public int datasetCount;
         @Param({"0.25", "0.5", "0.75"})
         public double coverage;
+        @Param({"0.1"})
+        public double errorRate;
         public PopulationComparisonProcessor processor;
 
         @Setup(Level.Iteration)
         public void setup() {
-            processor = new PopulationComparisonProcessorBenchmark.IndependentPopulationComparisonProcessor(this.populationSize, this.datasetCount, this.coverage);
+            processor = new PopulationComparisonProcessorBenchmark.IndependentPopulationComparisonProcessor(this.populationSize, this.datasetCount, this.coverage, this.errorRate);
         }
     }
 
@@ -62,8 +64,8 @@ public class PopulationComparisonProcessorBenchmark {
 
         private final ComparisonBenchmarkDataSupplier dataSupplier;
 
-        public IndependentPopulationComparisonProcessor(int populationSize, int datasetCount, double coverage) {
-            this.dataSupplier = new ComparisonBenchmarkDataSupplier(populationSize, datasetCount, coverage, 0);
+        public IndependentPopulationComparisonProcessor(int populationSize, int datasetCount, double coverage, double errorRate) {
+            this.dataSupplier = new ComparisonBenchmarkDataSupplier(populationSize, datasetCount, coverage, errorRate);
             Resource aspectIri = ResourceFactory.createResource("aspect");
             this.aspects = Collections.singleton(aspectIri);
             Aspect aspect = new Aspect(aspectIri, "key");
