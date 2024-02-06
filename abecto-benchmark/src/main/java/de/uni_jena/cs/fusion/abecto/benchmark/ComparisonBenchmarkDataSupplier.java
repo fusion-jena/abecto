@@ -106,10 +106,9 @@ public class ComparisonBenchmarkDataSupplier {
         }
 
 
-        Stream<List<Resource>>[] correspondingWrongResourcesStream = generateCasesStream(overlapShare, 0,
-                (int) (sampleSize * errorRate));
+        Stream<List<Resource>>[] correspondingWrongResourcesStream = generateCasesStream(overlapShare, 0, sampleSize, errorRate);
         Stream<List<Resource>>[] correspondingCorrectResourcesStream = generateCasesStream(overlapShare,
-                (int) (sampleSize * errorRate), (int) (sampleSize * (1 - errorRate)));
+                (int) (sampleSize * errorRate), sampleSize, 1 - errorRate);
 
         // join cases streams
         @SuppressWarnings("unchecked") Stream<List<Resource>>[] correspondingResourcesStream = new Stream[(1 << sampleCount) * 2];
@@ -119,46 +118,47 @@ public class ComparisonBenchmarkDataSupplier {
     }
 
     /**
-     * Generates one stream of corresponding resources per knowledge graph combination. The stream sizes are calculated
-     * based on the total number of cases and the target overlap between each pair of knowledge graphs.
+     * Generates one stream of corresponding resources per sample combination. The stream sizes are calculated
+     * based on the sample size and the target overlap share between each pair of samples.
      *
-     * @param overlapShare  target overlap between each pair of knowledge graphs
-     * @param localIdOffset number of resource IDs to skip per knowledge graph
-     * @param totalCases    number of resources to generate per knowledge graph
-     * @return one stream of corresponding resources per knowledge graph combination
+     * @param overlapShare     target overlap share between each pair of sample
+     * @param localIdOffset    number of resource IDs to skip per sample
+     * @param sampleSize       number of resources per sample
+     * @param correctnessShare share of resources per sample due to correctness per sample
+     * @return one stream of corresponding resources per sample combination
      */
-    private Stream<List<Resource>>[] generateCasesStream(double[] overlapShare, int localIdOffset, int totalCases) {
+    private Stream<List<Resource>>[] generateCasesStream(double[] overlapShare, int localIdOffset, int sampleSize, double correctnessShare) {
 
         int[] nextLocalId = new int[sampleCount];
         Arrays.fill(nextLocalId, localIdOffset);
 
-        @SuppressWarnings("unchecked") Stream<List<Resource>>[] casesStreams = new Stream[1 << sampleCount];
+        @SuppressWarnings("unchecked") Stream<List<Resource>>[] correspondingResourcesStream = new Stream[1 << sampleCount];
         // iterate through all subsets represented by the bits of an int, 0 = not contained, 1 = contained
-        int subsetCount = 1 << sampleCount; // = 2^{datasetCount}
-        for (int coveredDatasetsBits = 0; coveredDatasetsBits < subsetCount; coveredDatasetsBits++) {
-            int coveredDatasetsCount = Integer.bitCount(coveredDatasetsBits);
+        int subsetCount = 1 << sampleCount; // = 2^{sampleCount}
+        for (int coveredSamplesBits = 0; coveredSamplesBits < subsetCount; coveredSamplesBits++) {
+            int coveredSamplesCount = Integer.bitCount(coveredSamplesBits);
 
 
-            if (coveredDatasetsCount >= 2) {
-                // get array of covered datasets ids
-                int[] coveredSampleIds = new int[coveredDatasetsCount];
+            if (coveredSamplesCount >= 2) {
+                // get array of covered samples ids
+                int[] coveredSampleIds = new int[coveredSamplesCount];
                 for (int sampleId = 0, i = 0; sampleId < sampleCount; sampleId++) {
-                    if ((coveredDatasetsBits & (1 << sampleId  /* = 2^{sampleId} */)) != 0) {
+                    if ((coveredSamplesBits & (1 << sampleId  /* = 2^{sampleId} */)) != 0) {
                         coveredSampleIds[i++] = sampleId;
                     }
                 }
 
-                // calculate number of cases with covered datasets
-                int cases = (int) (overlapShare[coveredDatasetsCount] * totalCases);
-                // generate stream of cases with covered datasets
-                casesStreams[coveredDatasetsBits] = Stream.generate(new CorrespondenceGroupSupplier(coveredSampleIds,
+                // calculate number of cases with covered samples
+                int cases = (int) (overlapShare[coveredSamplesCount] * sampleSize * correctnessShare);
+                // generate stream of cases with covered samples
+                correspondingResourcesStream[coveredSamplesBits] = Stream.generate(new CorrespondenceGroupSupplier(coveredSampleIds,
                         nextLocalId)).limit(cases);
             } else {
                 // empty stream for combinations without correspondences
-                casesStreams[coveredDatasetsBits] = Stream.empty();
+                correspondingResourcesStream[coveredSamplesBits] = Stream.empty();
             }
         }
-        return casesStreams;
+        return correspondingResourcesStream;
     }
 
     private class CorrespondenceGroupSupplier implements Supplier<List<Resource>> {
