@@ -1,0 +1,50 @@
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX p-plan: <http://purl.org/net/p-plan#>
+PREFIX av: <http://w3id.org/abecto/vocabulary#>
+PREFIX dqv: <http://www.w3.org/ns/dqv#>
+PREFIX oa: <http://www.w3.org/ns/oa#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+SELECT DISTINCT ?affectedGraph ?aspect ?affectedResource ?affectedVariableName ?affectedValue ?comparedToValue ?comparedToResource ?comparedToDataset ?mappedBy ?snippetToAnnotateValueComparedToAsWrong
+WHERE {
+  GRAPH ?qualityAnnotationGraph {
+    [ rdf:type  dqv:QualityAnnotation ;
+      oa:hasBody
+        [ rdf:type                av:Deviation ;
+          av:affectedVariableName ?affectedVariableName ;
+          av:affectedAspect       ?aspectResource ;
+          av:affectedValue        ?affectedValue ;
+          av:comparedToValue      ?comparedToValue ;
+          av:comparedToResource   ?comparedToResource ;
+          av:comparedToDataset    ?comparedToDataset ;
+        ] ;
+      oa:hasTarget ?affectedResource
+    ] .
+  }
+  ?qualityAnnotationGraph av:associatedDataset ?affectedGraph .
+  ?aspectResource av:keyVariableName ?aspectKeyVar .
+  OPTIONAL { ?aspectResource rdfs:label ?aspectLabel .}
+  BIND(COALESCE(?aspectLabel, ?aspectKeyVar) AS ?aspect)
+  OPTIONAL {
+    GRAPH ?mappingGraph {
+      ?affectedResource av:correspondsToResource|^av:correspondsToResource ?comparedToResource.
+    }
+    ?mappingGraph prov:wasGeneratedBy/p-plan:correspondsToStep/rdfs:label ?mappedBy .
+  }
+  BIND(CONCAT(
+              '[ rdf:type dqv:QualityAnnotation ; oa:hasBody [ rdf:type av:WrongValue ; av:affectedAspect ',
+              IF(ISBLANK(?aspectResource), STR(?aspectResource), CONCAT('<',STR(?aspectResource),'>')),
+              ' ; av:affectedVariableName "',
+              ?affectedVariableName,
+              '" ; av:affectedValue "',
+              STR(?comparedToValue),
+              '"',
+              IF(DATATYPE(?comparedToValue) = rdf:langString, CONCAT('@',LANG(?comparedToValue)), CONCAT('^^<',STR(DATATYPE(?comparedToValue)),'>')),
+              ' ; ] ; oa:hasTarget <',
+              STR(?comparedToResource),
+              '> ] .'
+             ) AS ?snippetToAnnotateValueComparedToAsWrong)
+}
+ORDER BY ?affectedGraph ?aspect ?affectedResource ?affectedVariableName
