@@ -40,9 +40,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.sparql.core.TriplePath;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.path.PathFactory;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
 import de.uni_jena.cs.fusion.abecto.Vocabularies;
@@ -210,8 +208,8 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 	public Stream<List<Resource>> getCorrespondenceGroups() {
 		Model correspondencesModel = getCorrespondencesModel();
 		Query query = new SelectBuilder().addVar(RESOURCE_1).addVar(RESOURCE_2)
-				.addWhere(new TriplePath(RESOURCE_1,
-						PathFactory.pathZeroOrOne(PathFactory.pathLink(AV.correspondsToResource.asNode())), RESOURCE_2))
+				// presence of both directions is guaranteed by MappingProcessor#run() (for mapping results) and Step#run() (for predefined metadata graphs)
+				.addWhere(RESOURCE_1, AV.correspondsToResource, RESOURCE_2)
 				.addFilter(exprFactory
 						.notexists(new WhereBuilder().addWhere(RESOURCE_1, AV.correspondsToResource, RESOURCE_3)
 								.addFilter(exprFactory.gt(exprFactory.str(RESOURCE_1), exprFactory.str(RESOURCE_3)))))

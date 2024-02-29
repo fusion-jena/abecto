@@ -91,7 +91,8 @@ public class PopulationComparisonProcessorTest {
 		PopulationComparisonProcessor processor = new PopulationComparisonProcessor()
 				.addInputPrimaryModel(dataset(1), inputPrimaryModel1)
 				.addInputPrimaryModel(dataset(2), inputPrimaryModel2)
-				.addInputPrimaryModel(dataset(3), inputPrimaryModel3).addInputMetaModel(null, inputGeneralMetaModel)
+				.addInputPrimaryModel(dataset(3), inputPrimaryModel3)
+				.addInputMetaModel(null, MappingProcessor.inferTransitiveCorrespondences(inputGeneralMetaModel))
 				.addAspects(aspect1, aspect2, aspect3);
 		processor.aspects = Arrays.asList(aspect(1), aspect(2), aspect(3));
 		processor.run();

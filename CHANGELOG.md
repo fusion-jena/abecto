@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Fixed
+* fix a bug that causes an exception in the correspondence groups stream returned by `Processor#getCorrespondenceGroups()` if a literal is present in a used predefined metadata graph 
+
 ## [2.1.3] - 2024-02-06
 
 ### Fixed
