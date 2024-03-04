@@ -151,7 +151,7 @@ The execution of ABECTO is configured in a plan file, which is an RDF dataset fi
        .
    ```
 
-5. **Transformation, Mapping, and Comparison/Evaluation Steps:** Specify further steps for transforming, mapping and comparing the primary data. Each step will have at least one preceding steps specified using `p-plan:isPrecededBy`. With `av:predefinedMetaDataGraph` steps you can manually add mappings, mapping exclusions or annotations into the process. The following example declares a mapping step `<jaroWinklerMapping>` to map resources based on string similarity and a comparison step `<literalValueComparison>` to compare literal values. At the mapping step, a predefined metadata graph `<manualMappings>` is introduced to prevent the mapping of two resources. The mapping step is preceded by all three source steps. The comparison step is only directly preceded by the mapping step. But the data returned by all indirect preceding steps are also available. 
+5. **Transformation, Mapping, and Comparison/Evaluation Steps:** Specify further steps for transforming, mapping and comparing the primary data. Each step will have at least one preceding steps specified using `p-plan:isPrecededBy`. With `av:predefinedMetaDataGraph` steps you can manually add mappings, mapping exclusions or annotations into the process. The following example declares a mapping step `<jaroWinklerMapping>` to map resources based on string similarity and a comparison step `<literalValueComparison>` to compare literal values. At the mapping step, a predefined metadata graph `<manualMappings>` is introduced to prevent the mapping of two resources. The mapping step is preceded by all three source steps. The comparison step is only directly preceded by the mapping step. But the data returned by all indirect preceding steps are also available.
 
    ```turtle
    GRAPH <manualMappings>
@@ -296,7 +296,7 @@ We use the following prefix to abbreviate the namespace in the processor IRIs:
 
 Source Processors load RDF data from different sources and store them in the internal triple store for further processing.
 
-The **File Source Processor** ([abecto:FileSourceProcessor](src/main/java/de/uni_jena/cs/fusion/abecto/processor/FileSourceProcessor.java)) loads RDF data from one or multiple locale files of one of the following formats: RDF/XML, TriG, N-Quads, Turtle, N-Triples, JSON-LD, SHACL Compact Syntax, TriX, and RDF Thrift.
+The **[File Source Processor](src/main/java/de/uni_jena/cs/fusion/abecto/processor/FileSourceProcessor.java)** (`abecto:FileSourceProcessor`) loads RDF data from one or multiple locale files of one of the following formats: RDF/XML, TriG, N-Quads, Turtle, N-Triples, JSON-LD, SHACL Compact Syntax, TriX, and RDF Thrift.
 The format is automatically detected.
 The processor has the following parameter:
 
@@ -305,7 +305,7 @@ The processor has the following parameter:
 | path | One or multiple paths of RDF files that will be loaded. |         |
 A path may either be absolute, or relative to the configuration file.
 
-The **SPARQL Source Processor** ([abecto:SparqlSourceProcessor](src/main/java/de/uni_jena/cs/fusion/abecto/processor/SparqlSourceProcessor.java)) loads RDF data from a SPARQL endpoint.
+The **[SPARQL Source Processor](src/main/java/de/uni_jena/cs/fusion/abecto/processor/SparqlSourceProcessor.java)** (`abecto:SparqlSourceProcessor`) loads RDF data from a SPARQL endpoint.
 This makes ABECTO independent of the availability of knowledge graphs RDF dumps and may avoid the handling of large dump files, if only a small share of the data is needed.
 The resources of interest get defined by a SPARQL query, a list, or both.
 The processor partitions the requested resources into chunks and loads all statements containing resources of the chunk as subject or object.
@@ -328,7 +328,7 @@ The processor has the following parameters:
 | ignoreInverse           | Properties to ignore in inverse direction. Statements with one of these properties will neither get loaded nor will their subjects become an associated resource.                                                                                                                                  |                                      |
 | maxRetries              | Total maximum number of retries of failed request to the source SPARQL endpoint.                                                                                                                                                                                                                   | 128                                  |
 
-The **URL Source Processor** ([abecto:UrlSourceProcessor](src/main/java/de/uni_jena/cs/fusion/abecto/processor/UrlSourceProcessor.java)) loads RDF data from one or multiple remote files of one of the following formats: RDF/XML, TriG, N-Quads, Turtle, N-Triples, JSON-LD, SHACL Compact Syntax, TriX, and RDF Thrift.
+The **[URL Source Processor](src/main/java/de/uni_jena/cs/fusion/abecto/processor/UrlSourceProcessor.java)** (`abecto:UrlSourceProcessor`) loads RDF data from one or multiple remote files of one of the following formats: RDF/XML, TriG, N-Quads, Turtle, N-Triples, JSON-LD, SHACL Compact Syntax, TriX, and RDF Thrift.
 The format is automatically detected.
 The processor has the following parameter:
 
@@ -341,14 +341,14 @@ The processor has the following parameter:
 Transformation processors derive additional primary data from the existing primary data.
 For example, this enables the derivation of implicit statements or the adjustment of value formatting for the mapping or comparison.
 
-The **Forward Rule Reasoning Processor** ([abecto:ForwardRuleReasoningProcessor](src/main/java/de/uni_jena/cs/fusion/abecto/processor/ForwardRuleReasoningProcessor.java)) applies forward rules to derive additional primary data.
+The **[Forward Rule Reasoning Processor](src/main/java/de/uni_jena/cs/fusion/abecto/processor/ForwardRuleReasoningProcessor.java)** (`abecto:ForwardRuleReasoningProcessor`) applies forward rules to derive additional primary data.
 The processor has the following parameter:
 
 | name  | description                                                                                                                              | default |
 |-------|------------------------------------------------------------------------------------------------------------------------------------------|---------|
 | rules | The rules to apply on the primary data using the [Apache Jena rule syntax](https://jena.apache.org/documentation/inference/#RULEsyntax). |         |
 
-The **SPARQL Construct Processor** ([abecto:SparqlConstructProcessor](src/main/java/de/uni_jena/cs/fusion/abecto/processor/SparqlConstructProcessor.java)) applies a SPARQL construct query on the primary data of a knowledge graph to derive additional primary data.
+The **[SPARQL Construct Processor](src/main/java/de/uni_jena/cs/fusion/abecto/processor/SparqlConstructProcessor.java)** (`abecto:SparqlConstructProcessor`) applies a SPARQL construct query on the primary data of a knowledge graph to derive additional primary data.
 The query execution will be repeated until a configured limit of execution or no new statements have been produced.
 The processor has the following parameters:
 
@@ -367,7 +367,7 @@ A rule reasoner is used to derive implicit correspondences and correspondence ex
 The reasoning applies immediately on new correspondences to consider them during the further mapping processor execution.
 Additionally, the inferences get persisted after a mapping processor execution succeeded.
 
-The **Equivalent Value Mapping Processor** ([abecto:EquivalentValueMappingProcessor](src/main/java/de/uni_jena/cs/fusion/abecto/processor/EquivalentValueMappingProcessor.java)) provides correspondences between resources of one aspect in different knowledge graphs, if they have equivalent values for all given variables.
+The **[Equivalent Value Mapping Processor](src/main/java/de/uni_jena/cs/fusion/abecto/processor/EquivalentValueMappingProcessor.java)** (`abecto:EquivalentValueMappingProcessor`) provides correspondences between resources of one aspect in different knowledge graphs, if they have equivalent values for all given variables.
 This is similar to the inferences of an OWL reasoner on inverse functional properties.
 Values are treated as equivalent if they are equivalent literals or if they are resources that are already known to correspond.
 If multiple values exist for one variable, only one pair of values must be equivalent.
@@ -379,7 +379,7 @@ The processor has the following parameters:
 | aspect    | The aspects for which the correspondences get generated.                                      |         |
 | variables | One or multiple variables that will be compared to determine the correspondence of resources. |         |
 
-The **Functional Mapping Processor** ([abecto:FunctionalMappingProcessor](src/main/java/de/uni_jena/cs/fusion/abecto/processor/FunctionalMappingProcessor.java)) provides correspondences based on links from resources of another aspect.
+The **[Functional Mapping Processor](src/main/java/de/uni_jena/cs/fusion/abecto/processor/FunctionalMappingProcessor.java)** (`abecto:FunctionalMappingProcessor`) provides correspondences based on links from resources of another aspect.
 If corresponding resources from different knowledge graphs link with a given variable two resources, these resources will be considered to correspond.
 This is similar to the inferences of an OWL reasoner on functional properties.
 The processor has the following parameters:
@@ -390,7 +390,7 @@ The processor has the following parameters:
 | referringVariable | The variable linking the resources to map.                |         |
 | referredAspect    | The aspect of the resources to map.                       |         |
 
-The **Jaro-Winkler Mapping Processor** ([abecto:JaroWinklerMappingProcessor](src/main/java/de/uni_jena/cs/fusion/abecto/processor/JaroWinklerMappingProcessor.java)) provides correspondences based on the Jaro-Winkler Similarity (see [String Comparator Metrics and Enhanced Decision Rules in the Fellegi-Sunter Model of Record Linkage](http://eric.ed.gov/?id=ED325505)) of string values using our implementation for efficient bounded Jaro-Winkler similarity based search (see [Efficient Bounded Jaro-Winkler Similarity Based Search](http://doi.org/10.18420/btw2019-13)).
+The **[Jaro-Winkler Mapping Processor](src/main/java/de/uni_jena/cs/fusion/abecto/processor/JaroWinklerMappingProcessor.java)** (`abecto:JaroWinklerMappingProcessor`) provides correspondences based on the Jaro-Winkler Similarity (see [String Comparator Metrics and Enhanced Decision Rules in the Fellegi-Sunter Model of Record Linkage](http://eric.ed.gov/?id=ED325505)) of string values using our implementation for efficient bounded Jaro-Winkler similarity based search (see [Efficient Bounded Jaro-Winkler Similarity Based Search](http://doi.org/10.18420/btw2019-13)).
 Two resources are considered to correspond if for one variable in both directions the other variable value is the most similar value from the other knowledge graph and if the similarity score exceeds a threshold.
 The processor has the following parameters:
 
@@ -401,7 +401,7 @@ The processor has the following parameters:
 | threshold     | The similarity threshold the variable values of two resources must comply.               |         |
 | caseSensitive | Determines, if case is taken into account during the search for corresponding resources. |         |
 
-The **Use Present Mapping Processor** ([abecto:UsePresentMappingProcessor](src/main/java/de/uni_jena/cs/fusion/abecto/processor/UsePresentMappingProcessor.java)) provides correspondences based on existing links between resources in variable values.
+The **[Use Present Mapping Processor](src/main/java/de/uni_jena/cs/fusion/abecto/processor/UsePresentMappingProcessor.java)** (`abecto:UsePresentMappingProcessor`) provides correspondences based on existing links between resources in variable values.
 The processor has the following parameters:
 
 | name     | description                                                     | default |
@@ -414,7 +414,7 @@ The processor has the following parameters:
 Comparison processors compare the primary data of the knowledge graphs using the correspondences provided by the mapping processors.
 They provide annotations on specific values, resources, and knowledge graphs or determine measurements on the knowledge graphs.
 
-The **Population Comparison Processor** ([abecto:PopulationComparisonProcessor](src/main/java/de/uni_jena/cs/fusion/abecto/processor/PopulationComparisonProcessor.java)) provides on the one hand [av:Issue](http://w3id.org/abecto/vocabulary#Issue) annotations for resource duplicates and [av:ResourceOmission](http://w3id.org/abecto/vocabulary#ResourceOmission) annotations.
+The **[Population Comparison Processor](src/main/java/de/uni_jena/cs/fusion/abecto/processor/PopulationComparisonProcessor.java)** (`abecto:PopulationComparisonProcessor`) provides on the one hand [av:Issue](http://w3id.org/abecto/vocabulary#Issue) annotations for resource duplicates and [av:ResourceOmission](http://w3id.org/abecto/vocabulary#ResourceOmission) annotations.
 On the other hand, it provides per knowledge graph measurements of
 
 * the count ([av:count](http://w3id.org/abecto/vocabulary#count)) of resources of an aspect,
@@ -430,7 +430,7 @@ The processor has the following parameter:
 |---------|-----------------------------------------------------------------------------------|---------|
 | aspects | One or multiple aspects for which measurements and annotations will be generated. |         |
 
-The **Property Comparison Processor** ([abecto:PropertyComparisonProcessor](src/main/java/de/uni_jena/cs/fusion/abecto/processor/PropertyComparisonProcessor.java)) provides [av:Deviation](http://w3id.org/abecto/vocabulary#Deviation), [av:ValuesOmission](http://w3id.org/abecto/vocabulary#ValuesOmission), and [av:Issue](http://w3id.org/abecto/vocabulary#Issue) annotations on property values for one variable of corresponding resources.
+The **[Property Comparison Processor](src/main/java/de/uni_jena/cs/fusion/abecto/processor/PropertyComparisonProcessor.java)** (`abecto:PropertyComparisonProcessor`) provides [av:Deviation](http://w3id.org/abecto/vocabulary#Deviation), [av:ValuesOmission](http://w3id.org/abecto/vocabulary#ValuesOmission), and [av:Issue](http://w3id.org/abecto/vocabulary#Issue) annotations on property values for one variable of corresponding resources.
 On the other hand, it provides per knowledge graph measurements of
 
 * the count ([av:count](http://w3id.org/abecto/vocabulary#count)) of resources of an aspect,
