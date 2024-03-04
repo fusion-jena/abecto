@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Fixed
+* fix `measurementsMarkdown` report: working together with parameter `--reportOn`
+
 ## [2.1.4] - 2024-03-01
 
 ### Add

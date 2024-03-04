@@ -156,8 +156,8 @@ public class Abecto implements Callable<Integer> {
 			}
 
 			// load vocabulary
-			loadVocabulary("http://w3id.org/abecto/vocabulary", "abecto-vocabulary.ttl", "TTL");
-			loadVocabulary("http://www.ontology-of-units-of-measure.org/resource/om-2", "om-2.0.rdf", "RDF/XML");
+			loadVocabulary(reportOn, "http://w3id.org/abecto/vocabulary", "abecto-vocabulary.ttl", "TTL");
+			loadVocabulary(reportOn, "http://www.ontology-of-units-of-measure.org/resource/om-2", "om-2.0.rdf", "RDF/XML");
 
 			// export results
 			if (exports != null) {
@@ -195,8 +195,8 @@ public class Abecto implements Callable<Integer> {
 		}
 	}
 
-	private void loadVocabulary(String graphIri, String fileName, String lang) {
-		this.dataset.addNamedModel(graphIri, ModelFactory.createDefaultModel()
+	private void loadVocabulary(Dataset dataset, String graphIri, String fileName, String lang) {
+		dataset.addNamedModel(graphIri, ModelFactory.createDefaultModel()
 				.read(this.getClass().getResourceAsStream(VOCABULARY_FOLDER + "/" + fileName), null, lang));
 	}
 
