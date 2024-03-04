@@ -468,6 +468,8 @@ The **Deviations Report** (`deviations`) contrast the variable value of one reso
 (c) manually fixing the mapping, or
 (d) annotating the other knowledge graphs value as wrong in the comparison configuration using the provided snippet.
 
+The **Deviations Markdown Report** (`deviationsMarkdown`) provides the same content as the `deviations` report, but in [Markdown format](https://daringfireball.net/projects/markdown/).
+
 The **Mapping Review Report** (`mappingReview`) provides an overview of all mappings as well as all missing resources in CSV format.
 It provides the aspect, the two affected knowledge graphs, the resource IRIs and labels (if applicable) the processor that provide the mapping or resource omission.
 The aim of this report is to enable manual revision and adjustment of the mapping.
