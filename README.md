@@ -15,6 +15,7 @@ ABECTO is an ABox Evaluation and Comparison Tool for Ontologies.
   * [Configuration](#configuration)
     * [How to write an ABECTO plan?](#how-to-write-an-abecto-plan)
   * [Execution](#execution)
+  * [Annotating Known Wrong Values](#annotating-known-wrong-values)
   * [CI Usage with Docker](#ci-usage-with-docker)
 * [ABECTO Processors](#abecto-processors)
   * [Source Processors](#source-processors)
@@ -241,6 +242,31 @@ Examples:
   ```shell
   java -jar target/abecto.jar --loadOnly --reportOn "http://example.org/dataset1" --export deviations=deviations.csv result.trig
   ```
+
+## Annotating Known Wrong Values
+
+During comparison of knowledge graphs one might spot a deviation caused by a wrong value in a knowledge graph out of own control.
+To not get this deviation reported repeatedly, the value can be marked as wrong in the ABECTO plan.
+This is useful together with the `--reportOn` parameter, if the wrong value is not part of the knowledge graph of interest.
+To mark the value as wrong, add a predefined metadata graph for the knowledge graph containing the wrong value that contains an annotation on the resource with the wrong value and use it in the according comparison processor. 
+A predefined metadata graph can contain an arbitrary number of wrong value annotations and can be used by an arbitrary number of comparison processors.
+Thous, you can simply define one graph with wrong value annotations per knowledge graph.
+For example, if the graph `http://example.org/someGraph/` contains the resource `http://example.org/someGraph/someResource` with the wrong value `"some wrong value"` for the variable `someVariable` of the aspect `http://example.org/someAspect`, the predefined metadata graph definition looks like:
+
+```
+<predefinedMetaDataForSomeGraph> av:associatedDataset <http://example.org/someGraph/> .
+
+GRAPH <predefinedMetaDataForSomeGraph> {
+    [   rdf:type dqv:QualityAnnotation ; 
+        oa:hasBody [    rdf:type av:WrongValue ; 
+                        av:affectedAspect <http://example.org/someAspect> ; 
+                        av:affectedVariableName "someVariable" ; 
+                        av:affectedValue "some wrong value" ; 
+                    ] ; 
+        oa:hasTarget <http://example.org/someGraph/someResource> ;
+    ] .
+}
+```
 
 ## CI Usage with Docker
 
