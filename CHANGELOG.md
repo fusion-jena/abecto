@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [2.2.0] - 2024-03-04
 
-*Note: This release causes with a minor version increment, as the previous release wrongly caused as a patch version increment only.*
+*Note: This release causes a minor version increment, as the previous release wrongly caused a patch version increment only.*
 
 ### Fixed
 * fix `measurementsMarkdown` report: working together with parameter `--reportOn`
