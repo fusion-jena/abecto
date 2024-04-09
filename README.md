@@ -1,5 +1,5 @@
-[![Tests](https://github.com/fusion-jena/abecto/actions/workflows/maven.yml/badge.svg)](https://github.com/fusion-jena/abecto/actions/workflows/maven.yml)
-[![DOI](https://zenodo.org/badge/261377020.svg)](https://zenodo.org/badge/latestdoi/261377020)
+[![Tests](https://github.com/fusion-jena/abecto/actions/workflows/actions.yml/badge.svg)](https://github.com/fusion-jena/abecto/actions/workflows/actions.yml)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10780399.svg)](https://doi.org/10.5281/zenodo.10780399)
 
 # ABECTO
 
@@ -11,7 +11,7 @@ ABECTO is an ABox Evaluation and Comparison Tool for Ontologies.
   * [License](#license)
   * [Publications](#publications)
 * [How to Use ABECTO?](#how-to-use-abecto)
-  * [Building](#building)
+  * [Preparation](#preparation)
   * [Configuration](#configuration)
     * [How to write an ABECTO plan?](#how-to-write-an-abecto-plan)
   * [Execution](#execution)
@@ -47,15 +47,17 @@ Further related publications:
 
 This sections provides an overview about the use of ABECTO.
 
-## Building
+## Preparation
 
-To use ABECTO, first checkout the project and compile ABECTO using Maven:
+To use ABECTO, first download the [stand alone abecto.jar of the latest release](https://github.com/fusion-jena/abecto/releases/latest/download/abecto.jar).
+
+Alternatively, checkout the project and compile ABECTO using Maven:
 
 ```shell
-mvn -Dmaven.test.skip=true package
+mvn '-Dmaven.test.skip=true' package
 ```
 
-This will create a stand alone .jar file at [abecto-core/target/abecto.jar](target).
+This will create a stand alone .jar file at [abecto-core/target/abecto.jar](abecto-core/target).
 
 ## Configuration
 
@@ -297,11 +299,11 @@ jobs:
     container: ghcr.io/fusion-jena/abecto:latest
     steps:
       - name: Checkout Project
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Run ABECTO
         run: abecto --trig result.trig tutorial-configuration.trig
       - name: Archive Comparison Result
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: Comparison Result RDF Dataset
           path: result.trig
