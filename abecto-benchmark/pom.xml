@@ -32,6 +32,7 @@
 			<artifactId>abecto-core</artifactId>
 			<version>${project.parent.version}</version>
 			<scope>compile</scope>
+			<classifier>without-dependencies</classifier>
 		</dependency>
 		<dependency>
 			<!-- EPL 2.0 -->

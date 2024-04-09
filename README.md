@@ -55,7 +55,7 @@ To use ABECTO, first checkout the project and compile ABECTO using Maven:
 mvn -Dmaven.test.skip=true package
 ```
 
-This will create a stand alone .jar file at [abecto-core/target/abecto-exec.jar](target).
+This will create a stand alone .jar file at [abecto-core/target/abecto.jar](target).
 
 ## Configuration
 
@@ -232,15 +232,15 @@ Compares and evaluates several RDF datasets.
 Examples:
 * show the help message:
   ```shell
-  java -jar abecto-core/target/abecto-exec.jar --help
+  java -jar abecto-core/target/abecto.jar --help
   ```
 * run the tutorial plan and store the result:
   ```shell
-  java -jar abecto-core/target/abecto-exec.jar --trig result.trig abecto-core/src/test/resources/tutorial-configuration.trig
+  java -jar abecto-core/target/abecto.jar --trig result.trig abecto-core/src/test/resources/tutorial-configuration.trig
   ```
 * create a deviations report for a specific dataset and without re-running the plan:
   ```shell
-  java -jar abecto-core/target/abecto-exec.jar --loadOnly --reportOn "http://example.org/dataset1" --export deviations=deviations.csv result.trig
+  java -jar abecto-core/target/abecto.jar --loadOnly --reportOn "http://example.org/dataset1" --export deviations=deviations.csv result.trig
   ```
 
 ## Annotating Known Wrong Values

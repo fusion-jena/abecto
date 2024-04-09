@@ -153,10 +153,6 @@
 						<goals>
 							<goal>repackage</goal>
 						</goals>
-						<configuration>
-							<!-- https://stackoverflow.com/a/41742778 -->
-							<classifier>exec</classifier>
-						</configuration>
 					</execution>
 				</executions>
 			</plugin>
@@ -171,6 +167,17 @@
 						</manifest>
 					</archive>
 				</configuration>
+				<executions>
+					<execution>
+						<id>Arbitrary</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>without-dependencies</classifier>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
