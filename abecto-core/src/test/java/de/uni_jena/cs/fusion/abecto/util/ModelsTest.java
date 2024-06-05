@@ -18,25 +18,19 @@
 
 package de.uni_jena.cs.fusion.abecto.util;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.get;
-import static com.github.tomakehurst.wiremock.client.WireMock.okForContentType;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.ResourceFactory;
-import org.eclipse.jetty.util.log.Log;
-import org.eclipse.jetty.util.log.StdErrLog;
 import org.junit.jupiter.api.Test;
-
-import com.github.tomakehurst.wiremock.WireMockServer;
 
 public class ModelsTest {
 
@@ -46,33 +40,36 @@ public class ModelsTest {
 				new ByteArrayInputStream(("@prefix : <http://example.org/>.\n:s :p :o.").getBytes()));
 	}
 
-	@Test
-	public void readUrl() throws IllegalArgumentException, IOException, InterruptedException,
-			URISyntaxException {
-		StdErrLog logger = new StdErrLog();
-		logger.setLevel(StdErrLog.LEVEL_OFF);
-		Log.setLog(logger);
-		WireMockServer mock = new WireMockServer(options().dynamicPort());
-		mock.start();
-		int port = mock.port();
-		String content = "<http://example.org/a> <http://example.org/b> <http://example.org/c> .";
-		mock.stubFor(get("/text/turtle").willReturn(okForContentType("text/turtle", content)));
-		mock.stubFor(get("/text/plain").willReturn(okForContentType("text/plain", content)));
+    @Test
+    public void readUrl() throws IllegalArgumentException, IOException, InterruptedException,
+            URISyntaxException {
 
-		// server provides proper content type
-		assertTrue(Models.read(ModelFactory.createDefaultModel(), new URI("http://localhost:" + port + "/text/turtle"))
-				.contains(ResourceFactory.createResource("http://example.org/a"),
-						ResourceFactory.createProperty("http://example.org/b"),
-						ResourceFactory.createResource("http://example.org/c")));
+        String content = "<http://example.org/a> <http://example.org/a> <http://example.org/a> .";
+        Property resource = ResourceFactory.createProperty("http://example.org/a");
 
-		// server not provides proper content type
-		assertTrue(Models.read(ModelFactory.createDefaultModel(), new URI("http://localhost:" + port + "/text/plain"))
-				.contains(ResourceFactory.createResource("http://example.org/a"),
-						ResourceFactory.createProperty("http://example.org/b"),
-						ResourceFactory.createResource("http://example.org/c")));
+        MockWebServer mockWebServer = new MockWebServer();
+        URI mockWebServerUri = new URI(mockWebServer.url("/").toString());
 
-		mock.stop();
-	}
+        // server providing proper content type
+        mockWebServer.enqueue(new MockResponse()
+                .addHeader("Content-Type", "text/turtle")
+                .setBody(content)
+                .setResponseCode(200));
+        assertTrue(Models.read(ModelFactory.createDefaultModel(), mockWebServerUri)
+                .contains(resource,resource,resource));
+
+        // server not providing proper content type
+        mockWebServer.enqueue(new MockResponse()
+                .addHeader("Content-Type", "text/plain")
+                .setBody(content)
+                .setResponseCode(200));
+        mockWebServer.enqueue(new MockResponse()
+                .addHeader("Content-Type", "text/plain")
+                .setBody(content)
+                .setResponseCode(200));
+        assertTrue(Models.read(ModelFactory.createDefaultModel(), mockWebServerUri)
+                .contains(resource,resource,resource));
+    }
 
 	@Test
 	public void testGetEmptyOntModel() {

@@ -25,7 +25,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -34,10 +33,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
+import de.uni_jena.cs.fusion.abecto.visitor.VarPathsExtractionVisitor;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
-import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QuerySolution;
@@ -45,23 +43,14 @@ import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.sparql.core.TriplePath;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.path.P_Alt;
-import org.apache.jena.sparql.path.P_Inverse;
-import org.apache.jena.sparql.path.P_Seq;
 import org.apache.jena.sparql.path.Path;
 import org.apache.jena.sparql.path.PathWriter;
-import org.apache.jena.sparql.syntax.ElementPathBlock;
-import org.apache.jena.sparql.syntax.ElementTriplesBlock;
-import org.apache.jena.sparql.syntax.ElementVisitorBase;
-import org.apache.jena.sparql.syntax.RecursiveElementVisitor;
 import org.apache.jena.vocabulary.RDF;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Functions;
-import com.google.common.collect.Streams;
 
 import de.uni_jena.cs.fusion.abecto.converter.StringToQueryConverter;
 import de.uni_jena.cs.fusion.abecto.util.Models;
@@ -406,113 +395,4 @@ public class Aspect {
 		}
 	}
 
-	private static class VarPathsExtractionVisitor extends RecursiveElementVisitor {
-
-		public VarPathsExtractionVisitor() {
-			super(new ElementVisitorBase());
-		}
-
-		private Map<Node, Map<Node, Path>> paths = new HashMap<>();
-
-		private void consumeTriplePath(TriplePath triplePath) {
-			Node subject = triplePath.getSubject();
-			Path path = normalize(triplePath.getPath());
-			Node object = triplePath.getObject();
-			if ((subject.isVariable() || subject.isBlank()) && (object.isVariable() || object.isBlank())
-					&& path != null) {
-//				paths.computeIfAbsent(subject, k -> new HashMap<>()).compute(object,
-//						(k, v) -> (v == null) ? path : new P_Alt(path, v));
-				paths.computeIfAbsent(subject, k -> new HashMap<>()).merge(object, path, P_Alt::new);
-//				paths.computeIfAbsent(object, k -> new HashMap<>()).compute(subject,
-//						(k, v) -> (v == null) ? inverse(path) : new P_Alt(inverse(path), v));
-				paths.computeIfAbsent(object, k -> new HashMap<>()).merge(subject, inverse(path), P_Alt::new);
-			}
-		}
-
-		private void expandPaths() {
-			for (Node from : paths.keySet()) {
-				for (Node by : new ArrayList<>(paths.get(from).keySet())) { // avoid ConcurrentModificationException
-					for (Node to : paths.get(by).keySet()) {
-						boolean progress;
-						do {
-							progress = false;
-							if (!from.equals(to)) {
-								LinkedList<Path> direct = pathSeq2List(paths.get(from).get(by));
-								direct.addAll(pathSeq2List(paths.get(by).get(to)));
-								if (!paths.get(from).containsKey(to)
-										|| pathSeq2List(paths.get(from).get(to)).size() > direct.size()) {
-									paths.get(from).put(to, list2PathSeq(direct));
-									paths.computeIfAbsent(to, k -> new HashMap<>()).put(from,
-											inverse(list2PathSeq(direct)));
-									progress = true;
-								}
-							}
-						} while (progress);
-					}
-				}
-			}
-		}
-
-		private LinkedList<Path> pathSeq2List(Path path) {
-			if (path instanceof P_Seq) {
-				LinkedList<Path> list = pathSeq2List(((P_Seq) path).getLeft());
-				list.addAll(pathSeq2List(((P_Seq) path).getRight()));
-				return list;
-			} else {
-				LinkedList<Path> list = new LinkedList<>();
-				list.add(path);
-				return list;
-			}
-		}
-
-		private Path list2PathSeq(LinkedList<Path> list) {
-			Path path = list.getLast();
-			for (int i = list.size() - 2; i >= 0; i--) {
-				path = new P_Seq(list.get(i), path);
-			}
-			return path;
-		}
-
-		private Path normalize(Path path) {
-			return (path == null) ? null : list2PathSeq(pathSeq2List(path));
-		}
-
-		public Map<String, Path> getPaths(Var from) {
-			expandPaths();
-			Map<String, Path> pathsToTarget = new HashMap<>();
-			try {
-				paths.get(from.asNode()).forEach((node, path) -> {
-					if (node.isVariable() && !Var.isBlankNodeVar(node)) {
-						pathsToTarget.put(node.getName(), path);
-					}
-				});
-			} catch (NullPointerException e) {
-				throw new IllegalArgumentException(String.format("Variable \"%s\" not found.", from.getVarName()));
-			}
-			return pathsToTarget;
-		}
-
-		private Path inverse(Path path) {
-			if (path instanceof P_Inverse) {
-				return ((P_Inverse) path).getSubPath();
-			} else if (path instanceof P_Seq) {
-				return normalize(new P_Seq(inverse(((P_Seq) path).getRight()), inverse(((P_Seq) path).getLeft())));
-			} else if (path instanceof P_Alt) {
-				return new P_Alt(inverse(((P_Alt) path).getLeft()), inverse(((P_Alt) path).getRight()));
-			} else {
-				return new P_Inverse(path);
-			}
-		}
-
-		@Override
-		public void startElement(ElementPathBlock el) {
-			el.getPattern().forEach(this::consumeTriplePath);
-		}
-
-		@Override
-		public void startElement(ElementTriplesBlock el) {
-			el.getPattern().forEach(triple -> this.consumeTriplePath(new TriplePath(triple)));
-		}
-
-	}
 }
