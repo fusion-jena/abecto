@@ -67,13 +67,22 @@
 				<artifactId>license-maven-plugin</artifactId>
 				<version>3.0</version>
 				<configuration>
-					<header>com/mycila/maven/plugin/license/templates/APACHE-2.txt</header>
-					<properties>
-						<owner>${project.organization.name}</owner>
-						<email>${project.organization.url}</email>
-					</properties>
+					<header>license-header.txt</header>
+					<headerDefinitions>
+						<headerDefinition>license-header-style.xml</headerDefinition>
+					</headerDefinitions>
+					<mapping>
+						<java>JAVA_COMMENT_STYLE</java>
+						<nq>SCRIPT_STYLE</nq>
+						<nt>SCRIPT_STYLE</nt>
+						<rdf>XML_STYLE</rdf>
+						<rq>SCRIPT_STYLE</rq>
+						<trig>SCRIPT_STYLE</trig>
+						<ttl>SCRIPT_STYLE</ttl>
+					</mapping>
 					<excludes>
 						<exclude>LICENSE</exclude>
+						<exclude>CITATION.cff</exclude>
 						<exclude>pom.xml</exclude>
 						<exclude>.*/**</exclude>
 					</excludes>

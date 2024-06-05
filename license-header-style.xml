@@ -1,4 +1,5 @@
-<#--
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
 
     Copyright © 2019-2022 Heinz Nixdorf Chair for Distributed Information Systems,
                           Friedrich Schiller University Jena (http://www.fusion.uni-jena.de/)
@@ -17,8 +18,15 @@
     limitations under the License.
 
 -->
-<#ftl output_format="plainText">
-item_id,statement_guid,property_id,wikidata_value,meta_wikidata_value,external_value,external_url
-<#list data as row>
-"${row.item_id}","${row.statement_guid!}","${row.property_id}","${row.wikidata_value!}","${row.meta_wikidata_value!}","${row.external_value}","${row.external_url!}"
-</#list>
+<additionalHeaders>
+  <java_comment_style>
+    <firstLine>/*-</firstLine>
+    <beforeEachLine> * </beforeEachLine>
+    <endLine>-*/EOL</endLine>
+    <firstLineDetectionPattern>(\s|\t)*/\*.*$</firstLineDetectionPattern>
+    <lastLineDetectionPattern>.*\*/(\s|\t)*$</lastLineDetectionPattern>
+    <allowBlankLines>false</allowBlankLines>
+    <isMultiline>true</isMultiline>
+    <padLines>false</padLines>
+  </java_comment_style>
+</additionalHeaders>
