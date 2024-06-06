@@ -28,8 +28,8 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.TreeSet;
 
-import com.fasterxml.jackson.databind.util.Converter;
-
+import com.google.common.base.Converter;
+import de.uni_jena.cs.fusion.abecto.converter.NoConverter;
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
 import de.uni_jena.cs.fusion.abecto.util.ToManyElementsException;
 
@@ -46,7 +46,7 @@ public class Parameters {
 				List<Object> values = (List<Object>) parameters.get(field.getName());
 				// convert values
 				Class<? extends Converter> converterClass = field.getAnnotation(Parameter.class).converter();
-				if (!converterClass.equals(Converter.None.class)) {
+				if (!converterClass.equals(NoConverter.class)) {
 					Converter<Object, Object> converter = converterClass.getDeclaredConstructor().newInstance();
 					values.replaceAll(value -> (Object) converter.convert((Object) value));
 				}

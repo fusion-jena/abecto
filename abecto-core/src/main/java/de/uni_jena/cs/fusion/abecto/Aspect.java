@@ -36,10 +36,8 @@ import java.util.function.Function;
 
 import de.uni_jena.cs.fusion.abecto.visitor.VarPathsExtractionVisitor;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
-import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryExecutionFactory;
-import org.apache.jena.query.QuerySolution;
-import org.apache.jena.query.ResultSet;
+import org.apache.jena.datatypes.DatatypeFormatException;
+import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
@@ -52,7 +50,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Functions;
 
-import de.uni_jena.cs.fusion.abecto.converter.StringToQueryConverter;
 import de.uni_jena.cs.fusion.abecto.util.Models;
 import de.uni_jena.cs.fusion.abecto.util.ToManyElementsException;
 import de.uni_jena.cs.fusion.abecto.util.Values;
@@ -91,9 +88,9 @@ public class Aspect {
 		for (Resource aspectPatter : configurationModel.listResourcesWithProperty(AV.ofAspect, aspectIri).toList()) {
 			for (Resource dataset : configurationModel.listObjectsOfProperty(aspectPatter, AV.associatedDataset)
 					.mapWith(RDFNode::asResource).toList()) {
-				Query pattern = StringToQueryConverter
-						.apply(assertOne(configurationModel.listObjectsOfProperty(aspectPatter, AV.definingQuery))
-								.asLiteral().getString());
+				Query pattern = convertStringToQuery(assertOne(configurationModel
+							.listObjectsOfProperty(aspectPatter, AV.definingQuery))
+						.asLiteral().getString());
 				if (!pattern.isSelectType()) {
 					throw new IllegalArgumentException(
 							String.format("Pattern of aspect %s and dataset %s is not a SPARQL Select Query.",
@@ -104,6 +101,14 @@ public class Aspect {
 		}
 
 		return aspect;
+	}
+
+	private static Query convertStringToQuery(String s) {
+		try {
+			return QueryFactory.create(s, Syntax.syntaxSPARQL);
+		} catch (QueryException e) {
+			throw new DatatypeFormatException("Not a valid SPARQL query.", e);
+		}
 	}
 
 	/**
@@ -224,11 +229,6 @@ public class Aspect {
 	/**
 	 * Removes all result variables from a {@link Query} except of variables given
 	 * in {@code keyVariable} and {@code variables}.
-	 * 
-	 * @param query
-	 * @param keyVariable
-	 * @param variables
-	 * @return
 	 */
 	static Query retainVariables(Query query, Var keyVariable, Collection<String> variables) {
 		// TODO HOTFIX for https://issues.apache.org/jira/browse/JENA-2335
@@ -279,11 +279,6 @@ public class Aspect {
 	/**
 	 * Returns a new {@link Collection} instance containing the given resources that
 	 * are covered by the pattern for the given dataset in the given {@link Model}.
-	 * 
-	 * @param resources
-	 * @param dataset
-	 * @param model
-	 * @return
 	 */
 	public Collection<Resource> getResourcesInDataset(Collection<Resource> resources, Resource dataset, Model model) {
 		if (!this.patternByDataset.containsKey(dataset)) {

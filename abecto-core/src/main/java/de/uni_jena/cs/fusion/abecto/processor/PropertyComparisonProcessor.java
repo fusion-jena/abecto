@@ -20,25 +20,13 @@ package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import com.github.jsonldjava.shaded.com.google.common.base.Objects;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.xsd.XSDDateTime;
 import org.apache.jena.datatypes.xsd.impl.*;
 import org.apache.jena.rdf.model.Literal;
-import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 
@@ -466,7 +454,7 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
 					&& (type2 instanceof XSDBaseStringType || type2 instanceof RDFLangString)) {
 				String string1 = literal1.getString();
 				String string2 = literal2.getString();
-				return Objects.equal(string1, string2);
+				return Objects.equals(string1, string2);
 			}
 
 			// comparison of different number types

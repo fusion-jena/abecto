@@ -187,7 +187,7 @@ public class VarPathsExtractionVisitor implements ElementVisitor {
         expandPaths();
         Map<String, Path> pathsToTarget = new HashMap<>();
         try {
-            paths.get(from.asNode()).forEach((node, path) -> {
+            paths.get(from).forEach((node, path) -> {
                 if (node.isVariable() && !Var.isBlankNodeVar(node)) {
                     pathsToTarget.put(node.getName(), path);
                 }

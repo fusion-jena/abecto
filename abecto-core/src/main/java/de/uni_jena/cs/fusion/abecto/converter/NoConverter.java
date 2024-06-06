@@ -19,26 +19,17 @@
 package de.uni_jena.cs.fusion.abecto.converter;
 
 import com.google.common.base.Converter;
-import org.apache.jena.datatypes.DatatypeFormatException;
-import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryException;
-import org.apache.jena.query.QueryFactory;
-import org.apache.jena.query.Syntax;
 
-public class StringToQueryConverter extends Converter<String, Query> {
+public class NoConverter extends Converter<Object, Object> {
 
     @Override
-    protected Query doForward(String s) {
-        try {
-            return QueryFactory.create(s, Syntax.syntaxSPARQL);
-        } catch (QueryException e) {
-            throw new DatatypeFormatException("Not a valid SPARQL query.", e);
-        }
+    protected Object doForward(Object o) {
+        return o;
     }
 
     @Override
-    protected String doBackward(Query query) {
-        return query.toString(Syntax.syntaxSPARQL);
+    protected Object doBackward(Object o) {
+        return o;
     }
 
 }

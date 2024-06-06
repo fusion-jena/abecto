@@ -23,17 +23,16 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import com.fasterxml.jackson.databind.util.Converter;
-
+import com.google.common.base.Converter;
+import de.uni_jena.cs.fusion.abecto.converter.NoConverter;
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
 
 /**
  * Annotation of {@link Processor} fields. Annotated fields must be public.
- *
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface Parameter {
 	@SuppressWarnings("rawtypes")
-	public Class<? extends Converter> converter() default Converter.None.class;
+	public Class<? extends Converter> converter() default NoConverter.class;
 }

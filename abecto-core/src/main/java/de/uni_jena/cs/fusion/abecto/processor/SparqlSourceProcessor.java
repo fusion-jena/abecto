@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.apache.jena.graph.Node;
@@ -51,6 +52,7 @@ import org.apache.jena.sparql.syntax.ElementFilter;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.syntax.Template;
+import org.apache.jena.util.iterator.ExtendedIterator;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.slf4j.Logger;
@@ -158,32 +160,18 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 						.collect(Collectors.toList()));
 
 		// TODO hotfix for https://github.com/dbpedia/extraction-framework/issues/748 & https://issues.apache.org/jira/browse/JENA-2351
-		Selector withIriWithNewline = new Selector() {
-			@Override
-			public boolean isSimple() {return false;}
-
-			@Override
-			public Resource getSubject() {return null;}
-
-			@Override
-			public Property getPredicate() {return null;}
-
-			@Override
-			public RDFNode getObject() {return null;}
-
-			@Override
-			public boolean test(Statement statement) {
-				return statement.getSubject().isURIResource() && statement.getSubject().getURI().contains("\n") ||
-						statement.getPredicate().getURI().contains("\n") ||
-						statement.getObject().isURIResource() && statement.getObject().asResource().getURI().contains("\n");
-			}
-		};
-		StmtIterator statements = this.getOutputPrimaryModel().get().listStatements(withIriWithNewline);
+		ExtendedIterator statements = this.getOutputPrimaryModel().get().listStatements().filterKeep(this::statementWithIriContainingNewline);
 		while (statements.hasNext()) {
 			log.warn("Skipped statement due to Newline (U+000A) in IRI: " + statements.next());
 			statements.remove();
 		}
 
+	}
+
+	private boolean statementWithIriContainingNewline(Statement statement) {
+		return statement.getSubject().isURIResource() && statement.getSubject().getURI().contains("\n") ||
+				statement.getPredicate().getURI().contains("\n") ||
+				statement.getObject().isURIResource() && statement.getObject().asResource().getURI().contains("\n");
 	}
 
 	private static ElementGroup createElementGroup(Element... elements) {
@@ -234,13 +222,13 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 		ElementData values = new ElementData(valueVars, currentChunk);
 
 		BasicPattern pattern = BasicPattern
-				.wrap(Collections.singletonList(new Triple(resourceToLoadVar, predicateVar, objectVar)));
+				.wrap(Collections.singletonList(Triple.create(resourceToLoadVar, predicateVar, objectVar)));
 		Query query = createConstructQuery(new Template(pattern),
 				createElementGroup(new ElementTriplesBlock(pattern), values));
 
 		if (loadInverse) {
 			BasicPattern patternInverse = BasicPattern
-					.wrap(Collections.singletonList(new Triple(subjectVar, predicateVar, resourceToLoadVar)));
+					.wrap(Collections.singletonList(Triple.create(subjectVar, predicateVar, resourceToLoadVar)));
 			ElementFilter ignoreInverseFilter = (!ignoreInverse
 					.isEmpty())
 							? new ElementFilter(
