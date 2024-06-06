@@ -46,7 +46,6 @@ import org.opentest4j.AssertionFailedError;
 
 import de.uni_jena.cs.fusion.abecto.processor.Processor;
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
-import de.uni_jena.cs.fusion.abecto.vocabulary.DQV;
 import de.uni_jena.cs.fusion.abecto.vocabulary.PPlan;
 import de.uni_jena.cs.fusion.abecto.vocabulary.PROV;
 
@@ -291,7 +290,7 @@ public class StepTest {
 		public void run() {
 			try {
 				Thread.sleep(100); // ensure notable amount of time elapsed during the processor execution
-			} catch (InterruptedException e) {
+			} catch (InterruptedException ignored) {
 			}
 
 			if (this.getAssociatedDataset().isPresent()) {

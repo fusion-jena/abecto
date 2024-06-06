@@ -34,7 +34,7 @@ import java.util.Map;
 
 public class VarPathsExtractionVisitor implements ElementVisitor {
 
-    private Map<Node, Map<Node, Path>> paths = new HashMap<>();
+    private final Map<Node, Map<Node, Path>> paths = new HashMap<>();
 
     @Override
     public final void visit(ElementTriplesBlock el) {
@@ -126,11 +126,7 @@ public class VarPathsExtractionVisitor implements ElementVisitor {
         Node object = triplePath.getObject();
         if ((subject.isVariable() || subject.isBlank()) && (object.isVariable() || object.isBlank())
                 && path != null) {
-//				paths.computeIfAbsent(subject, k -> new HashMap<>()).compute(object,
-//						(k, v) -> (v == null) ? path : new P_Alt(path, v));
             paths.computeIfAbsent(subject, k -> new HashMap<>()).merge(object, path, P_Alt::new);
-//				paths.computeIfAbsent(object, k -> new HashMap<>()).compute(subject,
-//						(k, v) -> (v == null) ? inverse(path) : new P_Alt(inverse(path), v));
             paths.computeIfAbsent(object, k -> new HashMap<>()).merge(subject, inverse(path), P_Alt::new);
         }
     }
@@ -160,15 +156,15 @@ public class VarPathsExtractionVisitor implements ElementVisitor {
     }
 
     private LinkedList<Path> pathSeq2List(Path path) {
+        LinkedList<Path> list;
         if (path instanceof P_Seq) {
-            LinkedList<Path> list = pathSeq2List(((P_Seq) path).getLeft());
+            list = pathSeq2List(((P_Seq) path).getLeft());
             list.addAll(pathSeq2List(((P_Seq) path).getRight()));
-            return list;
         } else {
-            LinkedList<Path> list = new LinkedList<>();
+            list = new LinkedList<>();
             list.add(path);
-            return list;
         }
+        return list;
     }
 
     private Path list2PathSeq(LinkedList<Path> list) {

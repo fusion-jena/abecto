@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.apache.jena.graph.Node;
@@ -160,7 +159,7 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 						.collect(Collectors.toList()));
 
 		// TODO hotfix for https://github.com/dbpedia/extraction-framework/issues/748 & https://issues.apache.org/jira/browse/JENA-2351
-		ExtendedIterator statements = this.getOutputPrimaryModel().get().listStatements().filterKeep(this::statementWithIriContainingNewline);
+		ExtendedIterator<Statement> statements = this.getOutputPrimaryModel().get().listStatements().filterKeep(this::statementWithIriContainingNewline);
 		while (statements.hasNext()) {
 			log.warn("Skipped statement due to Newline (U+000A) in IRI: " + statements.next());
 			statements.remove();

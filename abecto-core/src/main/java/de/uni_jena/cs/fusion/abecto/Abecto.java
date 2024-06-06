@@ -55,7 +55,6 @@ import org.slf4j.LoggerFactory;
 
 import de.uni_jena.cs.fusion.abecto.util.Datasets;
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
-import de.uni_jena.cs.fusion.abecto.vocabulary.DQV;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
@@ -288,7 +287,7 @@ public class Abecto implements Callable<Integer> {
 		// get execution order
 		List<Resource> stepOrder = new ArrayList<>(predecessors.keySet());
 		// sort by number of (transitive) dependencies to ensure
-		Collections.sort(stepOrder, Comparator.comparingInt(x -> predecessors.get(x).size()));
+		stepOrder.sort(Comparator.comparingInt(x -> predecessors.get(x).size()));
 
 		// setup and run pipeline
 		Executor executor = Executors.newCachedThreadPool();
