@@ -18,7 +18,7 @@
 
 FROM maven:3.9.7-eclipse-temurin-17 AS builder
 COPY . /var/abecto/
-RUN mvn -B -f /var/abecto/pom.xml package
+RUN cd /var/abecto/ && mvn -B package
 
 FROM eclipse-temurin:17-jre
 RUN echo '#!/bin/sh\nexec java -jar /opt/abecto.jar "$@"' >> /bin/abecto && chmod +x /bin/abecto
