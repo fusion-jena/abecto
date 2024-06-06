@@ -16,10 +16,10 @@
 # limitations under the License.
 #
 
-FROM maven:3.8.4-openjdk-11 AS builder
+FROM maven:3.9.7-eclipse-temurin-17 AS builder
 COPY . /var/abecto/
 RUN mvn -B -f /var/abecto/pom.xml package
 
-FROM openjdk:11-jre-slim
+FROM eclipse-temurin:17-jre
 RUN echo '#!/bin/sh\nexec java -jar /opt/abecto.jar "$@"' >> /bin/abecto && chmod +x /bin/abecto
 COPY --from=builder /var/abecto/abecto-core/target/abecto.jar /opt/abecto.jar

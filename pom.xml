@@ -36,7 +36,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<javac.target>11</javac.target>
+		<javac.target>17</javac.target>
 		<apache.jena.version>5.0.0</apache.jena.version>
 		<junit.jupiter.version>5.5.1</junit.jupiter.version>
 	</properties>
