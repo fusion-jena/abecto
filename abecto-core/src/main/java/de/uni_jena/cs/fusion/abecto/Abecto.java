@@ -18,11 +18,7 @@
 
 package de.uni_jena.cs.fusion.abecto;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -99,8 +95,8 @@ public class Abecto implements Callable<Integer> {
 			"--export" }, paramLabel = "TEMPLATE_NAME=FILE", description = "Template and output file for an result export. Can be set multiple times.")
 	Map<String, File> exports;
 
-	@Option(names = "--reportOn", paramLabel = "IRI", description = "IRI of the dataset to report on. Reports will get limited to results about this dataset.")
-	String datasetToReportOnIri;
+	@Option(names = "--reportOn", paramLabel = "IRI", description = "IRI of the source to report on. Reports will be limited to results about this source.")
+	String sourceToReportOn;
 
 	@Option(names = "--failOnDeviation", description = "If set, a exit code > 0 will be returned, if the results contain a deviation. Useful together with \"--reportOn\".")
 	boolean failOnDeviation;
@@ -118,10 +114,11 @@ public class Abecto implements Callable<Integer> {
 	boolean failOnIssue;
 
 	@Parameters(index = "0", paramLabel = "FILE", description = "RDF dataset file containing the plan configuration and optionally plan execution results (see --loadOnly).")
-	File planDatasetFile;
+	File planFile;
 
-	private Dataset dataset = DatasetFactory.createGeneral();
-	private File relativeBasePath;
+	private Dataset datasetForExecution = DatasetFactory.createGeneral();
+	private Dataset datasetForReporting;
+	private File relativePathBase;
 	private Configuration freemarker;
 	private final static String TEMPLATE_FOLDER = "/de/uni_jena/cs/fusion/abecto/export";
 	private final static String VOCABULARY_FOLDER = "/de/uni_jena/cs/fusion/abecto/vocabulary";
@@ -129,115 +126,133 @@ public class Abecto implements Callable<Integer> {
 	@Override
 	public Integer call() {
 		try {
-			log.info("Loading plan dataset file started.");
-			loadDataset(planDatasetFile);
-			log.info("Loading plan dataset file completed.");
-
-			if (!loadOnly) {
-				log.info("Plan execution started.");
-				executePlan(planIri);
-				log.info("Plan execution completed.");
-			} else {
-				log.info("Plan execution skipped.");
-			}
-
-			reuseModelNamespaces(dataset);
-
-			// write results as TRIG
-			if (trigOutputFile != null && !loadOnly) {
-				log.info("Writing plan execution results as TRIG file started.");
-				RDFWriter.source(dataset).base(null) // no base prefix to ease result reading
-						.format(RDFFormat.TRIG_PRETTY).output(new FileOutputStream(trigOutputFile));
-				log.info("Writing plan execution results as TRIG file completed.");
-			}
-
-			// set models to report on
-			Dataset reportOn = this.dataset;
-			if (datasetToReportOnIri != null) {
-				reportOn = getModelsForDataset(datasetToReportOnIri, reportOn);
-			}
-
-			// load vocabulary
-			loadVocabulary(reportOn, "http://w3id.org/abecto/vocabulary", "abecto-vocabulary.ttl", "TTL");
-			loadVocabulary(reportOn, "http://www.ontology-of-units-of-measure.org/resource/om-2", "om-2.0.rdf", "RDF/XML");
-
-			// export results
-			if (exports != null) {
-				// prepare freemarker configuration
-				freemarker = new Configuration(Configuration.VERSION_2_3_31);
-				freemarker.setClassForTemplateLoading(this.getClass(), TEMPLATE_FOLDER);
-				freemarker.setDefaultEncoding("UTF-8");
-				freemarker.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
-				freemarker.setLogTemplateExceptions(false);
-				freemarker.setWrapUncheckedExceptions(true);
-				freemarker.setFallbackOnNullLoopVariable(false);
-				// apply export templates
-				for (Entry<String, File> export : exports.entrySet()) {
-					log.info(String.format("Export with template \"%s\" started.", export.getKey()));
-					export(export.getKey(), export.getValue(), reportOn);
-					log.info(String.format("Export with template \"%s\" completed.", export.getKey()));
-				}
-			}
-
-			if (this.failOnDeviation && datasetAffectedBy(reportOn, AV.Deviation)
-					|| this.failOnValueOmission && datasetAffectedBy(reportOn, AV.ValueOmission)
-					|| this.failOnResourceOmission && datasetAffectedBy(reportOn, AV.ResourceOmission)
-					|| this.failOnWrongValue && datasetAffectedBy(reportOn, AV.WrongValue)
-					|| this.failOnIssue && datasetAffectedBy(reportOn, AV.Issue)) {
-				return 1;
-			} else {
-				return 0;
-			}
+			determineRelativePathBase();
+			loadPlanFile();
+			executePlanIfConfigured();
+			reusePlanPrefixesForResults();
+			writeResultTrigFileIfConfigured();
+			prepareDatasetForReporting();
+			generateAndWriteReportsAsConfigured();
+			return determineExitCode();
 		} catch (CompletionException e) {
 			log.error("Plan execution failed.", e.getCause());
-			return 2;
+			return 1;
 		} catch (Throwable e) {
 			log.error(e.getMessage(), e);
-			return 2;
+			return 1;
 		}
 	}
 
-	private void loadVocabulary(Dataset dataset, String graphIri, String fileName, String lang) {
-		dataset.addNamedModel(graphIri, ModelFactory.createDefaultModel()
-				.read(this.getClass().getResourceAsStream(VOCABULARY_FOLDER + "/" + fileName), null, lang));
+	private void determineRelativePathBase() {
+		relativePathBase = planFile.getParentFile();
 	}
 
-	private boolean datasetAffectedBy(Dataset dataset, Resource affectedBy) {
-		return dataset.getUnionModel().contains(null, RDF.type, affectedBy);
+	private void loadPlanFile()
+			throws IllegalArgumentException, IOException {
+		log.info("Loading plan dataset file started.");
+		Datasets.read(datasetForExecution, new FileInputStream(planFile));
+		log.info("Loading plan dataset file completed.");
 	}
 
-	private static Dataset getModelsForDataset(String datasetToReportOnIri, Dataset allModels) {
-		Model configurationModel = allModels.getDefaultModel();
-		Resource datasetToReportOnResource = ResourceFactory.createResource(datasetToReportOnIri);
-		Dataset modelsForDataset = DatasetFactory.create(configurationModel);
-		allModels.listModelNames().forEachRemaining(modelResource -> {
-			if (configurationModel.contains(modelResource, RDF.type, AV.PrimaryDataGraph)
-					|| (configurationModel.contains(modelResource, RDF.type, AV.MetaDataGraph)
-							&& (!configurationModel.contains(modelResource, AV.associatedDataset) || configurationModel
-									.contains(modelResource, AV.associatedDataset, datasetToReportOnResource)))) {
-				modelsForDataset.addNamedModel(modelResource, allModels.getNamedModel(modelResource));
-			}
-		});
-		return modelsForDataset;
-	}
-
-	public void reuseModelNamespaces(Dataset dataset) {
-		PrefixMapping datasetPrefixMapping = dataset.getPrefixMapping();
-		datasetPrefixMapping.setNsPrefixes(dataset.getDefaultModel().getNsPrefixMap());
-		dataset.listModelNames().forEachRemaining(
-				modelName -> datasetPrefixMapping.setNsPrefixes(dataset.getNamedModel(modelName).getNsPrefixMap()));
+	public void reusePlanPrefixesForResults() {
+		PrefixMapping datasetPrefixMapping = datasetForExecution.getPrefixMapping();
+		datasetPrefixMapping.setNsPrefixes(datasetForExecution.getDefaultModel().getNsPrefixMap());
+		datasetForExecution.listModelNames().forEachRemaining(
+				modelName -> datasetPrefixMapping.setNsPrefixes(datasetForExecution.getNamedModel(modelName).getNsPrefixMap()));
 		// no empty prefix to ease result reading
 		datasetPrefixMapping.removeNsPrefix("");
 	}
 
-	public void loadDataset(File configurationFile)
-			throws IllegalArgumentException, IOException {
+	private void writeResultTrigFileIfConfigured() throws FileNotFoundException {
+		if (trigOutputFile != null && !loadOnly) {
+			log.info("Writing plan execution results as TRIG file started.");
+			RDFWriter.source(datasetForExecution).base(null) // no base prefix to ease result reading
+					.format(RDFFormat.TRIG_PRETTY).output(new FileOutputStream(trigOutputFile));
+			log.info("Writing plan execution results as TRIG file completed.");
+		}
+	}
 
-		// derive relative base path
-		this.relativeBasePath = configurationFile.getParentFile();
+	private void executePlanIfConfigured() throws ReflectiveOperationException {
+		if (!loadOnly) {
+			log.info("Plan execution started.");
+			executePlan(planIri);
+			log.info("Plan execution completed.");
+		} else {
+			log.info("Plan execution skipped.");
+		}
+	}
 
-		// read configuration
-		Datasets.read(this.dataset, new FileInputStream(configurationFile));
+	private void prepareDatasetForReporting() {
+		if (sourceToReportOn == null) {
+			datasetForReporting = datasetForExecution;
+		} else {
+			datasetForReporting = getDatasetAboutSourceToReportOn();
+		}
+		loadOntologyForReporting("http://w3id.org/abecto/vocabulary", "abecto-vocabulary.ttl", "TTL");
+		loadOntologyForReporting("http://www.ontology-of-units-of-measure.org/resource/om-2", "om-2.0.rdf", "RDF/XML");
+	}
+
+	private void generateAndWriteReportsAsConfigured() throws TemplateException, IOException {
+		if (exports != null) {
+			// prepare freemarker configuration
+			freemarker = new Configuration(Configuration.VERSION_2_3_31);
+			freemarker.setClassForTemplateLoading(this.getClass(), TEMPLATE_FOLDER);
+			freemarker.setDefaultEncoding("UTF-8");
+			freemarker.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
+			freemarker.setLogTemplateExceptions(false);
+			freemarker.setWrapUncheckedExceptions(true);
+			freemarker.setFallbackOnNullLoopVariable(false);
+			// apply export templates
+			for (Entry<String, File> export : exports.entrySet()) {
+				log.info(String.format("Export with template \"%s\" started.", export.getKey()));
+				export(export.getKey(), export.getValue(), datasetForReporting);
+				log.info(String.format("Export with template \"%s\" completed.", export.getKey()));
+			}
+		}
+	}
+
+	private int determineExitCode() {
+		int exitCode = 0;
+		if (failOnDeviation && resultsForReportingContainIssue(AV.Deviation)) {
+			exitCode += 2;
+		}
+		if (failOnValueOmission && resultsForReportingContainIssue(AV.ValueOmission)) {
+			exitCode += 4;
+		}
+		if (failOnResourceOmission && resultsForReportingContainIssue(AV.ResourceOmission)) {
+			exitCode += 8;
+		}
+		if (failOnWrongValue && resultsForReportingContainIssue(AV.WrongValue)) {
+			exitCode += 16;
+		}
+		if (failOnIssue && resultsForReportingContainIssue(AV.Issue)) {
+			exitCode += 32;
+		}
+		return exitCode;
+	}
+
+	private void loadOntologyForReporting(String graphIri, String fileName, String lang) {
+		datasetForReporting.addNamedModel(graphIri, ModelFactory.createDefaultModel()
+				.read(this.getClass().getResourceAsStream(VOCABULARY_FOLDER + "/" + fileName), null, lang));
+	}
+
+	private boolean resultsForReportingContainIssue(Resource affectedBy) {
+		return datasetForReporting.getUnionModel().contains(null, RDF.type, affectedBy);
+	}
+
+	private Dataset getDatasetAboutSourceToReportOn() {
+		Model configurationModel = datasetForExecution.getDefaultModel();
+		Resource datasetToReportOnResource = ResourceFactory.createResource(sourceToReportOn);
+		Dataset modelsForDataset = DatasetFactory.create(configurationModel);
+		datasetForExecution.listModelNames().forEachRemaining(modelResource -> {
+			if (configurationModel.contains(modelResource, RDF.type, AV.PrimaryDataGraph)
+					|| (configurationModel.contains(modelResource, RDF.type, AV.MetaDataGraph)
+							&& (!configurationModel.contains(modelResource, AV.associatedDataset) || configurationModel
+									.contains(modelResource, AV.associatedDataset, datasetToReportOnResource)))) {
+				modelsForDataset.addNamedModel(modelResource, datasetForExecution.getNamedModel(modelResource));
+			}
+		});
+		return modelsForDataset;
 	}
 
 	public void export(String exportType, File outputFile, Dataset reportOn) throws IOException, TemplateException {
@@ -268,7 +283,7 @@ public class Abecto implements Callable<Integer> {
 	public void executePlan(String planIri)
 			throws IllegalArgumentException, ClassCastException, ReflectiveOperationException {
 		// get configuration model
-		Model configurationModel = dataset.getDefaultModel();
+		Model configurationModel = datasetForExecution.getDefaultModel();
 
 		// get plan to process
 		Resource plan = Plans.getPlan(configurationModel, planIri);
@@ -297,7 +312,7 @@ public class Abecto implements Callable<Integer> {
 			// setup step
 			Collection<Step> inputSteps = predecessors.get(stepIri).stream().map(steps::get)
 					.collect(Collectors.toList());
-			Step step = new Step(relativeBasePath, dataset, configurationModel, stepIri, inputSteps, aspects);
+			Step step = new Step(relativePathBase, datasetForExecution, configurationModel, stepIri, inputSteps, aspects);
 			steps.put(stepIri, step);
 			// schedule step
 			CompletableFuture<?>[] inputFutures = predecessors.get(stepIri).stream().map(stepFutures::get)

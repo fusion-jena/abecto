@@ -18,19 +18,24 @@
 
 package de.uni_jena.cs.fusion.abecto;
 
-import java.io.File;
-
 import org.junit.jupiter.api.Test;
+
+import java.io.File;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class AbectoTest {
 
+	String tutorialPlanFilePath = "../../../../../tutorial-configuration.trig";
+
 	@Test
-	public void executePlan() throws Throwable {
-		File configurationFile = new File(
-				this.getClass().getResource("../../../../../tutorial-configuration.trig").toURI());
+	public void call() throws Throwable {
 		Abecto abecto = new Abecto();
-		abecto.loadDataset(configurationFile);
-		abecto.executePlan(null);
+		abecto.planFile = new File(this.getClass().getResource(tutorialPlanFilePath).toURI());
+		abecto.exports = Map.of("deviations", File.createTempFile("deviations",".csv"));
+		int exitCode = abecto.call();
+		assertEquals(0, exitCode);
 		// TODO check output
 	}
 
