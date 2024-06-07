@@ -75,7 +75,6 @@
 						<java>JAVA_COMMENT_STYLE</java>
 						<nq>SCRIPT_STYLE</nq>
 						<nt>SCRIPT_STYLE</nt>
-						<rdf>XML_STYLE</rdf>
 						<rq>SCRIPT_STYLE</rq>
 						<trig>SCRIPT_STYLE</trig>
 						<ttl>SCRIPT_STYLE</ttl>
@@ -85,6 +84,8 @@
 						<exclude>CITATION.cff</exclude>
 						<exclude>pom.xml</exclude>
 						<exclude>.*/**</exclude>
+						<exclude>**/*.ftl</exclude>
+						<exclude>**/*.rdf</exclude>
 					</excludes>
 				</configuration>
 				<executions>
