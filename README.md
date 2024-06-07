@@ -49,15 +49,13 @@ This sections provides an overview about the use of ABECTO.
 
 ## Preparation
 
-To use ABECTO, first download the [stand alone abecto.jar of the latest release](https://github.com/fusion-jena/abecto/releases/latest/download/abecto.jar).
-
-Alternatively, checkout the project and compile ABECTO using Maven:
+First make sure to have at least a Java 17 JRE installed at the system.
+Then download the [stand alone abecto.jar of the latest release](https://github.com/fusion-jena/abecto/releases/latest/download/abecto.jar).
+Alternatively, clone the project with Git and build ABECTO using [Maven](https://maven.apache.org/) to create a stand alone .jar file at [abecto-core/target/abecto.jar](abecto-core/target):
 
 ```shell
 mvn '-Dmaven.test.skip=true' package
 ```
-
-This will create a stand alone .jar file at [abecto-core/target/abecto.jar](abecto-core/target).
 
 ## Configuration
 
@@ -71,7 +69,7 @@ The execution of ABECTO is configured in a plan file, which is an RDF dataset fi
    @base                     <http://example.org/> .
    @prefix abecto:           <java:de.uni_jena.cs.fusion.abecto.processor.> .
    @prefix av:               <http://w3id.org/abecto/vocabulary#> .
-   @prefix pplan:            <http://purl.org/net/p-plan#> .
+   @prefix p-plan:            <http://purl.org/net/p-plan#> .
    @prefix rdf:              <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
    @prefix rdfs:             <http://www.w3.org/2000/01/rdf-schema#> .
    @prefix xsd:              <http://www.w3.org/2001/XMLSchema#> .
@@ -160,7 +158,6 @@ The execution of ABECTO is configured in a plan file, which is an RDF dataset fi
    GRAPH <manualMappings>
    {
        <http://example.org/b/william> av:correspondsNotToResource <http://example.org/c/P004> .
-       <aspectPerson> av:relevantResource <http://example.org/b/william>, <http://example.org/c/P004> .
    }
 
    <jaroWinklerMapping> a av:Step ;
@@ -175,7 +172,7 @@ The execution of ABECTO is configured in a plan file, which is an RDF dataset fi
            [av:key "aspect" ; av:value <aspectPerson> ] ,
            [av:key "variables" ; av:value "label" ] ;
        .
-    .
+
    <propertyComparison> a av:Step ;
        rdfs:label "Comparison of Persons Boss, Name and PNR"@en;
        p-plan:isStepOfPlan <plan> ;
