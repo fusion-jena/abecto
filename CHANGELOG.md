@@ -5,9 +5,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [2.2.2]
+
+### Fixed
+* fix reports
+
 ## [2.2.1]
 
 ### Changed
+* increase minimum Java version to Java 17
 * upgrade Apache Jena to v5.0.0
 * upgrade Guava to v33.2.1-jre
 
@@ -319,7 +325,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * add `ManualCategoryProcessor`: Enables users to manually define resource categories and their properties.
 * add `ResourceDeviationProcessor`: Detects deviations between the resource references of mapped resources as defined in the categories.
 
-[Unreleased]: https://github.com/fusion-jena/abecto/compare/v2.2.1...HEAD
+[Unreleased]: https://github.com/fusion-jena/abecto/compare/v2.2.2...HEAD
+[2.2.2]: https://github.com/fusion-jena/abecto/compare/v2.2.1...v2.2.2
 [2.2.1]: https://github.com/fusion-jena/abecto/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/fusion-jena/abecto/compare/v2.1.4...v2.2.0
 [2.1.4]: https://github.com/fusion-jena/abecto/compare/v2.1.3...v2.1.4
