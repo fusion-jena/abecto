@@ -276,6 +276,16 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 				k -> ModelFactory.createDefaultModel().withDefaultMappings(Vocabularies.getDefaultPrefixMapping()));
 	}
 
+    /**
+     * Returns the output metamodel for mapping. If not present, a new model will be
+     * created.
+     *
+     * @return the output metamodel for mapping
+     */
+    public final Model getOutputMappingModel() {
+        return this.getOutputMetaModel(null);
+    }
+
 	/**
 	 * Returns the primary data output model of this {@link Processor}. The model
 	 * can be replaced during processing using

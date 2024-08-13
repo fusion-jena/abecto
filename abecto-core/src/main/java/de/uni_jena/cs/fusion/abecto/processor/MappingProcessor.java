@@ -139,7 +139,7 @@ public abstract class MappingProcessor<P extends Processor<P>> extends Processor
 	public abstract void mapDatasets(Resource dataset1, Resource dataset2);
 
 	public void persistTransitiveCorrespondences() {
-		this.getOutputMetaModel(null).add(((InfModel) this.getCorrespondencesModel()).getDeductionsModel());
+		this.getOutputMappingModel().add(((InfModel) this.getCorrespondencesModel()).getDeductionsModel());
 	}
 
 	@Override

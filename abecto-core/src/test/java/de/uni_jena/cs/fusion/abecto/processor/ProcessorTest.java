@@ -59,7 +59,7 @@ public class ProcessorTest {
 		processor = new DummyProcessor();
 		inputModel = ModelFactory.createDefaultModel();
 		processor.addInputMetaModel(null, inputModel);
-		outputModel = processor.getOutputMetaModel(null);
+		outputModel = processor.getOutputMappingModel();
 	}
 
 	@Test

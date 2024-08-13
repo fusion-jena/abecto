@@ -97,7 +97,7 @@ public class UsePresentMappingProcessorTest {
 		assertTrue(processor.allCorrespondend(c1, c2));
 		assertFalse(processor.allCorrespondend(d1, d2));
 
-		Model outputMetaModel = processor.getOutputMetaModel(null);
+		Model outputMetaModel = processor.getOutputMappingModel();
 		// assert issue present
 		Query query = QueryFactory.create(""//
 				+ "ASK WHERE {"//

@@ -267,6 +267,6 @@ public class MappingProcessorTest {
 		processor = new DummyMappingProcessor();
 		inputModel = ModelFactory.createDefaultModel();
 		processor.addInputMetaModel(null, inputModel);
-		outputModel = processor.getOutputMetaModel(null);
+		outputModel = processor.getOutputMappingModel();
 	}
 }

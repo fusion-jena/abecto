@@ -310,7 +310,7 @@ public class StepTest {
 
 			{
 				Model inMeta = this.getInputMetaModelUnion(null);
-				Model out = this.getOutputMetaModel(null);
+				Model out = this.getOutputMappingModel();
 				out.addLiteral(ALL_DATASETS, META_IN_EMPTY, inMeta.listStatements().hasNext() ? 0 : 1);
 				out.addLiteral(ALL_DATASETS, STEP_NUMBER, this.integerParameter);
 			}

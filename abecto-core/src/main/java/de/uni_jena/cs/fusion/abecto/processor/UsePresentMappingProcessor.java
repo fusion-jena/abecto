@@ -43,7 +43,7 @@ public class UsePresentMappingProcessor extends MappingProcessor<UsePresentMappi
 
 	@Override
 	public void run() {
-		Model outputMetaModel = this.getOutputMetaModel(null);
+		Model outputMetaModel = this.getOutputMappingModel();
 		Aspect aspectObject = Objects.requireNonNull(getAspects().get(this.aspect), "Unknown aspect.");
 
 		// execute query for each dataset

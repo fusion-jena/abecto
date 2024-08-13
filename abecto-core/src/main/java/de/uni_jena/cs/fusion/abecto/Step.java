@@ -216,7 +216,7 @@ public class Step implements Runnable {
 				}
 			}
 			// set metadata for general metamodel
-			Model outputModel = processor.getOutputMetaModel(null);
+			Model outputModel = processor.getOutputMappingModel();
 			if (!outputModel.isEmpty()) {
 				Resource outputModelIri = configurationModel.createResource(AV.MetaDataGraph);
 				outputModelIri.addProperty(PROV.wasGeneratedBy, stepExecutionIri);
