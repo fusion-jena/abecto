@@ -33,10 +33,14 @@ public class PerDatasetRatio extends Ratio<Resource> {
     }
 
     public void storeInModelAsComparedToAllOtherResources(Aspect aspect, Map<Resource, Model> outputModelsMap) {
+        storeInModelWithVariableAsComparedToAllOtherResources(aspect, null, outputModelsMap);
+    }
+
+    public void storeInModelWithVariableAsComparedToAllOtherResources(Aspect aspect, String variable, Map<Resource, Model> outputModelsMap) {
         for (Resource dataset : values.keySet()) {
             Collection<Resource> otherDatasets = new HashSet<>(values.keySet());
             otherDatasets.remove(dataset);
-            Metadata.addQualityMeasurement(quantity, get(dataset), unit, dataset,
+            Metadata.addQualityMeasurement(quantity, get(dataset), unit, dataset, variable,
                     otherDatasets, aspect.getIri(), outputModelsMap.get(dataset));
         }
     }

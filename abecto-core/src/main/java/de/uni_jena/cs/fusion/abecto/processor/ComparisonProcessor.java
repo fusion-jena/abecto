@@ -20,6 +20,12 @@ package de.uni_jena.cs.fusion.abecto.processor;
 
 import com.google.common.collect.Streams;
 import de.uni_jena.cs.fusion.abecto.Aspect;
+import de.uni_jena.cs.fusion.abecto.ResourcePair;
+import de.uni_jena.cs.fusion.abecto.measure.PerDatasetCount;
+import de.uni_jena.cs.fusion.abecto.measure.PerDatasetPairCount;
+import de.uni_jena.cs.fusion.abecto.measure.PerDatasetRatio;
+import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
+import de.uni_jena.cs.fusion.abecto.vocabulary.OM;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
@@ -30,21 +36,26 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.core.Var;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 import java.util.stream.Stream;
 
 public abstract class ComparisonProcessor<P extends Processor<P>> extends Processor<P> {
+    /**
+     * Digits to preserve when rounding after division in measurement calculations.
+     */
+    public final static int SCALE = 16;
 
     /**
      * Returns a {@link Set} of all resource keys of a given aspect in a given
      * dataset.
      *
-     * @param aspect        the {@link Aspect} the returned {@link Resource
-     *                      Resources} belong to
-     * @param dataset       the IRI of the source dataset of the {@link Resource
-     *                      Resources}
+     * @param aspect  the {@link Aspect} the returned {@link Resource
+     *                Resources} belong to
+     * @param dataset the IRI of the source dataset of the {@link Resource
+     *                Resources}
      * @return all resource keys of the given aspect in the given dataset
-     *
      * @throws NullPointerException if no pattern is defined for the given dataset
      */
     public Stream<Resource> getResourceKeys(Aspect aspect, Resource dataset)
@@ -141,7 +152,7 @@ public abstract class ComparisonProcessor<P extends Processor<P>> extends Proces
      * given resource, {@code null} is returned.
      */
     private Map<String, Set<RDFNode>> selectResourceValues(Resource resource, Query pattern, Var keyVariable,
-                                                          Collection<String> variables, Model model) {
+                                                           Collection<String> variables, Model model) {
         Query query = SelectBuilder.rewrite(pattern.cloneQuery(),
                 Collections.singletonMap(keyVariable, resource.asNode()));
         ResultSet results = QueryExecutionFactory.create(query, model).execSelect();
@@ -165,5 +176,43 @@ public abstract class ComparisonProcessor<P extends Processor<P>> extends Proces
         }
 
         return values;
+    }
+
+    Map<Resource, Model> getOutputMetaModels(Iterable<Resource> datasets) {
+        Map<Resource, Model> outputMetaModelByDataset = new HashMap<>();
+        for (Resource dataset : datasets) {
+            outputMetaModelByDataset.put(dataset, getOutputMetaModel(dataset));
+        }
+        return outputMetaModelByDataset;
+    }
+
+    PerDatasetRatio calculateCompleteness(Iterable<ResourcePair> datasetPairs, PerDatasetPairCount absoluteCoverage, PerDatasetCount deduplicatedCount) {
+        PerDatasetRatio completeness = new PerDatasetRatio(AV.marCompletenessThomas08, OM.one);
+        long totalPairwiseOverlap = calculateTotalPairwiseOverlap(datasetPairs, absoluteCoverage);
+        if (totalPairwiseOverlap != 0) {
+            BigDecimal estimatedPopulationSize = calculateEstimatedPopulationSize(datasetPairs, deduplicatedCount, totalPairwiseOverlap);
+            completeness.setRatioOf(deduplicatedCount, estimatedPopulationSize);
+        }
+        return completeness;
+    }
+
+    long calculateTotalPairwiseOverlap(Iterable<ResourcePair> datasetPairs, PerDatasetPairCount absoluteCoverage) {
+        long totalPairwiseOverlap = 0L;
+        for (ResourcePair datasetPair : datasetPairs) {
+            totalPairwiseOverlap += absoluteCoverage.get(datasetPair);
+        }
+        return totalPairwiseOverlap;
+    }
+
+    BigDecimal calculateEstimatedPopulationSize(Iterable<ResourcePair> datasetPairs, PerDatasetCount deduplicatedCount, long totalPairwiseOverlap) {
+        BigDecimal estimatedPopulationSize = BigDecimal.ZERO;
+        for (ResourcePair datasetPair : datasetPairs) {
+            BigDecimal deduplicatedCount1 = BigDecimal.valueOf(deduplicatedCount.get(datasetPair.first));
+            BigDecimal deduplicatedCount2 = BigDecimal.valueOf(deduplicatedCount.get(datasetPair.second));
+            estimatedPopulationSize = estimatedPopulationSize.add(deduplicatedCount1.multiply(deduplicatedCount2));
+        }
+        estimatedPopulationSize = estimatedPopulationSize.divide(BigDecimal.valueOf(totalPairwiseOverlap), SCALE,
+                RoundingMode.HALF_UP);
+        return estimatedPopulationSize;
     }
 }

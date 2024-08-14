@@ -20,10 +20,12 @@ package de.uni_jena.cs.fusion.abecto.measure;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
 import de.uni_jena.cs.fusion.abecto.Metadata;
+import de.uni_jena.cs.fusion.abecto.ResourcePair;
 import de.uni_jena.cs.fusion.abecto.ResourceTupel;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 
+import java.math.BigDecimal;
 import java.util.Map;
 
 public class PerDatasetTupelRatio extends Ratio<ResourceTupel> {
@@ -32,10 +34,33 @@ public class PerDatasetTupelRatio extends Ratio<ResourceTupel> {
         super(quantity, unit);
     }
 
+    public void setRatioOf(PerDatasetPairCount numerators, PerDatasetCount denominators) {
+        for (ResourcePair pair : numerators.keySet()) {
+            BigDecimal numerator = BigDecimal.valueOf(numerators.get(pair));
+            if (denominators.contains(pair.first)) {
+                BigDecimal denominator = BigDecimal.valueOf(denominators.get(pair.first));
+                BigDecimal value = numerator.divide(denominator, SCALE, ROUNDING_MODE);
+                set(ResourceTupel.getTupel(pair.first, pair.second), value);
+            }
+            if (denominators.contains(pair.second)) {
+                BigDecimal denominator = BigDecimal.valueOf(denominators.get(pair.second));
+                BigDecimal value = numerator.divide(denominator, SCALE, ROUNDING_MODE);
+                set(ResourceTupel.getTupel(pair.second, pair.first), value);
+            }
+        }
+    }
+
     public void storeInModel(Aspect aspect, Map<Resource, Model> outputModelsMap) {
         for (ResourceTupel tupel : keySet()) {
             Metadata.addQualityMeasurement(quantity, get(tupel), unit,
                     tupel.first, tupel.second, aspect.getIri(), outputModelsMap.get(tupel.first));
+        }
+    }
+
+    public void storeInModelWithVariable(Aspect aspect, String variable, Map<Resource, Model> outputModelsMap) {
+        for (ResourceTupel tupel : keySet()) {
+            Metadata.addQualityMeasurement(quantity, get(tupel), unit,
+                    tupel.first, variable, tupel.second, aspect.getIri(), outputModelsMap.get(tupel.first));
         }
     }
 }

@@ -21,6 +21,8 @@ package de.uni_jena.cs.fusion.abecto.measure;
 import de.uni_jena.cs.fusion.abecto.Aspect;
 import de.uni_jena.cs.fusion.abecto.Metadata;
 import de.uni_jena.cs.fusion.abecto.ResourcePair;
+import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
+import de.uni_jena.cs.fusion.abecto.vocabulary.OM;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 
@@ -33,11 +35,13 @@ public class PerDatasetPairCount extends Count<ResourcePair> {
     }
 
     public void storeInModel(Aspect aspect, Map<Resource, Model> outputModelsMap) {
+        storeInModelWithVariable(aspect, null, outputModelsMap);
+    }
+
+    public void storeInModelWithVariable(Aspect aspect, String variable, Map<Resource, Model> outputModelsMap) {
         for (ResourcePair pair : keySet()) {
-            Metadata.addQualityMeasurement(quantity, get(pair), unit,
-                    pair.first, pair.second, aspect.getIri(), outputModelsMap.get(pair.first));
-            Metadata.addQualityMeasurement(quantity, get(pair), unit,
-                    pair.second, pair.first, aspect.getIri(), outputModelsMap.get(pair.second));
+            Metadata.addQualityMeasurement(quantity, get(pair), unit, pair.first, variable, pair.second, aspect.getIri(), outputModelsMap.get(pair.first));
+            Metadata.addQualityMeasurement(quantity, get(pair), unit, pair.second, variable, pair.first, aspect.getIri(), outputModelsMap.get(pair.second));
         }
     }
 }

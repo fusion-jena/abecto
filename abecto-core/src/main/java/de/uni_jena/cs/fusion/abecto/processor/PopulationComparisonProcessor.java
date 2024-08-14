@@ -70,7 +70,7 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
      */
     PerDatasetCount deduplicatedCount = new PerDatasetCount(AV.deduplicatedCount, OM.one);
     PerDatasetTupelRatio relativeCoverage = new PerDatasetTupelRatio(AV.relativeCoverage, OM.one);
-    PerDatasetRatio completeness = new PerDatasetRatio(AV.marCompletenessThomas08, OM.one);
+    PerDatasetRatio completeness;
 
     Map<Resource, Set<Resource>> uncoveredResourcesByDataset = new HashMap<>();
 
@@ -90,7 +90,7 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
         measureResourceCounts();
         countAndReportCoverageAndDuplicatesAndOmissions(getCorrespondenceGroups());
         calculateDeduplicatedCount();
-        calculateCompleteness();
+        completeness = calculateCompleteness(datasetPairs, absoluteCoverage, deduplicatedCount);
         calculateRelativeCoverages();
 
         count.storeInModel(aspect, outputMetaModelByDataset);
@@ -113,14 +113,6 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
         outputMetaModelByDataset = getOutputMetaModels(datasets);
     }
 
-    private Map<Resource, Model> getOutputMetaModels(Iterable<Resource> datasets) {
-        Map<Resource, Model> outputMetaModelByDataset = new HashMap<>();
-        for (Resource dataset : datasets) {
-            outputMetaModelByDataset.put(dataset, getOutputMetaModel(dataset));
-        }
-        return outputMetaModelByDataset;
-    }
-
     private void resetUncoveredResources() {
         uncoveredResourcesByDataset.clear();
         for (Resource dataset : datasets) {
@@ -134,7 +126,6 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
         duplicateCount.reset(datasets, 0L);
         absoluteCoverage.reset(datasetPairs, 0L);
         relativeCoverage.reset(datasetTupels, BigDecimal.ZERO);
-        completeness.clear();
     }
 
     private void countAndReportCoverageAndDuplicatesAndOmissions(Stream<List<Resource>> correspondenceGroups) {
@@ -223,34 +214,6 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
         deduplicatedCount.setDifferenceOf(count, duplicateCount);
     }
 
-    private void calculateCompleteness() {
-        long totalPairwiseOverlap = calculateTotalPairwiseOverlap();
-        if (totalPairwiseOverlap != 0) {
-            BigDecimal estimatedPopulationSize = calculateEstimatedPopulationSize(totalPairwiseOverlap);
-            completeness.setRatioOf(deduplicatedCount, estimatedPopulationSize);
-        }
-    }
-
-    private BigDecimal calculateEstimatedPopulationSize(long totalPairwiseOverlap) {
-        BigDecimal estimatedPopulationSize = BigDecimal.ZERO;
-        for (ResourcePair datasetPair : datasetPairs) {
-            BigDecimal firstDeduplicateCount = BigDecimal.valueOf(deduplicatedCount.get(datasetPair.first));
-            BigDecimal secondDeduplicateCount = BigDecimal.valueOf(deduplicatedCount.get(datasetPair.second));
-            estimatedPopulationSize = estimatedPopulationSize.add(firstDeduplicateCount.multiply(secondDeduplicateCount));
-        }
-        estimatedPopulationSize = estimatedPopulationSize.divide(BigDecimal.valueOf(totalPairwiseOverlap), 0,
-                RoundingMode.HALF_UP);
-        return estimatedPopulationSize;
-    }
-
-    private long calculateTotalPairwiseOverlap() {
-        long totalPairwiseOverlap = 0L;
-        for (ResourcePair datasetPair : datasetPairs) {
-            totalPairwiseOverlap += absoluteCoverage.get(datasetPair);
-        }
-        return totalPairwiseOverlap;
-    }
-
     private void reportOmissionsOfUncoveredResources() {
         for (ResourcePair datasetPair : datasetPairs) {
             reportResourceOmissionsOfUncoveredResourcesFor(datasetPair.first, datasetPair.second);
@@ -266,21 +229,7 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
     }
 
     private void calculateRelativeCoverages() {
-        Count<ResourcePair> numerators = absoluteCoverage;
-        Count<Resource> denominators = deduplicatedCount;
-        for (ResourcePair pair : numerators.keySet()) {
-            BigDecimal numerator = BigDecimal.valueOf(numerators.get(pair));
-            if (denominators.contains(pair.first)) {
-                BigDecimal denominator = BigDecimal.valueOf(denominators.get(pair.first));
-                BigDecimal value = numerator.divide(denominator, PerDatasetTupelRatio.SCALE, PerDatasetTupelRatio.ROUNDING_MODE);
-                relativeCoverage.set(ResourceTupel.getTupel(pair.first, pair.second), value);
-            }
-            if (denominators.contains(pair.second)) {
-                BigDecimal denominator = BigDecimal.valueOf(denominators.get(pair.second));
-                BigDecimal value = numerator.divide(denominator, PerDatasetTupelRatio.SCALE, PerDatasetTupelRatio.ROUNDING_MODE);
-                relativeCoverage.set(ResourceTupel.getTupel(pair.second, pair.first), value);
-            }
-        }
+        relativeCoverage.setRatioOf(absoluteCoverage,deduplicatedCount);
     }
 
     private void setResourcesOfDatasetAndAspectUncovered(Resource dataset) {

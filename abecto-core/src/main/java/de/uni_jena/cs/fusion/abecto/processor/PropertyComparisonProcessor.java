@@ -19,549 +19,559 @@
 package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import de.uni_jena.cs.fusion.abecto.*;
+import de.uni_jena.cs.fusion.abecto.measure.PerDatasetCount;
+import de.uni_jena.cs.fusion.abecto.measure.PerDatasetPairCount;
+import de.uni_jena.cs.fusion.abecto.measure.PerDatasetRatio;
+import de.uni_jena.cs.fusion.abecto.measure.PerDatasetTupelRatio;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.xsd.XSDDateTime;
 import org.apache.jena.datatypes.xsd.impl.*;
 import org.apache.jena.rdf.model.Literal;
+import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 
-import de.uni_jena.cs.fusion.abecto.Aspect;
-import de.uni_jena.cs.fusion.abecto.Metadata;
-import de.uni_jena.cs.fusion.abecto.Parameter;
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 import de.uni_jena.cs.fusion.abecto.vocabulary.OM;
 import org.apache.jena.sparql.expr.nodevalue.NodeFunctions;
 
 public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyComparisonProcessor> {
 
-	/** Aspect to process. */
-	@Parameter
-	public Resource aspect;
-	/** Variables to process. */
-	@Parameter
-	public List<String> variables;
-	/**
-	 * Language patterns to filter compared literals. Literals of datatype xsd:string and
-	 * rdf:langString will be considered only, if they match at least on of these patterns.
-	 * String literals without language tag will match with "", all string literals with
-	 * language tag match with "*". Default: "","*" (all match)
-	 */
-	@Parameter
-	public Collection<String> languageFilterPatterns = new ArrayList<>(List.of("","*"));
-	/**
-	 * If true, a literal of the type xsd:date and a literal of the type
-	 * xsd:dateTime with equal year, month and day part will match.
-	 */
-	@Parameter
-	public boolean allowTimeSkip;
-	/**
-	 * If true, literals of the type xsd:string or rdf:langString with equal lexical
-	 * value but different language tag will match.
-	 */
-	@Parameter
-	public boolean allowLangTagSkip;
+    /**
+     * Aspect to process.
+     */
+    @Parameter // TODO rename but keep name in configuration stable
+    public Resource aspect;
+    /**
+     * Variables to process.
+     */
+    @Parameter
+    public List<String> variables;
+    /**
+     * Language patterns to filter compared literals. Literals of datatype xsd:string and
+     * rdf:langString will be considered only, if they match at least on of these patterns.
+     * String literals without language tag will match with "", all string literals with
+     * language tag match with "*". Default: "","*" (all match)
+     */
+    @Parameter
+    public Collection<String> languageFilterPatterns = new ArrayList<>(List.of("", "*"));
+    /**
+     * If true, a literal of the type xsd:date and a literal of the type
+     * xsd:dateTime with equal year, month and day part will match.
+     */
+    @Parameter
+    public boolean allowTimeSkip;
+    /**
+     * If true, literals of the type xsd:string or rdf:langString with equal lexical
+     * value but different language tag will match.
+     */
+    @Parameter
+    public boolean allowLangTagSkip;
+    Aspect theAspect; // TODO rename to `aspect` after renaming the aspect parameter variable into `aspectIri`
+    Set<Resource> datasets;
+    Set<ResourcePair> datasetPairs;
+    Set<ResourceTupel> datasetTupels;
+    Map<Resource, Model> outputMetaModelByDataset;
+    /**
+     * Number of covered values of another dataset, per variable.
+     */
+    Map<String, PerDatasetPairCount> absoluteCoverage;
+    Map<String, PerDatasetTupelRatio> relativeCoverage;
+    /**
+     * Number of values in this dataset, per variable.
+     */
+    Map<String, PerDatasetCount> count;
+    /**
+     * Number of distinct values in this dataset, per variable. Index: variable, affectedDataset
+     */
+    Map<String, PerDatasetCount> deduplicatedCount;
+    Map<String, PerDatasetRatio> completeness;
 
 
+    @Override
+    public final void run() {
+        setAspect(aspect);
+        setAspectDatasets();
+        initializeMeasures();
 
-	/**
-	 * Digits to preserve when rounding after division in measurement calculations.
-	 */
-	public final static int SCALE = 16;
+        for (Resource dataset : theAspect.getDatasets()) {
+            getResourceKeys(theAspect, dataset).forEach(resource -> {
+                // get resource values
+                Map<String, Set<RDFNode>> valuesByVariable = selectResourceValues(resource, dataset, theAspect, variables);
 
-	/**
-	 * Returns a duplicate free list of the given values by removing all values equivalent to an earlier value.
-	 */
-	private List<RDFNode> deduplicate(Iterable<RDFNode> values) {
-		ArrayList<RDFNode> distinctValues = new ArrayList<>();
-		for (RDFNode value : values) {
-			if (distinctValues.stream().noneMatch(v -> equivalentValues(v, value))) {
-				distinctValues.add(value);
-			}
-		}
-		return distinctValues;
-	}
+                // removeExcludedValues
+                valuesByVariable.forEach((k, v) -> v.removeIf(this::isExcludedValue));
 
-	private <T> Set<T> distinctByIdentity(Collection<T> items) {
-		Set<T> distinctItems = Collections.newSetFromMap(new IdentityHashMap<>());
-		distinctItems.addAll(items);
-		return distinctItems;
-	}
+                for (String variable : variables) {
+                    // measure count of values
+                    int valuesCountOfDataset = valuesByVariable.getOrDefault(variable, Collections.emptySet()).size();
+                    count.get(variable).incrementBy(dataset, valuesCountOfDataset);
 
-	private int getPairwiseOverlap(Collection<Resource> resources1,
-									Collection<Resource> resources2, Map<RDFNode, Set<Resource>> resourcesByMappedValues) {
-		int pairwiseOverlap = 0;
-		// use set of resource sets for mapping values
-		// NOTE: equivalent values use the same set, so get distinct set instances
-		for (Set<Resource> resourceSet : distinctByIdentity(resourcesByMappedValues.values())) {
-			if (resources1.stream().noneMatch(resourceSet::contains)) {
-				continue;
-			}
-			if (resources2.stream().noneMatch(resourceSet::contains)) {
-				continue;
-			}
-			pairwiseOverlap++;
-		}
-		return pairwiseOverlap;
-	}
+                    // measure count of non equivalent values per resource
+                    int deduplicatedValuesCountOfDataset = deduplicate(valuesByVariable.getOrDefault(variable, Collections.emptySet())).size();
+                    deduplicatedCount.get(variable).incrementBy(dataset, deduplicatedValuesCountOfDataset);
+                }
 
-	/** Removes all values that are known wrong values. */
-	private void removeKnownWrongValues(Map<Resource, Map<String, Set<RDFNode>>> valuesByVariableByResource, Resource dataset) {
-		for (Resource resource : valuesByVariableByResource.keySet()) {
-			removeKnownWrongValues(valuesByVariableByResource.get(resource), resource, dataset);
-		}
-	}
+            });
+        }
 
-	/** Removes all values that are known wrong values. */
-	private void removeKnownWrongValues(Map<String, Set<RDFNode>> valuesByVariable, Resource resource, Resource dataset) {
-		for (String variable : valuesByVariable.keySet()) {
-			Set<RDFNode> values = valuesByVariable.get(variable);
-			values.removeIf(value -> this.isWrongValue(resource, variable, value, aspect, dataset));
-		}
-	}
+        getCorrespondenceGroups().forEach(correspondingResources -> {
+            // get values for all corresponding resources in all datasets
+            Map<Resource, Map<Resource, Map<String, Set<RDFNode>>>> valuesByVariableByResourceByDataset = new HashMap<>();
+            for (Resource dataset : theAspect.getDatasets()) {
+                valuesByVariableByResourceByDataset.put(dataset, selectResourceValues(correspondingResources, dataset, theAspect, variables));
+                removeKnownWrongValues(valuesByVariableByResourceByDataset.get(dataset), dataset);
+                // removeExcludedValues
+                valuesByVariableByResourceByDataset.forEach((k3, v3) -> v3.forEach((k2, v2) -> v2.forEach((k, v) -> v.removeIf(this::isExcludedValue))));
+                // update deduplicated counts
+                for (String variable : variables) {
+                    // get values of all corresponding resources
+                    var valuesOfCorrespondingResources = new ArrayList<RDFNode>();
+                    valuesByVariableByResourceByDataset.get(dataset).values().stream()
+                            .map(m -> m.getOrDefault(variable, Collections.emptySet()))
+                            .map(this::deduplicate) // avoid correction of count twice?
+                            .forEach(valuesOfCorrespondingResources::addAll);
 
-	protected boolean isWrongValue(Resource affectedResource, String affectedVariableName, RDFNode affectedValue,
-													Resource affectedAspect, Resource affectedDataset) {
-		return Metadata.isWrongValue(affectedResource, affectedVariableName, affectedValue, aspect,
-				this.getInputMetaModelUnion(affectedDataset));
-	}
+                    // measure count of non equivalent values per corresponding resources
+                    int interResourceDuplicatedValuesCountOfDataset = deduplicate(valuesOfCorrespondingResources).size() - valuesOfCorrespondingResources.size();
+                    deduplicatedCount.get(variable).incrementBy(dataset, interResourceDuplicatedValuesCountOfDataset);
+                }
+            }
 
-	@Override
-	public final void run() {
-		// Number of covered values of another dataset, per variable. Index: variable, affectedDataset, comparedToDataset
-		Map<String, Map<Resource, Map<Resource, Integer>>> absoluteCoverage = new HashMap<>();
-		// Number of values in this dataset, per variable. Index: variable, affectedDataset
-		Map<String, Map<Resource, Integer>> count = new HashMap<>();
-		// Number of distinct values in this dataset, per variable. Index: variable, affectedDataset
-		Map<String, Map<Resource, Integer>> deduplicatedCount = new HashMap<>();
-		// Number of overlaps between all pairs of dataset by dataset compared to by multiplied by 2.
-		Map<String, Integer> totalPairwiseOverlapByVariable = new HashMap<>();
-		// Estimated population site of values, per variable.
-		Map<String, BigDecimal> populationSize = new HashMap<>();
+            for (ResourcePair datasetPair : datasetPairs) {
+                for (String variable : variables) {
+                    if (theAspect.getPattern(datasetPair.first).getResultVars().contains(variable)
+                            && theAspect.getPattern(datasetPair.second).getResultVars().contains(variable)) {
+                        compareVariableValues(variable, datasetPair, valuesByVariableByResourceByDataset);
+                    }
+                }
+            }
+        });
 
-		Aspect aspect = this.getAspects().get(this.aspect);
+        calculateCompleteness();
+        calculateRelativeCoverage();
 
-		// init count and countDistinct
-		for (String variable : variables) {
-			count.put(variable, new HashMap<>());
-			deduplicatedCount.put(variable, new HashMap<>());
-		}
+        storeMeasures();
+    }
 
-		for (Resource dataset : aspect.getDatasets()) {
-			getResourceKeys(aspect, dataset).forEach(resource -> {
-				// get resource values
-				Map<String, Set<RDFNode>> valuesByVariable = selectResourceValues(resource, dataset, aspect, variables);
+    private void setAspect(Resource aspect) {
+        theAspect = this.getAspects().get(aspect);
+    }
 
-				// removeExcludedValues
-				valuesByVariable.forEach((k,v) -> v.removeIf(this::isExcludedValue));
+    private void setAspectDatasets() {
+        datasets = theAspect.getDatasets();
+        datasetPairs = ResourcePair.getPairsOf(datasets);
+        datasetTupels = ResourceTupel.getTupelsOf(datasets);
+        outputMetaModelByDataset = getOutputMetaModels(datasets);
+    }
 
-				for (String variable : variables) {
-					// measure count of values
-					count.get(variable).merge(dataset,
-							valuesByVariable.getOrDefault(variable, Collections.emptySet()).size(), Integer::sum);
+    private void initializeMeasures() {
+        initializeCount();
+        initializeDeduplicatedCount();
+        initializeAbsoluteCoverage();
+        initializeRelativeCoverage();
+        initializeCompleteness();
+    }
 
-					// measure count of non equivalent values per resource
-					deduplicatedCount.get(variable).merge(dataset,
-							deduplicate(valuesByVariable.getOrDefault(variable, Collections.emptySet())).size(),
-							Integer::sum);
-				}
+    private void initializeCount() {
+        count = new HashMap<>();
+        for (String variable : variables) {
+            PerDatasetCount countOfVariable = new PerDatasetCount(AV.count, OM.one);
+            countOfVariable.reset(datasets, 0L);
+            count.put(variable, countOfVariable);
+        }
+    }
 
-			});
-		}
+    private void initializeDeduplicatedCount() {
+        deduplicatedCount = new HashMap<>();
+        for (String variable : variables) {
+            PerDatasetCount deduplicatedCountOfVariable = new PerDatasetCount(AV.deduplicatedCount, OM.one);
+            deduplicatedCountOfVariable.reset(datasets, 0L);
+            deduplicatedCount.put(variable, deduplicatedCountOfVariable);
+        }
+    }
 
-		getCorrespondenceGroups().forEach(correspondingResources -> {
-			// get values for all corresponding resources in all datasets
-			Map<Resource,Map<Resource, Map<String, Set<RDFNode>>>> valuesByVariableByResourceByDataset = new HashMap<>();
-			for (Resource dataset : aspect.getDatasets()) {
-				valuesByVariableByResourceByDataset.put(dataset, selectResourceValues(correspondingResources, dataset, aspect, variables));
-				removeKnownWrongValues(valuesByVariableByResourceByDataset.get(dataset), dataset);
-				// removeExcludedValues
-				valuesByVariableByResourceByDataset.forEach((k3,v3) -> v3.forEach((k2,v2) -> v2.forEach((k,v) -> v.removeIf(this::isExcludedValue))));
-				// update deduplicated counts
-				for (String variable : variables) {
-					// get values of all corresponding resources
-					var valuesOfCorrespondingResources = new ArrayList<RDFNode>();
-					valuesByVariableByResourceByDataset.get(dataset).values().stream()
-							.map(m -> m.getOrDefault(variable, Collections.emptySet()))
-							.map(this::deduplicate) // avoid correction of count twice?
-							.forEach(valuesOfCorrespondingResources::addAll);
+    private void initializeAbsoluteCoverage() {
+        absoluteCoverage = new HashMap<>();
+        for (String variable : variables) {
+            PerDatasetPairCount absoluteCoverageOfVariable = new PerDatasetPairCount(AV.absoluteCoverage, OM.one);
+            absoluteCoverageOfVariable.reset(datasetPairs, 0L);
+            absoluteCoverage.put(variable, absoluteCoverageOfVariable);
+        }
+    }
 
-					// measure count of non equivalent values per corresponding resources
-					deduplicatedCount.get(variable).merge(dataset,
-							deduplicate(valuesOfCorrespondingResources).size() - valuesOfCorrespondingResources.size(),
-							Integer::sum);
-				}
-			}
+    private void initializeRelativeCoverage() {
+        relativeCoverage = new HashMap<>();
+        for (String variable : variables) {
+            PerDatasetTupelRatio relativeCoverageOfVariable = new PerDatasetTupelRatio(AV.relativeCoverage, OM.one);
+            relativeCoverageOfVariable.reset(datasetTupels, BigDecimal.ZERO);
+            relativeCoverage.put(variable, relativeCoverageOfVariable);
+        }
+    }
 
-			for (Resource dataset1 : aspect.getDatasets()) {
-				Map<Resource, Map<String, Set<RDFNode>>> valuesByVariableByResource1 = valuesByVariableByResourceByDataset.get(dataset1);
+    private void initializeCompleteness() {
+        completeness = new HashMap<>();
+    }
 
-				for (Resource dataset2 : aspect.getDatasets()) {
-					// do not do work twice
-					if (dataset1.hashCode() < dataset2.hashCode()) continue;
+    private void calculateCompleteness() {
+        for (String variable : variables) {
+            // TODO add value exclusion filter description to measurement description
+            completeness.put(variable, calculateCompleteness(datasetPairs, absoluteCoverage.get(variable), deduplicatedCount.get(variable)));
+        }
+    }
 
-					Map<Resource, Map<String, Set<RDFNode>>> valuesByVariableByResource2 = valuesByVariableByResourceByDataset.get(dataset2);
-					for (String variable : variables) {
-						if (aspect.getPattern(dataset1).getResultVars().contains(variable)
-								&& aspect.getPattern(dataset2).getResultVars().contains(variable)) {
-							this.compareVariableValues(variable, dataset1, valuesByVariableByResource1, dataset2,
-									valuesByVariableByResource2, absoluteCoverage);
-						}
-					}
-				}
+    private void calculateRelativeCoverage() {
+        for (String variable : variables) {
+            PerDatasetTupelRatio relativeCoverageOfVariable = relativeCoverage.get(variable);
+            PerDatasetPairCount absoluteCoverageOfVariable = absoluteCoverage.get(variable);
+            PerDatasetCount deduplicatedCountOfVariable = deduplicatedCount.get(variable);
+            relativeCoverageOfVariable.setRatioOf(absoluteCoverageOfVariable, deduplicatedCountOfVariable);
+        }
+    }
 
-			}
-		});
+    private void storeMeasures() {
+        storeCount();
+        storeDeduplicatedCount();
+        storeAbsoluteCoverage();
+        storeRelativeCoverage();
+        storeCompleteness();
+    }
 
-		// calculate total pairwise overlaps
-		for (String variable : variables) {
-			int totalPairwiseOverlap = 0;
-			for (Resource dataset : aspect.getDatasets()) {
-				for (Resource datasetComparedTo : aspect.getDatasets()) {
-					if (dataset.hashCode() < datasetComparedTo.hashCode()) { // only once per pair
-						totalPairwiseOverlap += absoluteCoverage
-								.getOrDefault(variable,Collections.emptyMap())
-								.getOrDefault(dataset,Collections.emptyMap())
-								.getOrDefault(datasetComparedTo,0);
-					}
-				}
-			}
-			totalPairwiseOverlapByVariable.put(variable, totalPairwiseOverlap);
-		}
+    private void storeCount() {
+        for (String variable : variables) {
+            // TODO add value exclusion filter description to measurement description
+            count.get(variable).storeInModelWithVariable(theAspect, variable, outputMetaModelByDataset);
+        }
+    }
 
-		// calculate estimated value population size and estimated completeness per variable
-		for (String variable : variables) {
-			populationSize.put(variable, BigDecimal.ZERO);
-			if (totalPairwiseOverlapByVariable.containsKey(variable) // variable covered by more than 1 dataset
-					&& totalPairwiseOverlapByVariable.get(variable) != 0) {
+    private void storeDeduplicatedCount() {
+        for (String variable : variables) {
+            // TODO add value exclusion filter description to measurement description
+            deduplicatedCount.get(variable).storeInModelWithVariable(theAspect, variable, outputMetaModelByDataset);
+        }
+    }
 
-				// calculate estimated value population size per variable
-				for (Resource affectedDataset : aspect.getDatasets()) {
-					for (Resource comparedToDataset : aspect.getDatasets()) {
+    private void storeAbsoluteCoverage() {
+        for (String variable : variables) {
+            // TODO add value exclusion filter description to measurement description
+            absoluteCoverage.get(variable).storeInModelWithVariable(theAspect, variable, outputMetaModelByDataset);
+        }
+    }
 
-						// only once per pair
-						// do not use Resource#getURI() as it might be null for blank nodes
-						if (affectedDataset.hashCode() >= comparedToDataset.hashCode()) continue;
+    private void storeRelativeCoverage() {
+        for (String variable : variables) {
+            // TODO add value exclusion filter description to measurement description
+            relativeCoverage.get(variable).storeInModelWithVariable(theAspect, variable, outputMetaModelByDataset);
+        }
+    }
 
-						populationSize.merge(variable,
-								BigDecimal.valueOf(deduplicatedCount.get(variable).get(affectedDataset)).multiply(
-										BigDecimal.valueOf(deduplicatedCount.get(variable).get(comparedToDataset))),
-								BigDecimal::add);
-					}
-				}
-				populationSize.merge(variable, BigDecimal.valueOf(totalPairwiseOverlapByVariable.get(variable)),
-						(x, y) -> x.divide(y, SCALE, RoundingMode.HALF_UP));
+    private void storeCompleteness() {
+        for (String variable : variables) {
+            // TODO add value exclusion filter description to measurement description
+            completeness.get(variable).storeInModelWithVariableAsComparedToAllOtherResources(theAspect, variable, outputMetaModelByDataset);
+        }
+    }
 
-				// calculate & store estimated completeness
-				for (Resource affectedDataset : aspect.getDatasets()) {
-					// calculate ratio of values in an estimated population covered by this dataset
-					BigDecimal completeness = BigDecimal.valueOf(deduplicatedCount.get(variable).get(affectedDataset))
-							.divide(populationSize.get(variable), SCALE, RoundingMode.HALF_UP);
-					Collection<Resource> otherDatasets = new HashSet<>(aspect.getDatasets());
-					otherDatasets.remove(affectedDataset);
-					// TODO add value exclusion filter description to measurement description
-					Metadata.addQualityMeasurement(AV.marCompletenessThomas08, completeness, OM.one, affectedDataset,
-							variable, otherDatasets, aspect.getIri(), this.getOutputMetaModel(affectedDataset));
-				}
-			}
-		}
+    /**
+     * Note: Not the most efficient way to do this, but there is no
+     * {@link Comparator} available to use {@link TreeMap#TreeMap(Comparator)}.
+     */
+    private void mapResources(String variable, Map<RDFNode, Set<Resource>> resourcesByMappedValues,
+                              Map<Resource, Map<String, Set<RDFNode>>> valuesByVariableByResource) {
+        for (Resource resource : valuesByVariableByResource.keySet()) {
+            for (RDFNode value : valuesByVariableByResource.get(resource).getOrDefault(variable,
+                    Collections.emptySet())) {
+                for (RDFNode valueKey : resourcesByMappedValues.keySet()) {
+                    if (equivalentValues(value, valueKey)) {
+                        Set<Resource> valuesSet = resourcesByMappedValues.get(valueKey);
+                        // add values to existing set
+                        valuesSet.add(resource);
+                        // map value to same set, so equivalent values will share one set
+                        resourcesByMappedValues.putIfAbsent(value, valuesSet);
+                        break;
+                    }
+                }
+                // no equivalent value in map
+                resourcesByMappedValues.computeIfAbsent(value, v -> new HashSet<>()).add(resource);
+            }
+        }
+    }
 
-		// store measurements
-		for (String variable : variables) {
+    /**
+     * Compares the values of one variable from two corresponding resources in two
+     * datasets and stores encountered deviations and issues in both according
+     * outputMetaModels (derived by {@link #getOutputMetaModel(Resource)}). Either
+     * the corresponding resources or the datasets might be equal, but not both at
+     * once.
+     *
+     * @param variable Name of the compared variable
+     */
+    public void compareVariableValues(String variable, ResourcePair datasetPair,
+                                      Map<Resource, Map<Resource, Map<String, Set<RDFNode>>>> valuesByVariableByResourceByDataset) {
 
-			for (Resource affectedDataset : aspect.getDatasets()) {
-				// skip if variable not covered by affected dataset
-				if (!aspect.getPattern(affectedDataset).getResultVars().contains(variable)) continue;
+        Map<Resource, Map<String, Set<RDFNode>>> valuesByVariableByResource1 = valuesByVariableByResourceByDataset.get(datasetPair.first);
+        Map<Resource, Map<String, Set<RDFNode>>> valuesByVariableByResource2 = valuesByVariableByResourceByDataset.get(datasetPair.second);
 
-				// store count
-				// TODO add value exclusion filter description to measurement description
-				Metadata.addQualityMeasurement(AV.count, count.get(variable).getOrDefault(affectedDataset, 0), OM.one,
-						affectedDataset, variable, aspect.getIri(), this.getOutputMetaModel(affectedDataset));
-				// store deduplicated count
-				// TODO add value exclusion filter description to measurement description
-				Metadata.addQualityMeasurement(AV.deduplicatedCount,
-						deduplicatedCount.get(variable).getOrDefault(affectedDataset, 0), OM.one, affectedDataset, variable,
-						aspect.getIri(), this.getOutputMetaModel(affectedDataset));
+        // create common value-resource look-up
+        Map<RDFNode, Set<Resource>> resourcesByMappedValues = new HashMap<>();
+        mapResources(variable, resourcesByMappedValues, valuesByVariableByResource1);
+        mapResources(variable, resourcesByMappedValues, valuesByVariableByResource2);
 
-				// calculate relative coverage
-				for (Resource comparedToDataset : aspect.getDatasets()) {
-					if (affectedDataset.equals(comparedToDataset)) continue;
+        // update measurements
+        int pairwiseOverlap = getPairwiseOverlap(valuesByVariableByResource1.keySet(), valuesByVariableByResource2.keySet(), resourcesByMappedValues);
+        absoluteCoverage.get(variable).incrementBy(datasetPair, pairwiseOverlap);
 
-					// skip if variable not covered by dataset compared to
-					if (!aspect.getPattern(comparedToDataset).getResultVars().contains(variable)) continue;
+        // deviation: a pair of resources with each having a value not present in the
+        // other resource
+        // omission: a pair of resources with one having a value not present in the other,
+        // but not vice versa
 
-					// store absolute coverage
-					int overlap = absoluteCoverage.getOrDefault(variable, Collections.emptyMap())
-							.getOrDefault(affectedDataset, Collections.emptyMap())
-							.getOrDefault(comparedToDataset, 0);
-					// TODO add value exclusion filter description to measurement description
-					Metadata.addQualityMeasurement(AV.absoluteCoverage, overlap,
-							OM.one, affectedDataset, variable, comparedToDataset, aspect.getIri(),
-							this.getOutputMetaModel(affectedDataset));
+        for (Resource resource1 : valuesByVariableByResource1.keySet()) {
+            var values1 = valuesByVariableByResource1.get(resource1).getOrDefault(variable, Collections.emptySet());
+            for (Resource resource2 : valuesByVariableByResource2.keySet()) {
+                var values2 = valuesByVariableByResource2.get(resource2).getOrDefault(variable, Collections.emptySet());
 
-					// calculate & store relative coverage
-					int countComparedTo = deduplicatedCount.getOrDefault(variable, Collections.emptyMap())
-							.getOrDefault(comparedToDataset, 0);
-					if (countComparedTo != 0) {
-						// TODO add value exclusion filter description to measurement description
-						Metadata.addQualityMeasurement(AV.relativeCoverage, BigDecimal.valueOf(overlap)
-										.divide(BigDecimal.valueOf(countComparedTo), SCALE, RoundingMode.HALF_UP),
-								OM.one, affectedDataset, variable, comparedToDataset, aspect.getIri(),
-								this.getOutputMetaModel(affectedDataset));
-					}
-				}
-			}
-		}
-	}
+                var notMatchingValues1 = values1.stream().filter(value1 -> !resourcesByMappedValues
+                        .getOrDefault(value1, Collections.emptySet()).contains(resource2)).collect(Collectors.toList());
+                var notMatchingValues2 = values2.stream().filter(value2 -> !resourcesByMappedValues
+                        .getOrDefault(value2, Collections.emptySet()).contains(resource1)).collect(Collectors.toList());
 
-	/**
-	 * 
-	 * Note: Not the most efficient way to do this, but there is no
-	 * {@link Comparator} available to use {@link TreeMap#TreeMap(Comparator)}.
-	 *
-	 */
-	private void mapResources(String variable, Map<RDFNode, Set<Resource>> resourcesByMappedValues,
-			Map<Resource, Map<String, Set<RDFNode>>> valuesByVariableByResource) {
-		for (Resource resource : valuesByVariableByResource.keySet()) {
-			for (RDFNode value : valuesByVariableByResource.get(resource).getOrDefault(variable,
-					Collections.emptySet())) {
-				for (RDFNode valueKey : resourcesByMappedValues.keySet()) {
-					if (equivalentValues(value, valueKey)) {
-						Set<Resource> valuesSet = resourcesByMappedValues.get(valueKey);
-						// add values to existing set
-						valuesSet.add(resource);
-						// map value to same set, so equivalent values will share one set
-						resourcesByMappedValues.putIfAbsent(value, valuesSet);
-						break;
-					}
-				}
-				// no equivalent value in map
-				resourcesByMappedValues.computeIfAbsent(value, v -> new HashSet<>()).add(resource);
-			}
-		}
-	}
+                // report missing not matching values
+                if (notMatchingValues1.isEmpty()) {
+                    for (RDFNode value2 : notMatchingValues2) {
+                        Metadata.addValuesOmission(resource1, variable, datasetPair.second, resource2, value2, this.aspect,
+                                this.getOutputMetaModel(datasetPair.first));
+                    }
+                } else if (notMatchingValues2.isEmpty()) {
+                    for (RDFNode value1 : notMatchingValues1) {
+                        Metadata.addValuesOmission(resource2, variable, datasetPair.first, resource1, value1, this.aspect,
+                                this.getOutputMetaModel(datasetPair.second));
+                    }
+                } else {
+                    // report pairs of deviating values
+                    for (RDFNode value1 : notMatchingValues1) {
+                        for (RDFNode value2 : notMatchingValues2) {
+                            Metadata.addDeviation(resource1.asResource(), variable, value1, datasetPair.second,
+                                    resource2.asResource(), value2, this.aspect, this.getOutputMetaModel(datasetPair.first));
+                            Metadata.addDeviation(resource2.asResource(), variable, value2, datasetPair.first,
+                                    resource1.asResource(), value1, this.aspect, this.getOutputMetaModel(datasetPair.second));
+                        }
+                    }
+                }
+            }
+        }
+    }
 
-	/**
-	 * Compares the values of one variable from two corresponding resources in two
-	 * datasets and stores encountered deviations and issues in both according
-	 * outputMetaModels (derived by {@link #getOutputMetaModel(Resource)}). Either
-	 * the corresponding resources or the datasets might be equal, but not both at
-	 * once.
-	 *
-	 * @param variable                    Name of the compared variable
-	 * @param dataset1                    IRI of the first dataset
-	 * @param valuesByVariableByResource1 Values of the first datasets resources
-	 * @param dataset2                    IRI of the second datasets dataset
-	 * @param valuesByVariableByResource2 Values of the second datasets resources
-	 */
-	public void compareVariableValues(String variable, Resource dataset1,
-									  Map<Resource, Map<String, Set<RDFNode>>> valuesByVariableByResource1, Resource dataset2,
-									  Map<Resource, Map<String, Set<RDFNode>>> valuesByVariableByResource2, Map<String, Map<Resource, Map<Resource, Integer>>> absoluteCoverage) {
+    /**
+     * Checks if two values are equivalent.
+     *
+     * @param value1 the first value to compare
+     * @param value2 the second value to compare
+     * @return {@code true}, if the values are equivalent, otherwise {@code false}
+     */
+    public boolean equivalentValues(RDFNode value1, RDFNode value2) {
+        if (value1.isResource() && value2.isResource()) {
+            return correspond(value1.asResource(), value2.asResource());
+        } else if (value1.isLiteral() && value2.isLiteral()) {
+            Literal literal1 = value1.asLiteral();
+            Literal literal2 = value2.asLiteral();
 
-		// create common value-resource look-up
-		Map<RDFNode, Set<Resource>> resourcesByMappedValues = new HashMap<>();
-		mapResources(variable, resourcesByMappedValues, valuesByVariableByResource1);
-		mapResources(variable, resourcesByMappedValues, valuesByVariableByResource2);
+            // same type/subtype check
+            if (literal1.sameValueAs(literal2)) {
+                return true;
+            }
 
-		// update measurements
-		if (!dataset1.equals(dataset2)) {
-			int pairwiseOverlap = getPairwiseOverlap(valuesByVariableByResource1.keySet(), valuesByVariableByResource2.keySet(), resourcesByMappedValues);
-			absoluteCoverage.computeIfAbsent(variable, v -> new HashMap<>()).computeIfAbsent(dataset1, v -> new HashMap<>())
-					.merge(dataset2, pairwiseOverlap, Integer::sum);
-			absoluteCoverage.computeIfAbsent(variable, v -> new HashMap<>()).computeIfAbsent(dataset2, v -> new HashMap<>())
-					.merge(dataset1, pairwiseOverlap, Integer::sum);
-		}
+            RDFDatatype type1 = literal1.getDatatype();
+            RDFDatatype type2 = literal2.getDatatype();
 
-		// deviation: a pair of resources with each having a value not present in the
-		// other resource
-		// omission: a pair of resources with one having a value not present in the other,
-		// but not vice versa
+            // comparison of xsd:date and xsd:dateTime
+            if (allowTimeSkip && (type1 instanceof XSDDateType && type2 instanceof XSDDateTimeType
+                    || type1 instanceof XSDDateTimeType && type2 instanceof XSDDateType)) {
+                XSDDateTime date1 = ((XSDDateTime) literal1.getValue());
+                XSDDateTime date2 = ((XSDDateTime) literal2.getValue());
+                return date1.getDays() == date2.getDays() //
+                        && date1.getMonths() == date2.getMonths() //
+                        && date1.getYears() == date2.getYears();
+            }
 
-		for (Resource resource1 : valuesByVariableByResource1.keySet()) {
-			var values1 = valuesByVariableByResource1.get(resource1).getOrDefault(variable, Collections.emptySet());
-			for (Resource resource2 : valuesByVariableByResource2.keySet()) {
-				var values2 = valuesByVariableByResource2.get(resource2).getOrDefault(variable, Collections.emptySet());
+            // ignore lang tags
+            if (allowLangTagSkip && (type1 instanceof XSDBaseStringType || type1 instanceof RDFLangString)
+                    && (type2 instanceof XSDBaseStringType || type2 instanceof RDFLangString)) {
+                String string1 = literal1.getString();
+                String string2 = literal2.getString();
+                return Objects.equals(string1, string2);
+            }
 
-				var notMatchingValues1 = values1.stream().filter(value1 -> !resourcesByMappedValues
-						.getOrDefault(value1, Collections.emptySet()).contains(resource2)).collect(Collectors.toList());
-				var notMatchingValues2 = values2.stream().filter(value2 -> !resourcesByMappedValues
-						.getOrDefault(value2, Collections.emptySet()).contains(resource1)).collect(Collectors.toList());
+            // comparison of different number types
+            try {
+                BigDecimal decimal1, decimal2;
 
-				// report missing not matching values
-				if (notMatchingValues1.isEmpty()) {
-					for (RDFNode value2 : notMatchingValues2) {
-						Metadata.addValuesOmission(resource1, variable, dataset2, resource2, value2, this.aspect,
-								this.getOutputMetaModel(dataset1));
-					}
-				} else if (notMatchingValues2.isEmpty()) {
-					for (RDFNode value1 : notMatchingValues1) {
-						Metadata.addValuesOmission(resource2, variable, dataset1, resource1, value1, this.aspect,
-								this.getOutputMetaModel(dataset2));
-					}
-				} else {
-					// report pairs of deviating values
-					for (RDFNode value1 : notMatchingValues1) {
-						for (RDFNode value2 : notMatchingValues2) {
-							Metadata.addDeviation(resource1.asResource(), variable, value1, dataset2,
-									resource2.asResource(), value2, this.aspect, this.getOutputMetaModel(dataset1));
-							Metadata.addDeviation(resource2.asResource(), variable, value2, dataset1,
-									resource1.asResource(), value1, this.aspect, this.getOutputMetaModel(dataset2));
-						}
-					}
-				}
-			}
-		}
-	}
+                // get precise BigDecimal of literal 1 and handle special cases of float/double
+                if (type1 instanceof XSDBaseNumericType) {
+                    decimal1 = new BigDecimal(literal1.getLexicalForm());
+                } else if (type1 instanceof XSDDouble) {
+                    double value1Double = literal1.getDouble();
+                    // handle special cases
+                    if (Double.isNaN(value1Double)) {
+                        return type2 instanceof XSDFloat && Float.isNaN(literal2.getFloat());
+                    } else if (value1Double == Double.NEGATIVE_INFINITY) {
+                        return type2 instanceof XSDFloat && literal2.getFloat() == Float.NEGATIVE_INFINITY;
+                    } else if (value1Double == Double.POSITIVE_INFINITY) {
+                        return type2 instanceof XSDFloat && literal2.getFloat() == Float.POSITIVE_INFINITY;
+                    }
+                    // get value as BigDecimal
+                    decimal1 = new BigDecimal(value1Double);
+                    /*
+                     * NOTE: don't use BigDecimal#valueOf(value1Double) or new
+                     * BigDecimal(literal1.getLexicalForm()) to represented value from the double
+                     * value space, not the double lexical space
+                     */
+                } else if (type1 instanceof XSDFloat) {
+                    float value1Float = literal1.getFloat();
+                    // handle special cases
+                    if (Float.isNaN(value1Float)) {
+                        return type2 instanceof XSDDouble && Double.isNaN(literal2.getDouble());
+                    } else if (value1Float == Double.NEGATIVE_INFINITY) {
+                        return type2 instanceof XSDDouble && literal2.getDouble() == Double.NEGATIVE_INFINITY;
+                    } else if (value1Float == Double.POSITIVE_INFINITY) {
+                        return type2 instanceof XSDDouble && literal2.getDouble() == Double.POSITIVE_INFINITY;
+                    }
+                    // get value as BigDecimal
+                    decimal1 = new BigDecimal(value1Float);
+                    /*
+                     * NOTE: don't use BigDecimal#valueOf(value1Float) or new
+                     * BigDecimal(literal1.getLexicalForm()) to represented value from the float
+                     * value space, not the float lexical space
+                     */
+                } else {
+                    return false;
+                }
 
-	/**
-	 * Checks if two values are equivalent.
-	 * 
-	 * @param value1 the first value to compare
-	 * @param value2 the second value to compare
-	 * @return {@code true}, if the values are equivalent, otherwise {@code false}
-	 */
-	public boolean equivalentValues(RDFNode value1, RDFNode value2) {
-		if (value1.isResource() && value2.isResource()) {
-			return correspond(value1.asResource(), value2.asResource());
-		} else if (value1.isLiteral() && value2.isLiteral()) {
-			Literal literal1 = value1.asLiteral();
-			Literal literal2 = value2.asLiteral();
+                // get precise BigDecimal of literal 2
+                if (type2 instanceof XSDBaseNumericType) {
+                    decimal2 = new BigDecimal(literal2.getLexicalForm());
+                } else if (type2 instanceof XSDDouble) {
+                    double value2Double = literal2.getDouble();
+                    // handle special cases
+                    if (Double.isNaN(value2Double) || value2Double == Double.NEGATIVE_INFINITY
+                            || value2Double == Double.POSITIVE_INFINITY) {
+                        return false;
+                    }
+                    // get value as BigDecimal
+                    decimal2 = new BigDecimal(value2Double);
+                    /*
+                     * NOTE: don't use BigDecimal#valueOf(value2Double) or new
+                     * BigDecimal(literal2.getLexicalForm()) to represented value from the double
+                     * value space, not the double lexical space
+                     */
+                } else if (type2 instanceof XSDFloat) {
+                    float value2Float = literal2.getFloat();
+                    // handle special cases
+                    if (Float.isNaN(value2Float) || value2Float == Float.NEGATIVE_INFINITY
+                            || value2Float == Float.POSITIVE_INFINITY) {
+                        return false;
+                    }
+                    // get value as BigDecimal
+                    decimal2 = new BigDecimal(value2Float);
+                    /*
+                     * NOTE: don't use BigDecimal#valueOf(value2Float) or new
+                     * BigDecimal(literal2.getLexicalForm()) to represented value from the float
+                     * value space, not the float lexical space
+                     */
+                } else {
+                    return false;
+                }
 
-			// same type/subtype check
-			if (literal1.sameValueAs(literal2)) {
-				return true;
-			}
+                // compare BigDecimals
+                return decimal1.compareTo(decimal2) == 0;
+            } catch (NumberFormatException e) {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
 
-			RDFDatatype type1 = literal1.getDatatype();
-			RDFDatatype type2 = literal2.getDatatype();
+    /**
+     * Checks if a value should be excluded from the comparison.
+     *
+     * @param value the value to check
+     * @return {@code true}, if the value should not be used, otherwise {@code false}
+     */
+    public boolean isExcludedValue(RDFNode value) {
+        if (!value.isLiteral() ||
+                !(value.asLiteral().getDatatype() instanceof XSDBaseStringType) &&
+                        !(value.asLiteral().getDatatype() instanceof RDFLangString)) {
+            return false;
+        } else {
+            String langStr = value.asLiteral().getLanguage();
+            return languageFilterPatterns.stream()
+                    .noneMatch(languageFilterPattern -> NodeFunctions.langMatches(langStr, languageFilterPattern));
+        }
+    }
 
-			// comparison of xsd:date and xsd:dateTime
-			if (allowTimeSkip && (type1 instanceof XSDDateType && type2 instanceof XSDDateTimeType
-					|| type1 instanceof XSDDateTimeType && type2 instanceof XSDDateType)) {
-				XSDDateTime date1 = ((XSDDateTime) literal1.getValue());
-				XSDDateTime date2 = ((XSDDateTime) literal2.getValue());
-				return date1.getDays() == date2.getDays() //
-						&& date1.getMonths() == date2.getMonths() //
-						&& date1.getYears() == date2.getYears();
-			}
+    /**
+     * Returns a duplicate free list of the given values by removing all values equivalent to an earlier value.
+     */
+    private List<RDFNode> deduplicate(Iterable<RDFNode> values) {
+        ArrayList<RDFNode> distinctValues = new ArrayList<>();
+        for (RDFNode value : values) {
+            if (distinctValues.stream().noneMatch(v -> equivalentValues(v, value))) {
+                distinctValues.add(value);
+            }
+        }
+        return distinctValues;
+    }
 
-			// ignore lang tags
-			if (allowLangTagSkip && (type1 instanceof XSDBaseStringType || type1 instanceof RDFLangString)
-					&& (type2 instanceof XSDBaseStringType || type2 instanceof RDFLangString)) {
-				String string1 = literal1.getString();
-				String string2 = literal2.getString();
-				return Objects.equals(string1, string2);
-			}
+    private <T> Set<T> distinctByIdentity(Collection<T> items) {
+        Set<T> distinctItems = Collections.newSetFromMap(new IdentityHashMap<>());
+        distinctItems.addAll(items);
+        return distinctItems;
+    }
 
-			// comparison of different number types
-			try {
-				BigDecimal decimal1, decimal2;
+    private int getPairwiseOverlap(Collection<Resource> resources1,
+                                   Collection<Resource> resources2, Map<RDFNode, Set<Resource>> resourcesByMappedValues) {
+        int pairwiseOverlap = 0;
+        // use set of resource sets for mapping values
+        // NOTE: equivalent values use the same set, so get distinct set instances
+        for (Set<Resource> resourceSet : distinctByIdentity(resourcesByMappedValues.values())) {
+            if (resources1.stream().noneMatch(resourceSet::contains)) {
+                continue;
+            }
+            if (resources2.stream().noneMatch(resourceSet::contains)) {
+                continue;
+            }
+            pairwiseOverlap++;
+        }
+        return pairwiseOverlap;
+    }
 
-				// get precise BigDecimal of literal 1 and handle special cases of float/double
-				if (type1 instanceof XSDBaseNumericType) {
-					decimal1 = new BigDecimal(literal1.getLexicalForm());
-				} else if (type1 instanceof XSDDouble) {
-					double value1Double = literal1.getDouble();
-					// handle special cases
-					if (Double.isNaN(value1Double)) {
-						return type2 instanceof XSDFloat && Float.isNaN(literal2.getFloat());
-					} else if (value1Double == Double.NEGATIVE_INFINITY) {
-						return type2 instanceof XSDFloat && literal2.getFloat() == Float.NEGATIVE_INFINITY;
-					} else if (value1Double == Double.POSITIVE_INFINITY) {
-						return type2 instanceof XSDFloat && literal2.getFloat() == Float.POSITIVE_INFINITY;
-					}
-					// get value as BigDecimal
-					decimal1 = new BigDecimal(value1Double);
-					/*
-					 * NOTE: don't use BigDecimal#valueOf(value1Double) or new
-					 * BigDecimal(literal1.getLexicalForm()) to represented value from the double
-					 * value space, not the double lexical space
-					 */
-				} else if (type1 instanceof XSDFloat) {
-					float value1Float = literal1.getFloat();
-					// handle special cases
-					if (Float.isNaN(value1Float)) {
-						return type2 instanceof XSDDouble && Double.isNaN(literal2.getDouble());
-					} else if (value1Float == Double.NEGATIVE_INFINITY) {
-						return type2 instanceof XSDDouble && literal2.getDouble() == Double.NEGATIVE_INFINITY;
-					} else if (value1Float == Double.POSITIVE_INFINITY) {
-						return type2 instanceof XSDDouble && literal2.getDouble() == Double.POSITIVE_INFINITY;
-					}
-					// get value as BigDecimal
-					decimal1 = new BigDecimal(value1Float);
-					/*
-					 * NOTE: don't use BigDecimal#valueOf(value1Float) or new
-					 * BigDecimal(literal1.getLexicalForm()) to represented value from the float
-					 * value space, not the float lexical space
-					 */
-				} else {
-					return false;
-				}
+    /**
+     * Removes all values that are known wrong values.
+     */
+    private void removeKnownWrongValues(Map<Resource, Map<String, Set<RDFNode>>> valuesByVariableByResource, Resource dataset) {
+        for (Resource resource : valuesByVariableByResource.keySet()) {
+            removeKnownWrongValues(valuesByVariableByResource.get(resource), resource, dataset);
+        }
+    }
 
-				// get precise BigDecimal of literal 2
-				if (type2 instanceof XSDBaseNumericType) {
-					decimal2 = new BigDecimal(literal2.getLexicalForm());
-				} else if (type2 instanceof XSDDouble) {
-					double value2Double = literal2.getDouble();
-					// handle special cases
-					if (Double.isNaN(value2Double) || value2Double == Double.NEGATIVE_INFINITY
-							|| value2Double == Double.POSITIVE_INFINITY) {
-						return false;
-					}
-					// get value as BigDecimal
-					decimal2 = new BigDecimal(value2Double);
-					/*
-					 * NOTE: don't use BigDecimal#valueOf(value2Double) or new
-					 * BigDecimal(literal2.getLexicalForm()) to represented value from the double
-					 * value space, not the double lexical space
-					 */
-				} else if (type2 instanceof XSDFloat) {
-					float value2Float = literal2.getFloat();
-					// handle special cases
-					if (Float.isNaN(value2Float) || value2Float == Float.NEGATIVE_INFINITY
-							|| value2Float == Float.POSITIVE_INFINITY) {
-						return false;
-					}
-					// get value as BigDecimal
-					decimal2 = new BigDecimal(value2Float);
-					/*
-					 * NOTE: don't use BigDecimal#valueOf(value2Float) or new
-					 * BigDecimal(literal2.getLexicalForm()) to represented value from the float
-					 * value space, not the float lexical space
-					 */
-				} else {
-					return false;
-				}
+    /**
+     * Removes all values that are known wrong values.
+     */
+    private void removeKnownWrongValues(Map<String, Set<RDFNode>> valuesByVariable, Resource resource, Resource dataset) {
+        for (String variable : valuesByVariable.keySet()) {
+            Set<RDFNode> values = valuesByVariable.get(variable);
+            values.removeIf(value -> this.isWrongValue(resource, variable, value, aspect, dataset));
+        }
+    }
 
-				// compare BigDecimals
-				return decimal1.compareTo(decimal2) == 0;
-			} catch (NumberFormatException e) {
-				return false;
-			}
-		} else {
-			return false;
-		}
-	}
-
-	/**
-	 * Checks if a value should be excluded from the comparison.
-	 * 
-	 * @param value the value to check
-	 * @return {@code true}, if the value should not be used, otherwise {@code false}
-	 */
-	public boolean isExcludedValue(RDFNode value) {
-		if (!value.isLiteral() ||
-				!(value.asLiteral().getDatatype() instanceof XSDBaseStringType) &&
-						!(value.asLiteral().getDatatype() instanceof RDFLangString)) {
-			return false;
-		} else {
-			String langStr = value.asLiteral().getLanguage();
-			return languageFilterPatterns.stream()
-					.noneMatch(languageFilterPattern -> NodeFunctions.langMatches(langStr, languageFilterPattern));
-		}
-	}
+    protected boolean isWrongValue(Resource affectedResource, String affectedVariableName, RDFNode affectedValue,
+                                   Resource affectedAspect, Resource affectedDataset) {
+        return Metadata.isWrongValue(affectedResource, affectedVariableName, affectedValue, aspect,
+                this.getInputMetaModelUnion(affectedDataset));
+    }
 }
