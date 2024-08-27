@@ -37,17 +37,20 @@ public class PerDatasetTupelRatio extends Ratio<ResourceTupel> {
     public void setRatioOf(PerDatasetPairCount numerators, PerDatasetCount denominators) {
         for (ResourcePair pair : numerators.keySet()) {
             BigDecimal numerator = BigDecimal.valueOf(numerators.get(pair));
-            if (denominators.contains(pair.first)) {
-                BigDecimal denominator = BigDecimal.valueOf(denominators.get(pair.first));
+            setRatioForTupel(numerator, denominators, pair.first, pair.second);
+            setRatioForTupel(numerator, denominators, pair.second, pair.first);
+        }
+    }
+
+    void setRatioForTupel(BigDecimal numerator, PerDatasetCount denominators, Resource measuredResource, Resource otherResource) {
+        if (denominators.contains(measuredResource)) {
+            BigDecimal denominator = BigDecimal.valueOf(denominators.get(measuredResource));
+            if (!denominator.equals(BigDecimal.ZERO)) {
                 BigDecimal value = numerator.divide(denominator, SCALE, ROUNDING_MODE);
-                set(ResourceTupel.getTupel(pair.first, pair.second), value);
-            }
-            if (denominators.contains(pair.second)) {
-                BigDecimal denominator = BigDecimal.valueOf(denominators.get(pair.second));
-                BigDecimal value = numerator.divide(denominator, SCALE, ROUNDING_MODE);
-                set(ResourceTupel.getTupel(pair.second, pair.first), value);
+                set(ResourceTupel.getTupel(measuredResource, otherResource), value);
             }
         }
+        // TODO check direction
     }
 
     public void storeInModel(Aspect aspect, Map<Resource, Model> outputModelsMap) {
