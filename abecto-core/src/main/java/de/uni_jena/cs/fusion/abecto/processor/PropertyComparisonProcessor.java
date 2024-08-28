@@ -73,7 +73,8 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
     public boolean allowLangTagSkip;
     Aspect theAspect; // TODO rename to `aspect` after renaming the aspect parameter variable into `aspectIri`
     Set<Resource> datasets;
-    Set<ResourcePair> datasetPairs;
+    Set<ResourcePair> datasetPairsWithoutRepetition;
+    Set<ResourcePair> datasetPairsWithRepetition;
     Set<ResourceTupel> datasetTupels;
     Map<Resource, Model> outputMetaModelByDataset;
     /**
@@ -123,7 +124,7 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
                 }
             }
 
-            for (ResourcePair datasetPair : datasetPairs) {
+            for (ResourcePair datasetPair : datasetPairsWithRepetition) {
                 for (String variable : variables) {
                     if (theAspect.getPattern(datasetPair.first).getResultVars().contains(variable)
                             && theAspect.getPattern(datasetPair.second).getResultVars().contains(variable)) {
@@ -147,7 +148,8 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
 
     private void setAspectDatasets() {
         datasets = theAspect.getDatasets();
-        datasetPairs = ResourcePair.getPairsOf(datasets);
+        datasetPairsWithoutRepetition = ResourcePair.getPairsWithoutRepetitionOf(datasets);
+        datasetPairsWithRepetition = ResourcePair.getPairsWithRepetitionOf(datasets);
         datasetTupels = ResourceTupel.getTupelsOf(datasets);
         outputMetaModelByDataset = getOutputMetaModels(datasets);
     }
@@ -164,7 +166,6 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         count = new HashMap<>();
         for (String variable : variables) {
             PerDatasetCount countOfVariable = new PerDatasetCount(AV.count, OM.one);
-            countOfVariable.reset(datasets, 0L);
             count.put(variable, countOfVariable);
         }
     }
@@ -173,7 +174,6 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         deduplicatedCount = new HashMap<>();
         for (String variable : variables) {
             PerDatasetCount deduplicatedCountOfVariable = new PerDatasetCount(AV.deduplicatedCount, OM.one);
-            deduplicatedCountOfVariable.reset(datasets, 0L);
             deduplicatedCount.put(variable, deduplicatedCountOfVariable);
         }
     }
@@ -182,7 +182,6 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         absoluteCoverage = new HashMap<>();
         for (String variable : variables) {
             PerDatasetPairCount absoluteCoverageOfVariable = new PerDatasetPairCount(AV.absoluteCoverage, OM.one);
-            absoluteCoverageOfVariable.reset(datasetPairs, 0L);
             absoluteCoverage.put(variable, absoluteCoverageOfVariable);
         }
     }
@@ -281,14 +280,14 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
     void measureCountAndDeduplicatedCount(Resource dataset, String variable, Collection<RDFNode> valuesOfVariable) {
         long valuesCountWithDuplicates = valuesOfVariable.size();
         long valuesCountWithoutDuplicates = deduplicate(valuesOfVariable).size();
-        count.get(variable).incrementBy(dataset, valuesCountWithDuplicates);
-        deduplicatedCount.get(variable).incrementBy(dataset, valuesCountWithoutDuplicates);
+        count.get(variable).incrementByOrSet(dataset, valuesCountWithDuplicates);
+        deduplicatedCount.get(variable).incrementByOrSet(dataset, valuesCountWithoutDuplicates);
     }
 
     private void calculateCompleteness() {
         for (String variable : variables) {
             // TODO add value exclusion filter description to measurement description
-            completeness.put(variable, calculateCompleteness(datasetPairs, absoluteCoverage.get(variable), deduplicatedCount.get(variable)));
+            completeness.put(variable, calculateCompleteness(datasetPairsWithoutRepetition, absoluteCoverage.get(variable), deduplicatedCount.get(variable)));
         }
     }
 
@@ -389,9 +388,13 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         mapResources(variable, resourcesByMappedValues, valuesByVariableByResource1);
         mapResources(variable, resourcesByMappedValues, valuesByVariableByResource2);
 
+
         // update measurements
-        int pairwiseOverlap = getPairwiseOverlap(valuesByVariableByResource1.keySet(), valuesByVariableByResource2.keySet(), resourcesByMappedValues);
-        absoluteCoverage.get(variable).incrementBy(datasetPair, pairwiseOverlap);
+        if (!datasetPair.first.equals(datasetPair.second)) {// do not measure for first == second
+            // TODO test, that no absolute coverage exist for dataset compared with itself
+            int pairwiseOverlap = getPairwiseOverlap(valuesByVariableByResource1.keySet(), valuesByVariableByResource2.keySet(), resourcesByMappedValues);
+            absoluteCoverage.get(variable).incrementByOrSet(datasetPair, pairwiseOverlap);
+        }
 
         // deviation: a pair of resources with each having a value not present in the
         // other resource

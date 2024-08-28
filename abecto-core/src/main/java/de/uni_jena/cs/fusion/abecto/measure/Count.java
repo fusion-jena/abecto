@@ -26,11 +26,11 @@ public abstract class Count<K> extends Measure<K, Long> {
         super(quantity, unit);
     }
 
-    public void incrementByOne(K key) {
-        incrementBy(key, 1);
+    public void incrementByOrSetOne(K key) {
+        incrementByOrSet(key, 1);
     }
 
-    public void incrementBy(K key, long increment) {
+    public void incrementByOrSet(K key, long increment) {
         values.merge(key, increment, Long::sum);
     }
 

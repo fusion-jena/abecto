@@ -19,7 +19,6 @@
 package de.uni_jena.cs.fusion.abecto.processor;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -108,7 +107,7 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
 
     private void setAspectDatasets() {
         datasets = aspect.getDatasets();
-        datasetPairs = ResourcePair.getPairsOf(datasets);
+        datasetPairs = ResourcePair.getPairsWithoutRepetitionOf(datasets);
         datasetTupels = ResourceTupel.getTupelsOf(datasets);
         outputMetaModelByDataset = getOutputMetaModels(datasets);
     }
@@ -145,7 +144,7 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
         for (ResourcePair datasetPair : datasetPairs) {
             if (!correspondingResourcesByDataset.get(datasetPair.first).isEmpty() &&
                     !correspondingResourcesByDataset.get(datasetPair.second).isEmpty()) {
-                absoluteCoverage.incrementByOne(datasetPair);
+                absoluteCoverage.incrementByOrSetOne(datasetPair);
             }
         }
     }
@@ -171,7 +170,7 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
         for (Resource dataset : datasets) {
             if (!correspondingResourcesByDataset.get(dataset).isEmpty()) {
                 int occurrencesInDataset = correspondingResourcesByDataset.get(dataset).size();
-                duplicateCount.incrementBy(dataset, occurrencesInDataset - 1);
+                duplicateCount.incrementByOrSet(dataset, occurrencesInDataset - 1);
             }
         }
     }

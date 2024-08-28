@@ -97,11 +97,6 @@ public abstract class ComparisonProcessor<P extends Processor<P>> extends Proces
      * pattern of the given dataset in the given {@link Model}. If this aspect does
      * not cover the given dataset or the model does not contain values for the
      * given resource, {@code null} is returned.
-     *
-     * @param resource
-     * @param dataset
-     * @param aspect
-     * @return
      */
     public Map<String, Set<RDFNode>> selectResourceValues(Resource resource, Resource dataset,
                                                           Aspect aspect, Collection<String> variables) {
@@ -199,7 +194,9 @@ public abstract class ComparisonProcessor<P extends Processor<P>> extends Proces
     long calculateTotalPairwiseOverlap(Iterable<ResourcePair> datasetPairs, PerDatasetPairCount absoluteCoverage) {
         long totalPairwiseOverlap = 0L;
         for (ResourcePair datasetPair : datasetPairs) {
-            totalPairwiseOverlap += absoluteCoverage.get(datasetPair);
+            if (absoluteCoverage.contains(datasetPair)) {
+                totalPairwiseOverlap += absoluteCoverage.get(datasetPair);
+            }
         }
         return totalPairwiseOverlap;
     }

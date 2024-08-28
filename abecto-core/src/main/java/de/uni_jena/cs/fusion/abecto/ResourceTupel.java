@@ -45,7 +45,7 @@ public class ResourceTupel {
     }
 
     public static ResourceTupel getTupel(Resource first, Resource second) {
-        return new ResourceTupel(second, first);
+        return new ResourceTupel(first, second);
     }
 
     @Override
