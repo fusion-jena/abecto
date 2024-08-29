@@ -21,17 +21,25 @@ package de.uni_jena.cs.fusion.abecto.measure;
 import de.uni_jena.cs.fusion.abecto.Aspect;
 import de.uni_jena.cs.fusion.abecto.Metadata;
 import de.uni_jena.cs.fusion.abecto.ResourcePair;
-import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
-import de.uni_jena.cs.fusion.abecto.vocabulary.OM;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class PerDatasetPairCount extends Count<ResourcePair> {
 
     public PerDatasetPairCount(Resource quantity, Resource unit) {
         super(quantity, unit);
+    }
+
+    public static <K> Map<K, PerDatasetPairCount> mapOfCounts(Iterable<K> keys, Resource quantity, Resource unit) {
+        Map<K, PerDatasetPairCount> mapOfCounts = new HashMap<>();
+        for (K key : keys) {
+            PerDatasetPairCount countOfVariable = new PerDatasetPairCount(quantity, unit);
+            mapOfCounts.put(key, countOfVariable);
+        }
+        return mapOfCounts;
     }
 
     public void storeInModel(Aspect aspect, Map<Resource, Model> outputModelsMap) {

@@ -155,46 +155,10 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
     }
 
     private void initializeMeasures() {
-        initializeCount();
-        initializeDeduplicatedCount();
-        initializeAbsoluteCoverage();
-        initializeRelativeCoverage();
-        initializeCompleteness();
-    }
-
-    private void initializeCount() {
-        count = new HashMap<>();
-        for (String variable : variables) {
-            PerDatasetCount countOfVariable = new PerDatasetCount(AV.count, OM.one);
-            count.put(variable, countOfVariable);
-        }
-    }
-
-    private void initializeDeduplicatedCount() {
-        deduplicatedCount = new HashMap<>();
-        for (String variable : variables) {
-            PerDatasetCount deduplicatedCountOfVariable = new PerDatasetCount(AV.deduplicatedCount, OM.one);
-            deduplicatedCount.put(variable, deduplicatedCountOfVariable);
-        }
-    }
-
-    private void initializeAbsoluteCoverage() {
-        absoluteCoverage = new HashMap<>();
-        for (String variable : variables) {
-            PerDatasetPairCount absoluteCoverageOfVariable = new PerDatasetPairCount(AV.absoluteCoverage, OM.one);
-            absoluteCoverage.put(variable, absoluteCoverageOfVariable);
-        }
-    }
-
-    private void initializeRelativeCoverage() {
-        relativeCoverage = new HashMap<>();
-        for (String variable : variables) {
-            PerDatasetTupelRatio relativeCoverageOfVariable = new PerDatasetTupelRatio(AV.relativeCoverage, OM.one);
-            relativeCoverage.put(variable, relativeCoverageOfVariable);
-        }
-    }
-
-    private void initializeCompleteness() {
+        count = PerDatasetCount.mapOfCounts(variables, AV.count, OM.one);
+        deduplicatedCount = PerDatasetCount.mapOfCounts(variables, AV.deduplicatedCount, OM.one);
+        absoluteCoverage = PerDatasetPairCount.mapOfCounts(variables, AV.absoluteCoverage, OM.one);
+        relativeCoverage = PerDatasetTupelRatio.mapOfRatios(variables, AV.relativeCoverage, OM.one);
         completeness = new HashMap<>();
     }
 

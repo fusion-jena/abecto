@@ -26,12 +26,22 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.Map;
 
 public class PerDatasetTupelRatio extends Ratio<ResourceTupel> {
 
     public PerDatasetTupelRatio(Resource quantity, Resource unit) {
         super(quantity, unit);
+    }
+
+    public static <K> Map<K, PerDatasetTupelRatio> mapOfRatios(Iterable<K> keys, Resource quantity, Resource unit) {
+        Map<K, PerDatasetTupelRatio> mapOfCounts = new HashMap<>();
+        for (K key : keys) {
+            PerDatasetTupelRatio ratioOfVariable = new PerDatasetTupelRatio(quantity, unit);
+            mapOfCounts.put(key, ratioOfVariable);
+        }
+        return mapOfCounts;
     }
 
     public void setRatioOf(PerDatasetPairCount numerators, PerDatasetCount denominators) {
