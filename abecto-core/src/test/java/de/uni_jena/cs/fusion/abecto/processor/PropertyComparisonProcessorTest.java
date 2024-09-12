@@ -456,15 +456,15 @@ public class PropertyComparisonProcessorTest {
         assertDeviation(dataset(2), subject(4), "value2", dataset(2), subject(3), "value1", outputMetaModel2, false);
 
         // assert measurements
-        BigDecimal expectedCount1 = new BigDecimal(4);
-        BigDecimal expectedCount2 = new BigDecimal(4);
-        BigDecimal expectedDeduplicatedCount1 = new BigDecimal(2);
-        BigDecimal expectedDeduplicatedCount2 = new BigDecimal(2);
-        BigDecimal expectedAbsoluteCoverage = new BigDecimal(2);
-        BigDecimal expectedRelativeCoverage1 = new BigDecimal(1);
-        BigDecimal expectedRelativeCoverage2 = new BigDecimal(1);
-        BigDecimal expectedCompleteness1 = new BigDecimal(1);
-        BigDecimal expectedCompleteness2 = new BigDecimal(1);
+        BigDecimal expectedCount1 = new BigDecimal("4");
+        BigDecimal expectedCount2 = new BigDecimal("4");
+        BigDecimal expectedDeduplicatedCount1 = new BigDecimal("2");
+        BigDecimal expectedDeduplicatedCount2 = new BigDecimal("2");
+        BigDecimal expectedAbsoluteCoverage = new BigDecimal("2");
+        BigDecimal expectedRelativeCoverage1 = new BigDecimal("1");
+        BigDecimal expectedRelativeCoverage2 = new BigDecimal("1");
+        BigDecimal expectedCompleteness1 = new BigDecimal("1");
+        BigDecimal expectedCompleteness2 = new BigDecimal("1");
         assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2,
                 expectedAbsoluteCoverage,
                 expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
@@ -562,15 +562,15 @@ public class PropertyComparisonProcessorTest {
         assertDeviation(dataset(2), subject(4), "value2", dataset(2), subject(3), "value1", outputMetaModel2, false);
 
         // assert measurements
-        BigDecimal expectedCount1 = new BigDecimal(2);
-        BigDecimal expectedCount2 = new BigDecimal(1);
-        BigDecimal expectedDeduplicatedCount1 = new BigDecimal(1);
-        BigDecimal expectedDeduplicatedCount2 = new BigDecimal(1);
-        BigDecimal expectedAbsoluteCoverage = new BigDecimal(1);
-        BigDecimal expectedRelativeCoverage1 = new BigDecimal(1);
-        BigDecimal expectedRelativeCoverage2 = new BigDecimal(1);
-        BigDecimal expectedCompleteness1 = new BigDecimal(1);
-        BigDecimal expectedCompleteness2 = new BigDecimal(1);
+        BigDecimal expectedCount1 = new BigDecimal("2");
+        BigDecimal expectedCount2 = new BigDecimal("1");
+        BigDecimal expectedDeduplicatedCount1 = new BigDecimal("1");
+        BigDecimal expectedDeduplicatedCount2 = new BigDecimal("1");
+        BigDecimal expectedAbsoluteCoverage = new BigDecimal("1");
+        BigDecimal expectedRelativeCoverage1 = new BigDecimal("1");
+        BigDecimal expectedRelativeCoverage2 = new BigDecimal("1");
+        BigDecimal expectedCompleteness1 = new BigDecimal("1");
+        BigDecimal expectedCompleteness2 = new BigDecimal("1");
         assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2,
                 expectedAbsoluteCoverage,
                 expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
@@ -668,15 +668,15 @@ public class PropertyComparisonProcessorTest {
         assertDeviation(dataset(2), subject(4), "value2", dataset(2), subject(3), "value1", outputMetaModel2, false);
 
         // assert measurements
-        BigDecimal expectedCount1 = new BigDecimal(2);
-        BigDecimal expectedCount2 = new BigDecimal(4);
-        BigDecimal expectedDeduplicatedCount1 = new BigDecimal(2);
-        BigDecimal expectedDeduplicatedCount2 = new BigDecimal(2);
-        BigDecimal expectedAbsoluteCoverage = new BigDecimal(2);
-        BigDecimal expectedRelativeCoverage1 = new BigDecimal(1);
-        BigDecimal expectedRelativeCoverage2 = new BigDecimal(1);
-        BigDecimal expectedCompleteness1 = new BigDecimal(1);
-        BigDecimal expectedCompleteness2 = new BigDecimal(1);
+        BigDecimal expectedCount1 = new BigDecimal("2");
+        BigDecimal expectedCount2 = new BigDecimal("4");
+        BigDecimal expectedDeduplicatedCount1 = new BigDecimal("2");
+        BigDecimal expectedDeduplicatedCount2 = new BigDecimal("2");
+        BigDecimal expectedAbsoluteCoverage = new BigDecimal("2");
+        BigDecimal expectedRelativeCoverage1 = new BigDecimal("1");
+        BigDecimal expectedRelativeCoverage2 = new BigDecimal("1");
+        BigDecimal expectedCompleteness1 = new BigDecimal("1");
+        BigDecimal expectedCompleteness2 = new BigDecimal("1");
         assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2,
                 expectedAbsoluteCoverage,
                 expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
@@ -774,15 +774,15 @@ public class PropertyComparisonProcessorTest {
         assertDeviation(dataset(2), subject(4), "value2", dataset(2), subject(3), "value1", outputMetaModel2, false);
 
         // assert measurements
-        BigDecimal expectedCount1 = new BigDecimal(2);
-        BigDecimal expectedCount2 = new BigDecimal(2);
-        BigDecimal expectedDeduplicatedCount1 = new BigDecimal(2);
-        BigDecimal expectedDeduplicatedCount2 = new BigDecimal(2);
-        BigDecimal expectedAbsoluteCoverage = new BigDecimal(2);
-        BigDecimal expectedRelativeCoverage1 = new BigDecimal(1);
-        BigDecimal expectedRelativeCoverage2 = new BigDecimal(1);
-        BigDecimal expectedCompleteness1 = new BigDecimal(1);
-        BigDecimal expectedCompleteness2 = new BigDecimal(1);
+        BigDecimal expectedCount1 = new BigDecimal("2");
+        BigDecimal expectedCount2 = new BigDecimal("2");
+        BigDecimal expectedDeduplicatedCount1 = new BigDecimal("2");
+        BigDecimal expectedDeduplicatedCount2 = new BigDecimal("2");
+        BigDecimal expectedAbsoluteCoverage = new BigDecimal("2");
+        BigDecimal expectedRelativeCoverage1 = new BigDecimal("1");
+        BigDecimal expectedRelativeCoverage2 = new BigDecimal("1");
+        BigDecimal expectedCompleteness1 = new BigDecimal("1");
+        BigDecimal expectedCompleteness2 = new BigDecimal("1");
         assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2,
                 expectedAbsoluteCoverage,
                 expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
@@ -880,15 +880,15 @@ public class PropertyComparisonProcessorTest {
         assertDeviation(dataset(2), subject(4), "value2", dataset(2), subject(3), "value1", outputMetaModel2, false);
 
         // assert measurements
-        BigDecimal expectedCount1 = new BigDecimal(2);
-        BigDecimal expectedCount2 = new BigDecimal(4);
-        BigDecimal expectedDeduplicatedCount1 = new BigDecimal(1);
-        BigDecimal expectedDeduplicatedCount2 = new BigDecimal(2);
-        BigDecimal expectedAbsoluteCoverage = new BigDecimal(1);
-        BigDecimal expectedRelativeCoverage1 = new BigDecimal(0.5);
-        BigDecimal expectedRelativeCoverage2 = new BigDecimal(1);
-        BigDecimal expectedCompleteness1 = new BigDecimal(0.5);
-        BigDecimal expectedCompleteness2 = new BigDecimal(1);
+        BigDecimal expectedCount1 = new BigDecimal("2");
+        BigDecimal expectedCount2 = new BigDecimal("4");
+        BigDecimal expectedDeduplicatedCount1 = new BigDecimal("1");
+        BigDecimal expectedDeduplicatedCount2 = new BigDecimal("2");
+        BigDecimal expectedAbsoluteCoverage = new BigDecimal("1");
+        BigDecimal expectedRelativeCoverage1 = new BigDecimal("0.5");
+        BigDecimal expectedRelativeCoverage2 = new BigDecimal("1");
+        BigDecimal expectedCompleteness1 = new BigDecimal("0.5");
+        BigDecimal expectedCompleteness2 = new BigDecimal("1");
         assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2,
                 expectedAbsoluteCoverage,
                 expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
@@ -986,15 +986,15 @@ public class PropertyComparisonProcessorTest {
         assertDeviation(dataset(2), subject(4), "value2", dataset(2), subject(3), "value1", outputMetaModel2, false);
 
         // assert measurements
-        BigDecimal expectedCount1 = new BigDecimal(1);
-        BigDecimal expectedCount2 = new BigDecimal(2);
-        BigDecimal expectedDeduplicatedCount1 = new BigDecimal(1);
-        BigDecimal expectedDeduplicatedCount2 = new BigDecimal(2);
-        BigDecimal expectedAbsoluteCoverage = new BigDecimal(1);
-        BigDecimal expectedRelativeCoverage1 = new BigDecimal(0.5);
-        BigDecimal expectedRelativeCoverage2 = new BigDecimal(1);
-        BigDecimal expectedCompleteness1 = new BigDecimal(0.5);
-        BigDecimal expectedCompleteness2 = new BigDecimal(1);
+        BigDecimal expectedCount1 = new BigDecimal("1");
+        BigDecimal expectedCount2 = new BigDecimal("2");
+        BigDecimal expectedDeduplicatedCount1 = new BigDecimal("1");
+        BigDecimal expectedDeduplicatedCount2 = new BigDecimal("2");
+        BigDecimal expectedAbsoluteCoverage = new BigDecimal("1");
+        BigDecimal expectedRelativeCoverage1 = new BigDecimal("0.5");
+        BigDecimal expectedRelativeCoverage2 = new BigDecimal("1");
+        BigDecimal expectedCompleteness1 = new BigDecimal("0.5");
+        BigDecimal expectedCompleteness2 = new BigDecimal("1");
         assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2,
                 expectedAbsoluteCoverage,
                 expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
@@ -1114,15 +1114,15 @@ public class PropertyComparisonProcessorTest {
         assertDeviation(dataset(2), subject(4), "value2", dataset(2), subject(3), "value1", outputMetaModel2, false);
 
         // assert measurements
-        BigDecimal expectedCount1 = new BigDecimal(1);
-        BigDecimal expectedCount2 = new BigDecimal(1);
-        BigDecimal expectedDeduplicatedCount1 = new BigDecimal(1);
-        BigDecimal expectedDeduplicatedCount2 = new BigDecimal(1);
-        BigDecimal expectedAbsoluteCoverage = new BigDecimal(1);
-        BigDecimal expectedRelativeCoverage1 = new BigDecimal(1);
-        BigDecimal expectedRelativeCoverage2 = new BigDecimal(1);
-        BigDecimal expectedCompleteness1 = new BigDecimal(1);
-        BigDecimal expectedCompleteness2 = new BigDecimal(1);
+        BigDecimal expectedCount1 = new BigDecimal("1");
+        BigDecimal expectedCount2 = new BigDecimal("1");
+        BigDecimal expectedDeduplicatedCount1 = new BigDecimal("1");
+        BigDecimal expectedDeduplicatedCount2 = new BigDecimal("1");
+        BigDecimal expectedAbsoluteCoverage = new BigDecimal("1");
+        BigDecimal expectedRelativeCoverage1 = new BigDecimal("1");
+        BigDecimal expectedRelativeCoverage2 = new BigDecimal("1");
+        BigDecimal expectedCompleteness1 = new BigDecimal("1");
+        BigDecimal expectedCompleteness2 = new BigDecimal("1");
         assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2,
                 expectedAbsoluteCoverage,
                 expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
@@ -1220,13 +1220,13 @@ public class PropertyComparisonProcessorTest {
         assertDeviation(dataset(2), subject(4), "value2", dataset(2), subject(3), "value1", outputMetaModel2, false);
 
         // assert measurements
-        BigDecimal expectedCount1 = new BigDecimal(1);
-        BigDecimal expectedCount2 = new BigDecimal(1);
-        BigDecimal expectedDeduplicatedCount1 = new BigDecimal(1);
-        BigDecimal expectedDeduplicatedCount2 = new BigDecimal(1);
-        BigDecimal expectedAbsoluteCoverage = new BigDecimal(0);
-        BigDecimal expectedRelativeCoverage1 = new BigDecimal(0);
-        BigDecimal expectedRelativeCoverage2 = new BigDecimal(0);
+        BigDecimal expectedCount1 = new BigDecimal("1");
+        BigDecimal expectedCount2 = new BigDecimal("1");
+        BigDecimal expectedDeduplicatedCount1 = new BigDecimal("1");
+        BigDecimal expectedDeduplicatedCount2 = new BigDecimal("1");
+        BigDecimal expectedAbsoluteCoverage = new BigDecimal("0");
+        BigDecimal expectedRelativeCoverage1 = new BigDecimal("0");
+        BigDecimal expectedRelativeCoverage2 = new BigDecimal("0");
         BigDecimal expectedCompleteness1 = null;
         BigDecimal expectedCompleteness2 = null;
         assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2,
@@ -1326,12 +1326,12 @@ public class PropertyComparisonProcessorTest {
         assertDeviation(dataset(2), subject(4), "value2", dataset(2), subject(3), "value1", outputMetaModel2, false);
 
         // assert measurements
-        BigDecimal expectedCount1 = new BigDecimal(0);
-        BigDecimal expectedCount2 = new BigDecimal(1);
-        BigDecimal expectedDeduplicatedCount1 = new BigDecimal(0);
-        BigDecimal expectedDeduplicatedCount2 = new BigDecimal(1);
-        BigDecimal expectedAbsoluteCoverage = new BigDecimal(0);
-        BigDecimal expectedRelativeCoverage1 = new BigDecimal(0);
+        BigDecimal expectedCount1 = new BigDecimal("0");
+        BigDecimal expectedCount2 = new BigDecimal("1");
+        BigDecimal expectedDeduplicatedCount1 = new BigDecimal("0");
+        BigDecimal expectedDeduplicatedCount2 = new BigDecimal("1");
+        BigDecimal expectedAbsoluteCoverage = new BigDecimal("0");
+        BigDecimal expectedRelativeCoverage1 = new BigDecimal("0");
         BigDecimal expectedRelativeCoverage2 = null;
         BigDecimal expectedCompleteness1 = null;
         BigDecimal expectedCompleteness2 = null;
@@ -1437,9 +1437,9 @@ public class PropertyComparisonProcessorTest {
         assertDeviation(dataset(2), subject(4), "value2", dataset(2), subject(3), "value1", outputMetaModel2, false);
 
         // assert measurements
-        BigDecimal expectedCount1 = new BigDecimal(1);
+        BigDecimal expectedCount1 = new BigDecimal("1");
         BigDecimal expectedCount2 = null;
-        BigDecimal expectedDeduplicatedCount1 = new BigDecimal(1);
+        BigDecimal expectedDeduplicatedCount1 = new BigDecimal("1");
         BigDecimal expectedDeduplicatedCount2 = null;
         BigDecimal expectedAbsoluteCoverage = null;
         BigDecimal expectedRelativeCoverage1 = null;
