@@ -58,20 +58,20 @@ public class ComparisonBenchmarkDataSupplier {
         return IntStream.range(0, sampleSize).map(localId -> localId + sampleId * sampleSize).mapToObj(i -> ResourceFactory.createResource(Integer.toString(i)));
     }
 
-    public Map<String, Set<RDFNode>> selectResourceValues(Resource resource, Resource sample,
-                                                          Collection<String> variables) {
+    public Map<String, Set<RDFNode>> getValuesByVariable(Resource resource, Resource sample,
+                                                         Collection<String> variables) {
         int resourceId = Integer.parseInt(resource.getURI());
         int sampleId = Integer.parseInt(sample.getURI());
         if (resourceId / sampleSize == sampleId) {
-            return selectResourceValues(resourceId, sampleId, variables.iterator().next());
+            return getValuesByVariable(resourceId, sampleId, variables.iterator().next());
         } else {
             return null;
         }
     }
 
-    public Map<String, Set<RDFNode>> selectResourceValues(int resourceId, int sampleId,
-                                                          String variable) {
-        Set<RDFNode> valuesSet = new HashSet<>(1); // Note: must be mutable
+    public Map<String, Set<RDFNode>> getValuesByVariable(int resourceId, int sampleId,
+                                                         String variable) {
+        Set<RDFNode> valuesSet = new HashSet<>(1); // Note: must be mutable TODO not necessary after not ignoring wrong values for measures anymore
         if (resourceId % sampleSize >= sampleSize * errorRate) {
             valuesSet.add(correctValue);
         } else {
@@ -80,15 +80,15 @@ public class ComparisonBenchmarkDataSupplier {
         return Collections.singletonMap(variable, valuesSet);
     }
 
-    public Map<Resource, Map<String, Set<RDFNode>>> selectResourceValues(Collection<Resource> resources,
-                                                                         Resource sample, List<String> variables) {
+    public Map<Resource, Map<String, Set<RDFNode>>> getValuesByVariableResource(Collection<Resource> resources,
+                                                                                Resource sample, List<String> variables) {
         int sampleId = Integer.parseInt(sample.getURI());
         String variable = variables.iterator().next();
         Map<Resource, Map<String, Set<RDFNode>>> resourceValues = new HashMap<>();
         for (Resource resource : resources) {
             int resourceId = Integer.parseInt(resource.getURI());
             if (resourceId / sampleSize == sampleId) {
-                resourceValues.put(resource, selectResourceValues(resourceId, sampleId, variable));
+                resourceValues.put(resource, getValuesByVariable(resourceId, sampleId, variable));
             }
         }
         return resourceValues;

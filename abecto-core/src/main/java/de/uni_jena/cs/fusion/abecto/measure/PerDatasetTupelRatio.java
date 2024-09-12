@@ -45,27 +45,20 @@ public class PerDatasetTupelRatio extends Ratio<ResourceTupel> {
     }
 
     public void setRatioOf(PerDatasetPairCount numerators, PerDatasetCount denominators) {
-        for (ResourcePair pair : numerators.keySet()) {
-            BigDecimal numerator = BigDecimal.valueOf(numerators.get(pair));
-            setRatioForTupel(numerator, denominators, pair.first, pair.second);
-            setRatioForTupel(numerator, denominators, pair.second, pair.first);
-        }
-    }
-
-    void setRatioForTupel(BigDecimal numerator, PerDatasetCount denominators, Resource asessedResource, Resource otherResource) {
-        if (denominators.contains(otherResource)) {
-            BigDecimal denominator = BigDecimal.valueOf(denominators.get(otherResource));
-            if (!denominator.equals(BigDecimal.ZERO)) {
-                BigDecimal value = numerator.divide(denominator, SCALE, ROUNDING_MODE);
-                set(ResourceTupel.getTupel(asessedResource, otherResource), value);
+        for (ResourcePair datasetPair : numerators.keySet()) {
+            if (denominators.contains(datasetPair.first) && denominators.contains(datasetPair.second)) {
+                BigDecimal numerator = BigDecimal.valueOf(numerators.get(datasetPair));
+                setRatioForTupel(numerator, denominators, datasetPair.first, datasetPair.second);
+                setRatioForTupel(numerator, denominators, datasetPair.second, datasetPair.first);
             }
         }
     }
 
-    public void storeInModel(Aspect aspect, Map<Resource, Model> outputModelsMap) {
-        for (ResourceTupel tupel : keySet()) {
-            Metadata.addQualityMeasurement(quantity, get(tupel), unit,
-                    tupel.first, tupel.second, aspect.getIri(), outputModelsMap.get(tupel.first));
+    void setRatioForTupel(BigDecimal numerator, PerDatasetCount denominators, Resource assessedDataset, Resource comparedDataset) {
+        BigDecimal denominator = BigDecimal.valueOf(denominators.get(comparedDataset));
+        if (!denominator.equals(BigDecimal.ZERO)) {
+            BigDecimal value = numerator.divide(denominator, SCALE, ROUNDING_MODE);
+            set(ResourceTupel.getTupel(assessedDataset, comparedDataset), value);
         }
     }
 

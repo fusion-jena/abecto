@@ -89,6 +89,7 @@ public class PopulationComparisonProcessorBenchmark {
             return this.dataSupplier.getResourceKeys(dataset);
         }
 
+        @Override
         public Stream<List<Resource>> getCorrespondenceGroups() {
             return this.dataSupplier.getCorrespondenceGroups();
         }

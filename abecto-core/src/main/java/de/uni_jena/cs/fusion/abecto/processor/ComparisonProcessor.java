@@ -26,19 +26,17 @@ import de.uni_jena.cs.fusion.abecto.measure.PerDatasetPairCount;
 import de.uni_jena.cs.fusion.abecto.measure.PerDatasetRatio;
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 import de.uni_jena.cs.fusion.abecto.vocabulary.OM;
-import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
-import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.sparql.core.Var;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 
 public abstract class ComparisonProcessor<P extends Processor<P>> extends Processor<P> {
@@ -90,87 +88,6 @@ public abstract class ComparisonProcessor<P extends Processor<P>> extends Proces
         String keyVariableName = aspect.getKeyVariableName();
 
         return Streams.stream(results).map(querySolution -> querySolution.getResource(keyVariableName));
-    }
-
-    /**
-     * Returns the values of the given {@link Resource} that are covered by the
-     * pattern of the given dataset in the given {@link Model}. If this aspect does
-     * not cover the given dataset or the model does not contain values for the
-     * given resource, {@code null} is returned.
-     */
-    public Map<String, Set<RDFNode>> selectResourceValues(Resource resource, Resource dataset,
-                                                          Aspect aspect, Collection<String> variables) {
-        if (!aspect.coversDataset(dataset)) {
-            return Collections.emptyMap();
-        }
-
-        Model model = this.getInputPrimaryModelUnion(dataset);
-        Query pattern = aspect.getPattern(dataset);
-        Var keyVariable = aspect.getKeyVariable();
-
-        return this.selectResourceValues(resource, pattern, keyVariable, variables, model);
-    }
-
-    /**
-     * Returns the values of the given {@link Resource Resources} that are covered
-     * by the pattern of the given dataset in the given {@link Model}. If this
-     * aspect does not cover the given dataset an empty result is returned. If the
-     * model does not contain any value for a given resource, the resource is mapped
-     * to {@code null}.
-     */
-    public Map<Resource, Map<String, Set<RDFNode>>> selectResourceValues(Collection<Resource> resources,
-                                                                         Resource dataset, Aspect aspect, List<String> variables) {
-        if (!aspect.coversDataset(dataset)) {
-            return Collections.emptyMap();
-        }
-
-        Model model = this.getInputPrimaryModelUnion(dataset);
-        Query pattern = aspect.getPattern(dataset);
-        Var keyVariable = aspect.getKeyVariable();
-
-        Map<Resource, Map<String, Set<RDFNode>>> valuesByResource = new HashMap<>();
-
-        for (Resource resource : resources) {
-            Map<String, Set<RDFNode>> resourceValues = selectResourceValues(resource, pattern, keyVariable, variables, model);
-            if (resourceValues != null) {
-                valuesByResource.put(resource, resourceValues);
-            }
-        }
-
-        return valuesByResource;
-    }
-
-    /**
-     * Returns the values of the given {@link Resource} that are covered by the
-     * pattern of the given dataset in the given {@link Model}. If this aspect does
-     * not cover the given dataset or the model does not contain values for the
-     * given resource, {@code null} is returned.
-     */
-    private Map<String, Set<RDFNode>> selectResourceValues(Resource resource, Query pattern, Var keyVariable,
-                                                           Collection<String> variables, Model model) {
-        Query query = SelectBuilder.rewrite(pattern.cloneQuery(),
-                Collections.singletonMap(keyVariable, resource.asNode()));
-        ResultSet results = QueryExecutionFactory.create(query, model).execSelect();
-
-        if (!results.hasNext()) {
-            return null;
-        }
-
-        Map<String, Set<RDFNode>> values = new HashMap<>();
-        for (String variable : variables) {
-            values.put(variable, new HashSet<>());
-        }
-        while (results.hasNext()) {
-            QuerySolution result = results.next();
-            for (String variable : variables) {
-                if (result.contains(variable)) {
-                    RDFNode value = result.get(variable);
-                    values.get(variable).add(value);
-                }
-            }
-        }
-
-        return values;
     }
 
     Map<Resource, Model> getOutputMetaModels(Iterable<Resource> datasets) {

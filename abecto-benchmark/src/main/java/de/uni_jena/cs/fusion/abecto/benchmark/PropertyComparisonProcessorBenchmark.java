@@ -88,19 +88,10 @@ public class PropertyComparisonProcessorBenchmark {
             return this.dataSupplier.getResourceKeys(dataset);
         }
 
-        public Map<String, Set<RDFNode>> selectResourceValues(Resource resource, Resource dataset,
-                                                              @SuppressWarnings("unused") Aspect aspect,
-                                                              Collection<String> variables) {
-            return this.dataSupplier.selectResourceValues(resource, dataset, variables);
+        @Override
+        protected Map<String, Set<RDFNode>> getValuesByVariable(Resource dataset, Resource resource) {
+            return this.dataSupplier.getValuesByVariable(resource, dataset, variables);
         }
-
-        public Map<Resource, Map<String, Set<RDFNode>>> selectResourceValues(Collection<Resource> resources,
-                                                                             Resource dataset,
-                                                                             @SuppressWarnings("unused") Aspect aspect,
-                                                                             List<String> variables) {
-            return this.dataSupplier.selectResourceValues(resources, dataset, variables);
-        }
-
 
         @Override
         public Stream<List<Resource>> getCorrespondenceGroups() {

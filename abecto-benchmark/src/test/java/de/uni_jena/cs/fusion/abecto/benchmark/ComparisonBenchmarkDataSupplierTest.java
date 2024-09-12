@@ -55,9 +55,9 @@ public class ComparisonBenchmarkDataSupplierTest {
             int rightValuesSingle = 0, wrongValuesSingle = 0, rightValuesCollection = 0, wrongValuesCollection = 0;
             for (Resource resource : population[i]) {
                 // single resource method
-                Assertions.assertEquals(1, supplier.selectResourceValues(resource, dataset.get(i),
+                Assertions.assertEquals(1, supplier.getValuesByVariable(resource, dataset.get(i),
                         Collections.singletonList("var")).get("var").size());
-                if (supplier.selectResourceValues(resource, dataset.get(i), Collections.singletonList("var")).get(
+                if (supplier.getValuesByVariable(resource, dataset.get(i), Collections.singletonList("var")).get(
                         "var").contains(ComparisonBenchmarkDataSupplier.correctValue)) {
                     rightValuesSingle++;
                 } else {
@@ -65,11 +65,11 @@ public class ComparisonBenchmarkDataSupplierTest {
                 }
 
                 // resource collection method
-                Assertions.assertEquals(1, supplier.selectResourceValues(Collections.singletonList(resource),
+                Assertions.assertEquals(1, supplier.getValuesByVariableResource(Collections.singletonList(resource),
                         dataset.get(i), Collections.singletonList("var")).get(resource).size());
-                Assertions.assertEquals(1, supplier.selectResourceValues(Collections.singletonList(resource),
+                Assertions.assertEquals(1, supplier.getValuesByVariableResource(Collections.singletonList(resource),
                         dataset.get(i), Collections.singletonList("var")).get(resource).get("var").size());
-                if (supplier.selectResourceValues(Collections.singletonList(resource), dataset.get(i),
+                if (supplier.getValuesByVariableResource(Collections.singletonList(resource), dataset.get(i),
                         Collections.singletonList("var")).get(resource).get("var").contains(ComparisonBenchmarkDataSupplier.correctValue)) {
                     rightValuesCollection++;
                 } else {

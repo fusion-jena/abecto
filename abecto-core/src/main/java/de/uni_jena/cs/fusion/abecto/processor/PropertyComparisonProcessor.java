@@ -23,13 +23,12 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import de.uni_jena.cs.fusion.abecto.*;
-import de.uni_jena.cs.fusion.abecto.measure.PerDatasetCount;
-import de.uni_jena.cs.fusion.abecto.measure.PerDatasetPairCount;
-import de.uni_jena.cs.fusion.abecto.measure.PerDatasetRatio;
-import de.uni_jena.cs.fusion.abecto.measure.PerDatasetTupelRatio;
+import de.uni_jena.cs.fusion.abecto.measure.*;
+import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.xsd.XSDDateTime;
 import org.apache.jena.datatypes.xsd.impl.*;
+import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
@@ -37,6 +36,7 @@ import org.apache.jena.rdf.model.Resource;
 
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 import de.uni_jena.cs.fusion.abecto.vocabulary.OM;
+import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.nodevalue.NodeFunctions;
 
 public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyComparisonProcessor> {
@@ -80,20 +80,22 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
     /**
      * Number of covered values of another dataset, per variable.
      */
-    Map<String, PerDatasetPairCount> absoluteCoverage;
-    Map<String, PerDatasetTupelRatio> relativeCoverage;
+    Map<String, PerDatasetPairCount> absoluteValueCoverage;
+    Map<String, PerDatasetTupelRatio> relativeValueCoverage;
     /**
      * Number of values in this dataset, per variable.
      */
-    Map<String, PerDatasetCount> count;
+    Map<String, PerDatasetCount> nonDistinctValuesCount;
     /**
      * Number of distinct values in this dataset, per variable. Index: variable, affectedDataset
      */
-    Map<String, PerDatasetCount> deduplicatedCount;
-    Map<String, PerDatasetRatio> completeness;
+    Map<String, PerDatasetCount> distinctValuesCount;
+    Map<String, PerDatasetRatio> valueCompleteness;
 
     Map<Resource, Set<Resource>> uncoveredResourcesByDataset = new HashMap<>();
-
+    Map<String, Map<Resource, Map<RDFNode, Set<Resource>>>> resourcesByNonDistinctValueByDatasetByVariable = new HashMap<>();
+    Map<String, Map<Resource, Map<RDFNode, Set<Resource>>>> resourcesByDistinctValueByDatasetByVariable = new HashMap<>();
+    Map<Resource, Set<Resource>> correspondingResourcesByDataset = new HashMap<>();
 
     @Override
     public final void run() {
@@ -102,39 +104,8 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         initializeMeasures();
         resetUncoveredResources();
 
-        getCorrespondenceGroups().forEach(correspondingResources -> {
-            Map<Resource, Set<Resource>> correspondingResourcesByDataset = separateByDataset(correspondingResources);
-            removeFromUncoveredResources(correspondingResourcesByDataset);
-            // get values for all corresponding resources in all datasets
-            Map<Resource, Map<Resource, Map<String, Set<RDFNode>>>> valuesByVariableByResourceByDataset = new HashMap<>();
-            for (Resource dataset : datasets) {
-                Set<Resource> correspondingResourcesOfDataset = correspondingResourcesByDataset.get(dataset);
-                valuesByVariableByResourceByDataset.put(dataset, selectResourceValues(correspondingResourcesOfDataset, dataset, theAspect, variables));
-                removeKnownWrongValues(valuesByVariableByResourceByDataset.get(dataset), dataset);
-                removeExcludedValues(valuesByVariableByResourceByDataset.get(dataset));
-                // increment count and deduplicated count
-                for (String variable : variables) {
-                    // get values of variable for all corresponding resources in dataset
-                    var valuesOfCorrespondingResources = new ArrayList<RDFNode>();
-                    valuesByVariableByResourceByDataset.get(dataset).values().stream()
-                            .map(m -> m.getOrDefault(variable, Collections.emptySet()))
-                            .forEach(valuesOfCorrespondingResources::addAll);
-
-                    measureCountAndDeduplicatedCount(dataset, variable, valuesOfCorrespondingResources);
-                }
-            }
-
-            for (ResourcePair datasetPair : datasetPairsWithRepetition) {
-                for (String variable : variables) {
-                    if (theAspect.getPattern(datasetPair.first).getResultVars().contains(variable)
-                            && theAspect.getPattern(datasetPair.second).getResultVars().contains(variable)) {
-                        calculateDeviationsAndOmissions(variable, datasetPair, valuesByVariableByResourceByDataset);
-                    }
-                }
-            }
-        });
-
-        countAndDeduplicateValuesOfUncoveredResource();
+        compareValuesOfCorrespondingResources();
+        compareValuesOfNotCorrespondingResources();
 
         calculateCompleteness();
         calculateRelativeCoverage();
@@ -142,263 +113,402 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         storeMeasures();
     }
 
-    private void setAspect(Resource aspect) {
+    protected void compareValuesOfCorrespondingResources() {
+        getCorrespondenceGroups().forEach(this::compareValuesOfCorrespondingResources);
+    }
+
+    protected void compareValuesOfCorrespondingResources(List<Resource> correspondingResources) {
+        setCorrespondingResourcesByDataset(correspondingResources);
+        removeCorrespondingResourcesFromUncoveredResources();
+
+        loadNonDistinctValues();
+        calculateDistinctValues();
+
+        measureNonDistinctValuesCount();
+        measureDistinctValuesCount();
+        measureAbsoluteCoverage();
+        reportDeviationsAndOmissions();
+    }
+
+    protected void setCorrespondingResourcesByDataset(List<Resource> correspondingResources) {
+        for (Resource dataset : datasets) {
+            Set<Resource> correspondingResourcesOfDataset = correspondingResourcesByDataset.get(dataset);
+            correspondingResourcesOfDataset.clear();
+            correspondingResourcesOfDataset.addAll(correspondingResources);
+            correspondingResourcesOfDataset.retainAll(uncoveredResourcesByDataset.get(dataset));
+        }
+    }
+
+    protected void loadNonDistinctValues() {
+        resetResourcesByNonDistinctValueByDatasetByVariable();
+
+        Set<Resource> datasetsOfCorrespondingResources = correspondingResourcesByDataset.keySet();
+
+        for (Resource dataset : datasetsOfCorrespondingResources) {
+            Collection<Resource> resourcesOfDataset = correspondingResourcesByDataset.get(dataset);
+            loadNonDistinctValuesOfDataset(dataset, resourcesOfDataset);
+        }
+    }
+
+    protected void loadNonDistinctValuesOfDataset(Resource dataset, Collection<Resource> resourcesOfDataset) {
+        for (Resource resource : resourcesOfDataset) {
+            Map<String, Set<RDFNode>> valuesByVariable = getValuesByVariable(dataset, resource);
+            for (String variable : variables) {
+                if (theAspect.variableCoveredByDataset(variable, dataset)) {
+                    Iterable<RDFNode> values = valuesByVariable.get(variable);
+                    Map<RDFNode, Set<Resource>> resourcesByNonDistinctValue = resourcesByNonDistinctValueByDatasetByVariable.get(variable).get(dataset);
+                    for (RDFNode value : values) {
+                        Set<Resource> resourcesOfValue = resourcesByNonDistinctValue.computeIfAbsent(value, k -> new HashSet<>());
+                        resourcesOfValue.add(resource);
+                    }
+                }
+            }
+        }
+    }
+
+    protected Query getQueryForResource(Resource dataset, Resource resource) {
+        Query aspectPatternOfDataset = theAspect.getPattern(dataset).cloneQuery();
+        Var keyVariable = theAspect.getKeyVariable();
+        return SelectBuilder.rewrite(aspectPatternOfDataset, Collections.singletonMap(keyVariable, resource.asNode()));
+    }
+
+    protected void resetResourcesByNonDistinctValueByDatasetByVariable() {
+        for (Map<Resource, Map<RDFNode, Set<Resource>>> resourcesByNonDistinctValueByDataset : resourcesByNonDistinctValueByDatasetByVariable.values()) {
+            for (Map<RDFNode, Set<Resource>> resourcesByNonDistinctValue : resourcesByNonDistinctValueByDataset.values()) {
+                resourcesByNonDistinctValue.clear();
+            }
+        }
+    }
+
+    protected void calculateDistinctValues() {
+        for (String variable : variables) {
+            for (Resource dataset : datasets) {
+                if (theAspect.variableCoveredByDataset(variable, dataset)) {
+                    calculateDistinctValuesForVariableAndDataset(variable, dataset);
+                }
+            }
+        }
+    }
+
+    protected void calculateDistinctValuesForVariableAndDataset(String variable, Resource dataset) {
+        Map<RDFNode, Set<Resource>> resourcesByNonDistinctValue = resourcesByNonDistinctValueByDatasetByVariable.get(variable).get(dataset);
+        Map<RDFNode, Set<Resource>> resourcesByDistinctValue = resourcesByDistinctValueByDatasetByVariable.get(variable).get(dataset);
+        resourcesByDistinctValue.clear();
+        for (RDFNode nonDistinctValue : resourcesByNonDistinctValue.keySet()) {
+            Set<Resource> resourcesOfNonDistinctValue = resourcesByNonDistinctValue.get(nonDistinctValue);
+            Set<Resource> resourcesOfDistinctValue = getResourcesOfEquivalentDistinctValue(nonDistinctValue, resourcesByDistinctValue);
+            resourcesOfDistinctValue.addAll(resourcesOfNonDistinctValue);
+        }
+    }
+
+    Set<Resource> getResourcesOfEquivalentDistinctValue(RDFNode nonDistinctValue, Map<RDFNode, Set<Resource>> resourcesByDistinctValue) {
+        Set<Resource> resourcesOfDistinctValue;
+        for (RDFNode distinctValue : resourcesByDistinctValue.keySet()) {
+            if (equivalentValues(nonDistinctValue, distinctValue)) {
+                resourcesOfDistinctValue = resourcesByDistinctValue.get(distinctValue);
+                return resourcesOfDistinctValue;
+            }
+        }
+        resourcesOfDistinctValue = new HashSet<>();
+        resourcesByDistinctValue.put(nonDistinctValue, resourcesOfDistinctValue);
+        return resourcesOfDistinctValue;
+    }
+
+    protected void measureNonDistinctValuesCount() {
+        for (String variable : variables) {
+            Map<Resource, Map<RDFNode, Set<Resource>>> resourcesByNonDistinctValueByDataset = resourcesByNonDistinctValueByDatasetByVariable.get(variable);
+            PerDatasetCount nonDistinctValuesCountOfVariable = nonDistinctValuesCount.get(variable);
+            for (Resource dataset : datasets) {
+                if (theAspect.variableCoveredByDataset(variable, dataset)) {
+                    nonDistinctValuesCountOfVariable.setZero(dataset);
+                    Map<RDFNode, Set<Resource>> resourcesByNonDistinctValue = resourcesByNonDistinctValueByDataset.get(dataset);
+                    for (RDFNode nonDistinctValue : resourcesByNonDistinctValue.keySet()) {
+                        Set<Resource> resourcesOfNonDistinctValue = resourcesByNonDistinctValue.get(nonDistinctValue);
+                        nonDistinctValuesCountOfVariable.incrementByOrSet(dataset, resourcesOfNonDistinctValue.size());
+                    }
+                }
+            }
+        }
+    }
+
+    protected void measureDistinctValuesCount() {
+        for (String variable : variables) {
+            Map<Resource, Map<RDFNode, Set<Resource>>> resourcesByDistinctValueByDataset = resourcesByDistinctValueByDatasetByVariable.get(variable);
+            for (Resource dataset : datasets) {
+                if (theAspect.variableCoveredByDataset(variable, dataset)) {
+                    Map<RDFNode, Set<Resource>> resourcesByDistinctValue = resourcesByDistinctValueByDataset.get(dataset);
+                    distinctValuesCount.get(variable).incrementByOrSet(dataset, resourcesByDistinctValue.size());
+                }
+            }
+        }
+    }
+
+    protected void measureAbsoluteCoverage() {
+        for (String variable : variables) {
+            Map<Resource, Map<RDFNode, Set<Resource>>> resourcesByDistinctValueByDataset = resourcesByDistinctValueByDatasetByVariable.get(variable);
+            PerDatasetPairCount absoluteCoverageForVariable = absoluteValueCoverage.get(variable);
+            for (ResourcePair datasetPair : datasetPairsWithoutRepetition) {
+                absoluteCoverageForVariable.setZero(datasetPair);
+                if (theAspect.variableCoveredByDatasets(variable, datasetPair.first, datasetPair.second)) {
+                    Set<RDFNode> distinctValuesOfFirstDataset = resourcesByDistinctValueByDataset.get(datasetPair.first).keySet();
+                    Set<RDFNode> distinctValuesOfSecondDataset = resourcesByDistinctValueByDataset.get(datasetPair.second).keySet();
+                    for (RDFNode valueOfFirstDataset : distinctValuesOfFirstDataset) {
+                        for (RDFNode valueOfSecondDataset : distinctValuesOfSecondDataset) {
+                            if (equivalentValues(valueOfFirstDataset, valueOfSecondDataset)) {
+                                absoluteCoverageForVariable.incrementByOrSetOne(datasetPair);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    protected void reportDeviationsAndOmissions() {
+        for (String variable : variables) {
+            Map<Resource, Map<RDFNode, Set<Resource>>> resourcesByNonDistinctValueByDataset = resourcesByNonDistinctValueByDatasetByVariable.get(variable);
+            for (ResourcePair datasetPair : datasetPairsWithRepetition) {
+                if (theAspect.variableCoveredByDatasets(variable, datasetPair.first, datasetPair.second)) {
+                    Map<RDFNode, Set<Resource>> resourceByNonDistinctValuesOfFirstDataset = resourcesByNonDistinctValueByDataset.get(datasetPair.first);
+                    Map<RDFNode, Set<Resource>> resourceByNonDistinctValuesOfSecondDataset = resourcesByNonDistinctValueByDataset.get(datasetPair.second);
+                    for (Resource firstResource : correspondingResourcesByDataset.get(datasetPair.first)) {
+                        for (Resource secondResource : correspondingResourcesByDataset.get(datasetPair.second)) {
+                            Set<RDFNode> uncoveredValuesOfFirstResource =
+                                    getUncoveredValuesOfResource(firstResource, secondResource, resourceByNonDistinctValuesOfFirstDataset, resourceByNonDistinctValuesOfSecondDataset);
+                            Set<RDFNode> uncoveredValuesOfSecondResource =
+                                    getUncoveredValuesOfResource(secondResource, firstResource, resourceByNonDistinctValuesOfSecondDataset, resourceByNonDistinctValuesOfFirstDataset);
+
+                            // deviation: a pair of resources with each having a value not present in the
+                            // other resource
+                            // omission: a pair of resources with one having a value not present in the other,
+                            // but not vice versa
+
+                            // report missing not matching values
+                            if (uncoveredValuesOfFirstResource.isEmpty()) {
+                                for (RDFNode value2 : uncoveredValuesOfSecondResource) {
+                                    Metadata.addValuesOmission(firstResource, variable, datasetPair.second, secondResource, value2, aspect,
+                                            getOutputMetaModel(datasetPair.first));
+                                }
+                            } else if (uncoveredValuesOfSecondResource.isEmpty()) {
+                                for (RDFNode value1 : uncoveredValuesOfFirstResource) {
+                                    Metadata.addValuesOmission(secondResource, variable, datasetPair.first, firstResource, value1, aspect,
+                                            getOutputMetaModel(datasetPair.second));
+                                }
+                            } else {
+                                // report pairs of deviating values
+                                for (RDFNode value1 : uncoveredValuesOfFirstResource) {
+                                    for (RDFNode value2 : uncoveredValuesOfSecondResource) {
+                                        Metadata.addDeviation(firstResource.asResource(), variable, value1, datasetPair.second,
+                                                secondResource.asResource(), value2, aspect, getOutputMetaModel(datasetPair.first));
+                                        Metadata.addDeviation(secondResource.asResource(), variable, value2, datasetPair.first,
+                                                firstResource.asResource(), value1, aspect, getOutputMetaModel(datasetPair.second));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    protected Set<RDFNode> getUncoveredValuesOfResource(Resource resource, Resource comparedResource, Map<RDFNode, Set<Resource>> resourcesByValues, Map<RDFNode, Set<Resource>> comparedResourcesByValues) {
+        Set<RDFNode> uncoveredValuesOfResource = new HashSet<>();
+        Set<RDFNode> values = resourcesByValues.keySet();
+        Set<RDFNode> comparedValues = comparedResourcesByValues.keySet();
+        iterationOfComparedValues:
+        for (RDFNode value : values) {
+            if (isValueOfResource(value, resource, resourcesByValues)) {
+                for (RDFNode comparedValue : comparedValues) {
+                    if (isValueOfResource(comparedValue, comparedResource, comparedResourcesByValues)) {
+                        if (equivalentValues(value, comparedValue)) {
+                            continue iterationOfComparedValues;
+                        }
+                    }
+                }
+                uncoveredValuesOfResource.add(value);
+            }
+        }
+        return uncoveredValuesOfResource;
+    }
+
+    boolean isValueOfResource(RDFNode value, Resource resource, Map<RDFNode, Set<Resource>> resourcesByValues) {
+        return resourcesByValues.get(value).contains(resource);
+    }
+
+    protected void setAspect(Resource aspect) {
         theAspect = this.getAspects().get(aspect);
     }
 
-    private void setAspectDatasets() {
+    protected void setAspectDatasets() {
         datasets = theAspect.getDatasets();
         datasetPairsWithoutRepetition = ResourcePair.getPairsWithoutRepetitionOf(datasets);
         datasetPairsWithRepetition = ResourcePair.getPairsWithRepetitionOf(datasets);
         datasetTupels = ResourceTupel.getTupelsOf(datasets);
         outputMetaModelByDataset = getOutputMetaModels(datasets);
+        initializeCorrespondingResourceByDataset();
+        resourcesByNonDistinctValueByDatasetByVariable = getMapOfResourcesByValueByDatasetByVariable();
+        resourcesByDistinctValueByDatasetByVariable = getMapOfResourcesByValueByDatasetByVariable();
     }
 
-    private void initializeMeasures() {
-        count = PerDatasetCount.mapOfCounts(variables, AV.count, OM.one);
-        deduplicatedCount = PerDatasetCount.mapOfCounts(variables, AV.deduplicatedCount, OM.one);
-        absoluteCoverage = PerDatasetPairCount.mapOfCounts(variables, AV.absoluteCoverage, OM.one);
-        relativeCoverage = PerDatasetTupelRatio.mapOfRatios(variables, AV.relativeCoverage, OM.one);
-        completeness = new HashMap<>();
+    protected void initializeCorrespondingResourceByDataset() {
+        correspondingResourcesByDataset = new HashMap<>();
+        for (Resource dataset : datasets) {
+            correspondingResourcesByDataset.put(dataset, new HashSet<>());
+        }
     }
 
-    private void resetUncoveredResources() {
+    protected Map<String, Map<Resource, Map<RDFNode, Set<Resource>>>> getMapOfResourcesByValueByDatasetByVariable() {
+        Map<String, Map<Resource, Map<RDFNode, Set<Resource>>>> map = new HashMap<>();
+        for (String variable : variables) {
+            Map<Resource, Map<RDFNode, Set<Resource>>> resourcesByValueByDataset = new HashMap<>();
+            map.put(variable, resourcesByValueByDataset);
+            for (Resource dataset : datasets) {
+                if (theAspect.variableCoveredByDataset(variable, dataset)) {
+                    resourcesByValueByDataset.put(dataset, new HashMap<>());
+                }
+            }
+        }
+        return map;
+    }
+
+    protected void initializeMeasures() {
+        nonDistinctValuesCount = PerDatasetCount.mapOfCounts(variables, AV.count, OM.one);
+        distinctValuesCount = PerDatasetCount.mapOfCounts(variables, AV.deduplicatedCount, OM.one);
+        absoluteValueCoverage = PerDatasetPairCount.mapOfCounts(variables, AV.absoluteCoverage, OM.one);
+        relativeValueCoverage = PerDatasetTupelRatio.mapOfRatios(variables, AV.relativeCoverage, OM.one);
+        valueCompleteness = new HashMap<>();
+    }
+
+    protected void resetUncoveredResources() {
         uncoveredResourcesByDataset.clear();
         for (Resource dataset : datasets) {
             setResourcesOfDatasetAndAspectUncovered(dataset);
         }
     }
 
-    Map<Resource, Set<Resource>> separateByDataset(List<Resource> resources) {
-        Map<Resource, Set<Resource>> resourcesByDataset = new HashMap<>();
-        for (Resource dataset : datasets) {
-            Set<Resource> resourcesOfDataset = new HashSet<>(resources);
-            resourcesOfDataset.retainAll(uncoveredResourcesByDataset.get(dataset));
-            resourcesByDataset.put(dataset, resourcesOfDataset);
-        }
-        return resourcesByDataset;
-    }
-
-    void removeFromUncoveredResources(Map<Resource, Set<Resource>> coveredResourcesByDataset) {
-        for (Resource dataset : coveredResourcesByDataset.keySet()) {
+    protected void removeCorrespondingResourcesFromUncoveredResources() {
+        for (Resource dataset : correspondingResourcesByDataset.keySet()) {
             Set<Resource> uncoveredResourcesOfDataset = uncoveredResourcesByDataset.get(dataset);
-            Set<Resource> coveredResourcesOfDataset = coveredResourcesByDataset.get(dataset);
+            Set<Resource> coveredResourcesOfDataset = correspondingResourcesByDataset.get(dataset);
             uncoveredResourcesOfDataset.removeAll(coveredResourcesOfDataset);
         }
     }
 
-    /**
-     * Removes all values that are known wrong values.
-     */
-    private void removeKnownWrongValues(Map<Resource, Map<String, Set<RDFNode>>> valuesByVariableByResource, Resource dataset) {
-        for (Resource resource : valuesByVariableByResource.keySet()) {
-            removeKnownWrongValues(valuesByVariableByResource.get(resource), resource, dataset);
-        }
-    }
-
-    /**
-     * Removes all values that are known wrong values.
-     */
-    private void removeKnownWrongValues(Map<String, Set<RDFNode>> valuesByVariable, Resource resource, Resource dataset) {
-        for (String variable : valuesByVariable.keySet()) {
-            Set<RDFNode> values = valuesByVariable.get(variable);
-            values.removeIf(value -> this.isWrongValue(resource, variable, value, dataset));
-        }
-    }
-
-    protected boolean isWrongValue(Resource affectedResource, String affectedVariableName, RDFNode affectedValue,
-                                   Resource affectedDataset) {
+    protected boolean isKnownWrongValue(Resource affectedResource, String affectedVariableName, RDFNode affectedValue,
+                                        Resource affectedDataset) {
         return Metadata.isWrongValue(affectedResource, affectedVariableName, affectedValue, aspect,
                 this.getInputMetaModelUnion(affectedDataset));
     }
 
-    private void removeExcludedValues(Map<Resource, Map<String, Set<RDFNode>>> valuesByVariableByResource) {
-        valuesByVariableByResource.forEach((resource, valuesByVariable) -> valuesByVariable.forEach((variable, values) -> values.removeIf(this::isExcludedValue)));
-    }
-
-    private void setResourcesOfDatasetAndAspectUncovered(Resource dataset) {
+    protected void setResourcesOfDatasetAndAspectUncovered(Resource dataset) {
         Set<Resource> distinctResources = getResourceKeys(theAspect, dataset).collect(Collectors.toSet());
         uncoveredResourcesByDataset.put(dataset, distinctResources);
     }
 
-    private void countAndDeduplicateValuesOfUncoveredResource() {
+    protected void compareValuesOfNotCorrespondingResources() {
         for (Resource dataset : datasets) {
             Set<Resource> uncoveredResources = uncoveredResourcesByDataset.get(dataset);
             for (Resource uncoveredResource : uncoveredResources) {
-                // TODO refactor
-
-                // get resource values
-                Map<String, Set<RDFNode>> valuesByVariable = selectResourceValues(uncoveredResource, dataset, theAspect, variables);
-
-                // removeExcludedValues
-                valuesByVariable.forEach((k, v) -> v.removeIf(this::isExcludedValue));
-
+                Map<String, Set<RDFNode>> valuesByVariable = getValuesByVariable(dataset, uncoveredResource);
                 for (String variable : valuesByVariable.keySet()) {
-                    Collection<RDFNode> valuesOfVariable = valuesByVariable.get(variable);
+                    Set<RDFNode> valuesOfVariable = valuesByVariable.get(variable);
                     measureCountAndDeduplicatedCount(dataset, variable, valuesOfVariable);
                 }
             }
         }
     }
 
-    void measureCountAndDeduplicatedCount(Resource dataset, String variable, Collection<RDFNode> valuesOfVariable) {
-        long valuesCountWithDuplicates = valuesOfVariable.size();
-        long valuesCountWithoutDuplicates = deduplicate(valuesOfVariable).size();
-        count.get(variable).incrementByOrSet(dataset, valuesCountWithDuplicates);
-        deduplicatedCount.get(variable).incrementByOrSet(dataset, valuesCountWithoutDuplicates);
-    }
-
-    private void calculateCompleteness() {
-        for (String variable : variables) {
-            // TODO add value exclusion filter description to measurement description
-            completeness.put(variable, calculateCompleteness(datasetPairsWithoutRepetition, absoluteCoverage.get(variable), deduplicatedCount.get(variable)));
+    protected Map<String, Set<RDFNode>> getValuesByVariable(Resource dataset, Resource resource) {
+        if (!theAspect.coversDataset(dataset)) {
+            return Collections.emptyMap();
         }
+        Query query = getQueryForResource(dataset, resource);
+        Model model = getInputPrimaryModelUnion(dataset);
+        Map<String, Set<RDFNode>> valuesByVariable = getValuesByVariable(model, query);
+        // TODO do not ignore wrong values for measures -> remove check
+        valuesByVariable.forEach((variable, values) -> values.removeIf(value -> isKnownWrongValue(resource, variable, value, dataset)));
+        return valuesByVariable;
     }
 
-    private void calculateRelativeCoverage() {
-        for (String variable : variables) {
-            PerDatasetTupelRatio relativeCoverageOfVariable = relativeCoverage.get(variable);
-            PerDatasetPairCount absoluteCoverageOfVariable = absoluteCoverage.get(variable);
-            PerDatasetCount deduplicatedCountOfVariable = deduplicatedCount.get(variable);
-            relativeCoverageOfVariable.setRatioOf(absoluteCoverageOfVariable, deduplicatedCountOfVariable);
-        }
-    }
-
-    private void storeMeasures() {
-        storeCount();
-        storeDeduplicatedCount();
-        storeAbsoluteCoverage();
-        storeRelativeCoverage();
-        storeCompleteness();
-    }
-
-    private void storeCount() {
-        for (String variable : variables) {
-            // TODO add value exclusion filter description to measurement description
-            count.get(variable).storeInModelWithVariable(theAspect, variable, outputMetaModelByDataset);
-        }
-    }
-
-    private void storeDeduplicatedCount() {
-        for (String variable : variables) {
-            // TODO add value exclusion filter description to measurement description
-            deduplicatedCount.get(variable).storeInModelWithVariable(theAspect, variable, outputMetaModelByDataset);
-        }
-    }
-
-    private void storeAbsoluteCoverage() {
-        for (String variable : variables) {
-            // TODO add value exclusion filter description to measurement description
-            absoluteCoverage.get(variable).storeInModelWithVariable(theAspect, variable, outputMetaModelByDataset);
-        }
-    }
-
-    private void storeRelativeCoverage() {
-        for (String variable : variables) {
-            // TODO add value exclusion filter description to measurement description
-            relativeCoverage.get(variable).storeInModelWithVariable(theAspect, variable, outputMetaModelByDataset);
-        }
-    }
-
-    private void storeCompleteness() {
-        for (String variable : variables) {
-            // TODO add value exclusion filter description to measurement description
-            completeness.get(variable).storeInModelWithVariableAsComparedToAllOtherResources(theAspect, variable, outputMetaModelByDataset);
-        }
-    }
-
-    /**
-     * Note: Not the most efficient way to do this, but there is no
-     * {@link Comparator} available to use {@link TreeMap#TreeMap(Comparator)}.
-     */
-    private void mapResources(String variable, Map<RDFNode, Set<Resource>> resourcesByMappedValues,
-                              Map<Resource, Map<String, Set<RDFNode>>> valuesByVariableByResource) {
-        for (Resource resource : valuesByVariableByResource.keySet()) {
-            for (RDFNode value : valuesByVariableByResource.get(resource).getOrDefault(variable,
-                    Collections.emptySet())) {
-                for (RDFNode valueKey : resourcesByMappedValues.keySet()) {
-                    if (equivalentValues(value, valueKey)) {
-                        Set<Resource> valuesSet = resourcesByMappedValues.get(valueKey);
-                        // add values to existing set
-                        valuesSet.add(resource);
-                        // map value to same set, so equivalent values will share one set
-                        resourcesByMappedValues.putIfAbsent(value, valuesSet);
-                        break;
-                    }
-                }
-                // no equivalent value in map
-                resourcesByMappedValues.computeIfAbsent(value, v -> new HashSet<>()).add(resource);
+    protected Map<String, Set<RDFNode>> getValuesByVariable(Model model, Query query) {
+        try (QueryExecution queryExecution = QueryExecutionFactory.create(query, model)) {
+            ResultSet results = queryExecution.execSelect();
+            List<String> relevantVariables = getRelevantVariables(results);
+            Map<String, Set<RDFNode>> valuesByVariable = new HashMap<>();
+            for (String variable : relevantVariables) {
+                valuesByVariable.put(variable, new HashSet<>());
             }
-        }
-    }
-
-    /**
-     * Compares the values of one variable from two corresponding resources in two
-     * datasets and stores encountered deviations and issues in both according
-     * outputMetaModels (derived by {@link #getOutputMetaModel(Resource)}). Either
-     * the corresponding resources or the datasets might be equal, but not both at
-     * once.
-     *
-     * @param variable Name of the compared variable
-     */
-    public void calculateDeviationsAndOmissions(String variable, ResourcePair datasetPair,
-                                                Map<Resource, Map<Resource, Map<String, Set<RDFNode>>>> valuesByVariableByResourceByDataset) {
-
-        Map<Resource, Map<String, Set<RDFNode>>> valuesByVariableByResource1 = valuesByVariableByResourceByDataset.get(datasetPair.first);
-        Map<Resource, Map<String, Set<RDFNode>>> valuesByVariableByResource2 = valuesByVariableByResourceByDataset.get(datasetPair.second);
-
-        // create common value-resource look-up
-        Map<RDFNode, Set<Resource>> resourcesByMappedValues = new HashMap<>();
-        mapResources(variable, resourcesByMappedValues, valuesByVariableByResource1);
-        mapResources(variable, resourcesByMappedValues, valuesByVariableByResource2);
-
-
-        // update measurements
-        if (!datasetPair.first.equals(datasetPair.second)) {// do not measure for first == second
-            // TODO test, that no absolute coverage exist for dataset compared with itself
-            int pairwiseOverlap = getPairwiseOverlap(valuesByVariableByResource1.keySet(), valuesByVariableByResource2.keySet(), resourcesByMappedValues);
-            absoluteCoverage.get(variable).incrementByOrSet(datasetPair, pairwiseOverlap);
-        }
-
-        // deviation: a pair of resources with each having a value not present in the
-        // other resource
-        // omission: a pair of resources with one having a value not present in the other,
-        // but not vice versa
-
-        for (Resource resource1 : valuesByVariableByResource1.keySet()) {
-            var values1 = valuesByVariableByResource1.get(resource1).getOrDefault(variable, Collections.emptySet());
-            for (Resource resource2 : valuesByVariableByResource2.keySet()) {
-                var values2 = valuesByVariableByResource2.get(resource2).getOrDefault(variable, Collections.emptySet());
-
-                var notMatchingValues1 = values1.stream().filter(value1 -> !resourcesByMappedValues
-                        .getOrDefault(value1, Collections.emptySet()).contains(resource2)).toList();
-                var notMatchingValues2 = values2.stream().filter(value2 -> !resourcesByMappedValues
-                        .getOrDefault(value2, Collections.emptySet()).contains(resource1)).toList();
-
-                // report missing not matching values
-                if (notMatchingValues1.isEmpty()) {
-                    for (RDFNode value2 : notMatchingValues2) {
-                        Metadata.addValuesOmission(resource1, variable, datasetPair.second, resource2, value2, this.aspect,
-                                this.getOutputMetaModel(datasetPair.first));
-                    }
-                } else if (notMatchingValues2.isEmpty()) {
-                    for (RDFNode value1 : notMatchingValues1) {
-                        Metadata.addValuesOmission(resource2, variable, datasetPair.first, resource1, value1, this.aspect,
-                                this.getOutputMetaModel(datasetPair.second));
-                    }
-                } else {
-                    // report pairs of deviating values
-                    for (RDFNode value1 : notMatchingValues1) {
-                        for (RDFNode value2 : notMatchingValues2) {
-                            Metadata.addDeviation(resource1.asResource(), variable, value1, datasetPair.second,
-                                    resource2.asResource(), value2, this.aspect, this.getOutputMetaModel(datasetPair.first));
-                            Metadata.addDeviation(resource2.asResource(), variable, value2, datasetPair.first,
-                                    resource1.asResource(), value1, this.aspect, this.getOutputMetaModel(datasetPair.second));
+            while (results.hasNext()) {
+                QuerySolution result = results.next();
+                for (String variable : relevantVariables) {
+                    if (result.contains(variable)) {
+                        RDFNode value = result.get(variable);
+                        if (!isExcludedValue(value)) {
+                            valuesByVariable.get(variable).add(value);
                         }
                     }
                 }
             }
+            return valuesByVariable;
         }
+    }
+
+    List<String> getRelevantVariables(ResultSet results) {
+        List<String> relevantVariables = results.getResultVars();
+        relevantVariables.retainAll(variables);
+        return relevantVariables;
+    }
+
+    protected void measureCountAndDeduplicatedCount(Resource dataset, String variable, Set<RDFNode> valuesOfVariable) {
+        long valuesCountWithDuplicates = valuesOfVariable.size();
+        long valuesCountWithoutDuplicates = countDistinctValues(valuesOfVariable);
+        nonDistinctValuesCount.get(variable).incrementByOrSet(dataset, valuesCountWithDuplicates);
+        distinctValuesCount.get(variable).incrementByOrSet(dataset, valuesCountWithoutDuplicates);
+    }
+
+    protected int countDistinctValues(Set<RDFNode> nonDistinctValues) {
+        List<RDFNode> distinctValues = new ArrayList<>(nonDistinctValues.size());
+        iterationOfNonDistinctValues:
+        for (RDFNode nonDistinctValue : nonDistinctValues) {
+            for (RDFNode distinctValue : distinctValues) {
+                if (equivalentValues(nonDistinctValue, distinctValue)) {
+                    continue iterationOfNonDistinctValues;
+                }
+            }
+            distinctValues.add(nonDistinctValue);
+        }
+        return distinctValues.size();
+    }
+
+    protected void calculateCompleteness() {
+        for (String variable : variables) {
+            PerDatasetRatio valueCompletenessOfVariable = calculateCompleteness(datasetPairsWithoutRepetition, absoluteValueCoverage.get(variable), distinctValuesCount.get(variable));
+            valueCompleteness.put(variable, valueCompletenessOfVariable);
+        }
+    }
+
+    protected void calculateRelativeCoverage() {
+        for (String variable : variables) {
+            PerDatasetTupelRatio relativeCoverageOfVariable = relativeValueCoverage.get(variable);
+            PerDatasetPairCount absoluteCoverageOfVariable = absoluteValueCoverage.get(variable);
+            PerDatasetCount deduplicatedCountOfVariable = distinctValuesCount.get(variable);
+            relativeCoverageOfVariable.setRatioOf(absoluteCoverageOfVariable, deduplicatedCountOfVariable);
+        }
+    }
+
+    protected void storeMeasures() {
+        // TODO add value exclusion filter description to measurement description
+        Measure.storeInModelForAllVariable(nonDistinctValuesCount, theAspect, outputMetaModelByDataset);
+        // TODO add value exclusion filter description to measurement description
+        Measure.storeInModelForAllVariable(distinctValuesCount, theAspect, outputMetaModelByDataset);
+        // TODO add value exclusion filter description to measurement description
+        Measure.storeInModelForAllVariable(absoluteValueCoverage, theAspect, outputMetaModelByDataset);
+        // TODO add value exclusion filter description to measurement description
+        Measure.storeInModelForAllVariable(relativeValueCoverage, theAspect, outputMetaModelByDataset);
+        // TODO add value exclusion filter description to measurement description
+        PerDatasetRatio.storeInModelAsComparedToAllOtherResourcesForAllVariables(valueCompleteness, theAspect, outputMetaModelByDataset);
     }
 
     /**
@@ -408,7 +518,7 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
      * @param value2 the second value to compare
      * @return {@code true}, if the values are equivalent, otherwise {@code false}
      */
-    public boolean equivalentValues(RDFNode value1, RDFNode value2) {
+    protected boolean equivalentValues(RDFNode value1, RDFNode value2) {
         if (value1.isResource() && value2.isResource()) {
             return correspond(value1.asResource(), value2.asResource());
         } else if (value1.isLiteral() && value2.isLiteral()) {
@@ -537,7 +647,7 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
      * @param value the value to check
      * @return {@code true}, if the value should not be used, otherwise {@code false}
      */
-    public boolean isExcludedValue(RDFNode value) {
+    protected boolean isExcludedValue(RDFNode value) {
         if (!value.isLiteral() ||
                 !(value.asLiteral().getDatatype() instanceof XSDBaseStringType) &&
                         !(value.asLiteral().getDatatype() instanceof RDFLangString)) {
@@ -547,41 +657,5 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
             return languageFilterPatterns.stream()
                     .noneMatch(languageFilterPattern -> NodeFunctions.langMatches(langStr, languageFilterPattern));
         }
-    }
-
-    /**
-     * Returns a duplicate free list of the given values by removing all values equivalent to an earlier value.
-     */
-    private List<RDFNode> deduplicate(Iterable<RDFNode> values) {
-        ArrayList<RDFNode> distinctValues = new ArrayList<>();
-        for (RDFNode value : values) {
-            if (distinctValues.stream().noneMatch(v -> equivalentValues(v, value))) {
-                distinctValues.add(value);
-            }
-        }
-        return distinctValues;
-    }
-
-    private <T> Set<T> distinctByIdentity(Collection<T> items) {
-        Set<T> distinctItems = Collections.newSetFromMap(new IdentityHashMap<>());
-        distinctItems.addAll(items);
-        return distinctItems;
-    }
-
-    private int getPairwiseOverlap(Collection<Resource> resources1,
-                                   Collection<Resource> resources2, Map<RDFNode, Set<Resource>> resourcesByMappedValues) {
-        int pairwiseOverlap = 0;
-        // use set of resource sets for mapping values
-        // NOTE: equivalent values use the same set, so get distinct set instances
-        for (Set<Resource> resourceSet : distinctByIdentity(resourcesByMappedValues.values())) {
-            if (resources1.stream().noneMatch(resourceSet::contains)) {
-                continue;
-            }
-            if (resources2.stream().noneMatch(resourceSet::contains)) {
-                continue;
-            }
-            pairwiseOverlap++;
-        }
-        return pairwiseOverlap;
     }
 }

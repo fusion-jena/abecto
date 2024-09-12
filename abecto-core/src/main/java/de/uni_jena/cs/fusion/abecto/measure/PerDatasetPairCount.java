@@ -42,10 +42,6 @@ public class PerDatasetPairCount extends Count<ResourcePair> {
         return mapOfCounts;
     }
 
-    public void storeInModel(Aspect aspect, Map<Resource, Model> outputModelsMap) {
-        storeInModelWithVariable(aspect, null, outputModelsMap);
-    }
-
     public void storeInModelWithVariable(Aspect aspect, String variable, Map<Resource, Model> outputModelsMap) {
         for (ResourcePair pair : keySet()) {
             Metadata.addQualityMeasurement(quantity, get(pair), unit, pair.first, variable, pair.second, aspect.getIri(), outputModelsMap.get(pair.first));

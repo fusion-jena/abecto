@@ -157,6 +157,7 @@ public class PropertyComparisonProcessorTest {
                 dataset(1), dataset(2), aspect(1), outputMetaModels[0], outputMetaModels[1]);
     }
 
+
     private void assertMeasurements(BigDecimal expectedCount1, BigDecimal expectedCount2,
                                     BigDecimal expectedDeduplicatedCount1, BigDecimal expectedDeduplicatedCount2,
                                     BigDecimal expectedAbsoluteCoverage1, BigDecimal expectedAbsoluteCoverage2,

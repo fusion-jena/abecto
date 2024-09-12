@@ -18,13 +18,15 @@
 
 package de.uni_jena.cs.fusion.abecto.measure;
 
+import de.uni_jena.cs.fusion.abecto.Aspect;
+import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-abstract class Measure<K, V extends Number> {
+public abstract class Measure<K, V extends Number> {
 
     final Map<K, V> values = new HashMap<>();
     final Resource quantity;
@@ -33,6 +35,12 @@ abstract class Measure<K, V extends Number> {
     public Measure(Resource quantity, Resource unit) {
         this.quantity = quantity;
         this.unit = unit;
+    }
+
+    public static <K, V extends Number, M extends Measure<K, V>> void storeInModelForAllVariable(Map<String, M> measuresByVariable, Aspect aspect, Map<Resource, Model> outputModelsMap) {
+        for (String variable : measuresByVariable.keySet()) {
+            measuresByVariable.get(variable).storeInModelWithVariable(aspect, variable, outputModelsMap);
+        }
     }
 
     public V get(K key) {
@@ -66,5 +74,11 @@ abstract class Measure<K, V extends Number> {
     public void set(K key, V value) {
         values.put(key, value);
     }
+
+    public void storeInModel(Aspect aspect, Map<Resource, Model> outputModelsMap) {
+        storeInModelWithVariable(aspect, null, outputModelsMap);
+    }
+
+    abstract void storeInModelWithVariable(Aspect aspect, String variable, Map<Resource, Model> outputModelsMap);
 
 }

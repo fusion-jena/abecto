@@ -26,8 +26,12 @@ public abstract class Count<K> extends Measure<K, Long> {
         super(quantity, unit);
     }
 
+    public void setZero(K key) {
+        values.put(key, 0L);
+    }
+
     public void incrementByOrSetOne(K key) {
-        incrementByOrSet(key, 1);
+        incrementByOrSet(key, 1L);
     }
 
     public void incrementByOrSet(K key, long increment) {
