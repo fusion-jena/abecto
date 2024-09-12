@@ -136,13 +136,12 @@ public class PropertyComparisonProcessorTest {
         BigDecimal expectedCount2 = new BigDecimal(values2.size());
         BigDecimal expectedDeduplicatedCount1 = new BigDecimal(values1.size());
         BigDecimal expectedDeduplicatedCount2 = new BigDecimal(values2.size());
-        BigDecimal expectedAbsoluteCoverage1 = new BigDecimal(notDeviatingValues1.size());
-        BigDecimal expectedAbsoluteCoverage2 = new BigDecimal(notDeviatingValues2.size());
+        BigDecimal expectedAbsoluteCoverage = new BigDecimal(notDeviatingValues1.size());
         BigDecimal expectedRelativeCoverage1 = (expectedCount2.equals(BigDecimal.ZERO)) ? null
-                : expectedAbsoluteCoverage1.divide(expectedCount2, PropertyComparisonProcessor.SCALE,
+                : expectedAbsoluteCoverage.divide(expectedCount2, PropertyComparisonProcessor.SCALE,
                 RoundingMode.HALF_UP);
         BigDecimal expectedRelativeCoverage2 = (expectedCount1.equals(BigDecimal.ZERO)) ? null
-                : expectedAbsoluteCoverage2.divide(expectedCount1, PropertyComparisonProcessor.SCALE,
+                : expectedAbsoluteCoverage.divide(expectedCount1, PropertyComparisonProcessor.SCALE,
                 RoundingMode.HALF_UP);
         BigDecimal overlapD = new BigDecimal(overlap);
         BigDecimal expectedCompleteness1 = (overlapD.equals(BigDecimal.ZERO)) ? null
@@ -152,7 +151,7 @@ public class PropertyComparisonProcessorTest {
                 : expectedCount2.divide(expectedCount1.multiply(expectedCount2).divide(overlapD,
                 PropertyComparisonProcessor.SCALE, RoundingMode.HALF_UP));
         assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2,
-                expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+                expectedAbsoluteCoverage,
                 expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
                 dataset(1), dataset(2), aspect(1), outputMetaModels[0], outputMetaModels[1]);
     }
@@ -160,7 +159,7 @@ public class PropertyComparisonProcessorTest {
 
     private void assertMeasurements(BigDecimal expectedCount1, BigDecimal expectedCount2,
                                     BigDecimal expectedDeduplicatedCount1, BigDecimal expectedDeduplicatedCount2,
-                                    BigDecimal expectedAbsoluteCoverage1, BigDecimal expectedAbsoluteCoverage2,
+                                    BigDecimal expectedAbsoluteCoverage,
                                     @Nullable BigDecimal expectedRelativeCoverage1, @Nullable BigDecimal expectedRelativeCoverage2,
                                     @Nullable BigDecimal expectedCompleteness1, @Nullable BigDecimal expectedCompleteness2, Resource dataset1,
                                     Resource dataset2, Resource aspect1, Model outputMetaModel1, Model outputMetaModel2) {
@@ -185,17 +184,11 @@ public class PropertyComparisonProcessorTest {
                     getMeasurement(AV.deduplicatedCount, OM.one, dataset(2), "value", null, aspect(1), outputMetaModel2).stripTrailingZeros(),
                     "Wrong deduplicated count for dataset 2.");
         }
-        if (expectedAbsoluteCoverage1 != null) {
+        if (expectedAbsoluteCoverage != null) {
             assertEquals(
-                    expectedAbsoluteCoverage1, getMeasurement(AV.absoluteCoverage, OM.one, dataset(1), "value",
+                    expectedAbsoluteCoverage, getMeasurement(AV.absoluteCoverage, OM.one, dataset(1), "value",
                             Collections.singleton(dataset(2)), aspect(1), outputMetaModel1).stripTrailingZeros(),
-                    "Wrong absolute coverage for dataset 1.");
-        }
-        if (expectedAbsoluteCoverage2 != null) {
-            assertEquals(
-                    expectedAbsoluteCoverage2, getMeasurement(AV.absoluteCoverage, OM.one, dataset(2), "value",
-                            Collections.singleton(dataset(1)), aspect(1), outputMetaModel2).stripTrailingZeros(),
-                    "Wrong absolute coverage for dataset 2.");
+                    "Wrong absolute coverage.");
         }
         if (expectedRelativeCoverage1 != null) {
             assertEquals(
@@ -284,13 +277,12 @@ public class PropertyComparisonProcessorTest {
         BigDecimal expectedCount2 = new BigDecimal(values2.size());
         BigDecimal expectedDeduplicatedCount1 = new BigDecimal(values1.size());
         BigDecimal expectedDeduplicatedCount2 = new BigDecimal(values2.size());
-        BigDecimal expectedAbsoluteCoverage1 = new BigDecimal(values2.size() - missingValues1.size());
-        BigDecimal expectedAbsoluteCoverage2 = new BigDecimal(values1.size() - missingValues2.size());
+        BigDecimal expectedAbsoluteCoverage = new BigDecimal(values2.size() - missingValues1.size());
         BigDecimal expectedRelativeCoverage1 = (expectedCount2.equals(BigDecimal.ZERO)) ? null
-                : expectedAbsoluteCoverage1.divide(expectedCount2, PropertyComparisonProcessor.SCALE,
+                : expectedAbsoluteCoverage.divide(expectedCount2, PropertyComparisonProcessor.SCALE,
                 RoundingMode.HALF_UP);
         BigDecimal expectedRelativeCoverage2 = (expectedCount1.equals(BigDecimal.ZERO)) ? null
-                : expectedAbsoluteCoverage2.divide(expectedCount1, PropertyComparisonProcessor.SCALE,
+                : expectedAbsoluteCoverage.divide(expectedCount1, PropertyComparisonProcessor.SCALE,
                 RoundingMode.HALF_UP);
         BigDecimal overlapD = new BigDecimal(overlap);
         BigDecimal expectedCompleteness1 = (overlapD.equals(BigDecimal.ZERO)) ? null
@@ -300,7 +292,7 @@ public class PropertyComparisonProcessorTest {
                 : expectedCount2.divide(expectedCount1.multiply(expectedCount2).divide(overlapD,
                 PropertyComparisonProcessor.SCALE, RoundingMode.HALF_UP));
         assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2,
-                expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+                expectedAbsoluteCoverage,
                 expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
                 dataset(1), dataset(2), aspect(1), outputMetaModels[0], outputMetaModels[1]);
     }
@@ -346,14 +338,13 @@ public class PropertyComparisonProcessorTest {
         BigDecimal expectedCount2 = BigDecimal.ONE;
         BigDecimal expectedDeduplicatedCount1 = BigDecimal.ONE;
         BigDecimal expectedDeduplicatedCount2 = BigDecimal.ONE;
-        BigDecimal expectedAbsoluteCoverage1 = BigDecimal.ONE;
-        BigDecimal expectedAbsoluteCoverage2 = BigDecimal.ONE;
+        BigDecimal expectedAbsoluteCoverage = BigDecimal.ONE;
         BigDecimal expectedRelativeCoverage1 = BigDecimal.ONE;
         BigDecimal expectedRelativeCoverage2 = BigDecimal.ONE;
         BigDecimal expectedCompleteness1 = BigDecimal.ONE;
         BigDecimal expectedCompleteness2 = BigDecimal.ONE;
         assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2,
-                expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+                expectedAbsoluteCoverage,
                 expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
                 dataset(1), dataset(2), aspect(1), outputMetaModels[0], outputMetaModels[1]);
     }
@@ -469,14 +460,13 @@ public class PropertyComparisonProcessorTest {
         BigDecimal expectedCount2 = new BigDecimal(4);
         BigDecimal expectedDeduplicatedCount1 = new BigDecimal(2);
         BigDecimal expectedDeduplicatedCount2 = new BigDecimal(2);
-        BigDecimal expectedAbsoluteCoverage1 = new BigDecimal(2);
-        BigDecimal expectedAbsoluteCoverage2 = new BigDecimal(2);
+        BigDecimal expectedAbsoluteCoverage = new BigDecimal(2);
         BigDecimal expectedRelativeCoverage1 = new BigDecimal(1);
         BigDecimal expectedRelativeCoverage2 = new BigDecimal(1);
         BigDecimal expectedCompleteness1 = new BigDecimal(1);
         BigDecimal expectedCompleteness2 = new BigDecimal(1);
         assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2,
-                expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+                expectedAbsoluteCoverage,
                 expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
                 dataset(1), dataset(2), aspect(1), outputMetaModel1, outputMetaModel2);
     }
@@ -576,14 +566,13 @@ public class PropertyComparisonProcessorTest {
         BigDecimal expectedCount2 = new BigDecimal(1);
         BigDecimal expectedDeduplicatedCount1 = new BigDecimal(1);
         BigDecimal expectedDeduplicatedCount2 = new BigDecimal(1);
-        BigDecimal expectedAbsoluteCoverage1 = new BigDecimal(1);
-        BigDecimal expectedAbsoluteCoverage2 = new BigDecimal(1);
+        BigDecimal expectedAbsoluteCoverage = new BigDecimal(1);
         BigDecimal expectedRelativeCoverage1 = new BigDecimal(1);
         BigDecimal expectedRelativeCoverage2 = new BigDecimal(1);
         BigDecimal expectedCompleteness1 = new BigDecimal(1);
         BigDecimal expectedCompleteness2 = new BigDecimal(1);
         assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2,
-                expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+                expectedAbsoluteCoverage,
                 expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
                 dataset(1), dataset(2), aspect(1), outputMetaModel1, outputMetaModel2);
     }
@@ -683,14 +672,13 @@ public class PropertyComparisonProcessorTest {
         BigDecimal expectedCount2 = new BigDecimal(4);
         BigDecimal expectedDeduplicatedCount1 = new BigDecimal(2);
         BigDecimal expectedDeduplicatedCount2 = new BigDecimal(2);
-        BigDecimal expectedAbsoluteCoverage1 = new BigDecimal(2);
-        BigDecimal expectedAbsoluteCoverage2 = new BigDecimal(2);
+        BigDecimal expectedAbsoluteCoverage = new BigDecimal(2);
         BigDecimal expectedRelativeCoverage1 = new BigDecimal(1);
         BigDecimal expectedRelativeCoverage2 = new BigDecimal(1);
         BigDecimal expectedCompleteness1 = new BigDecimal(1);
         BigDecimal expectedCompleteness2 = new BigDecimal(1);
         assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2,
-                expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+                expectedAbsoluteCoverage,
                 expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
                 dataset(1), dataset(2), aspect(1), outputMetaModel1, outputMetaModel2);
     }
@@ -790,14 +778,13 @@ public class PropertyComparisonProcessorTest {
         BigDecimal expectedCount2 = new BigDecimal(2);
         BigDecimal expectedDeduplicatedCount1 = new BigDecimal(2);
         BigDecimal expectedDeduplicatedCount2 = new BigDecimal(2);
-        BigDecimal expectedAbsoluteCoverage1 = new BigDecimal(2);
-        BigDecimal expectedAbsoluteCoverage2 = new BigDecimal(2);
+        BigDecimal expectedAbsoluteCoverage = new BigDecimal(2);
         BigDecimal expectedRelativeCoverage1 = new BigDecimal(1);
         BigDecimal expectedRelativeCoverage2 = new BigDecimal(1);
         BigDecimal expectedCompleteness1 = new BigDecimal(1);
         BigDecimal expectedCompleteness2 = new BigDecimal(1);
         assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2,
-                expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+                expectedAbsoluteCoverage,
                 expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
                 dataset(1), dataset(2), aspect(1), outputMetaModel1, outputMetaModel2);
     }
@@ -897,14 +884,13 @@ public class PropertyComparisonProcessorTest {
         BigDecimal expectedCount2 = new BigDecimal(4);
         BigDecimal expectedDeduplicatedCount1 = new BigDecimal(1);
         BigDecimal expectedDeduplicatedCount2 = new BigDecimal(2);
-        BigDecimal expectedAbsoluteCoverage1 = new BigDecimal(1);
-        BigDecimal expectedAbsoluteCoverage2 = new BigDecimal(1);
+        BigDecimal expectedAbsoluteCoverage = new BigDecimal(1);
         BigDecimal expectedRelativeCoverage1 = new BigDecimal(0.5);
         BigDecimal expectedRelativeCoverage2 = new BigDecimal(1);
         BigDecimal expectedCompleteness1 = new BigDecimal(0.5);
         BigDecimal expectedCompleteness2 = new BigDecimal(1);
         assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2,
-                expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+                expectedAbsoluteCoverage,
                 expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
                 dataset(1), dataset(2), aspect(1), outputMetaModel1, outputMetaModel2);
     }
@@ -1004,14 +990,13 @@ public class PropertyComparisonProcessorTest {
         BigDecimal expectedCount2 = new BigDecimal(2);
         BigDecimal expectedDeduplicatedCount1 = new BigDecimal(1);
         BigDecimal expectedDeduplicatedCount2 = new BigDecimal(2);
-        BigDecimal expectedAbsoluteCoverage1 = new BigDecimal(1);
-        BigDecimal expectedAbsoluteCoverage2 = new BigDecimal(1);
+        BigDecimal expectedAbsoluteCoverage = new BigDecimal(1);
         BigDecimal expectedRelativeCoverage1 = new BigDecimal(0.5);
         BigDecimal expectedRelativeCoverage2 = new BigDecimal(1);
         BigDecimal expectedCompleteness1 = new BigDecimal(0.5);
         BigDecimal expectedCompleteness2 = new BigDecimal(1);
         assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2,
-                expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+                expectedAbsoluteCoverage,
                 expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
                 dataset(1), dataset(2), aspect(1), outputMetaModel1, outputMetaModel2);
     }
@@ -1133,14 +1118,13 @@ public class PropertyComparisonProcessorTest {
         BigDecimal expectedCount2 = new BigDecimal(1);
         BigDecimal expectedDeduplicatedCount1 = new BigDecimal(1);
         BigDecimal expectedDeduplicatedCount2 = new BigDecimal(1);
-        BigDecimal expectedAbsoluteCoverage1 = new BigDecimal(1);
-        BigDecimal expectedAbsoluteCoverage2 = new BigDecimal(1);
+        BigDecimal expectedAbsoluteCoverage = new BigDecimal(1);
         BigDecimal expectedRelativeCoverage1 = new BigDecimal(1);
         BigDecimal expectedRelativeCoverage2 = new BigDecimal(1);
         BigDecimal expectedCompleteness1 = new BigDecimal(1);
         BigDecimal expectedCompleteness2 = new BigDecimal(1);
         assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2,
-                expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+                expectedAbsoluteCoverage,
                 expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
                 dataset(1), dataset(2), aspect(1), outputMetaModel1, outputMetaModel2);
     }
@@ -1240,14 +1224,13 @@ public class PropertyComparisonProcessorTest {
         BigDecimal expectedCount2 = new BigDecimal(1);
         BigDecimal expectedDeduplicatedCount1 = new BigDecimal(1);
         BigDecimal expectedDeduplicatedCount2 = new BigDecimal(1);
-        BigDecimal expectedAbsoluteCoverage1 = new BigDecimal(0);
-        BigDecimal expectedAbsoluteCoverage2 = new BigDecimal(0);
+        BigDecimal expectedAbsoluteCoverage = new BigDecimal(0);
         BigDecimal expectedRelativeCoverage1 = new BigDecimal(0);
         BigDecimal expectedRelativeCoverage2 = new BigDecimal(0);
         BigDecimal expectedCompleteness1 = null;
         BigDecimal expectedCompleteness2 = null;
         assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2,
-                expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+                expectedAbsoluteCoverage,
                 expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
                 dataset(1), dataset(2), aspect(1), outputMetaModel1, outputMetaModel2);
     }
@@ -1347,14 +1330,13 @@ public class PropertyComparisonProcessorTest {
         BigDecimal expectedCount2 = new BigDecimal(1);
         BigDecimal expectedDeduplicatedCount1 = new BigDecimal(0);
         BigDecimal expectedDeduplicatedCount2 = new BigDecimal(1);
-        BigDecimal expectedAbsoluteCoverage1 = new BigDecimal(0);
-        BigDecimal expectedAbsoluteCoverage2 = new BigDecimal(0);
+        BigDecimal expectedAbsoluteCoverage = new BigDecimal(0);
         BigDecimal expectedRelativeCoverage1 = new BigDecimal(0);
         BigDecimal expectedRelativeCoverage2 = null;
         BigDecimal expectedCompleteness1 = null;
         BigDecimal expectedCompleteness2 = null;
         assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2,
-                expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+                expectedAbsoluteCoverage,
                 expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
                 dataset(1), dataset(2), aspect(1), outputMetaModel1, outputMetaModel2);
     }
@@ -1459,14 +1441,13 @@ public class PropertyComparisonProcessorTest {
         BigDecimal expectedCount2 = null;
         BigDecimal expectedDeduplicatedCount1 = new BigDecimal(1);
         BigDecimal expectedDeduplicatedCount2 = null;
-        BigDecimal expectedAbsoluteCoverage1 = null;
-        BigDecimal expectedAbsoluteCoverage2 = null;
+        BigDecimal expectedAbsoluteCoverage = null;
         BigDecimal expectedRelativeCoverage1 = null;
         BigDecimal expectedRelativeCoverage2 = null;
         BigDecimal expectedCompleteness1 = null;
         BigDecimal expectedCompleteness2 = null;
         assertMeasurements(expectedCount1, expectedCount2, expectedDeduplicatedCount1, expectedDeduplicatedCount2,
-                expectedAbsoluteCoverage1, expectedAbsoluteCoverage2,
+                expectedAbsoluteCoverage,
                 expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2,
                 dataset(1), dataset(2), aspect(1), outputMetaModel1, outputMetaModel2);
     }
