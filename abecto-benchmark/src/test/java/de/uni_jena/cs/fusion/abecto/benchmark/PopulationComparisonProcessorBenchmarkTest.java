@@ -24,6 +24,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -50,7 +51,7 @@ public class PopulationComparisonProcessorBenchmarkTest {
         assertEquals(10000, getQualityMeasurement(AV.count, dataset0, null, none, aspect, outputModel).value);
         assertEquals(10000, getQualityMeasurement(AV.deduplicatedCount, dataset0, null, none, aspect, outputModel).value);
         assertEquals(7500, getQualityMeasurement(AV.absoluteCoverage, dataset0, null, dataset1singleton, aspect, outputModel).value);
-        assertEquals(0.75, getQualityMeasurement(AV.relativeCoverage, dataset0, null, dataset1singleton, aspect, outputModel).value.doubleValue());
-        assertEquals(0.7500187504687617, getQualityMeasurement(AV.marCompletenessThomas08, dataset0, null, dataset1singleton, aspect, outputModel).value.doubleValue());
+        assertEquals(new BigDecimal("0.75"), getQualityMeasurement(AV.relativeCoverage, dataset0, null, dataset1singleton, aspect, outputModel).value);
+        assertEquals(new BigDecimal("0.75"), getQualityMeasurement(AV.marCompletenessThomas08, dataset0, null, dataset1singleton, aspect, outputModel).value);
     }
 }
