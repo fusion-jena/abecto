@@ -44,12 +44,11 @@ public class PropertyComparisonProcessorTest {
             + "> ?dummy OPTIONAL{?key <" + property(1) + "> ?value}}");
     Aspect aspect1 = new Aspect(aspect(1), "key").setPattern(dataset(1), pattern).setPattern(dataset(2), pattern);
     Model mappingModel = ModelFactory.createDefaultModel();
+    Model[] outputMetaModels;
 
     {
         addMapping(subject(1), subject(2), subject(3), subject(4));
     }
-
-    Model[] outputMetaModels;
 
     @BeforeAll
     public static void initJena() {
@@ -184,8 +183,8 @@ public class PropertyComparisonProcessorTest {
     void assertNoIndependentMeasurement(Resource measure, int computedOnDatasetNumber) {
         assertFalse(
                 containsMeasurement(measure, null, null, dataset(computedOnDatasetNumber), "value",
-                        Collections.emptySet(), aspect(1), outputMetaModels[computedOnDatasetNumber-1]),
-                "Unexpected existence of " + measure.getLocalName() + " for dataset " + computedOnDatasetNumber +".");
+                        Collections.emptySet(), aspect(1), outputMetaModels[computedOnDatasetNumber - 1]),
+                "Unexpected existence of " + measure.getLocalName() + " for dataset " + computedOnDatasetNumber + ".");
     }
 
     void assertComparativeMeasurement(Resource measure, int computedOnDatasetNumber, BigDecimal expectedValue) {
@@ -200,16 +199,16 @@ public class PropertyComparisonProcessorTest {
     void assertMeasurement(Resource measure, int computedOnDatasetNumber, Collection<Resource> comparedToDatasets, BigDecimal expectedValue) {
         assertEquals(expectedValue.stripTrailingZeros(),
                 getMeasurement(measure, OM.one, dataset(computedOnDatasetNumber), "value",
-                        comparedToDatasets, aspect(1), outputMetaModels[computedOnDatasetNumber-1]).stripTrailingZeros(),
-                "Wrong " + measure.getLocalName() + " value for dataset " + computedOnDatasetNumber +".");
+                        comparedToDatasets, aspect(1), outputMetaModels[computedOnDatasetNumber - 1]).stripTrailingZeros(),
+                "Wrong " + measure.getLocalName() + " value for dataset " + computedOnDatasetNumber + ".");
     }
 
     void assertNoComparativeMeasurement(Resource measure, int computedOnDatasetNumber) {
-        Collection<Resource> comparedToDatasets = Collections.singleton(dataset(3-computedOnDatasetNumber));
+        Collection<Resource> comparedToDatasets = Collections.singleton(dataset(3 - computedOnDatasetNumber));
         assertFalse(
                 containsMeasurement(measure, null, null, dataset(computedOnDatasetNumber), "value",
-                        comparedToDatasets, aspect(1), outputMetaModels[computedOnDatasetNumber-1]),
-                "Unexpected existence of " + measure.getLocalName() + " for dataset " + computedOnDatasetNumber +".");
+                        comparedToDatasets, aspect(1), outputMetaModels[computedOnDatasetNumber - 1]),
+                "Unexpected existence of " + measure.getLocalName() + " for dataset " + computedOnDatasetNumber + ".");
     }
 
     void assertMissing(Aspect aspect, Collection<RDFNode> values1, Collection<RDFNode> values2,
@@ -272,20 +271,27 @@ public class PropertyComparisonProcessorTest {
                 expectedRelativeCoverage1, expectedRelativeCoverage2, expectedCompleteness1, expectedCompleteness2);
     }
 
-    public void assertMissingValue(Resource affectedDataset, Resource affectedResource, Resource comparedToDataset,
-                                   Resource comparedToResource, String missingValue, Model outputMetaModel, boolean expected) {
+    public void assertValueMissing(int affectedDatasetNumber, Resource affectedResource, int comparedToDatasetNumber,
+                                   Resource comparedToResource, String missingValue) {
+        Resource affectedDataset = dataset(affectedDatasetNumber);
+        Resource comparedToDataset = dataset(comparedToDatasetNumber);
         boolean actual = containsValuesOmission(affectedResource, "value", comparedToDataset, comparedToResource,
-                ResourceFactory.createStringLiteral(missingValue), aspect(1), outputMetaModel);
-        if (expected) {
-            assertTrue(actual,
-                    String.format("Value \"%s\" for %s from %s should be reported as missing compared to %s from %s.",
-                            missingValue, affectedResource, affectedDataset, comparedToResource, comparedToDataset));
-        } else {
-            assertFalse(actual,
-                    String.format(
-                            "Value \"%s\" for %s from %s should not be reported as missing compared to %s from %s.",
-                            missingValue, affectedResource, affectedDataset, comparedToResource, comparedToDataset));
-        }
+                ResourceFactory.createStringLiteral(missingValue), aspect(1), outputMetaModels[affectedDatasetNumber - 1]);
+        assertTrue(actual,
+                String.format("Value \"%s\" for %s from %s should be reported as missing compared to %s from %s.",
+                        missingValue, affectedResource, affectedDataset, comparedToResource, comparedToDataset));
+    }
+
+    public void assertValueNotMissing(int affectedDatasetNumber, Resource affectedResource, int comparedToDatasetNumber,
+                                      Resource comparedToResource, String missingValue) {
+        Resource affectedDataset = dataset(affectedDatasetNumber);
+        Resource comparedToDataset = dataset(comparedToDatasetNumber);
+        boolean actual = containsValuesOmission(affectedResource, "value", comparedToDataset, comparedToResource,
+                ResourceFactory.createStringLiteral(missingValue), aspect(1), outputMetaModels[affectedDatasetNumber - 1]);
+        assertFalse(actual,
+                String.format(
+                        "Value \"%s\" for %s from %s should not be reported as missing compared to %s from %s.",
+                        missingValue, affectedResource, affectedDataset, comparedToResource, comparedToDataset));
     }
 
     void assertSame(Aspect aspect, RDFNode value1, RDFNode value2) throws Exception {
@@ -345,36 +351,36 @@ public class PropertyComparisonProcessorTest {
                 Arrays.asList("value1", "value2"), true);
 
         // omissions subject 1
-        assertMissingValue(dataset(1), subject(1), dataset(1), subject(2), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(1), subject(2), "value2", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(3), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(3), "value2", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(4), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(4), "value2", outputMetaModels[0], false);
+        assertValueNotMissing(1, subject(1), 1, subject(2), "value1");
+        assertValueNotMissing(1, subject(1), 1, subject(2), "value2");
+        assertValueNotMissing(1, subject(1), 2, subject(3), "value1");
+        assertValueNotMissing(1, subject(1), 2, subject(3), "value2");
+        assertValueNotMissing(1, subject(1), 2, subject(4), "value1");
+        assertValueNotMissing(1, subject(1), 2, subject(4), "value2");
 
         // omissions subject 2
-        assertMissingValue(dataset(1), subject(2), dataset(1), subject(1), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(1), subject(1), "value2", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(3), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(3), "value2", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(4), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(4), "value2", outputMetaModels[0], false);
+        assertValueNotMissing(1, subject(2), 1, subject(1), "value1");
+        assertValueNotMissing(1, subject(2), 1, subject(1), "value2");
+        assertValueNotMissing(1, subject(2), 2, subject(3), "value1");
+        assertValueNotMissing(1, subject(2), 2, subject(3), "value2");
+        assertValueNotMissing(1, subject(2), 2, subject(4), "value1");
+        assertValueNotMissing(1, subject(2), 2, subject(4), "value2");
 
         // omissions subject 3
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(1), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(1), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(2), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(2), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(2), subject(4), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(2), subject(4), "value2", outputMetaModels[1], false);
+        assertValueNotMissing(2, subject(3), 1, subject(1), "value1");
+        assertValueNotMissing(2, subject(3), 1, subject(1), "value2");
+        assertValueNotMissing(2, subject(3), 1, subject(2), "value1");
+        assertValueNotMissing(2, subject(3), 1, subject(2), "value2");
+        assertValueNotMissing(2, subject(3), 2, subject(4), "value1");
+        assertValueNotMissing(2, subject(3), 2, subject(4), "value2");
 
         // omissions subject 4
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(1), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(1), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(2), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(2), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(2), subject(3), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(2), subject(3), "value2", outputMetaModels[1], false);
+        assertValueNotMissing(2, subject(4), 1, subject(1), "value1");
+        assertValueNotMissing(2, subject(4), 1, subject(1), "value2");
+        assertValueNotMissing(2, subject(4), 1, subject(2), "value1");
+        assertValueNotMissing(2, subject(4), 1, subject(2), "value2");
+        assertValueNotMissing(2, subject(4), 2, subject(3), "value1");
+        assertValueNotMissing(2, subject(4), 2, subject(3), "value2");
 
         // deviations subject 1
         assertDeviation(dataset(1), subject(1), "value1", dataset(1), subject(2), "value1", outputMetaModels[0], false);
@@ -448,36 +454,36 @@ public class PropertyComparisonProcessorTest {
                 true, List.of("value1"), List.of(), false);
 
         // omissions subject 1
-        assertMissingValue(dataset(1), subject(1), dataset(1), subject(2), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(1), subject(2), "value2", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(3), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(3), "value2", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(4), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(4), "value2", outputMetaModels[0], false);
+        assertValueNotMissing(1, subject(1), 1, subject(2), "value1");
+        assertValueNotMissing(1, subject(1), 1, subject(2), "value2");
+        assertValueNotMissing(1, subject(1), 2, subject(3), "value1");
+        assertValueNotMissing(1, subject(1), 2, subject(3), "value2");
+        assertValueNotMissing(1, subject(1), 2, subject(4), "value1");
+        assertValueNotMissing(1, subject(1), 2, subject(4), "value2");
 
         // omissions subject 2
-        assertMissingValue(dataset(1), subject(2), dataset(1), subject(1), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(1), subject(1), "value2", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(3), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(3), "value2", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(4), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(4), "value2", outputMetaModels[0], false);
+        assertValueNotMissing(1, subject(2), 1, subject(1), "value1");
+        assertValueNotMissing(1, subject(2), 1, subject(1), "value2");
+        assertValueNotMissing(1, subject(2), 2, subject(3), "value1");
+        assertValueNotMissing(1, subject(2), 2, subject(3), "value2");
+        assertValueNotMissing(1, subject(2), 2, subject(4), "value1");
+        assertValueNotMissing(1, subject(2), 2, subject(4), "value2");
 
         // omissions subject 3
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(1), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(1), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(2), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(2), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(2), subject(4), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(2), subject(4), "value2", outputMetaModels[1], false);
+        assertValueNotMissing(2, subject(3), 1, subject(1), "value1");
+        assertValueNotMissing(2, subject(3), 1, subject(1), "value2");
+        assertValueNotMissing(2, subject(3), 1, subject(2), "value1");
+        assertValueNotMissing(2, subject(3), 1, subject(2), "value2");
+        assertValueNotMissing(2, subject(3), 2, subject(4), "value1");
+        assertValueNotMissing(2, subject(3), 2, subject(4), "value2");
 
         // omissions subject 4
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(1), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(1), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(2), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(2), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(2), subject(3), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(2), subject(3), "value2", outputMetaModels[1], false);
+        assertValueNotMissing(2, subject(4), 1, subject(1), "value1");
+        assertValueNotMissing(2, subject(4), 1, subject(1), "value2");
+        assertValueNotMissing(2, subject(4), 1, subject(2), "value1");
+        assertValueNotMissing(2, subject(4), 1, subject(2), "value2");
+        assertValueNotMissing(2, subject(4), 2, subject(3), "value1");
+        assertValueNotMissing(2, subject(4), 2, subject(3), "value2");
 
         // deviations subject 1
         assertDeviation(dataset(1), subject(1), "value1", dataset(1), subject(2), "value1", outputMetaModels[0], false);
@@ -551,36 +557,36 @@ public class PropertyComparisonProcessorTest {
                 true, Arrays.asList("value1", "value2"), Arrays.asList("value1", "value2"), true);
 
         // omissions subject 1
-        assertMissingValue(dataset(1), subject(1), dataset(1), subject(2), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(1), subject(2), "value2", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(3), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(3), "value2", outputMetaModels[0], true);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(4), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(4), "value2", outputMetaModels[0], true);
+        assertValueNotMissing(1, subject(1), 1, subject(2), "value1");
+        assertValueNotMissing(1, subject(1), 1, subject(2), "value2");
+        assertValueNotMissing(1, subject(1), 2, subject(3), "value1");
+        assertValueMissing(1, subject(1), 2, subject(3), "value2");
+        assertValueNotMissing(1, subject(1), 2, subject(4), "value1");
+        assertValueMissing(1, subject(1), 2, subject(4), "value2");
 
         // omissions subject 2
-        assertMissingValue(dataset(1), subject(2), dataset(1), subject(1), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(1), subject(1), "value2", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(3), "value1", outputMetaModels[0], true);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(3), "value2", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(4), "value1", outputMetaModels[0], true);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(4), "value2", outputMetaModels[0], false);
+        assertValueNotMissing(1, subject(2), 1, subject(1), "value1");
+        assertValueNotMissing(1, subject(2), 1, subject(1), "value2");
+        assertValueMissing(1, subject(2), 2, subject(3), "value1");
+        assertValueNotMissing(1, subject(2), 2, subject(3), "value2");
+        assertValueMissing(1, subject(2), 2, subject(4), "value1");
+        assertValueNotMissing(1, subject(2), 2, subject(4), "value2");
 
         // omissions subject 3
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(1), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(1), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(2), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(2), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(2), subject(4), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(2), subject(4), "value2", outputMetaModels[1], false);
+        assertValueNotMissing(2, subject(3), 1, subject(1), "value1");
+        assertValueNotMissing(2, subject(3), 1, subject(1), "value2");
+        assertValueNotMissing(2, subject(3), 1, subject(2), "value1");
+        assertValueNotMissing(2, subject(3), 1, subject(2), "value2");
+        assertValueNotMissing(2, subject(3), 2, subject(4), "value1");
+        assertValueNotMissing(2, subject(3), 2, subject(4), "value2");
 
         // omissions subject 4
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(1), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(1), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(2), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(2), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(2), subject(3), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(2), subject(3), "value2", outputMetaModels[1], false);
+        assertValueNotMissing(2, subject(4), 1, subject(1), "value1");
+        assertValueNotMissing(2, subject(4), 1, subject(1), "value2");
+        assertValueNotMissing(2, subject(4), 1, subject(2), "value1");
+        assertValueNotMissing(2, subject(4), 1, subject(2), "value2");
+        assertValueNotMissing(2, subject(4), 2, subject(3), "value1");
+        assertValueNotMissing(2, subject(4), 2, subject(3), "value2");
 
         // deviations subject 1
         assertDeviation(dataset(1), subject(1), "value1", dataset(1), subject(2), "value1", outputMetaModels[0], false);
@@ -654,36 +660,36 @@ public class PropertyComparisonProcessorTest {
                 true, Arrays.asList("value1", "value2"), List.of(), false);
 
         // omissions subject 1
-        assertMissingValue(dataset(1), subject(1), dataset(1), subject(2), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(1), subject(2), "value2", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(3), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(3), "value2", outputMetaModels[0], true);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(4), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(4), "value2", outputMetaModels[0], false);
+        assertValueNotMissing(1, subject(1), 1, subject(2), "value1");
+        assertValueNotMissing(1, subject(1), 1, subject(2), "value2");
+        assertValueNotMissing(1, subject(1), 2, subject(3), "value1");
+        assertValueMissing(1, subject(1), 2, subject(3), "value2");
+        assertValueNotMissing(1, subject(1), 2, subject(4), "value1");
+        assertValueNotMissing(1, subject(1), 2, subject(4), "value2");
 
         // omissions subject 2
-        assertMissingValue(dataset(1), subject(2), dataset(1), subject(1), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(1), subject(1), "value2", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(3), "value1", outputMetaModels[0], true);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(3), "value2", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(4), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(4), "value2", outputMetaModels[0], false);
+        assertValueNotMissing(1, subject(2), 1, subject(1), "value1");
+        assertValueNotMissing(1, subject(2), 1, subject(1), "value2");
+        assertValueMissing(1, subject(2), 2, subject(3), "value1");
+        assertValueNotMissing(1, subject(2), 2, subject(3), "value2");
+        assertValueNotMissing(1, subject(2), 2, subject(4), "value1");
+        assertValueNotMissing(1, subject(2), 2, subject(4), "value2");
 
         // omissions subject 3
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(1), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(1), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(2), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(2), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(2), subject(4), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(2), subject(4), "value2", outputMetaModels[1], false);
+        assertValueNotMissing(2, subject(3), 1, subject(1), "value1");
+        assertValueNotMissing(2, subject(3), 1, subject(1), "value2");
+        assertValueNotMissing(2, subject(3), 1, subject(2), "value1");
+        assertValueNotMissing(2, subject(3), 1, subject(2), "value2");
+        assertValueNotMissing(2, subject(3), 2, subject(4), "value1");
+        assertValueNotMissing(2, subject(3), 2, subject(4), "value2");
 
         // omissions subject 4
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(1), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(1), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(2), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(2), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(2), subject(3), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(2), subject(3), "value2", outputMetaModels[1], false);
+        assertValueNotMissing(2, subject(4), 1, subject(1), "value1");
+        assertValueNotMissing(2, subject(4), 1, subject(1), "value2");
+        assertValueNotMissing(2, subject(4), 1, subject(2), "value1");
+        assertValueNotMissing(2, subject(4), 1, subject(2), "value2");
+        assertValueNotMissing(2, subject(4), 2, subject(3), "value1");
+        assertValueNotMissing(2, subject(4), 2, subject(3), "value2");
 
         // deviations subject 1
         assertDeviation(dataset(1), subject(1), "value1", dataset(1), subject(2), "value1", outputMetaModels[0], false);
@@ -757,36 +763,36 @@ public class PropertyComparisonProcessorTest {
                 true, Arrays.asList("value1", "value2"), Arrays.asList("value1", "value2"), true);
 
         // omissions subject 1
-        assertMissingValue(dataset(1), subject(1), dataset(1), subject(2), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(1), subject(2), "value2", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(3), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(3), "value2", outputMetaModels[0], true);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(4), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(4), "value2", outputMetaModels[0], true);
+        assertValueNotMissing(1, subject(1), 1, subject(2), "value1");
+        assertValueNotMissing(1, subject(1), 1, subject(2), "value2");
+        assertValueNotMissing(1, subject(1), 2, subject(3), "value1");
+        assertValueMissing(1, subject(1), 2, subject(3), "value2");
+        assertValueNotMissing(1, subject(1), 2, subject(4), "value1");
+        assertValueMissing(1, subject(1), 2, subject(4), "value2");
 
         // omissions subject 2
-        assertMissingValue(dataset(1), subject(2), dataset(1), subject(1), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(1), subject(1), "value2", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(3), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(3), "value2", outputMetaModels[0], true);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(4), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(4), "value2", outputMetaModels[0], true);
+        assertValueNotMissing(1, subject(2), 1, subject(1), "value1");
+        assertValueNotMissing(1, subject(2), 1, subject(1), "value2");
+        assertValueNotMissing(1, subject(2), 2, subject(3), "value1");
+        assertValueMissing(1, subject(2), 2, subject(3), "value2");
+        assertValueNotMissing(1, subject(2), 2, subject(4), "value1");
+        assertValueMissing(1, subject(2), 2, subject(4), "value2");
 
         // omissions subject 3
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(1), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(1), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(2), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(2), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(2), subject(4), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(2), subject(4), "value2", outputMetaModels[1], false);
+        assertValueNotMissing(2, subject(3), 1, subject(1), "value1");
+        assertValueNotMissing(2, subject(3), 1, subject(1), "value2");
+        assertValueNotMissing(2, subject(3), 1, subject(2), "value1");
+        assertValueNotMissing(2, subject(3), 1, subject(2), "value2");
+        assertValueNotMissing(2, subject(3), 2, subject(4), "value1");
+        assertValueNotMissing(2, subject(3), 2, subject(4), "value2");
 
         // omissions subject 4
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(1), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(1), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(2), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(2), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(2), subject(3), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(2), subject(3), "value2", outputMetaModels[1], false);
+        assertValueNotMissing(2, subject(4), 1, subject(1), "value1");
+        assertValueNotMissing(2, subject(4), 1, subject(1), "value2");
+        assertValueNotMissing(2, subject(4), 1, subject(2), "value1");
+        assertValueNotMissing(2, subject(4), 1, subject(2), "value2");
+        assertValueNotMissing(2, subject(4), 2, subject(3), "value1");
+        assertValueNotMissing(2, subject(4), 2, subject(3), "value2");
 
         // deviations subject 1
         assertDeviation(dataset(1), subject(1), "value1", dataset(1), subject(2), "value1", outputMetaModels[0], false);
@@ -860,36 +866,36 @@ public class PropertyComparisonProcessorTest {
                 Arrays.asList("value1", "value2"), List.of(), false);
 
         // omissions subject 1
-        assertMissingValue(dataset(1), subject(1), dataset(1), subject(2), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(1), subject(2), "value2", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(3), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(3), "value2", outputMetaModels[0], true);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(4), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(4), "value2", outputMetaModels[0], false);
+        assertValueNotMissing(1, subject(1), 1, subject(2), "value1");
+        assertValueNotMissing(1, subject(1), 1, subject(2), "value2");
+        assertValueNotMissing(1, subject(1), 2, subject(3), "value1");
+        assertValueMissing(1, subject(1), 2, subject(3), "value2");
+        assertValueNotMissing(1, subject(1), 2, subject(4), "value1");
+        assertValueNotMissing(1, subject(1), 2, subject(4), "value2");
 
         // omissions subject 2
-        assertMissingValue(dataset(1), subject(2), dataset(1), subject(1), "value1", outputMetaModels[0], true);
-        assertMissingValue(dataset(1), subject(2), dataset(1), subject(1), "value2", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(3), "value1", outputMetaModels[0], true);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(3), "value2", outputMetaModels[0], true);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(4), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(4), "value2", outputMetaModels[0], false);
+        assertValueMissing(1, subject(2), 1, subject(1), "value1");
+        assertValueNotMissing(1, subject(2), 1, subject(1), "value2");
+        assertValueMissing(1, subject(2), 2, subject(3), "value1");
+        assertValueMissing(1, subject(2), 2, subject(3), "value2");
+        assertValueNotMissing(1, subject(2), 2, subject(4), "value1");
+        assertValueNotMissing(1, subject(2), 2, subject(4), "value2");
 
         // omissions subject 3
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(1), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(1), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(2), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(2), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(2), subject(4), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(2), subject(4), "value2", outputMetaModels[1], false);
+        assertValueNotMissing(2, subject(3), 1, subject(1), "value1");
+        assertValueNotMissing(2, subject(3), 1, subject(1), "value2");
+        assertValueNotMissing(2, subject(3), 1, subject(2), "value1");
+        assertValueNotMissing(2, subject(3), 1, subject(2), "value2");
+        assertValueNotMissing(2, subject(3), 2, subject(4), "value1");
+        assertValueNotMissing(2, subject(3), 2, subject(4), "value2");
 
         // omissions subject 4
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(1), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(1), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(2), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(2), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(2), subject(3), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(2), subject(3), "value2", outputMetaModels[1], false);
+        assertValueNotMissing(2, subject(4), 1, subject(1), "value1");
+        assertValueNotMissing(2, subject(4), 1, subject(1), "value2");
+        assertValueNotMissing(2, subject(4), 1, subject(2), "value1");
+        assertValueNotMissing(2, subject(4), 1, subject(2), "value2");
+        assertValueNotMissing(2, subject(4), 2, subject(3), "value1");
+        assertValueNotMissing(2, subject(4), 2, subject(3), "value2");
 
         // deviations subject 1
         assertDeviation(dataset(1), subject(1), "value1", dataset(1), subject(2), "value1", outputMetaModels[0], false);
@@ -985,36 +991,36 @@ public class PropertyComparisonProcessorTest {
                 List.of("value1"), List.of(), false);
 
         // omissions subject 1
-        assertMissingValue(dataset(1), subject(1), dataset(1), subject(2), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(1), subject(2), "value2", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(3), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(3), "value2", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(4), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(4), "value2", outputMetaModels[0], false);
+        assertValueNotMissing(1, subject(1), 1, subject(2), "value1");
+        assertValueNotMissing(1, subject(1), 1, subject(2), "value2");
+        assertValueNotMissing(1, subject(1), 2, subject(3), "value1");
+        assertValueNotMissing(1, subject(1), 2, subject(3), "value2");
+        assertValueNotMissing(1, subject(1), 2, subject(4), "value1");
+        assertValueNotMissing(1, subject(1), 2, subject(4), "value2");
 
         // omissions subject 2
-        assertMissingValue(dataset(1), subject(2), dataset(1), subject(1), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(1), subject(1), "value2", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(3), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(3), "value2", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(4), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(4), "value2", outputMetaModels[0], false);
+        assertValueNotMissing(1, subject(2), 1, subject(1), "value1");
+        assertValueNotMissing(1, subject(2), 1, subject(1), "value2");
+        assertValueNotMissing(1, subject(2), 2, subject(3), "value1");
+        assertValueNotMissing(1, subject(2), 2, subject(3), "value2");
+        assertValueNotMissing(1, subject(2), 2, subject(4), "value1");
+        assertValueNotMissing(1, subject(2), 2, subject(4), "value2");
 
         // omissions subject 3
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(1), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(1), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(2), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(2), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(2), subject(4), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(2), subject(4), "value2", outputMetaModels[1], false);
+        assertValueNotMissing(2, subject(3), 1, subject(1), "value1");
+        assertValueNotMissing(2, subject(3), 1, subject(1), "value2");
+        assertValueNotMissing(2, subject(3), 1, subject(2), "value1");
+        assertValueNotMissing(2, subject(3), 1, subject(2), "value2");
+        assertValueNotMissing(2, subject(3), 2, subject(4), "value1");
+        assertValueNotMissing(2, subject(3), 2, subject(4), "value2");
 
         // omissions subject 4
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(1), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(1), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(2), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(2), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(2), subject(3), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(2), subject(3), "value2", outputMetaModels[1], false);
+        assertValueNotMissing(2, subject(4), 1, subject(1), "value1");
+        assertValueNotMissing(2, subject(4), 1, subject(1), "value2");
+        assertValueNotMissing(2, subject(4), 1, subject(2), "value1");
+        assertValueNotMissing(2, subject(4), 1, subject(2), "value2");
+        assertValueNotMissing(2, subject(4), 2, subject(3), "value1");
+        assertValueNotMissing(2, subject(4), 2, subject(3), "value2");
 
         // deviations subject 1
         assertDeviation(dataset(1), subject(1), "value1", dataset(1), subject(2), "value1", outputMetaModels[0], false);
@@ -1088,36 +1094,36 @@ public class PropertyComparisonProcessorTest {
                 List.of("value2"), List.of(), false);
 
         // omissions subject 1
-        assertMissingValue(dataset(1), subject(1), dataset(1), subject(2), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(1), subject(2), "value2", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(3), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(3), "value2", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(4), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(4), "value2", outputMetaModels[0], false);
+        assertValueNotMissing(1, subject(1), 1, subject(2), "value1");
+        assertValueNotMissing(1, subject(1), 1, subject(2), "value2");
+        assertValueNotMissing(1, subject(1), 2, subject(3), "value1");
+        assertValueNotMissing(1, subject(1), 2, subject(3), "value2");
+        assertValueNotMissing(1, subject(1), 2, subject(4), "value1");
+        assertValueNotMissing(1, subject(1), 2, subject(4), "value2");
 
         // omissions subject 2
-        assertMissingValue(dataset(1), subject(2), dataset(1), subject(1), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(1), subject(1), "value2", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(3), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(3), "value2", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(4), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(4), "value2", outputMetaModels[0], false);
+        assertValueNotMissing(1, subject(2), 1, subject(1), "value1");
+        assertValueNotMissing(1, subject(2), 1, subject(1), "value2");
+        assertValueNotMissing(1, subject(2), 2, subject(3), "value1");
+        assertValueNotMissing(1, subject(2), 2, subject(3), "value2");
+        assertValueNotMissing(1, subject(2), 2, subject(4), "value1");
+        assertValueNotMissing(1, subject(2), 2, subject(4), "value2");
 
         // omissions subject 3
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(1), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(1), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(2), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(2), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(2), subject(4), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(2), subject(4), "value2", outputMetaModels[1], false);
+        assertValueNotMissing(2, subject(3), 1, subject(1), "value1");
+        assertValueNotMissing(2, subject(3), 1, subject(1), "value2");
+        assertValueNotMissing(2, subject(3), 1, subject(2), "value1");
+        assertValueNotMissing(2, subject(3), 1, subject(2), "value2");
+        assertValueNotMissing(2, subject(3), 2, subject(4), "value1");
+        assertValueNotMissing(2, subject(3), 2, subject(4), "value2");
 
         // omissions subject 4
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(1), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(1), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(2), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(2), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(2), subject(3), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(2), subject(3), "value2", outputMetaModels[1], false);
+        assertValueNotMissing(2, subject(4), 1, subject(1), "value1");
+        assertValueNotMissing(2, subject(4), 1, subject(1), "value2");
+        assertValueNotMissing(2, subject(4), 1, subject(2), "value1");
+        assertValueNotMissing(2, subject(4), 1, subject(2), "value2");
+        assertValueNotMissing(2, subject(4), 2, subject(3), "value1");
+        assertValueNotMissing(2, subject(4), 2, subject(3), "value2");
 
         // deviations subject 1
         assertDeviation(dataset(1), subject(1), "value1", dataset(1), subject(2), "value1", outputMetaModels[0], false);
@@ -1191,36 +1197,36 @@ public class PropertyComparisonProcessorTest {
                 List.of("value1"), List.of(), false);
 
         // omissions subject 1
-        assertMissingValue(dataset(1), subject(1), dataset(1), subject(2), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(1), subject(2), "value2", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(3), "value1", outputMetaModels[0], true);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(3), "value2", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(4), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(4), "value2", outputMetaModels[0], false);
+        assertValueNotMissing(1, subject(1), 1, subject(2), "value1");
+        assertValueNotMissing(1, subject(1), 1, subject(2), "value2");
+        assertValueMissing(1, subject(1), 2, subject(3), "value1");
+        assertValueNotMissing(1, subject(1), 2, subject(3), "value2");
+        assertValueNotMissing(1, subject(1), 2, subject(4), "value1");
+        assertValueNotMissing(1, subject(1), 2, subject(4), "value2");
 
         // omissions subject 2
-        assertMissingValue(dataset(1), subject(2), dataset(1), subject(1), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(1), subject(1), "value2", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(3), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(3), "value2", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(4), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(4), "value2", outputMetaModels[0], false);
+        assertValueNotMissing(1, subject(2), 1, subject(1), "value1");
+        assertValueNotMissing(1, subject(2), 1, subject(1), "value2");
+        assertValueNotMissing(1, subject(2), 2, subject(3), "value1");
+        assertValueNotMissing(1, subject(2), 2, subject(3), "value2");
+        assertValueNotMissing(1, subject(2), 2, subject(4), "value1");
+        assertValueNotMissing(1, subject(2), 2, subject(4), "value2");
 
         // omissions subject 3
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(1), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(1), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(2), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(2), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(2), subject(4), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(2), subject(4), "value2", outputMetaModels[1], false);
+        assertValueNotMissing(2, subject(3), 1, subject(1), "value1");
+        assertValueNotMissing(2, subject(3), 1, subject(1), "value2");
+        assertValueNotMissing(2, subject(3), 1, subject(2), "value1");
+        assertValueNotMissing(2, subject(3), 1, subject(2), "value2");
+        assertValueNotMissing(2, subject(3), 2, subject(4), "value1");
+        assertValueNotMissing(2, subject(3), 2, subject(4), "value2");
 
         // omissions subject 4
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(1), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(1), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(2), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(2), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(2), subject(3), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(2), subject(3), "value2", outputMetaModels[1], false);
+        assertValueNotMissing(2, subject(4), 1, subject(1), "value1");
+        assertValueNotMissing(2, subject(4), 1, subject(1), "value2");
+        assertValueNotMissing(2, subject(4), 1, subject(2), "value1");
+        assertValueNotMissing(2, subject(4), 1, subject(2), "value2");
+        assertValueNotMissing(2, subject(4), 2, subject(3), "value1");
+        assertValueNotMissing(2, subject(4), 2, subject(3), "value2");
 
         // deviations subject 1
         assertDeviation(dataset(1), subject(1), "value1", dataset(1), subject(2), "value1", outputMetaModels[0], false);
@@ -1299,36 +1305,36 @@ public class PropertyComparisonProcessorTest {
                 List.of(), false, List.of(), List.of(), false);
 
         // omissions subject 1
-        assertMissingValue(dataset(1), subject(1), dataset(1), subject(2), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(1), subject(2), "value2", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(3), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(3), "value2", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(4), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(1), dataset(2), subject(4), "value2", outputMetaModels[0], false);
+        assertValueNotMissing(1, subject(1), 1, subject(2), "value1");
+        assertValueNotMissing(1, subject(1), 1, subject(2), "value2");
+        assertValueNotMissing(1, subject(1), 2, subject(3), "value1");
+        assertValueNotMissing(1, subject(1), 2, subject(3), "value2");
+        assertValueNotMissing(1, subject(1), 2, subject(4), "value1");
+        assertValueNotMissing(1, subject(1), 2, subject(4), "value2");
 
         // omissions subject 2
-        assertMissingValue(dataset(1), subject(2), dataset(1), subject(1), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(1), subject(1), "value2", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(3), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(3), "value2", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(4), "value1", outputMetaModels[0], false);
-        assertMissingValue(dataset(1), subject(2), dataset(2), subject(4), "value2", outputMetaModels[0], false);
+        assertValueNotMissing(1, subject(2), 1, subject(1), "value1");
+        assertValueNotMissing(1, subject(2), 1, subject(1), "value2");
+        assertValueNotMissing(1, subject(2), 2, subject(3), "value1");
+        assertValueNotMissing(1, subject(2), 2, subject(3), "value2");
+        assertValueNotMissing(1, subject(2), 2, subject(4), "value1");
+        assertValueNotMissing(1, subject(2), 2, subject(4), "value2");
 
         // omissions subject 3
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(1), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(1), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(2), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(1), subject(2), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(2), subject(4), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(3), dataset(2), subject(4), "value2", outputMetaModels[1], false);
+        assertValueNotMissing(2, subject(3), 1, subject(1), "value1");
+        assertValueNotMissing(2, subject(3), 1, subject(1), "value2");
+        assertValueNotMissing(2, subject(3), 1, subject(2), "value1");
+        assertValueNotMissing(2, subject(3), 1, subject(2), "value2");
+        assertValueNotMissing(2, subject(3), 2, subject(4), "value1");
+        assertValueNotMissing(2, subject(3), 2, subject(4), "value2");
 
         // omissions subject 4
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(1), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(1), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(2), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(1), subject(2), "value2", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(2), subject(3), "value1", outputMetaModels[1], false);
-        assertMissingValue(dataset(2), subject(4), dataset(2), subject(3), "value2", outputMetaModels[1], false);
+        assertValueNotMissing(2, subject(4), 1, subject(1), "value1");
+        assertValueNotMissing(2, subject(4), 1, subject(1), "value2");
+        assertValueNotMissing(2, subject(4), 1, subject(2), "value1");
+        assertValueNotMissing(2, subject(4), 1, subject(2), "value2");
+        assertValueNotMissing(2, subject(4), 2, subject(3), "value1");
+        assertValueNotMissing(2, subject(4), 2, subject(3), "value2");
 
         // deviations subject 1
         assertDeviation(dataset(1), subject(1), "value1", dataset(1), subject(2), "value1", outputMetaModels[0], false);
