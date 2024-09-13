@@ -169,7 +169,7 @@ public class TestUtil {
 		return QueryExecutionFactory.create(builder.build(), outputAffectedDatasetMetaModel).execAsk();
 	}
 
-	public static boolean containsMeasurement(Resource measure, @Nullable Number value, Resource unit,
+	public static boolean containsMeasurement(Resource measure, @Nullable Number value, @Nullable Resource unit,
 			Resource computedOnDataset, @Nullable String affectedVariableName, Iterable<Resource> comparedToDatasets,
 			Resource affectedAspect, Model outputAffectedDatasetMetaModel) {
 
@@ -182,7 +182,9 @@ public class TestUtil {
 		if (value != null) {
 			builder.addWhere(qualityMeasurement, DQV.value, value);
 		}
-		builder.addWhere(qualityMeasurement, SdmxAttribute.unitMeasure, unit);
+		if (unit != null) {
+			builder.addWhere(qualityMeasurement, SdmxAttribute.unitMeasure, unit);
+		}
 		builder.addWhere(qualityMeasurement, AV.affectedAspect, affectedAspect);
 		if (affectedVariableName != null) {
 			builder.addWhere(qualityMeasurement, AV.affectedVariableName, affectedVariableName);
