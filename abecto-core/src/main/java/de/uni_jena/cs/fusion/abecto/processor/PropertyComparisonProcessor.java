@@ -73,8 +73,7 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
     public boolean allowLangTagSkip;
     Aspect theAspect; // TODO rename to `aspect` after renaming the aspect parameter variable into `aspectIri`
     Set<Resource> datasets;
-    Set<ResourcePair> datasetPairsWithoutRepetition;
-    Set<ResourcePair> datasetPairsWithRepetition;
+    Set<ResourcePair> datasetPairs;
     Set<ResourceTupel> datasetTupels;
     Map<Resource, Model> outputMetaModelByDataset;
     /**
@@ -246,7 +245,7 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         for (String variable : variables) {
             Map<Resource, Map<RDFNode, Set<Resource>>> resourcesByDistinctValueByDataset = resourcesByDistinctValueByDatasetByVariable.get(variable);
             PerDatasetPairCount absoluteCoverageForVariable = absoluteValueCoverage.get(variable);
-            for (ResourcePair datasetPair : datasetPairsWithoutRepetition) {
+            for (ResourcePair datasetPair : datasetPairs) {
                 if (theAspect.variableCoveredByDatasets(variable, datasetPair.first, datasetPair.second)) {
                     Set<RDFNode> distinctValuesOfFirstDataset = resourcesByDistinctValueByDataset.get(datasetPair.first).keySet();
                     Set<RDFNode> distinctValuesOfSecondDataset = resourcesByDistinctValueByDataset.get(datasetPair.second).keySet();
@@ -264,44 +263,52 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
     }
 
     protected void reportDeviationsAndOmissions() {
+        for (ResourcePair datasetPair : datasetPairs) {
+            reportDeviationsAndOmissionsForDatasetPair(datasetPair);
+        }
+        for (Resource dataset : datasets) {
+            ResourcePair datasetPair = ResourcePair.getPair(dataset,dataset);
+            reportDeviationsAndOmissionsForDatasetPair(datasetPair);
+        }
+    }
+
+    protected void reportDeviationsAndOmissionsForDatasetPair(ResourcePair datasetPair) {
         for (String variable : variables) {
             Map<Resource, Map<RDFNode, Set<Resource>>> resourcesByNonDistinctValueByDataset = resourcesByNonDistinctValueByDatasetByVariable.get(variable);
-            for (ResourcePair datasetPair : datasetPairsWithRepetition) {
-                if (theAspect.variableCoveredByDatasets(variable, datasetPair.first, datasetPair.second)) {
-                    Map<RDFNode, Set<Resource>> resourceByNonDistinctValuesOfFirstDataset = resourcesByNonDistinctValueByDataset.get(datasetPair.first);
-                    Map<RDFNode, Set<Resource>> resourceByNonDistinctValuesOfSecondDataset = resourcesByNonDistinctValueByDataset.get(datasetPair.second);
-                    for (Resource firstResource : correspondingResourcesByDataset.get(datasetPair.first)) {
-                        for (Resource secondResource : correspondingResourcesByDataset.get(datasetPair.second)) {
-                            Set<RDFNode> uncoveredValuesOfFirstResource =
-                                    getUncoveredValuesOfResource(firstResource, secondResource, resourceByNonDistinctValuesOfFirstDataset, resourceByNonDistinctValuesOfSecondDataset);
-                            Set<RDFNode> uncoveredValuesOfSecondResource =
-                                    getUncoveredValuesOfResource(secondResource, firstResource, resourceByNonDistinctValuesOfSecondDataset, resourceByNonDistinctValuesOfFirstDataset);
+            if (theAspect.variableCoveredByDatasets(variable, datasetPair.first, datasetPair.second)) {
+                Map<RDFNode, Set<Resource>> resourceByNonDistinctValuesOfFirstDataset = resourcesByNonDistinctValueByDataset.get(datasetPair.first);
+                Map<RDFNode, Set<Resource>> resourceByNonDistinctValuesOfSecondDataset = resourcesByNonDistinctValueByDataset.get(datasetPair.second);
+                for (Resource firstResource : correspondingResourcesByDataset.get(datasetPair.first)) {
+                    for (Resource secondResource : correspondingResourcesByDataset.get(datasetPair.second)) {
+                        Set<RDFNode> uncoveredValuesOfFirstResource =
+                                getUncoveredValuesOfResource(firstResource, secondResource, resourceByNonDistinctValuesOfFirstDataset, resourceByNonDistinctValuesOfSecondDataset);
+                        Set<RDFNode> uncoveredValuesOfSecondResource =
+                                getUncoveredValuesOfResource(secondResource, firstResource, resourceByNonDistinctValuesOfSecondDataset, resourceByNonDistinctValuesOfFirstDataset);
 
-                            // deviation: a pair of resources with each having a value not present in the
-                            // other resource
-                            // omission: a pair of resources with one having a value not present in the other,
-                            // but not vice versa
+                        // deviation: a pair of resources with each having a value not present in the
+                        // other resource
+                        // omission: a pair of resources with one having a value not present in the other,
+                        // but not vice versa
 
-                            // report missing not matching values
-                            if (uncoveredValuesOfFirstResource.isEmpty()) {
+                        // report missing not matching values
+                        if (uncoveredValuesOfFirstResource.isEmpty()) {
+                            for (RDFNode value2 : uncoveredValuesOfSecondResource) {
+                                Metadata.addValuesOmission(firstResource, variable, datasetPair.second, secondResource, value2, aspect,
+                                        getOutputMetaModel(datasetPair.first));
+                            }
+                        } else if (uncoveredValuesOfSecondResource.isEmpty()) {
+                            for (RDFNode value1 : uncoveredValuesOfFirstResource) {
+                                Metadata.addValuesOmission(secondResource, variable, datasetPair.first, firstResource, value1, aspect,
+                                        getOutputMetaModel(datasetPair.second));
+                            }
+                        } else {
+                            // report pairs of deviating values
+                            for (RDFNode value1 : uncoveredValuesOfFirstResource) {
                                 for (RDFNode value2 : uncoveredValuesOfSecondResource) {
-                                    Metadata.addValuesOmission(firstResource, variable, datasetPair.second, secondResource, value2, aspect,
-                                            getOutputMetaModel(datasetPair.first));
-                                }
-                            } else if (uncoveredValuesOfSecondResource.isEmpty()) {
-                                for (RDFNode value1 : uncoveredValuesOfFirstResource) {
-                                    Metadata.addValuesOmission(secondResource, variable, datasetPair.first, firstResource, value1, aspect,
-                                            getOutputMetaModel(datasetPair.second));
-                                }
-                            } else {
-                                // report pairs of deviating values
-                                for (RDFNode value1 : uncoveredValuesOfFirstResource) {
-                                    for (RDFNode value2 : uncoveredValuesOfSecondResource) {
-                                        Metadata.addDeviation(firstResource.asResource(), variable, value1, datasetPair.second,
-                                                secondResource.asResource(), value2, aspect, getOutputMetaModel(datasetPair.first));
-                                        Metadata.addDeviation(secondResource.asResource(), variable, value2, datasetPair.first,
-                                                firstResource.asResource(), value1, aspect, getOutputMetaModel(datasetPair.second));
-                                    }
+                                    Metadata.addDeviation(firstResource.asResource(), variable, value1, datasetPair.second,
+                                            secondResource.asResource(), value2, aspect, getOutputMetaModel(datasetPair.first));
+                                    Metadata.addDeviation(secondResource.asResource(), variable, value2, datasetPair.first,
+                                            firstResource.asResource(), value1, aspect, getOutputMetaModel(datasetPair.second));
                                 }
                             }
                         }
@@ -341,8 +348,7 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
 
     protected void setAspectDatasets() {
         datasets = theAspect.getDatasets();
-        datasetPairsWithoutRepetition = ResourcePair.getPairsWithoutRepetitionOf(datasets);
-        datasetPairsWithRepetition = ResourcePair.getPairsWithRepetitionOf(datasets);
+        datasetPairs = ResourcePair.getPairsOf(datasets);
         datasetTupels = ResourceTupel.getTupelsOf(datasets);
         outputMetaModelByDataset = getOutputMetaModels(datasets);
         initializeCorrespondingResourceByDataset();
@@ -381,7 +387,7 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
             }
         }
         distinctValuesCount = PerDatasetCount.mapOfCounts(variables, AV.deduplicatedCount, OM.one);
-        absoluteValueCoverage = PerDatasetPairCount.mapOfCountsInitializedToZero(variables, AV.absoluteCoverage, OM.one, datasetPairsWithoutRepetition); //TODO limit to variable covering datasets
+        absoluteValueCoverage = PerDatasetPairCount.mapOfCountsInitializedToZero(variables, AV.absoluteCoverage, OM.one, datasetPairs); //TODO limit to variable covering datasets
         relativeValueCoverage = PerDatasetTupelRatio.mapOfRatios(variables, AV.relativeCoverage, OM.one);
         valueCompleteness = new HashMap<>();
     }
@@ -498,7 +504,7 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
 
     protected void calculateCompleteness() {
         for (String variable : variables) {
-            PerDatasetRatio valueCompletenessOfVariable = calculateCompleteness(datasetPairsWithoutRepetition, absoluteValueCoverage.get(variable), distinctValuesCount.get(variable));
+            PerDatasetRatio valueCompletenessOfVariable = calculateCompleteness(datasetPairs, absoluteValueCoverage.get(variable), distinctValuesCount.get(variable));
             valueCompleteness.put(variable, valueCompletenessOfVariable);
         }
     }

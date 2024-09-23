@@ -107,7 +107,7 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
 
     private void setAspectDatasets() {
         datasets = aspect.getDatasets();
-        datasetPairs = ResourcePair.getPairsWithoutRepetitionOf(datasets);
+        datasetPairs = ResourcePair.getPairsOf(datasets);
         datasetTupels = ResourceTupel.getTupelsOf(datasets);
         outputMetaModelByDataset = getOutputMetaModels(datasets);
     }

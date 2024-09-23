@@ -32,23 +32,11 @@ public class ResourcePair {
         this.second = second;
     }
 
-    public static Set<ResourcePair> getPairsWithoutRepetitionOf(Set<Resource> resources) {
+    public static Set<ResourcePair> getPairsOf(Set<Resource> resources) {
         Set<ResourcePair> pairs = new HashSet<>();
         for (Resource first : resources) {
             for (Resource second : resources) {
                 if (validOrder(first, second)) {
-                    pairs.add(new ResourcePair(first, second));
-                }
-            }
-        }
-        return pairs;
-    }
-
-    public static Set<ResourcePair> getPairsWithRepetitionOf(Set<Resource> resources) {
-        Set<ResourcePair> pairs = new HashSet<>();
-        for (Resource first : resources) {
-            for (Resource second : resources) {
-                if (first.equals(second) || validOrder(first, second)) {
                     pairs.add(new ResourcePair(first, second));
                 }
             }
