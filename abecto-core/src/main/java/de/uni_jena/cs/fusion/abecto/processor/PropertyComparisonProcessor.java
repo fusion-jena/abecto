@@ -267,7 +267,7 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
             reportDeviationsAndOmissionsForDatasetPair(datasetPair);
         }
         for (Resource dataset : datasets) {
-            ResourcePair datasetPair = ResourcePair.getPair(dataset,dataset);
+            ResourcePair datasetPair = ResourcePair.getPair(dataset, dataset);
             reportDeviationsAndOmissionsForDatasetPair(datasetPair);
         }
     }
@@ -293,22 +293,30 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
                         // report missing not matching values
                         if (uncoveredValuesOfFirstResource.isEmpty()) {
                             for (RDFNode value2 : uncoveredValuesOfSecondResource) {
-                                Metadata.addValuesOmission(firstResource, variable, datasetPair.second, secondResource, value2, aspect,
-                                        getOutputMetaModel(datasetPair.first));
+                                if (!isKnownWrongValue(secondResource, variable, value2, datasetPair.second)) {
+                                    Metadata.addValuesOmission(firstResource, variable, datasetPair.second, secondResource, value2, aspect,
+                                            getOutputMetaModel(datasetPair.first));
+                                }
                             }
                         } else if (uncoveredValuesOfSecondResource.isEmpty()) {
                             for (RDFNode value1 : uncoveredValuesOfFirstResource) {
-                                Metadata.addValuesOmission(secondResource, variable, datasetPair.first, firstResource, value1, aspect,
-                                        getOutputMetaModel(datasetPair.second));
+                                if (!isKnownWrongValue(firstResource, variable, value1, datasetPair.first)) {
+                                    Metadata.addValuesOmission(secondResource, variable, datasetPair.first, firstResource, value1, aspect,
+                                            getOutputMetaModel(datasetPair.second));
+                                }
                             }
                         } else {
                             // report pairs of deviating values
                             for (RDFNode value1 : uncoveredValuesOfFirstResource) {
                                 for (RDFNode value2 : uncoveredValuesOfSecondResource) {
-                                    Metadata.addDeviation(firstResource.asResource(), variable, value1, datasetPair.second,
-                                            secondResource.asResource(), value2, aspect, getOutputMetaModel(datasetPair.first));
-                                    Metadata.addDeviation(secondResource.asResource(), variable, value2, datasetPair.first,
-                                            firstResource.asResource(), value1, aspect, getOutputMetaModel(datasetPair.second));
+                                    if (!isKnownWrongValue(secondResource, variable, value2, datasetPair.second)) {
+                                        Metadata.addDeviation(firstResource.asResource(), variable, value1, datasetPair.second,
+                                                secondResource.asResource(), value2, aspect, getOutputMetaModel(datasetPair.first));
+                                    }
+                                    if (!isKnownWrongValue(firstResource, variable, value1, datasetPair.first)) {
+                                        Metadata.addDeviation(secondResource.asResource(), variable, value2, datasetPair.first,
+                                                firstResource.asResource(), value1, aspect, getOutputMetaModel(datasetPair.second));
+                                    }
                                 }
                             }
                         }
@@ -437,10 +445,7 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         }
         Query query = getQueryForResource(dataset, resource);
         Model model = getInputPrimaryModelUnion(dataset);
-        Map<String, Set<RDFNode>> valuesByVariable = getValuesByVariable(model, query);
-        // TODO do not ignore wrong values for measures -> remove check
-        valuesByVariable.forEach((variable, values) -> values.removeIf(value -> isKnownWrongValue(resource, variable, value, dataset)));
-        return valuesByVariable;
+        return getValuesByVariable(model, query);
     }
 
     protected Map<String, Set<RDFNode>> getValuesByVariable(Model model, Query query) {
