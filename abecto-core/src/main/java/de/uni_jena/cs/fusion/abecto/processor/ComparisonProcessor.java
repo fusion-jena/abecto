@@ -56,8 +56,7 @@ public abstract class ComparisonProcessor<P extends Processor<P>> extends Proces
      * @return all resource keys of the given aspect in the given dataset
      * @throws NullPointerException if no pattern is defined for the given dataset
      */
-    public Stream<Resource> getResourceKeys(Aspect aspect, Resource dataset)
-            throws NullPointerException {
+    public Stream<Resource> getResourceKeys(Aspect aspect, Resource dataset) {
 
         Model datasetModels = this.getInputPrimaryModelUnion(dataset);
 

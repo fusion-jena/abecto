@@ -85,7 +85,7 @@ public class PopulationComparisonProcessorBenchmark {
         }
 
         @Override
-        public Stream<Resource> getResourceKeys(Aspect aspect, Resource dataset) throws NullPointerException {
+        public Stream<Resource> getResourceKeys(Aspect aspect, Resource dataset) {
             return this.dataSupplier.getResourceKeys(dataset);
         }
 

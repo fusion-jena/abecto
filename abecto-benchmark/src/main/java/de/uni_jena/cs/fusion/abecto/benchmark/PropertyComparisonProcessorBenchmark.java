@@ -84,7 +84,7 @@ public class PropertyComparisonProcessorBenchmark {
         }
 
         @Override
-        public Stream<Resource> getResourceKeys(@SuppressWarnings("unused") Aspect aspect, Resource dataset) throws NullPointerException {
+        public Stream<Resource> getResourceKeys(@SuppressWarnings("unused") Aspect aspect, Resource dataset) {
             return this.dataSupplier.getResourceKeys(dataset);
         }
 
