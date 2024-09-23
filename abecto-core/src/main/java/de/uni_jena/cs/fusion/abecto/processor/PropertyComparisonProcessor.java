@@ -107,8 +107,8 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         compareValuesOfCorrespondingResources();
         compareValuesOfNotCorrespondingResources();
 
-        calculateCompleteness();
         calculateRelativeCoverage();
+        calculateCompleteness();
 
         storeMeasures();
     }
@@ -220,7 +220,6 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
             PerDatasetCount nonDistinctValuesCountOfVariable = nonDistinctValuesCount.get(variable);
             for (Resource dataset : datasets) {
                 if (theAspect.variableCoveredByDataset(variable, dataset)) {
-                    nonDistinctValuesCountOfVariable.setZero(dataset);
                     Map<RDFNode, Set<Resource>> resourcesByNonDistinctValue = resourcesByNonDistinctValueByDataset.get(dataset);
                     for (RDFNode nonDistinctValue : resourcesByNonDistinctValue.keySet()) {
                         Set<Resource> resourcesOfNonDistinctValue = resourcesByNonDistinctValue.get(nonDistinctValue);
@@ -248,7 +247,6 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
             Map<Resource, Map<RDFNode, Set<Resource>>> resourcesByDistinctValueByDataset = resourcesByDistinctValueByDatasetByVariable.get(variable);
             PerDatasetPairCount absoluteCoverageForVariable = absoluteValueCoverage.get(variable);
             for (ResourcePair datasetPair : datasetPairsWithoutRepetition) {
-                absoluteCoverageForVariable.setZero(datasetPair);
                 if (theAspect.variableCoveredByDatasets(variable, datasetPair.first, datasetPair.second)) {
                     Set<RDFNode> distinctValuesOfFirstDataset = resourcesByDistinctValueByDataset.get(datasetPair.first).keySet();
                     Set<RDFNode> distinctValuesOfSecondDataset = resourcesByDistinctValueByDataset.get(datasetPair.second).keySet();
@@ -375,8 +373,15 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
 
     protected void initializeMeasures() {
         nonDistinctValuesCount = PerDatasetCount.mapOfCounts(variables, AV.count, OM.one);
+        for (String variable : variables) { //TODO refactor
+            for (Resource dataset : datasets) {
+                if (theAspect.variableCoveredByDataset(variable, dataset)) {
+                    nonDistinctValuesCount.get(variable).setZero(dataset);
+                }
+            }
+        }
         distinctValuesCount = PerDatasetCount.mapOfCounts(variables, AV.deduplicatedCount, OM.one);
-        absoluteValueCoverage = PerDatasetPairCount.mapOfCounts(variables, AV.absoluteCoverage, OM.one);
+        absoluteValueCoverage = PerDatasetPairCount.mapOfCountsInitializedToZero(variables, AV.absoluteCoverage, OM.one, datasetPairsWithoutRepetition); //TODO limit to variable covering datasets
         relativeValueCoverage = PerDatasetTupelRatio.mapOfRatios(variables, AV.relativeCoverage, OM.one);
         valueCompleteness = new HashMap<>();
     }
@@ -482,19 +487,19 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         return distinctValues.size();
     }
 
-    protected void calculateCompleteness() {
-        for (String variable : variables) {
-            PerDatasetRatio valueCompletenessOfVariable = calculateCompleteness(datasetPairsWithoutRepetition, absoluteValueCoverage.get(variable), distinctValuesCount.get(variable));
-            valueCompleteness.put(variable, valueCompletenessOfVariable);
-        }
-    }
-
     protected void calculateRelativeCoverage() {
         for (String variable : variables) {
             PerDatasetTupelRatio relativeCoverageOfVariable = relativeValueCoverage.get(variable);
             PerDatasetPairCount absoluteCoverageOfVariable = absoluteValueCoverage.get(variable);
             PerDatasetCount deduplicatedCountOfVariable = distinctValuesCount.get(variable);
             relativeCoverageOfVariable.setRatioOf(absoluteCoverageOfVariable, deduplicatedCountOfVariable);
+        }
+    }
+
+    protected void calculateCompleteness() {
+        for (String variable : variables) {
+            PerDatasetRatio valueCompletenessOfVariable = calculateCompleteness(datasetPairsWithoutRepetition, absoluteValueCoverage.get(variable), distinctValuesCount.get(variable));
+            valueCompleteness.put(variable, valueCompletenessOfVariable);
         }
     }
 

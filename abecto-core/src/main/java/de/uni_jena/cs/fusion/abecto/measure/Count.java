@@ -26,6 +26,12 @@ public abstract class Count<K> extends Measure<K, Long> {
         super(quantity, unit);
     }
 
+    public void setAllZero(Iterable<K> keys) {
+        for (K key: keys) {
+            setZero(key);
+        }
+    }
+
     public void setZero(K key) {
         values.put(key, 0L);
     }
