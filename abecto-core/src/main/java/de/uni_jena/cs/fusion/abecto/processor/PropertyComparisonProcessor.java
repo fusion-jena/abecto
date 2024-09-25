@@ -118,12 +118,11 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         datasetPairs = ResourcePair.getPairsOf(datasets);
         datasetTupels = ResourceTupel.getTupelsOf(datasets);
         outputMetaModelByDataset = getOutputMetaModels(datasets);
-        correspondingResourcesByDataset = new HashMap<>();
-        resourcesByNonDistinctValueByDatasetByVariable = getMapOfResourcesByValueByDatasetByVariable();
-        resourcesByDistinctValueByDatasetByVariable = getMapOfResourcesByValueByDatasetByVariable();
+        resourcesByNonDistinctValueByDatasetByVariable = createMapOfResourcesByValueByDatasetByVariable();
+        resourcesByDistinctValueByDatasetByVariable = createMapOfResourcesByValueByDatasetByVariable();
     }
 
-    protected Map<String, Map<Resource, Map<RDFNode, Set<Resource>>>> getMapOfResourcesByValueByDatasetByVariable() {
+    protected Map<String, Map<Resource, Map<RDFNode, Set<Resource>>>> createMapOfResourcesByValueByDatasetByVariable() {
         Map<String, Map<Resource, Map<RDFNode, Set<Resource>>>> map = new HashMap<>();
         for (String variable : variables) {
             Map<Resource, Map<RDFNode, Set<Resource>>> resourcesByValueByDataset = new HashMap<>();
@@ -168,7 +167,6 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
     }
 
     protected void loadResourcesOfAspect() {
-        unprocessedResourcesByDataset.clear();
         for (Resource dataset : datasets) {
             loadResourcesOfAspectAndDataset(dataset);
         }
@@ -185,7 +183,7 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
 
     protected void compareValuesOfCorrespondingResources(List<Resource> correspondingResources) {
         setCorrespondingResourcesByDataset(correspondingResources);
-        removeCorrespondingResourcesFromUncoveredResources();
+        removeFromUnprocessedResources(correspondingResources);
 
         loadNonDistinctValues();
         calculateDistinctValues();
@@ -196,7 +194,7 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         reportDeviationsAndOmissions();
     }
 
-    protected void setCorrespondingResourcesByDataset(List<Resource> correspondingResources) {
+    protected void setCorrespondingResourcesByDataset(Collection<Resource> correspondingResources) {
         for (Resource dataset : datasets) {
             Set<Resource> correspondingResourcesOfDataset = new HashSet<>(correspondingResources);
             correspondingResourcesOfDataset.retainAll(unprocessedResourcesByDataset.get(dataset));
@@ -204,16 +202,14 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         }
     }
 
-    protected void removeCorrespondingResourcesFromUncoveredResources() {
-        for (Resource dataset : correspondingResourcesByDataset.keySet()) {
-            Set<Resource> uncoveredResourcesOfDataset = unprocessedResourcesByDataset.get(dataset);
-            Set<Resource> coveredResourcesOfDataset = correspondingResourcesByDataset.get(dataset);
-            uncoveredResourcesOfDataset.removeAll(coveredResourcesOfDataset);
+    protected void removeFromUnprocessedResources(Collection<Resource> correspondingResources) {
+        for (Set<Resource> unprocessedResourcesOfDataset : unprocessedResourcesByDataset.values()) {
+            unprocessedResourcesOfDataset.removeAll(correspondingResources);
         }
     }
 
     protected void loadNonDistinctValues() {
-        resetResourcesByNonDistinctValueByDatasetByVariable();
+        clearValues(resourcesByNonDistinctValueByDatasetByVariable);
 
         Set<Resource> datasetsOfCorrespondingResources = correspondingResourcesByDataset.keySet();
 
@@ -223,7 +219,7 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         }
     }
 
-    protected void resetResourcesByNonDistinctValueByDatasetByVariable() {
+    protected void clearValues(Map<String, Map<Resource, Map<RDFNode, Set<Resource>>>> resourcesByNonDistinctValueByDatasetByVariable) {
         for (Map<Resource, Map<RDFNode, Set<Resource>>> resourcesByNonDistinctValueByDataset : resourcesByNonDistinctValueByDatasetByVariable.values()) {
             for (Map<RDFNode, Set<Resource>> resourcesByNonDistinctValue : resourcesByNonDistinctValueByDataset.values()) {
                 resourcesByNonDistinctValue.clear();
