@@ -101,7 +101,7 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         setAspect(aspect);
         setAspectDatasets();
         initializeMeasures();
-        resetUncoveredResources();
+        loadRelevantResources();
 
         compareValuesOfCorrespondingResources();
         compareValuesOfNotCorrespondingResources();
@@ -110,6 +110,49 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         calculateCompleteness();
 
         storeMeasures();
+    }
+
+    protected void setAspect(Resource aspect) {
+        theAspect = this.getAspects().get(aspect);
+    }
+
+    protected void setAspectDatasets() {
+        datasets = theAspect.getDatasets();
+        datasetPairs = ResourcePair.getPairsOf(datasets);
+        datasetTupels = ResourceTupel.getTupelsOf(datasets);
+        outputMetaModelByDataset = getOutputMetaModels(datasets);
+        initializeCorrespondingResourceByDataset();
+        resourcesByNonDistinctValueByDatasetByVariable = getMapOfResourcesByValueByDatasetByVariable();
+        resourcesByDistinctValueByDatasetByVariable = getMapOfResourcesByValueByDatasetByVariable();
+    }
+
+    protected void initializeCorrespondingResourceByDataset() {
+        correspondingResourcesByDataset = new HashMap<>();
+        for (Resource dataset : datasets) {
+            correspondingResourcesByDataset.put(dataset, new HashSet<>());
+        }
+    }
+
+    protected void initializeMeasures() {
+        nonDistinctValuesCount = PerDatasetCount.mapByVariable(variables, AV.count, OM.one);
+        for (String variable : variables) { //TODO refactor
+            for (Resource dataset : datasets) {
+                if (theAspect.variableCoveredByDataset(variable, dataset)) {
+                    nonDistinctValuesCount.get(variable).setZero(dataset);
+                }
+            }
+        }
+        distinctValuesCount = PerDatasetCount.mapByVariable(variables, AV.deduplicatedCount, OM.one);
+        absoluteValueCoverage = PerDatasetPairCount.mapOfCountsInitializedToZero(variables, AV.absoluteCoverage, OM.one, datasetPairs); //TODO limit to variable covering datasets
+        relativeValueCoverage = PerDatasetTupelRatio.mapOfRatios(variables, AV.relativeCoverage, OM.one);
+        valueCompleteness = new HashMap<>();
+    }
+
+    protected void loadRelevantResources() {
+        uncoveredResourcesByDataset.clear();
+        for (Resource dataset : datasets) {
+            setResourcesOfDatasetAndAspectUncovered(dataset);
+        }
     }
 
     protected void compareValuesOfCorrespondingResources() {
@@ -350,27 +393,6 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         return resourcesByValues.get(value).contains(resource);
     }
 
-    protected void setAspect(Resource aspect) {
-        theAspect = this.getAspects().get(aspect);
-    }
-
-    protected void setAspectDatasets() {
-        datasets = theAspect.getDatasets();
-        datasetPairs = ResourcePair.getPairsOf(datasets);
-        datasetTupels = ResourceTupel.getTupelsOf(datasets);
-        outputMetaModelByDataset = getOutputMetaModels(datasets);
-        initializeCorrespondingResourceByDataset();
-        resourcesByNonDistinctValueByDatasetByVariable = getMapOfResourcesByValueByDatasetByVariable();
-        resourcesByDistinctValueByDatasetByVariable = getMapOfResourcesByValueByDatasetByVariable();
-    }
-
-    protected void initializeCorrespondingResourceByDataset() {
-        correspondingResourcesByDataset = new HashMap<>();
-        for (Resource dataset : datasets) {
-            correspondingResourcesByDataset.put(dataset, new HashSet<>());
-        }
-    }
-
     protected Map<String, Map<Resource, Map<RDFNode, Set<Resource>>>> getMapOfResourcesByValueByDatasetByVariable() {
         Map<String, Map<Resource, Map<RDFNode, Set<Resource>>>> map = new HashMap<>();
         for (String variable : variables) {
@@ -383,28 +405,6 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
             }
         }
         return map;
-    }
-
-    protected void initializeMeasures() {
-        nonDistinctValuesCount = PerDatasetCount.mapOfCounts(variables, AV.count, OM.one);
-        for (String variable : variables) { //TODO refactor
-            for (Resource dataset : datasets) {
-                if (theAspect.variableCoveredByDataset(variable, dataset)) {
-                    nonDistinctValuesCount.get(variable).setZero(dataset);
-                }
-            }
-        }
-        distinctValuesCount = PerDatasetCount.mapOfCounts(variables, AV.deduplicatedCount, OM.one);
-        absoluteValueCoverage = PerDatasetPairCount.mapOfCountsInitializedToZero(variables, AV.absoluteCoverage, OM.one, datasetPairs); //TODO limit to variable covering datasets
-        relativeValueCoverage = PerDatasetTupelRatio.mapOfRatios(variables, AV.relativeCoverage, OM.one);
-        valueCompleteness = new HashMap<>();
-    }
-
-    protected void resetUncoveredResources() {
-        uncoveredResourcesByDataset.clear();
-        for (Resource dataset : datasets) {
-            setResourcesOfDatasetAndAspectUncovered(dataset);
-        }
     }
 
     protected void removeCorrespondingResourcesFromUncoveredResources() {
