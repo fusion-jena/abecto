@@ -32,22 +32,18 @@ public class PerDatasetRatio extends Ratio<Resource> {
         super(quantity, unit);
     }
 
-    public static void storeInModelAsComparedToAllOtherResourcesForAllVariables(Map<String, PerDatasetRatio> measuresByVariable, Aspect aspect, Map<Resource, Model> outputModelsMap) {
-        for (String variable : measuresByVariable.keySet()) {
-            measuresByVariable.get(variable).storeInModelAsComparedToAllOtherResourcesWithVariable(aspect, variable, outputModelsMap);
+    public static void storeMeasuresByVariableInModelAsComparedToAllOtherResources(Map<String, PerDatasetRatio> measuresByVariable, Aspect aspect, Map<Resource, Model> outputModelsMap) {
+        for (PerDatasetRatio measure : measuresByVariable.values()) {
+            measure.storeInModelAsComparedToAllOtherResources(aspect, outputModelsMap);
         }
     }
 
     @Override
-    void storeInModelWithVariable(Aspect aspect, String variable, Map<Resource, Model> outputModelsMap) {
+    public void storeInModel(Aspect aspect, Map<Resource, Model> outputModelsMap) {
         throw new UnsupportedOperationException(); // TODO
     }
 
     public void storeInModelAsComparedToAllOtherResources(Aspect aspect, Map<Resource, Model> outputModelsMap) {
-        storeInModelAsComparedToAllOtherResourcesWithVariable(aspect, null, outputModelsMap);
-    }
-
-    public void storeInModelAsComparedToAllOtherResourcesWithVariable(Aspect aspect, String variable, Map<Resource, Model> outputModelsMap) {
         for (Resource dataset : values.keySet()) {
             Collection<Resource> otherDatasets = new HashSet<>(values.keySet());
             otherDatasets.remove(dataset);

@@ -33,14 +33,6 @@ public class SymmetricPerDatasetPairCount extends Count<ResourcePair> {
         super(quantity, unit);
     }
 
-    public static Map<String, SymmetricPerDatasetPairCount> createMapByVariableInitializedToZero(Iterable<String> variables, Resource quantity, Resource unit, Iterable<ResourcePair> pairs) {
-        Map<String, SymmetricPerDatasetPairCount> mapOfCounts = createMapByVariable(variables, quantity, unit);
-        for (SymmetricPerDatasetPairCount count : mapOfCounts.values()) {
-            count.setAllZero(pairs);
-        }
-        return mapOfCounts;
-    }
-
     public static Map<String, SymmetricPerDatasetPairCount> createMapByVariable(Iterable<String> variables, Resource quantity, Resource unit) {
         Map<String, SymmetricPerDatasetPairCount> mapBaVariable = new HashMap<>();
         for (String variable : variables) {
@@ -51,7 +43,7 @@ public class SymmetricPerDatasetPairCount extends Count<ResourcePair> {
         return mapBaVariable;
     }
 
-    public void storeInModelWithVariable(Aspect aspect, String variable, Map<Resource, Model> outputModelsMap) {
+    public void storeInModel(Aspect aspect, Map<Resource, Model> outputModelsMap) {
         for (ResourcePair pair : keySet()) {
             Metadata.addQualityMeasurement(quantity, get(pair), unit, pair.first, variable, pair.second, aspect.getIri(), outputModelsMap.get(pair.first));
             Metadata.addQualityMeasurement(quantity, get(pair), unit, pair.second, variable, pair.first, aspect.getIri(), outputModelsMap.get(pair.second));

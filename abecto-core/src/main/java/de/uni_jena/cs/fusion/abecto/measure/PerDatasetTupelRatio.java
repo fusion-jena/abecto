@@ -63,7 +63,7 @@ public class PerDatasetTupelRatio extends Ratio<ResourceTupel> {
         }
     }
 
-    public void storeInModelWithVariable(Aspect aspect, String variable, Map<Resource, Model> outputModelsMap) {
+    public void storeInModel(Aspect aspect, Map<Resource, Model> outputModelsMap) {
         for (ResourceTupel tupel : keySet()) {
             Metadata.addQualityMeasurement(quantity, get(tupel), unit,
                     tupel.first, variable, tupel.second, aspect.getIri(), outputModelsMap.get(tupel.first));

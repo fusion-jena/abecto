@@ -525,21 +525,22 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
     protected void calculateCompleteness() {
         for (String variable : variables) {
             PerDatasetRatio valueCompletenessOfVariable = calculateCompleteness(datasetPairs, absoluteValueCoverage.get(variable), distinctValuesCount.get(variable));
+            valueCompletenessOfVariable.setVariable(variable);
             valueCompleteness.put(variable, valueCompletenessOfVariable);
         }
     }
 
     protected void storeMeasures() {
         // TODO add value exclusion filter description to measurement description
-        Measure.storeInModelForAllVariable(nonDistinctValuesCount, theAspect, outputMetaModelByDataset);
+        Measure.storeMeasuresByVariableInModel(nonDistinctValuesCount, theAspect, outputMetaModelByDataset);
         // TODO add value exclusion filter description to measurement description
-        Measure.storeInModelForAllVariable(distinctValuesCount, theAspect, outputMetaModelByDataset);
+        Measure.storeMeasuresByVariableInModel(distinctValuesCount, theAspect, outputMetaModelByDataset);
         // TODO add value exclusion filter description to measurement description
-        Measure.storeInModelForAllVariable(absoluteValueCoverage, theAspect, outputMetaModelByDataset);
+        Measure.storeMeasuresByVariableInModel(absoluteValueCoverage, theAspect, outputMetaModelByDataset);
         // TODO add value exclusion filter description to measurement description
-        Measure.storeInModelForAllVariable(relativeValueCoverage, theAspect, outputMetaModelByDataset);
+        Measure.storeMeasuresByVariableInModel(relativeValueCoverage, theAspect, outputMetaModelByDataset);
         // TODO add value exclusion filter description to measurement description
-        PerDatasetRatio.storeInModelAsComparedToAllOtherResourcesForAllVariables(valueCompleteness, theAspect, outputMetaModelByDataset);
+        PerDatasetRatio.storeMeasuresByVariableInModelAsComparedToAllOtherResources(valueCompleteness, theAspect, outputMetaModelByDataset);
     }
 
     /**

@@ -31,16 +31,16 @@ public abstract class Measure<K, V extends Number> {
     protected final Map<K, V> values = new HashMap<>();
     protected final Resource quantity;
     protected final Resource unit;
-    private String variable;
+    String variable;
 
     public Measure(Resource quantity, Resource unit) {
         this.quantity = quantity;
         this.unit = unit;
     }
 
-    public static <K, V extends Number, M extends Measure<K, V>> void storeInModelForAllVariable(Map<String, M> measuresByVariable, Aspect aspect, Map<Resource, Model> outputModelsMap) {
-        for (String variable : measuresByVariable.keySet()) {
-            measuresByVariable.get(variable).storeInModelWithVariable(aspect, variable, outputModelsMap);
+    public static <K, V extends Number, M extends Measure<K, V>> void storeMeasuresByVariableInModel(Map<String, M> measuresByVariable, Aspect aspect, Map<Resource, Model> outputModelsMap) {
+        for (M measure : measuresByVariable.values()) {
+            measure.storeInModel(aspect, outputModelsMap);
         }
     }
 
@@ -80,10 +80,6 @@ public abstract class Measure<K, V extends Number> {
         this.variable = variable;
     }
 
-    public void storeInModel(Aspect aspect, Map<Resource, Model> outputModelsMap) {
-        storeInModelWithVariable(aspect, null, outputModelsMap);
-    }
-
-    abstract void storeInModelWithVariable(Aspect aspect, String variable, Map<Resource, Model> outputModelsMap);
+    public abstract void storeInModel(Aspect aspect, Map<Resource, Model> outputModelsMap);
 
 }
