@@ -351,14 +351,14 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
                         // report missing not matching values
                         if (uncoveredValuesOfFirstResource.isEmpty()) {
                             for (RDFNode value2 : uncoveredValuesOfSecondResource) {
-                                if (!isKnownWrongValue(secondResource, variable, value2, datasetPair.second)) {
+                                if (notKnownWrongValue(secondResource, variable, value2, datasetPair.second)) {
                                     Metadata.addValuesOmission(firstResource, variable, datasetPair.second, secondResource, value2, aspect,
                                             getOutputMetaModel(datasetPair.first));
                                 }
                             }
                         } else if (uncoveredValuesOfSecondResource.isEmpty()) {
                             for (RDFNode value1 : uncoveredValuesOfFirstResource) {
-                                if (!isKnownWrongValue(firstResource, variable, value1, datasetPair.first)) {
+                                if (notKnownWrongValue(firstResource, variable, value1, datasetPair.first)) {
                                     Metadata.addValuesOmission(secondResource, variable, datasetPair.first, firstResource, value1, aspect,
                                             getOutputMetaModel(datasetPair.second));
                                 }
@@ -367,11 +367,11 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
                             // report pairs of deviating values
                             for (RDFNode value1 : uncoveredValuesOfFirstResource) {
                                 for (RDFNode value2 : uncoveredValuesOfSecondResource) {
-                                    if (!isKnownWrongValue(secondResource, variable, value2, datasetPair.second)) {
+                                    if (notKnownWrongValue(secondResource, variable, value2, datasetPair.second)) {
                                         Metadata.addDeviation(firstResource.asResource(), variable, value1, datasetPair.second,
                                                 secondResource.asResource(), value2, aspect, getOutputMetaModel(datasetPair.first));
                                     }
-                                    if (!isKnownWrongValue(firstResource, variable, value1, datasetPair.first)) {
+                                    if (notKnownWrongValue(firstResource, variable, value1, datasetPair.first)) {
                                         Metadata.addDeviation(secondResource.asResource(), variable, value2, datasetPair.first,
                                                 firstResource.asResource(), value1, aspect, getOutputMetaModel(datasetPair.second));
                                     }
@@ -430,9 +430,9 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         }
     }
 
-    protected boolean isKnownWrongValue(Resource affectedResource, String affectedVariableName, RDFNode affectedValue,
-                                        Resource affectedDataset) {
-        return Metadata.isWrongValue(affectedResource, affectedVariableName, affectedValue, aspect,
+    protected boolean notKnownWrongValue(Resource affectedResource, String affectedVariableName, RDFNode affectedValue,
+                                         Resource affectedDataset) {
+        return !Metadata.isWrongValue(affectedResource, affectedVariableName, affectedValue, aspect,
                 this.getInputMetaModelUnion(affectedDataset));
     }
 
