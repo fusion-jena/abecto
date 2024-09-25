@@ -135,17 +135,21 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
 
     protected void initializeMeasures() {
         nonDistinctValuesCount = PerDatasetCount.mapByVariable(variables, AV.count, OM.one);
-        for (String variable : variables) { //TODO refactor
-            for (Resource dataset : datasets) {
-                if (theAspect.variableCoveredByDataset(variable, dataset)) {
-                    nonDistinctValuesCount.get(variable).setZero(dataset);
-                }
-            }
-        }
+        setCoveredVariablesZero(nonDistinctValuesCount);
         distinctValuesCount = PerDatasetCount.mapByVariable(variables, AV.deduplicatedCount, OM.one);
         absoluteValueCoverage = PerDatasetPairCount.mapOfCountsInitializedToZero(variables, AV.absoluteCoverage, OM.one, datasetPairs); //TODO limit to variable covering datasets
         relativeValueCoverage = PerDatasetTupelRatio.mapOfRatios(variables, AV.relativeCoverage, OM.one);
         valueCompleteness = new HashMap<>();
+    }
+
+    protected void setCoveredVariablesZero(Map<String, PerDatasetCount> measures) {
+        for (String variable : variables) {
+            for (Resource dataset : datasets) {
+                if (theAspect.variableCoveredByDataset(variable, dataset)) {
+                    measures.get(variable).setZero(dataset);
+                }
+            }
+        }
     }
 
     protected void loadRelevantResources() {
