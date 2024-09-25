@@ -102,13 +102,10 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         setAspectDatasets();
         initializeMeasures();
         loadResourcesOfAspect();
-
         compareValuesOfCorrespondingResources();
         compareValuesOfNotCorrespondingResources();
-
         calculateRelativeCoverage();
         calculateCompleteness();
-
         storeMeasures();
     }
 
@@ -121,16 +118,9 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         datasetPairs = ResourcePair.getPairsOf(datasets);
         datasetTupels = ResourceTupel.getTupelsOf(datasets);
         outputMetaModelByDataset = getOutputMetaModels(datasets);
-        initializeCorrespondingResourceByDataset();
+        correspondingResourcesByDataset = new HashMap<>();
         resourcesByNonDistinctValueByDatasetByVariable = getMapOfResourcesByValueByDatasetByVariable();
         resourcesByDistinctValueByDatasetByVariable = getMapOfResourcesByValueByDatasetByVariable();
-    }
-
-    protected void initializeCorrespondingResourceByDataset() {
-        correspondingResourcesByDataset = new HashMap<>();
-        for (Resource dataset : datasets) {
-            correspondingResourcesByDataset.put(dataset, new HashSet<>());
-        }
     }
 
     protected Map<String, Map<Resource, Map<RDFNode, Set<Resource>>>> getMapOfResourcesByValueByDatasetByVariable() {
@@ -208,10 +198,9 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
 
     protected void setCorrespondingResourcesByDataset(List<Resource> correspondingResources) {
         for (Resource dataset : datasets) {
-            Set<Resource> correspondingResourcesOfDataset = correspondingResourcesByDataset.get(dataset);
-            correspondingResourcesOfDataset.clear();
-            correspondingResourcesOfDataset.addAll(correspondingResources);
+            Set<Resource> correspondingResourcesOfDataset = new HashSet<>(correspondingResources);
             correspondingResourcesOfDataset.retainAll(unprocessedResourcesByDataset.get(dataset));
+            correspondingResourcesByDataset.put(dataset,correspondingResourcesOfDataset);
         }
     }
 
