@@ -1392,7 +1392,7 @@ public class PropertyComparisonProcessorTest {
         BigDecimal expectedCount2 = null;
         BigDecimal expectedDeduplicatedCount1 = new BigDecimal("1");
         BigDecimal expectedDeduplicatedCount2 = null;
-        BigDecimal expectedAbsoluteCoverage = new BigDecimal("0");
+        BigDecimal expectedAbsoluteCoverage = null;
         BigDecimal expectedRelativeCoverage1 = null;
         BigDecimal expectedRelativeCoverage2 = null;
         BigDecimal expectedCompleteness1 = null;

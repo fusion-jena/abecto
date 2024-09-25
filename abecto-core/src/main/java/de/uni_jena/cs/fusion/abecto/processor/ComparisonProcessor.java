@@ -22,7 +22,7 @@ import com.google.common.collect.Streams;
 import de.uni_jena.cs.fusion.abecto.Aspect;
 import de.uni_jena.cs.fusion.abecto.ResourcePair;
 import de.uni_jena.cs.fusion.abecto.measure.PerDatasetCount;
-import de.uni_jena.cs.fusion.abecto.measure.PerDatasetPairCount;
+import de.uni_jena.cs.fusion.abecto.measure.SymmetricPerDatasetPairCount;
 import de.uni_jena.cs.fusion.abecto.measure.PerDatasetRatio;
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 import de.uni_jena.cs.fusion.abecto.vocabulary.OM;
@@ -97,7 +97,7 @@ public abstract class ComparisonProcessor<P extends Processor<P>> extends Proces
         return outputMetaModelByDataset;
     }
 
-    PerDatasetRatio calculateCompleteness(Iterable<ResourcePair> datasetPairs, PerDatasetPairCount absoluteCoverage, PerDatasetCount deduplicatedCount) {
+    PerDatasetRatio calculateCompleteness(Iterable<ResourcePair> datasetPairs, SymmetricPerDatasetPairCount absoluteCoverage, PerDatasetCount deduplicatedCount) {
         PerDatasetRatio completeness = new PerDatasetRatio(AV.marCompletenessThomas08, OM.one);
         long totalPairwiseOverlap = calculateTotalPairwiseOverlap(datasetPairs, absoluteCoverage);
         if (totalPairwiseOverlap != 0) {
@@ -107,7 +107,7 @@ public abstract class ComparisonProcessor<P extends Processor<P>> extends Proces
         return completeness;
     }
 
-    long calculateTotalPairwiseOverlap(Iterable<ResourcePair> datasetPairs, PerDatasetPairCount absoluteCoverage) {
+    long calculateTotalPairwiseOverlap(Iterable<ResourcePair> datasetPairs, SymmetricPerDatasetPairCount absoluteCoverage) {
         long totalPairwiseOverlap = 0L;
         for (ResourcePair datasetPair : datasetPairs) {
             if (absoluteCoverage.contains(datasetPair)) {

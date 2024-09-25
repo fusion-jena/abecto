@@ -28,9 +28,10 @@ import java.util.Set;
 
 public abstract class Measure<K, V extends Number> {
 
-    final Map<K, V> values = new HashMap<>();
-    final Resource quantity;
-    final Resource unit;
+    protected final Map<K, V> values = new HashMap<>();
+    protected final Resource quantity;
+    protected final Resource unit;
+    private String variable;
 
     public Measure(Resource quantity, Resource unit) {
         this.quantity = quantity;
@@ -73,6 +74,10 @@ public abstract class Measure<K, V extends Number> {
 
     public void set(K key, V value) {
         values.put(key, value);
+    }
+
+    public void setVariable(String variable) {
+        this.variable = variable;
     }
 
     public void storeInModel(Aspect aspect, Map<Resource, Model> outputModelsMap) {

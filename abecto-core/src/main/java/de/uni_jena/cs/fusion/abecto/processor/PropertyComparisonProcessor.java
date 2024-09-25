@@ -79,7 +79,7 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
     /**
      * Number of covered values of another dataset, per variable.
      */
-    Map<String, PerDatasetPairCount> absoluteValueCoverage;
+    Map<String, SymmetricPerDatasetPairCount> absoluteValueCoverage;
     Map<String, PerDatasetTupelRatio> relativeValueCoverage;
     /**
      * Number of values in this dataset, per variable.
@@ -134,19 +134,30 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
     }
 
     protected void initializeMeasures() {
-        nonDistinctValuesCount = PerDatasetCount.mapByVariable(variables, AV.count, OM.one);
-        setCoveredVariablesZero(nonDistinctValuesCount);
-        distinctValuesCount = PerDatasetCount.mapByVariable(variables, AV.deduplicatedCount, OM.one);
-        absoluteValueCoverage = PerDatasetPairCount.mapOfCountsInitializedToZero(variables, AV.absoluteCoverage, OM.one, datasetPairs); //TODO limit to variable covering datasets
-        relativeValueCoverage = PerDatasetTupelRatio.mapOfRatios(variables, AV.relativeCoverage, OM.one);
+        nonDistinctValuesCount = PerDatasetCount.createMapByVariable(variables, AV.count, OM.one);
+        setZeroForVariablesCoveredByDataset(nonDistinctValuesCount);
+        distinctValuesCount = PerDatasetCount.createMapByVariable(variables, AV.deduplicatedCount, OM.one);
+        absoluteValueCoverage = SymmetricPerDatasetPairCount.createMapByVariable(variables, AV.absoluteCoverage, OM.one);
+        setZeroForVariablesCoveredByDatasetPair(absoluteValueCoverage);
+        relativeValueCoverage = PerDatasetTupelRatio.createMapByVariable(variables, AV.relativeCoverage, OM.one);
         valueCompleteness = new HashMap<>();
     }
 
-    protected void setCoveredVariablesZero(Map<String, PerDatasetCount> measures) {
+    protected <M extends Count<Resource>> void setZeroForVariablesCoveredByDataset(Map<String, M> measures) {
         for (String variable : variables) {
             for (Resource dataset : datasets) {
                 if (theAspect.variableCoveredByDataset(variable, dataset)) {
                     measures.get(variable).setZero(dataset);
+                }
+            }
+        }
+    }
+
+    protected <M extends Count<ResourcePair>> void setZeroForVariablesCoveredByDatasetPair(Map<String, M> measures) {
+        for (String variable : variables) {
+            for (ResourcePair datasetPair : datasetPairs) {
+                if (theAspect.variableCoveredByDatasets(variable, datasetPair.first, datasetPair.second)) {
+                    measures.get(variable).setZero(datasetPair);
                 }
             }
         }
@@ -291,7 +302,7 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
     protected void measureAbsoluteCoverage() {
         for (String variable : variables) {
             Map<Resource, Map<RDFNode, Set<Resource>>> resourcesByDistinctValueByDataset = resourcesByDistinctValueByDatasetByVariable.get(variable);
-            PerDatasetPairCount absoluteCoverageForVariable = absoluteValueCoverage.get(variable);
+            SymmetricPerDatasetPairCount absoluteCoverageForVariable = absoluteValueCoverage.get(variable);
             for (ResourcePair datasetPair : datasetPairs) {
                 if (theAspect.variableCoveredByDatasets(variable, datasetPair.first, datasetPair.second)) {
                     Set<RDFNode> distinctValuesOfFirstDataset = resourcesByDistinctValueByDataset.get(datasetPair.first).keySet();
@@ -505,7 +516,7 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
     protected void calculateRelativeCoverage() {
         for (String variable : variables) {
             PerDatasetTupelRatio relativeCoverageOfVariable = relativeValueCoverage.get(variable);
-            PerDatasetPairCount absoluteCoverageOfVariable = absoluteValueCoverage.get(variable);
+            SymmetricPerDatasetPairCount absoluteCoverageOfVariable = absoluteValueCoverage.get(variable);
             PerDatasetCount deduplicatedCountOfVariable = distinctValuesCount.get(variable);
             relativeCoverageOfVariable.setRatioOf(absoluteCoverageOfVariable, deduplicatedCountOfVariable);
         }

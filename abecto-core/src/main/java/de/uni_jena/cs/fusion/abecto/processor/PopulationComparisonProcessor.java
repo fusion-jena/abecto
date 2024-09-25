@@ -55,7 +55,7 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
     /**
      * Number of covered resources of another dataset, excluding duplicates.
      */
-    PerDatasetPairCount absoluteCoverage = new PerDatasetPairCount(AV.absoluteCoverage, OM.one);
+    SymmetricPerDatasetPairCount absoluteCoverage = new SymmetricPerDatasetPairCount(AV.absoluteCoverage, OM.one);
     /**
      * Number of resources in this dataset including duplicates.
      */

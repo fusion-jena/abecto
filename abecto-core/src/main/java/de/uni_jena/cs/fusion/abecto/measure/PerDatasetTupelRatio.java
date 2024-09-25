@@ -35,16 +35,17 @@ public class PerDatasetTupelRatio extends Ratio<ResourceTupel> {
         super(quantity, unit);
     }
 
-    public static <K> Map<K, PerDatasetTupelRatio> mapOfRatios(Iterable<K> keys, Resource quantity, Resource unit) {
-        Map<K, PerDatasetTupelRatio> mapOfCounts = new HashMap<>();
-        for (K key : keys) {
+    public static Map<String, PerDatasetTupelRatio> createMapByVariable(Iterable<String> variables, Resource quantity, Resource unit) {
+        Map<String, PerDatasetTupelRatio> mapByVariable = new HashMap<>();
+        for (String variable : variables) {
             PerDatasetTupelRatio ratioOfVariable = new PerDatasetTupelRatio(quantity, unit);
-            mapOfCounts.put(key, ratioOfVariable);
+            ratioOfVariable.setVariable(variable);
+            mapByVariable.put(variable, ratioOfVariable);
         }
-        return mapOfCounts;
+        return mapByVariable;
     }
 
-    public void setRatioOf(PerDatasetPairCount numerators, PerDatasetCount denominators) {
+    public void setRatioOf(SymmetricPerDatasetPairCount numerators, PerDatasetCount denominators) {
         for (ResourcePair datasetPair : numerators.keySet()) {
             if (denominators.contains(datasetPair.first) && denominators.contains(datasetPair.second)) {
                 BigDecimal numerator = BigDecimal.valueOf(numerators.get(datasetPair));

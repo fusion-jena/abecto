@@ -32,11 +32,12 @@ public class PerDatasetCount extends Count<Resource> {
         super(quantity, unit);
     }
 
-    public static <K> Map<K, PerDatasetCount> mapOfCounts(Iterable<K> keys, Resource quantity, Resource unit) {
-        Map<K, PerDatasetCount> mapOfCounts = new HashMap<>();
-        for (K key : keys) {
+    public static Map<String, PerDatasetCount> createMapByVariable(Iterable<String> variables, Resource quantity, Resource unit) {
+        Map<String, PerDatasetCount> mapOfCounts = new HashMap<>();
+        for (String variable : variables) {
             PerDatasetCount countOfVariable = new PerDatasetCount(quantity, unit);
-            mapOfCounts.put(key, countOfVariable);
+            countOfVariable.setVariable(variable);
+            mapOfCounts.put(variable, countOfVariable);
         }
         return mapOfCounts;
     }

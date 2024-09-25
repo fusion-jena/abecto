@@ -27,27 +27,28 @@ import org.apache.jena.rdf.model.Resource;
 import java.util.HashMap;
 import java.util.Map;
 
-public class PerDatasetPairCount extends Count<ResourcePair> {
+public class SymmetricPerDatasetPairCount extends Count<ResourcePair> {
 
-    public PerDatasetPairCount(Resource quantity, Resource unit) {
+    public SymmetricPerDatasetPairCount(Resource quantity, Resource unit) {
         super(quantity, unit);
     }
 
-    public static <K> Map<K, PerDatasetPairCount> mapOfCountsInitializedToZero(Iterable<K> keys, Resource quantity, Resource unit, Iterable<ResourcePair> pairs) {
-        Map<K, PerDatasetPairCount> mapOfCounts = mapOfCounts(keys, quantity, unit);
-        for (PerDatasetPairCount count : mapOfCounts.values()) {
+    public static Map<String, SymmetricPerDatasetPairCount> createMapByVariableInitializedToZero(Iterable<String> variables, Resource quantity, Resource unit, Iterable<ResourcePair> pairs) {
+        Map<String, SymmetricPerDatasetPairCount> mapOfCounts = createMapByVariable(variables, quantity, unit);
+        for (SymmetricPerDatasetPairCount count : mapOfCounts.values()) {
             count.setAllZero(pairs);
         }
         return mapOfCounts;
     }
 
-    public static <K> Map<K, PerDatasetPairCount> mapOfCounts(Iterable<K> keys, Resource quantity, Resource unit) {
-        Map<K, PerDatasetPairCount> mapOfCounts = new HashMap<>();
-        for (K key : keys) {
-            PerDatasetPairCount countOfVariable = new PerDatasetPairCount(quantity, unit);
-            mapOfCounts.put(key, countOfVariable);
+    public static Map<String, SymmetricPerDatasetPairCount> createMapByVariable(Iterable<String> variables, Resource quantity, Resource unit) {
+        Map<String, SymmetricPerDatasetPairCount> mapBaVariable = new HashMap<>();
+        for (String variable : variables) {
+            SymmetricPerDatasetPairCount countOfVariable = new SymmetricPerDatasetPairCount(quantity, unit);
+            countOfVariable.setVariable(variable);
+            mapBaVariable.put(variable, countOfVariable);
         }
-        return mapOfCounts;
+        return mapBaVariable;
     }
 
     public void storeInModelWithVariable(Aspect aspect, String variable, Map<Resource, Model> outputModelsMap) {
