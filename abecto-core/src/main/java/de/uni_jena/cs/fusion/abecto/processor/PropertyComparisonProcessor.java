@@ -91,7 +91,7 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
     Map<String, PerDatasetCount> distinctValuesCount;
     Map<String, PerDatasetRatio> valueCompleteness;
 
-    Map<Resource, Set<Resource>> uncoveredResourcesByDataset = new HashMap<>();
+    Map<Resource, Set<Resource>> unprocessedResourcesByDataset = new HashMap<>();
     Map<String, Map<Resource, Map<RDFNode, Set<Resource>>>> resourcesByNonDistinctValueByDatasetByVariable = new HashMap<>();
     Map<String, Map<Resource, Map<RDFNode, Set<Resource>>>> resourcesByDistinctValueByDatasetByVariable = new HashMap<>();
     Map<Resource, Set<Resource>> correspondingResourcesByDataset = new HashMap<>();
@@ -101,7 +101,7 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         setAspect(aspect);
         setAspectDatasets();
         initializeMeasures();
-        loadRelevantResources();
+        loadResourcesOfAspect();
 
         compareValuesOfCorrespondingResources();
         compareValuesOfNotCorrespondingResources();
@@ -131,6 +131,20 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         for (Resource dataset : datasets) {
             correspondingResourcesByDataset.put(dataset, new HashSet<>());
         }
+    }
+
+    protected Map<String, Map<Resource, Map<RDFNode, Set<Resource>>>> getMapOfResourcesByValueByDatasetByVariable() {
+        Map<String, Map<Resource, Map<RDFNode, Set<Resource>>>> map = new HashMap<>();
+        for (String variable : variables) {
+            Map<Resource, Map<RDFNode, Set<Resource>>> resourcesByValueByDataset = new HashMap<>();
+            map.put(variable, resourcesByValueByDataset);
+            for (Resource dataset : datasets) {
+                if (theAspect.variableCoveredByDataset(variable, dataset)) {
+                    resourcesByValueByDataset.put(dataset, new HashMap<>());
+                }
+            }
+        }
+        return map;
     }
 
     protected void initializeMeasures() {
@@ -163,11 +177,16 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         }
     }
 
-    protected void loadRelevantResources() {
-        uncoveredResourcesByDataset.clear();
+    protected void loadResourcesOfAspect() {
+        unprocessedResourcesByDataset.clear();
         for (Resource dataset : datasets) {
-            setResourcesOfDatasetAndAspectUncovered(dataset);
+            loadResourcesOfAspectAndDataset(dataset);
         }
+    }
+
+    protected void loadResourcesOfAspectAndDataset(Resource dataset) {
+        Set<Resource> resourcesOfDataset = getResourceKeys(theAspect, dataset).collect(Collectors.toSet());
+        unprocessedResourcesByDataset.put(dataset, resourcesOfDataset);
     }
 
     protected void compareValuesOfCorrespondingResources() {
@@ -192,7 +211,15 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
             Set<Resource> correspondingResourcesOfDataset = correspondingResourcesByDataset.get(dataset);
             correspondingResourcesOfDataset.clear();
             correspondingResourcesOfDataset.addAll(correspondingResources);
-            correspondingResourcesOfDataset.retainAll(uncoveredResourcesByDataset.get(dataset));
+            correspondingResourcesOfDataset.retainAll(unprocessedResourcesByDataset.get(dataset));
+        }
+    }
+
+    protected void removeCorrespondingResourcesFromUncoveredResources() {
+        for (Resource dataset : correspondingResourcesByDataset.keySet()) {
+            Set<Resource> uncoveredResourcesOfDataset = unprocessedResourcesByDataset.get(dataset);
+            Set<Resource> coveredResourcesOfDataset = correspondingResourcesByDataset.get(dataset);
+            uncoveredResourcesOfDataset.removeAll(coveredResourcesOfDataset);
         }
     }
 
@@ -204,6 +231,14 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         for (Resource dataset : datasetsOfCorrespondingResources) {
             Collection<Resource> resourcesOfDataset = correspondingResourcesByDataset.get(dataset);
             loadNonDistinctValuesOfDataset(dataset, resourcesOfDataset);
+        }
+    }
+
+    protected void resetResourcesByNonDistinctValueByDatasetByVariable() {
+        for (Map<Resource, Map<RDFNode, Set<Resource>>> resourcesByNonDistinctValueByDataset : resourcesByNonDistinctValueByDatasetByVariable.values()) {
+            for (Map<RDFNode, Set<Resource>> resourcesByNonDistinctValue : resourcesByNonDistinctValueByDataset.values()) {
+                resourcesByNonDistinctValue.clear();
+            }
         }
     }
 
@@ -219,20 +254,6 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
                         resourcesOfValue.add(resource);
                     }
                 }
-            }
-        }
-    }
-
-    protected Query getQueryForResource(Resource dataset, Resource resource) {
-        Query aspectPatternOfDataset = theAspect.getPattern(dataset).cloneQuery();
-        Var keyVariable = theAspect.getKeyVariable();
-        return SelectBuilder.rewrite(aspectPatternOfDataset, Collections.singletonMap(keyVariable, resource.asNode()));
-    }
-
-    protected void resetResourcesByNonDistinctValueByDatasetByVariable() {
-        for (Map<Resource, Map<RDFNode, Set<Resource>>> resourcesByNonDistinctValueByDataset : resourcesByNonDistinctValueByDatasetByVariable.values()) {
-            for (Map<RDFNode, Set<Resource>> resourcesByNonDistinctValue : resourcesByNonDistinctValueByDataset.values()) {
-                resourcesByNonDistinctValue.clear();
             }
         }
     }
@@ -269,6 +290,136 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         resourcesOfDistinctValue = new HashSet<>();
         resourcesByDistinctValue.put(nonDistinctValue, resourcesOfDistinctValue);
         return resourcesOfDistinctValue;
+    }
+
+    /**
+     * Checks if two values are equivalent.
+     *
+     * @param value1 the first value to compare
+     * @param value2 the second value to compare
+     * @return {@code true}, if the values are equivalent, otherwise {@code false}
+     */
+    protected boolean equivalentValues(RDFNode value1, RDFNode value2) {
+        if (value1.isResource() && value2.isResource()) {
+            return correspond(value1.asResource(), value2.asResource());
+        } else if (value1.isLiteral() && value2.isLiteral()) {
+            Literal literal1 = value1.asLiteral();
+            Literal literal2 = value2.asLiteral();
+
+            // same type/subtype check
+            if (literal1.sameValueAs(literal2)) {
+                return true;
+            }
+
+            RDFDatatype type1 = literal1.getDatatype();
+            RDFDatatype type2 = literal2.getDatatype();
+
+            // comparison of xsd:date and xsd:dateTime
+            if (allowTimeSkip && (type1 instanceof XSDDateType && type2 instanceof XSDDateTimeType
+                    || type1 instanceof XSDDateTimeType && type2 instanceof XSDDateType)) {
+                XSDDateTime date1 = ((XSDDateTime) literal1.getValue());
+                XSDDateTime date2 = ((XSDDateTime) literal2.getValue());
+                return date1.getDays() == date2.getDays() //
+                        && date1.getMonths() == date2.getMonths() //
+                        && date1.getYears() == date2.getYears();
+            }
+
+            // ignore lang tags
+            if (allowLangTagSkip && (type1 instanceof XSDBaseStringType || type1 instanceof RDFLangString)
+                    && (type2 instanceof XSDBaseStringType || type2 instanceof RDFLangString)) {
+                String string1 = literal1.getString();
+                String string2 = literal2.getString();
+                return Objects.equals(string1, string2);
+            }
+
+            // comparison of different number types
+            try {
+                BigDecimal decimal1, decimal2;
+
+                // get precise BigDecimal of literal 1 and handle special cases of float/double
+                if (type1 instanceof XSDBaseNumericType) {
+                    decimal1 = new BigDecimal(literal1.getLexicalForm());
+                } else if (type1 instanceof XSDDouble) {
+                    double value1Double = literal1.getDouble();
+                    // handle special cases
+                    if (Double.isNaN(value1Double)) {
+                        return type2 instanceof XSDFloat && Float.isNaN(literal2.getFloat());
+                    } else if (value1Double == Double.NEGATIVE_INFINITY) {
+                        return type2 instanceof XSDFloat && literal2.getFloat() == Float.NEGATIVE_INFINITY;
+                    } else if (value1Double == Double.POSITIVE_INFINITY) {
+                        return type2 instanceof XSDFloat && literal2.getFloat() == Float.POSITIVE_INFINITY;
+                    }
+                    // get value as BigDecimal
+                    decimal1 = new BigDecimal(value1Double);
+                    /*
+                     * NOTE: don't use BigDecimal#valueOf(value1Double) or new
+                     * BigDecimal(literal1.getLexicalForm()) to represented value from the double
+                     * value space, not the double lexical space
+                     */
+                } else if (type1 instanceof XSDFloat) {
+                    float value1Float = literal1.getFloat();
+                    // handle special cases
+                    if (Float.isNaN(value1Float)) {
+                        return type2 instanceof XSDDouble && Double.isNaN(literal2.getDouble());
+                    } else if (value1Float == Double.NEGATIVE_INFINITY) {
+                        return type2 instanceof XSDDouble && literal2.getDouble() == Double.NEGATIVE_INFINITY;
+                    } else if (value1Float == Double.POSITIVE_INFINITY) {
+                        return type2 instanceof XSDDouble && literal2.getDouble() == Double.POSITIVE_INFINITY;
+                    }
+                    // get value as BigDecimal
+                    decimal1 = new BigDecimal(value1Float);
+                    /*
+                     * NOTE: don't use BigDecimal#valueOf(value1Float) or new
+                     * BigDecimal(literal1.getLexicalForm()) to represented value from the float
+                     * value space, not the float lexical space
+                     */
+                } else {
+                    return false;
+                }
+
+                // get precise BigDecimal of literal 2
+                if (type2 instanceof XSDBaseNumericType) {
+                    decimal2 = new BigDecimal(literal2.getLexicalForm());
+                } else if (type2 instanceof XSDDouble) {
+                    double value2Double = literal2.getDouble();
+                    // handle special cases
+                    if (Double.isNaN(value2Double) || value2Double == Double.NEGATIVE_INFINITY
+                            || value2Double == Double.POSITIVE_INFINITY) {
+                        return false;
+                    }
+                    // get value as BigDecimal
+                    decimal2 = new BigDecimal(value2Double);
+                    /*
+                     * NOTE: don't use BigDecimal#valueOf(value2Double) or new
+                     * BigDecimal(literal2.getLexicalForm()) to represented value from the double
+                     * value space, not the double lexical space
+                     */
+                } else if (type2 instanceof XSDFloat) {
+                    float value2Float = literal2.getFloat();
+                    // handle special cases
+                    if (Float.isNaN(value2Float) || value2Float == Float.NEGATIVE_INFINITY
+                            || value2Float == Float.POSITIVE_INFINITY) {
+                        return false;
+                    }
+                    // get value as BigDecimal
+                    decimal2 = new BigDecimal(value2Float);
+                    /*
+                     * NOTE: don't use BigDecimal#valueOf(value2Float) or new
+                     * BigDecimal(literal2.getLexicalForm()) to represented value from the float
+                     * value space, not the float lexical space
+                     */
+                } else {
+                    return false;
+                }
+
+                // compare BigDecimals
+                return decimal1.compareTo(decimal2) == 0;
+            } catch (NumberFormatException e) {
+                return false;
+            }
+        } else {
+            return false;
+        }
     }
 
     protected void measureNonDistinctValuesCount() {
@@ -408,42 +559,15 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         return resourcesByValues.get(value).contains(resource);
     }
 
-    protected Map<String, Map<Resource, Map<RDFNode, Set<Resource>>>> getMapOfResourcesByValueByDatasetByVariable() {
-        Map<String, Map<Resource, Map<RDFNode, Set<Resource>>>> map = new HashMap<>();
-        for (String variable : variables) {
-            Map<Resource, Map<RDFNode, Set<Resource>>> resourcesByValueByDataset = new HashMap<>();
-            map.put(variable, resourcesByValueByDataset);
-            for (Resource dataset : datasets) {
-                if (theAspect.variableCoveredByDataset(variable, dataset)) {
-                    resourcesByValueByDataset.put(dataset, new HashMap<>());
-                }
-            }
-        }
-        return map;
-    }
-
-    protected void removeCorrespondingResourcesFromUncoveredResources() {
-        for (Resource dataset : correspondingResourcesByDataset.keySet()) {
-            Set<Resource> uncoveredResourcesOfDataset = uncoveredResourcesByDataset.get(dataset);
-            Set<Resource> coveredResourcesOfDataset = correspondingResourcesByDataset.get(dataset);
-            uncoveredResourcesOfDataset.removeAll(coveredResourcesOfDataset);
-        }
-    }
-
     protected boolean notKnownWrongValue(Resource affectedResource, String affectedVariableName, RDFNode affectedValue,
                                          Resource affectedDataset) {
         return !Metadata.isWrongValue(affectedResource, affectedVariableName, affectedValue, aspect,
                 this.getInputMetaModelUnion(affectedDataset));
     }
 
-    protected void setResourcesOfDatasetAndAspectUncovered(Resource dataset) {
-        Set<Resource> distinctResources = getResourceKeys(theAspect, dataset).collect(Collectors.toSet());
-        uncoveredResourcesByDataset.put(dataset, distinctResources);
-    }
-
     protected void compareValuesOfNotCorrespondingResources() {
         for (Resource dataset : datasets) {
-            Set<Resource> uncoveredResources = uncoveredResourcesByDataset.get(dataset);
+            Set<Resource> uncoveredResources = unprocessedResourcesByDataset.get(dataset);
             for (Resource uncoveredResource : uncoveredResources) {
                 Map<String, Set<RDFNode>> valuesByVariable = getValuesByVariable(dataset, uncoveredResource);
                 for (String variable : valuesByVariable.keySet()) {
@@ -461,6 +585,12 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         Query query = getQueryForResource(dataset, resource);
         Model model = getInputPrimaryModelUnion(dataset);
         return getValuesByVariable(model, query);
+    }
+
+    protected Query getQueryForResource(Resource dataset, Resource resource) {
+        Query aspectPatternOfDataset = theAspect.getPattern(dataset).cloneQuery();
+        Var keyVariable = theAspect.getKeyVariable();
+        return SelectBuilder.rewrite(aspectPatternOfDataset, Collections.singletonMap(keyVariable, resource.asNode()));
     }
 
     protected Map<String, Set<RDFNode>> getValuesByVariable(Model model, Query query) {
@@ -490,6 +620,24 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         List<String> relevantVariables = results.getResultVars();
         relevantVariables.retainAll(variables);
         return relevantVariables;
+    }
+
+    /**
+     * Checks if a value should be excluded from the comparison.
+     *
+     * @param value the value to check
+     * @return {@code true}, if the value should not be used, otherwise {@code false}
+     */
+    protected boolean isExcludedValue(RDFNode value) {
+        if (!value.isLiteral() ||
+                !(value.asLiteral().getDatatype() instanceof XSDBaseStringType) &&
+                        !(value.asLiteral().getDatatype() instanceof RDFLangString)) {
+            return false;
+        } else {
+            String langStr = value.asLiteral().getLanguage();
+            return languageFilterPatterns.stream()
+                    .noneMatch(languageFilterPattern -> NodeFunctions.langMatches(langStr, languageFilterPattern));
+        }
     }
 
     protected void measureCountAndDeduplicatedCount(Resource dataset, String variable, Set<RDFNode> valuesOfVariable) {
@@ -541,153 +689,5 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         Measure.storeMeasuresByVariableInModel(relativeValueCoverage, theAspect, outputMetaModelByDataset);
         // TODO add value exclusion filter description to measurement description
         PerDatasetRatio.storeMeasuresByVariableInModelAsComparedToAllOtherResources(valueCompleteness, theAspect, outputMetaModelByDataset);
-    }
-
-    /**
-     * Checks if two values are equivalent.
-     *
-     * @param value1 the first value to compare
-     * @param value2 the second value to compare
-     * @return {@code true}, if the values are equivalent, otherwise {@code false}
-     */
-    protected boolean equivalentValues(RDFNode value1, RDFNode value2) {
-        if (value1.isResource() && value2.isResource()) {
-            return correspond(value1.asResource(), value2.asResource());
-        } else if (value1.isLiteral() && value2.isLiteral()) {
-            Literal literal1 = value1.asLiteral();
-            Literal literal2 = value2.asLiteral();
-
-            // same type/subtype check
-            if (literal1.sameValueAs(literal2)) {
-                return true;
-            }
-
-            RDFDatatype type1 = literal1.getDatatype();
-            RDFDatatype type2 = literal2.getDatatype();
-
-            // comparison of xsd:date and xsd:dateTime
-            if (allowTimeSkip && (type1 instanceof XSDDateType && type2 instanceof XSDDateTimeType
-                    || type1 instanceof XSDDateTimeType && type2 instanceof XSDDateType)) {
-                XSDDateTime date1 = ((XSDDateTime) literal1.getValue());
-                XSDDateTime date2 = ((XSDDateTime) literal2.getValue());
-                return date1.getDays() == date2.getDays() //
-                        && date1.getMonths() == date2.getMonths() //
-                        && date1.getYears() == date2.getYears();
-            }
-
-            // ignore lang tags
-            if (allowLangTagSkip && (type1 instanceof XSDBaseStringType || type1 instanceof RDFLangString)
-                    && (type2 instanceof XSDBaseStringType || type2 instanceof RDFLangString)) {
-                String string1 = literal1.getString();
-                String string2 = literal2.getString();
-                return Objects.equals(string1, string2);
-            }
-
-            // comparison of different number types
-            try {
-                BigDecimal decimal1, decimal2;
-
-                // get precise BigDecimal of literal 1 and handle special cases of float/double
-                if (type1 instanceof XSDBaseNumericType) {
-                    decimal1 = new BigDecimal(literal1.getLexicalForm());
-                } else if (type1 instanceof XSDDouble) {
-                    double value1Double = literal1.getDouble();
-                    // handle special cases
-                    if (Double.isNaN(value1Double)) {
-                        return type2 instanceof XSDFloat && Float.isNaN(literal2.getFloat());
-                    } else if (value1Double == Double.NEGATIVE_INFINITY) {
-                        return type2 instanceof XSDFloat && literal2.getFloat() == Float.NEGATIVE_INFINITY;
-                    } else if (value1Double == Double.POSITIVE_INFINITY) {
-                        return type2 instanceof XSDFloat && literal2.getFloat() == Float.POSITIVE_INFINITY;
-                    }
-                    // get value as BigDecimal
-                    decimal1 = new BigDecimal(value1Double);
-                    /*
-                     * NOTE: don't use BigDecimal#valueOf(value1Double) or new
-                     * BigDecimal(literal1.getLexicalForm()) to represented value from the double
-                     * value space, not the double lexical space
-                     */
-                } else if (type1 instanceof XSDFloat) {
-                    float value1Float = literal1.getFloat();
-                    // handle special cases
-                    if (Float.isNaN(value1Float)) {
-                        return type2 instanceof XSDDouble && Double.isNaN(literal2.getDouble());
-                    } else if (value1Float == Double.NEGATIVE_INFINITY) {
-                        return type2 instanceof XSDDouble && literal2.getDouble() == Double.NEGATIVE_INFINITY;
-                    } else if (value1Float == Double.POSITIVE_INFINITY) {
-                        return type2 instanceof XSDDouble && literal2.getDouble() == Double.POSITIVE_INFINITY;
-                    }
-                    // get value as BigDecimal
-                    decimal1 = new BigDecimal(value1Float);
-                    /*
-                     * NOTE: don't use BigDecimal#valueOf(value1Float) or new
-                     * BigDecimal(literal1.getLexicalForm()) to represented value from the float
-                     * value space, not the float lexical space
-                     */
-                } else {
-                    return false;
-                }
-
-                // get precise BigDecimal of literal 2
-                if (type2 instanceof XSDBaseNumericType) {
-                    decimal2 = new BigDecimal(literal2.getLexicalForm());
-                } else if (type2 instanceof XSDDouble) {
-                    double value2Double = literal2.getDouble();
-                    // handle special cases
-                    if (Double.isNaN(value2Double) || value2Double == Double.NEGATIVE_INFINITY
-                            || value2Double == Double.POSITIVE_INFINITY) {
-                        return false;
-                    }
-                    // get value as BigDecimal
-                    decimal2 = new BigDecimal(value2Double);
-                    /*
-                     * NOTE: don't use BigDecimal#valueOf(value2Double) or new
-                     * BigDecimal(literal2.getLexicalForm()) to represented value from the double
-                     * value space, not the double lexical space
-                     */
-                } else if (type2 instanceof XSDFloat) {
-                    float value2Float = literal2.getFloat();
-                    // handle special cases
-                    if (Float.isNaN(value2Float) || value2Float == Float.NEGATIVE_INFINITY
-                            || value2Float == Float.POSITIVE_INFINITY) {
-                        return false;
-                    }
-                    // get value as BigDecimal
-                    decimal2 = new BigDecimal(value2Float);
-                    /*
-                     * NOTE: don't use BigDecimal#valueOf(value2Float) or new
-                     * BigDecimal(literal2.getLexicalForm()) to represented value from the float
-                     * value space, not the float lexical space
-                     */
-                } else {
-                    return false;
-                }
-
-                // compare BigDecimals
-                return decimal1.compareTo(decimal2) == 0;
-            } catch (NumberFormatException e) {
-                return false;
-            }
-        } else {
-            return false;
-        }
-    }
-
-    /**
-     * Checks if a value should be excluded from the comparison.
-     *
-     * @param value the value to check
-     * @return {@code true}, if the value should not be used, otherwise {@code false}
-     */
-    protected boolean isExcludedValue(RDFNode value) {
-        if (!value.isLiteral() ||
-                !(value.asLiteral().getDatatype() instanceof XSDBaseStringType) &&
-                        !(value.asLiteral().getDatatype() instanceof RDFLangString)) {
-            return false;
-        } else {
-            String langStr = value.asLiteral().getLanguage();
-            return languageFilterPatterns.stream()
-                    .noneMatch(languageFilterPattern -> NodeFunctions.langMatches(langStr, languageFilterPattern));
-        }
     }
 }
