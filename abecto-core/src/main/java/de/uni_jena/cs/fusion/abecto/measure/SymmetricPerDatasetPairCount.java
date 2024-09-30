@@ -34,13 +34,13 @@ public class SymmetricPerDatasetPairCount extends Count<ResourcePair> {
     }
 
     public static Map<String, SymmetricPerDatasetPairCount> createMapByVariable(Iterable<String> variables, Resource quantity, Resource unit) {
-        Map<String, SymmetricPerDatasetPairCount> mapBaVariable = new HashMap<>();
+        Map<String, SymmetricPerDatasetPairCount> mapByVariable = new HashMap<>();
         for (String variable : variables) {
             SymmetricPerDatasetPairCount countOfVariable = new SymmetricPerDatasetPairCount(quantity, unit);
             countOfVariable.setVariable(variable);
-            mapBaVariable.put(variable, countOfVariable);
+            mapByVariable.put(variable, countOfVariable);
         }
-        return mapBaVariable;
+        return mapByVariable;
     }
 
     public void storeInModel(Aspect aspect, Map<Resource, Model> outputModelsMap) {
