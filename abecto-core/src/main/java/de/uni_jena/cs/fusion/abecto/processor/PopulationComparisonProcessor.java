@@ -71,7 +71,7 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
     PerDatasetTupelRatio relativeCoverage = new PerDatasetTupelRatio(AV.relativeCoverage, OM.one);
     PerDatasetRatio completeness;
 
-    Map<Resource, Set<Resource>> uncoveredResourcesByDataset = new HashMap<>();
+    Map<Resource, Set<Resource>> unprocessedResourcesByDataset = new HashMap<>();
 
     public void run() {
         for (Resource aspectIri : aspects) {
@@ -84,7 +84,7 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
         setAspect(aspect);
         setAspectDatasets();
         resetMeasures();
-        resetUncoveredResources();
+        loadResourcesOfAspect();
 
         measureResourceCounts();
         countAndReportCoverageAndDuplicatesAndOmissions(getCorrespondenceGroups());
@@ -98,7 +98,7 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
         absoluteCoverage.storeInModel(aspect, outputMetaModelByDataset);
         relativeCoverage.storeInModel(aspect, outputMetaModelByDataset);
         completeness.storeInModelAsComparedToAllOtherResources(aspect, outputMetaModelByDataset);
-        reportOmissionsOfUncoveredResources();
+        reportOmissionsOfUnprocessedResources();
     }
 
     private void setAspect(Aspect aspect) {
@@ -112,10 +112,10 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
         outputMetaModelByDataset = getOutputMetaModels(datasets);
     }
 
-    private void resetUncoveredResources() {
-        uncoveredResourcesByDataset.clear();
+    private void loadResourcesOfAspect() {
+        unprocessedResourcesByDataset.clear();
         for (Resource dataset : datasets) {
-            setResourcesOfDatasetAndAspectUncovered(dataset);
+            loadResourcesOfAspectAndDataset(dataset);
         }
     }
 
@@ -133,7 +133,7 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
 
     private void countAndReportCoverageAndDuplicatesAndOmissions(List<Resource> correspondingResources) {
         Map<Resource, Set<Resource>> correspondingResourcesByDataset = separateByDataset(correspondingResources);
-        removeFromUncoveredResources(correspondingResourcesByDataset);
+        removeFromUnprocessedResources(correspondingResourcesByDataset);
         incrementAbsoluteCoverages(correspondingResourcesByDataset);
         incrementDuplicatesCount(correspondingResourcesByDataset);
         reportOmissions(correspondingResourcesByDataset);
@@ -195,17 +195,17 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
         Map<Resource, Set<Resource>> resourcesByDataset = new HashMap<>();
         for (Resource dataset : datasets) {
             Set<Resource> resourcesOfDataset = new HashSet<>(resources);
-            resourcesOfDataset.retainAll(uncoveredResourcesByDataset.get(dataset));
+            resourcesOfDataset.retainAll(unprocessedResourcesByDataset.get(dataset));
             resourcesByDataset.put(dataset, resourcesOfDataset);
         }
         return resourcesByDataset;
     }
 
-    private void removeFromUncoveredResources(Map<Resource, Set<Resource>> coveredResourcesByDataset) {
+    private void removeFromUnprocessedResources(Map<Resource, Set<Resource>> coveredResourcesByDataset) {
         for (Resource dataset : coveredResourcesByDataset.keySet()) {
-            Set<Resource> uncoveredResourcesOfDataset = uncoveredResourcesByDataset.get(dataset);
+            Set<Resource> unprocessedResourcesOfDataset = unprocessedResourcesByDataset.get(dataset);
             Set<Resource> coveredResourcesOfDataset = coveredResourcesByDataset.get(dataset);
-            uncoveredResourcesOfDataset.removeAll(coveredResourcesOfDataset);
+            unprocessedResourcesOfDataset.removeAll(coveredResourcesOfDataset);
         }
     }
 
@@ -213,16 +213,16 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
         deduplicatedCount.setDifferenceOf(count, duplicateCount);
     }
 
-    private void reportOmissionsOfUncoveredResources() {
+    private void reportOmissionsOfUnprocessedResources() {
         for (ResourcePair datasetPair : datasetPairs) {
-            reportResourceOmissionsOfUncoveredResourcesFor(datasetPair.first, datasetPair.second);
-            reportResourceOmissionsOfUncoveredResourcesFor(datasetPair.second, datasetPair.first);
+            reportOmissionsOfUnprocessedResourcesForResource(datasetPair.first, datasetPair.second);
+            reportOmissionsOfUnprocessedResourcesForResource(datasetPair.second, datasetPair.first);
         }
     }
 
-    private void reportResourceOmissionsOfUncoveredResourcesFor(Resource dataset, Resource datasetComparedTo) {
-        for (Resource uncoveredResource : uncoveredResourcesByDataset.get(datasetComparedTo)) {
-            Metadata.addResourceOmission(dataset, datasetComparedTo, uncoveredResource, aspect.getIri(),
+    private void reportOmissionsOfUnprocessedResourcesForResource(Resource dataset, Resource datasetComparedTo) {
+        for (Resource unprocessedResource : unprocessedResourcesByDataset.get(datasetComparedTo)) {
+            Metadata.addResourceOmission(dataset, datasetComparedTo, unprocessedResource, aspect.getIri(),
                     outputMetaModelByDataset.get(dataset));
         }
     }
@@ -231,14 +231,14 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
         relativeCoverage.setRatioOf(absoluteCoverage,deduplicatedCount);
     }
 
-    private void setResourcesOfDatasetAndAspectUncovered(Resource dataset) {
+    private void loadResourcesOfAspectAndDataset(Resource dataset) {
         Set<Resource> distinctResources = getResourceKeys(aspect, dataset).collect(Collectors.toSet());
-        uncoveredResourcesByDataset.put(dataset, distinctResources);
+        unprocessedResourcesByDataset.put(dataset, distinctResources);
     }
 
     private void measureResourceCounts() {
         for (Resource dataset : datasets) {
-            count.set(dataset, (long) uncoveredResourcesByDataset.get(dataset).size());
+            count.set(dataset, (long) unprocessedResourcesByDataset.get(dataset).size());
         }
     }
 }
