@@ -18,15 +18,13 @@
 
 package de.uni_jena.cs.fusion.abecto.processor;
 
-import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import de.uni_jena.cs.fusion.abecto.*;
 import de.uni_jena.cs.fusion.abecto.measure.*;
+import de.uni_jena.cs.fusion.abecto.util.Literals;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
-import org.apache.jena.datatypes.RDFDatatype;
-import org.apache.jena.datatypes.xsd.XSDDateTime;
 import org.apache.jena.datatypes.xsd.impl.*;
 import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.Literal;
@@ -287,124 +285,16 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
     protected boolean equivalentValues(RDFNode value1, RDFNode value2) {
         if (value1.isResource() && value2.isResource()) {
             return correspond(value1.asResource(), value2.asResource());
-        } else if (value1.isLiteral() && value2.isLiteral()) {
+        }
+        if (value1.isLiteral() && value2.isLiteral()) {
             Literal literal1 = value1.asLiteral();
             Literal literal2 = value2.asLiteral();
-
-            // same type/subtype check
-            if (literal1.sameValueAs(literal2)) {
-                return true;
-            }
-
-            RDFDatatype type1 = literal1.getDatatype();
-            RDFDatatype type2 = literal2.getDatatype();
-
-            // comparison of xsd:date and xsd:dateTime
-            if (allowTimeSkip && (type1 instanceof XSDDateType && type2 instanceof XSDDateTimeType
-                    || type1 instanceof XSDDateTimeType && type2 instanceof XSDDateType)) {
-                XSDDateTime date1 = ((XSDDateTime) literal1.getValue());
-                XSDDateTime date2 = ((XSDDateTime) literal2.getValue());
-                return date1.getDays() == date2.getDays() //
-                        && date1.getMonths() == date2.getMonths() //
-                        && date1.getYears() == date2.getYears();
-            }
-
-            // ignore lang tags
-            if (allowLangTagSkip && (type1 instanceof XSDBaseStringType || type1 instanceof RDFLangString)
-                    && (type2 instanceof XSDBaseStringType || type2 instanceof RDFLangString)) {
-                String string1 = literal1.getString();
-                String string2 = literal2.getString();
-                return Objects.equals(string1, string2);
-            }
-
-            // comparison of different number types
-            try {
-                BigDecimal decimal1, decimal2;
-
-                // get precise BigDecimal of literal 1 and handle special cases of float/double
-                if (type1 instanceof XSDBaseNumericType) {
-                    decimal1 = new BigDecimal(literal1.getLexicalForm());
-                } else if (type1 instanceof XSDDouble) {
-                    double value1Double = literal1.getDouble();
-                    // handle special cases
-                    if (Double.isNaN(value1Double)) {
-                        return type2 instanceof XSDFloat && Float.isNaN(literal2.getFloat());
-                    } else if (value1Double == Double.NEGATIVE_INFINITY) {
-                        return type2 instanceof XSDFloat && literal2.getFloat() == Float.NEGATIVE_INFINITY;
-                    } else if (value1Double == Double.POSITIVE_INFINITY) {
-                        return type2 instanceof XSDFloat && literal2.getFloat() == Float.POSITIVE_INFINITY;
-                    }
-                    // get value as BigDecimal
-                    decimal1 = new BigDecimal(value1Double);
-                    /*
-                     * NOTE: don't use BigDecimal#valueOf(value1Double) or new
-                     * BigDecimal(literal1.getLexicalForm()) to represented value from the double
-                     * value space, not the double lexical space
-                     */
-                } else if (type1 instanceof XSDFloat) {
-                    float value1Float = literal1.getFloat();
-                    // handle special cases
-                    if (Float.isNaN(value1Float)) {
-                        return type2 instanceof XSDDouble && Double.isNaN(literal2.getDouble());
-                    } else if (value1Float == Double.NEGATIVE_INFINITY) {
-                        return type2 instanceof XSDDouble && literal2.getDouble() == Double.NEGATIVE_INFINITY;
-                    } else if (value1Float == Double.POSITIVE_INFINITY) {
-                        return type2 instanceof XSDDouble && literal2.getDouble() == Double.POSITIVE_INFINITY;
-                    }
-                    // get value as BigDecimal
-                    decimal1 = new BigDecimal(value1Float);
-                    /*
-                     * NOTE: don't use BigDecimal#valueOf(value1Float) or new
-                     * BigDecimal(literal1.getLexicalForm()) to represented value from the float
-                     * value space, not the float lexical space
-                     */
-                } else {
-                    return false;
-                }
-
-                // get precise BigDecimal of literal 2
-                if (type2 instanceof XSDBaseNumericType) {
-                    decimal2 = new BigDecimal(literal2.getLexicalForm());
-                } else if (type2 instanceof XSDDouble) {
-                    double value2Double = literal2.getDouble();
-                    // handle special cases
-                    if (Double.isNaN(value2Double) || value2Double == Double.NEGATIVE_INFINITY
-                            || value2Double == Double.POSITIVE_INFINITY) {
-                        return false;
-                    }
-                    // get value as BigDecimal
-                    decimal2 = new BigDecimal(value2Double);
-                    /*
-                     * NOTE: don't use BigDecimal#valueOf(value2Double) or new
-                     * BigDecimal(literal2.getLexicalForm()) to represented value from the double
-                     * value space, not the double lexical space
-                     */
-                } else if (type2 instanceof XSDFloat) {
-                    float value2Float = literal2.getFloat();
-                    // handle special cases
-                    if (Float.isNaN(value2Float) || value2Float == Float.NEGATIVE_INFINITY
-                            || value2Float == Float.POSITIVE_INFINITY) {
-                        return false;
-                    }
-                    // get value as BigDecimal
-                    decimal2 = new BigDecimal(value2Float);
-                    /*
-                     * NOTE: don't use BigDecimal#valueOf(value2Float) or new
-                     * BigDecimal(literal2.getLexicalForm()) to represented value from the float
-                     * value space, not the float lexical space
-                     */
-                } else {
-                    return false;
-                }
-
-                // compare BigDecimals
-                return decimal1.compareTo(decimal2) == 0;
-            } catch (NumberFormatException e) {
-                return false;
-            }
-        } else {
-            return false;
+            return Literals.equivalentLiteralsOfSameTypes(literal1, literal2) ||
+                    allowLangTagSkip && Literals.equivalentStringsIgnoringLangTag(literal1, literal2) ||
+                    allowTimeSkip && Literals.equivalentDatesIgnoringTimes(literal1, literal2) ||
+                    Literals.equivalentNumbersIgnoringNumberType(literal1, literal2);
         }
+        return false;
     }
 
     protected void measureNonDistinctValuesCount() {
