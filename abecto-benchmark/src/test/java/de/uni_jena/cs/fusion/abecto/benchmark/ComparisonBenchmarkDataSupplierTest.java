@@ -52,9 +52,8 @@ public class ComparisonBenchmarkDataSupplierTest {
 
         // check values
         for (int i = 0; i < datasetCount; i++) {
-            int rightValuesSingle = 0, wrongValuesSingle = 0, rightValuesCollection = 0, wrongValuesCollection = 0;
+            int rightValuesSingle = 0, wrongValuesSingle = 0;
             for (Resource resource : population[i]) {
-                // single resource method
                 Assertions.assertEquals(1, supplier.getValuesByVariable(resource, dataset.get(i),
                         Collections.singletonList("var")).get("var").size());
                 if (supplier.getValuesByVariable(resource, dataset.get(i), Collections.singletonList("var")).get(
@@ -63,23 +62,9 @@ public class ComparisonBenchmarkDataSupplierTest {
                 } else {
                     wrongValuesSingle++;
                 }
-
-                // resource collection method
-                Assertions.assertEquals(1, supplier.getValuesByVariableResource(Collections.singletonList(resource),
-                        dataset.get(i), Collections.singletonList("var")).get(resource).size());
-                Assertions.assertEquals(1, supplier.getValuesByVariableResource(Collections.singletonList(resource),
-                        dataset.get(i), Collections.singletonList("var")).get(resource).get("var").size());
-                if (supplier.getValuesByVariableResource(Collections.singletonList(resource), dataset.get(i),
-                        Collections.singletonList("var")).get(resource).get("var").contains(ComparisonBenchmarkDataSupplier.correctValue)) {
-                    rightValuesCollection++;
-                } else {
-                    wrongValuesCollection++;
-                }
             }
             Assertions.assertEquals((int) (populationSize * errorRate), wrongValuesSingle);
-            Assertions.assertEquals((int) (populationSize * errorRate), wrongValuesCollection);
             Assertions.assertEquals(populationSize - (int) (populationSize * errorRate), rightValuesSingle);
-            Assertions.assertEquals(populationSize - (int) (populationSize * errorRate), rightValuesCollection);
         }
 
 

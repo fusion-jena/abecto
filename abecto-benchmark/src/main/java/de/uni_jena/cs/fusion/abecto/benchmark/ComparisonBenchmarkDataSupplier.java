@@ -75,23 +75,9 @@ public class ComparisonBenchmarkDataSupplier {
         if (resourceId % sampleSize >= sampleSize * errorRate) {
             valuesSet.add(correctValue);
         } else {
-            valuesSet.add(this.wrongValues[sampleId]);
+            valuesSet.add(wrongValues[sampleId]);
         }
         return Collections.singletonMap(variable, valuesSet);
-    }
-
-    public Map<Resource, Map<String, Set<RDFNode>>> getValuesByVariableResource(Collection<Resource> resources,
-                                                                                Resource sample, List<String> variables) {
-        int sampleId = Integer.parseInt(sample.getURI());
-        String variable = variables.iterator().next();
-        Map<Resource, Map<String, Set<RDFNode>>> resourceValues = new HashMap<>();
-        for (Resource resource : resources) {
-            int resourceId = Integer.parseInt(resource.getURI());
-            if (resourceId / sampleSize == sampleId) {
-                resourceValues.put(resource, getValuesByVariable(resourceId, sampleId, variable));
-            }
-        }
-        return resourceValues;
     }
 
     private double overlapShare(int overlappingSamplesCount, int sampleCount, double pairwiseOverlap) {
