@@ -18,7 +18,6 @@
 
 package de.uni_jena.cs.fusion.abecto.benchmark;
 
-import com.google.common.collect.Streams;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
@@ -100,48 +99,17 @@ public class ComparisonBenchmarkDataSupplier {
         return Stream.concat(correspondingWrongResources,correspondingCorrectResources);
     }
 
-    /**
-     * Generates one stream of corresponding resources per sample combination. The stream sizes are calculated
-     * based on the sample size and the target overlap share between each pair of samples.
-     *
-     * @param localIdOffset    number of resource IDs to skip per sample
-     * @param subsetSize       number of resources per sample in subset
-     * @return one stream of corresponding resources per sample combination
-     */
     private Stream<List<Resource>> getCorrespondenceGroupsSubset(int localIdOffset, double subsetSize) {
+        Stream<List<Resource>> correspondenceGroupsSubset = Stream.empty();
         setNextLocalIds(localIdOffset);
 
-        @SuppressWarnings("unchecked") Stream<List<Resource>>[] correspondingResourcesStream = new Stream[1 << sampleCount];
-        // iterate through all subsets represented by the bits of an int, 0 = not contained, 1 = contained
-        int subsetCount = 1 << sampleCount; // = 2^{sampleCount}
-        for (int coveredSamplesBits = 0; coveredSamplesBits < subsetCount; coveredSamplesBits++) {
-            int coveredSamplesCount = Integer.bitCount(coveredSamplesBits);
-
-
-            if (coveredSamplesCount >= 2) {
-                // get array of covered samples ids
-                int[] coveredSampleIds = new int[coveredSamplesCount];
-                for (int sampleId = 0, i = 0; sampleId < sampleCount; sampleId++) {
-                    if ((coveredSamplesBits & (1 << sampleId  /* = 2^{sampleId} */)) != 0) {
-                        coveredSampleIds[i++] = sampleId;
-                    }
-                }
-
-                // calculate number of cases with covered samples
-                int cases = (int) (getOverlapShare(coveredSamplesCount) * subsetSize);
-                // generate stream of cases with covered samples
-                correspondingResourcesStream[coveredSamplesBits] = Stream.generate(new CorrespondenceGroupSupplier(coveredSampleIds,
-                        nextLocalIds)).limit(cases);
-            } else {
-                // empty stream for combinations without correspondences
-                correspondingResourcesStream[coveredSamplesBits] = Stream.empty();
-            }
+        int sampleCombinationsCount = twoToThePowerOf(sampleCount);
+        // iterate through all subsets represented by the bits of an int: 0 = not contained, 1 = contained
+        for (int overlappingSamplesBits = 0; overlappingSamplesBits < sampleCombinationsCount; overlappingSamplesBits++) {
+            Stream<List<Resource>> correspondenceGroupsSubsetOfCombination = getCorrespondenceGroupsSubsetOfCombination(overlappingSamplesBits, subsetSize);
+            correspondenceGroupsSubset = Stream.concat(correspondenceGroupsSubset, correspondenceGroupsSubsetOfCombination);
         }
-        return Streams.concat(correspondingResourcesStream);
-    }
-
-    private double getOverlapShare(int sampleCount) {
-        return overlapShare[sampleCount];
+        return correspondenceGroupsSubset;
     }
 
     private void setNextLocalIds(int nextLocalId) {
@@ -149,28 +117,77 @@ public class ComparisonBenchmarkDataSupplier {
         Arrays.fill(nextLocalIds, nextLocalId);
     }
 
-    private int getNextLocalId(int sample) {
-        return nextLocalIds[sample]++;
+    private int twoToThePowerOf(int exponent) {
+        return 1 << exponent;
     }
 
-    private class CorrespondenceGroupSupplier implements Supplier<List<Resource>> {
-        int[] coveredSampleIds;
-        int[] nextLocalId;
+    private Stream<List<Resource>> getCorrespondenceGroupsSubsetOfCombination(int overlappingSamplesBits, double subsetSize) {
+        int[] overlappingSamplesIds = overlappingSamples(overlappingSamplesBits);
+        int overlappingSamplesCount = overlappingSamplesIds.length;
 
-        CorrespondenceGroupSupplier(int[] coveredSampleIds, int[] nextLocalId) {
-            this.coveredSampleIds = coveredSampleIds;
-            this.nextLocalId = nextLocalId;
+        if (overlappingSamplesCount >= 2) {
+            int overlapSize = (int) (getOverlapShare(overlappingSamplesCount) * subsetSize);
+            int[] localIdsOffsetOfOverlap = nextLocalIds.clone();
+            incrementNextIdsOfSamples(overlappingSamplesIds,overlapSize);
+            return Stream.generate(new CorrespondenceGroupSupplier(overlappingSamplesIds, localIdsOffsetOfOverlap, sampleSize)).limit(overlapSize);
+        } else {
+            return Stream.empty();
+        }
+    }
+
+    private int[] overlappingSamples(int overlappingSamplesBits) {
+        int overlappingSamplesCount = Integer.bitCount(overlappingSamplesBits);
+        int[] overlappingSamplesIds = new int[overlappingSamplesCount];
+        for (int sampleId = 0, i = 0; sampleId < sampleCount; sampleId++) {
+            if ((overlappingSamplesBits & twoToThePowerOf(sampleId)) != 0) {
+                overlappingSamplesIds[i++] = sampleId;
+            }
+        }
+        return overlappingSamplesIds;
+    }
+
+    private double getOverlapShare(int sampleCount) {
+        return overlapShare[sampleCount];
+    }
+
+    private void incrementNextIdsOfSamples(int[] sampleIds, int incrementBy) {
+        for (int sampleId: sampleIds) {
+            nextLocalIds[sampleId] += incrementBy;
+        }
+    }
+
+    private static class CorrespondenceGroupSupplier implements Supplier<List<Resource>> {
+        int[] nextLocalIds;
+        int[] overlappingSamplesIds;
+        int overlappingSamplesCount;
+        int sampleSize;
+
+        CorrespondenceGroupSupplier(int[] overlappingSamplesIds, int[] nextLocalIds, int sampleSize) {
+            this.nextLocalIds = nextLocalIds;
+            this.overlappingSamplesIds = overlappingSamplesIds;
+            overlappingSamplesCount = overlappingSamplesIds.length;
+            this.sampleSize = sampleSize;
         }
 
         @Override
         public List<Resource> get() {
-            List<Resource> resources = Arrays.asList(new Resource[coveredSampleIds.length]);
-            for (int i = 0; i < coveredSampleIds.length; i++) {
-                int sampleId = coveredSampleIds[i];
-                resources.set(i,
-                        ResourceFactory.createResource(Integer.toString(nextLocalId[sampleId]++ + sampleId * sampleSize)));
+            List<Resource> resources = Arrays.asList(new Resource[overlappingSamplesCount]);
+            for (int i = 0; i < overlappingSamplesCount; i++) {
+                int sampleId = overlappingSamplesIds[i];
+                Resource nextResourceOfSample = getNextResourceOfSample(sampleId);
+                resources.set(i, nextResourceOfSample);
             }
             return resources;
+        }
+
+        private Resource getNextResourceOfSample(int sampleId) {
+            int nextLocalId = getNextLocalId(sampleId);
+            int resourceId = nextLocalId + sampleId * sampleSize;
+            return ResourceFactory.createResource(Integer.toString(resourceId));
+        }
+
+        private int getNextLocalId(int sampleId) {
+            return nextLocalIds[sampleId]++;
         }
     }
 }
