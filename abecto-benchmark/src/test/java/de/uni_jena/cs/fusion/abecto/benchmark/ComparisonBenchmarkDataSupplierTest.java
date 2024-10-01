@@ -24,7 +24,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -54,10 +53,8 @@ public class ComparisonBenchmarkDataSupplierTest {
         for (int i = 0; i < datasetCount; i++) {
             int rightValuesSingle = 0, wrongValuesSingle = 0;
             for (Resource resource : population[i]) {
-                Assertions.assertEquals(1, supplier.getValuesByVariable(resource, dataset.get(i),
-                        Collections.singletonList("var")).get("var").size());
-                if (supplier.getValuesByVariable(resource, dataset.get(i), Collections.singletonList("var")).get(
-                        "var").contains(ComparisonBenchmarkDataSupplier.correctValue)) {
+                Assertions.assertEquals(1, supplier.getValueOfResource(resource, dataset.get(i)).size());
+                if (supplier.getValueOfResource(resource, dataset.get(i)).contains(ComparisonBenchmarkDataSupplier.correctValue)) {
                     rightValuesSingle++;
                 } else {
                     wrongValuesSingle++;

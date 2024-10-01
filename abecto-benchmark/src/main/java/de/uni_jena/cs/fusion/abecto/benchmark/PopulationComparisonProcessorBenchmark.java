@@ -85,7 +85,7 @@ public class PopulationComparisonProcessorBenchmark {
         }
 
         @Override
-        public Stream<Resource> getResourceKeys(Aspect aspect, Resource dataset) {
+        public Stream<Resource> getResourceKeys(@SuppressWarnings("unused") Aspect aspect, Resource dataset) {
             return this.dataSupplier.getResourceKeys(dataset);
         }
 

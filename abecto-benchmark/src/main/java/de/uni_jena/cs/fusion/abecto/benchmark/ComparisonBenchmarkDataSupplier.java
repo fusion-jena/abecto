@@ -58,33 +58,28 @@ public class ComparisonBenchmarkDataSupplier {
         return IntStream.range(0, sampleSize).map(localId -> localId + sampleId * sampleSize).mapToObj(i -> ResourceFactory.createResource(Integer.toString(i)));
     }
 
-    public Map<String, Set<RDFNode>> getValuesByVariable(Resource resource, Resource sample,
-                                                         Collection<String> variables) {
+    public Set<RDFNode> getValueOfResource(Resource resource, Resource sample) {
         int resourceId = Integer.parseInt(resource.getURI());
         int sampleId = Integer.parseInt(sample.getURI());
         if (resourceId / sampleSize == sampleId) {
-            return getValuesByVariable(resourceId, sampleId, variables.iterator().next());
+            return getValueOfResource(resourceId, sampleId);
         } else {
-            return null;
+            return Collections.emptySet();
         }
     }
 
-    public Map<String, Set<RDFNode>> getValuesByVariable(int resourceId, int sampleId,
-                                                         String variable) {
-        Set<RDFNode> valuesSet = new HashSet<>(1); // Note: must be mutable TODO not necessary after not ignoring wrong values for measures anymore
+    public Set<RDFNode> getValueOfResource(int resourceId, int sampleId) {
         if (resourceId % sampleSize >= sampleSize * errorRate) {
-            valuesSet.add(correctValue);
+            return Collections.singleton(correctValue);
         } else {
-            valuesSet.add(wrongValues[sampleId]);
+            return Collections.singleton(wrongValues[sampleId]);
         }
-        return Collections.singletonMap(variable, valuesSet);
     }
 
     private double overlapShare(int overlappingSamplesCount, int sampleCount, double pairwiseOverlap) {
         return Math.pow(pairwiseOverlap, overlappingSamplesCount - 1) * Math.pow(1 - pairwiseOverlap,
                 sampleCount - overlappingSamplesCount);
     }
-
 
     public Stream<List<Resource>> getCorrespondenceGroups() {
         // precalculate overlap share, the share of an overlap of a given number of datasets on a dataset population

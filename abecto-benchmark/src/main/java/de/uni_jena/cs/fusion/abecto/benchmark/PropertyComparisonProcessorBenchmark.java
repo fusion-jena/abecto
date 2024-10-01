@@ -65,17 +65,19 @@ public class PropertyComparisonProcessorBenchmark {
     private static class IndependentPropertyComparisonProcessor extends PropertyComparisonProcessor {
 
         private final ComparisonBenchmarkDataSupplier dataSupplier;
+        private final String variable;
 
         public IndependentPropertyComparisonProcessor(int populationSize, int datasetCount, double coverage, double errorRate) {
-            this.dataSupplier = new ComparisonBenchmarkDataSupplier(populationSize, datasetCount, coverage, errorRate);
-            this.aspect = ResourceFactory.createResource("aspect");
-            this.variables = Collections.singletonList("var1");
+            dataSupplier = new ComparisonBenchmarkDataSupplier(populationSize, datasetCount, coverage, errorRate);
+            aspect = ResourceFactory.createResource("aspect");
+            variable = "var1";
+            variables = Collections.singletonList(variable);
             Aspect aspect = new Aspect(this.aspect, "key");
             Query query = QueryFactory.create("SELECT ?var1 WHERE {?key ?p ?var1}");
             for (Resource dataset : dataSupplier.getDatasets()) {
                 aspect.setPattern(dataset, query);
             }
-            this.addAspects(aspect);
+            addAspects(aspect);
         }
 
         @Override
@@ -90,7 +92,8 @@ public class PropertyComparisonProcessorBenchmark {
 
         @Override
         protected Map<String, Set<RDFNode>> getValuesByVariable(Resource dataset, Resource resource) {
-            return this.dataSupplier.getValuesByVariable(resource, dataset, variables);
+            Set<RDFNode> valuesOfVariable = dataSupplier.getValueOfResource(resource, dataset);
+            return Collections.singletonMap(variable, valuesOfVariable);
         }
 
         @Override
