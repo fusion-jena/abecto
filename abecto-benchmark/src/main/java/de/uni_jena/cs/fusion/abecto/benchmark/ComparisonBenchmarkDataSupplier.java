@@ -33,19 +33,29 @@ public class ComparisonBenchmarkDataSupplier {
 
     protected static final RDFNode correctValue = ResourceFactory.createTypedLiteral(-1);
     private final int sampleSize, sampleCount;
-    private final double pairwiseOverlap, errorRate;
+    private final double errorRate;
     private final RDFNode[] wrongValues;
+    private int[] nextLocalIds;
+    double[] overlapShare;
 
     public ComparisonBenchmarkDataSupplier(int sampleSize, int sampleCount, double pairwiseOverlap, double errorRate) {
         this.sampleSize = sampleSize;
         this.sampleCount = sampleCount;
-        this.pairwiseOverlap = pairwiseOverlap;
         this.errorRate = errorRate;
         // generate wrong values per dataset
         // wrongValues[0] should not be used and exists to improve code readability by avoiding -1 shifts later on
         this.wrongValues = new RDFNode[sampleCount + 1];
         for (int sampleId = 0; sampleId <= sampleCount; sampleId++) {
             this.wrongValues[sampleId] = ResourceFactory.createTypedLiteral(sampleId);
+        }
+        calculateOverlapShares(sampleCount, pairwiseOverlap);
+    }
+
+    private void calculateOverlapShares(int sampleCount, double pairwiseOverlap) {
+        overlapShare = new double[sampleCount + 1];
+        // overlapShare[0] should not be used and exists to avoiding -1 shifts during access
+        for (int overlappingSamplesCount = 1; overlappingSamplesCount <= sampleCount; overlappingSamplesCount++) {
+            overlapShare[overlappingSamplesCount] =  overlapShare(overlappingSamplesCount, sampleCount, pairwiseOverlap);
         }
     }
 
@@ -82,39 +92,24 @@ public class ComparisonBenchmarkDataSupplier {
     }
 
     public Stream<List<Resource>> getCorrespondenceGroups() {
-        // precalculate overlap share, the share of an overlap of a given number of datasets on a dataset population
-        // overlapShare[0] should not be used and exists to improve code readability by avoiding -1 shifts later on
-        double[] overlapShare = new double[sampleCount + 1];
-        for (int overlappingSamplesCount = 1; overlappingSamplesCount < sampleCount + 1; overlappingSamplesCount++) {
-            overlapShare[overlappingSamplesCount] = overlapShare(overlappingSamplesCount, sampleCount, pairwiseOverlap);
-        }
-
-
-        Stream<List<Resource>>[] correspondingWrongResourcesStream = generateCasesStream(overlapShare, 0, sampleSize, errorRate);
-        Stream<List<Resource>>[] correspondingCorrectResourcesStream = generateCasesStream(overlapShare,
-                (int) (sampleSize * errorRate), sampleSize, 1 - errorRate);
-
-        // join cases streams
-        @SuppressWarnings("unchecked") Stream<List<Resource>>[] correspondingResourcesStream = new Stream[(1 << sampleCount) * 2];
-        System.arraycopy(correspondingWrongResourcesStream, 0, correspondingResourcesStream, 0, 1 << sampleCount);
-        System.arraycopy(correspondingCorrectResourcesStream, 0, correspondingResourcesStream, 1 << sampleCount, 1 << sampleCount);
-        return Streams.concat(correspondingResourcesStream);
+        double wrongValuesSubsetSize = sampleSize * errorRate;
+        double correctValuesSubsetSize = sampleSize * (1 - errorRate);
+        Stream<List<Resource>> correspondingWrongResources, correspondingCorrectResources;
+        correspondingWrongResources = getCorrespondenceGroupsSubset(0, wrongValuesSubsetSize);
+        correspondingCorrectResources = getCorrespondenceGroupsSubset((int) wrongValuesSubsetSize, correctValuesSubsetSize);
+        return Stream.concat(correspondingWrongResources,correspondingCorrectResources);
     }
 
     /**
      * Generates one stream of corresponding resources per sample combination. The stream sizes are calculated
      * based on the sample size and the target overlap share between each pair of samples.
      *
-     * @param overlapShare     target overlap share between each pair of sample
      * @param localIdOffset    number of resource IDs to skip per sample
-     * @param sampleSize       number of resources per sample
-     * @param correctnessShare share of resources per sample due to correctness per sample
+     * @param subsetSize       number of resources per sample in subset
      * @return one stream of corresponding resources per sample combination
      */
-    private Stream<List<Resource>>[] generateCasesStream(double[] overlapShare, int localIdOffset, int sampleSize, double correctnessShare) {
-
-        int[] nextLocalId = new int[sampleCount];
-        Arrays.fill(nextLocalId, localIdOffset);
+    private Stream<List<Resource>> getCorrespondenceGroupsSubset(int localIdOffset, double subsetSize) {
+        setNextLocalIds(localIdOffset);
 
         @SuppressWarnings("unchecked") Stream<List<Resource>>[] correspondingResourcesStream = new Stream[1 << sampleCount];
         // iterate through all subsets represented by the bits of an int, 0 = not contained, 1 = contained
@@ -133,16 +128,29 @@ public class ComparisonBenchmarkDataSupplier {
                 }
 
                 // calculate number of cases with covered samples
-                int cases = (int) (overlapShare[coveredSamplesCount] * sampleSize * correctnessShare);
+                int cases = (int) (getOverlapShare(coveredSamplesCount) * subsetSize);
                 // generate stream of cases with covered samples
                 correspondingResourcesStream[coveredSamplesBits] = Stream.generate(new CorrespondenceGroupSupplier(coveredSampleIds,
-                        nextLocalId)).limit(cases);
+                        nextLocalIds)).limit(cases);
             } else {
                 // empty stream for combinations without correspondences
                 correspondingResourcesStream[coveredSamplesBits] = Stream.empty();
             }
         }
-        return correspondingResourcesStream;
+        return Streams.concat(correspondingResourcesStream);
+    }
+
+    private double getOverlapShare(int sampleCount) {
+        return overlapShare[sampleCount];
+    }
+
+    private void setNextLocalIds(int nextLocalId) {
+        nextLocalIds = new int[sampleCount];
+        Arrays.fill(nextLocalIds, nextLocalId);
+    }
+
+    private int getNextLocalId(int sample) {
+        return nextLocalIds[sample]++;
     }
 
     private class CorrespondenceGroupSupplier implements Supplier<List<Resource>> {
