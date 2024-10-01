@@ -41,10 +41,8 @@ public class ComparisonBenchmarkDataSupplier {
         this.sampleSize = sampleSize;
         this.sampleCount = sampleCount;
         this.errorRate = errorRate;
-        // generate wrong values per dataset
-        // wrongValues[0] should not be used and exists to improve code readability by avoiding -1 shifts later on
-        this.wrongValues = new RDFNode[sampleCount + 1];
-        for (int sampleId = 0; sampleId <= sampleCount; sampleId++) {
+        this.wrongValues = new RDFNode[sampleCount];
+        for (int sampleId = 0; sampleId < sampleCount; sampleId++) {
             this.wrongValues[sampleId] = ResourceFactory.createTypedLiteral(sampleId);
         }
         calculateOverlapShares(sampleCount, pairwiseOverlap);
