@@ -23,29 +23,12 @@ import org.apache.jena.rdf.model.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-public abstract class Ratio<K> extends Measure<K, BigDecimal> {
+public abstract class BigDecimalMeasure<K> extends Measure<K, BigDecimal> {
 
     public final static int SCALE = 16;
     public final static RoundingMode ROUNDING_MODE = RoundingMode.HALF_UP;
 
-    public Ratio(Resource quantity, Resource unit) {
+    public BigDecimalMeasure(Resource quantity, Resource unit) {
         super(quantity, unit);
-    }
-
-    public void setRatioOf(Count<K> numerators, Count<K> denominators) {
-        for (K key : numerators.keySet()) {
-            if (denominators.contains(key)) {
-                BigDecimal numerator = BigDecimal.valueOf(numerators.get(key));
-                BigDecimal denominator = BigDecimal.valueOf(denominators.get(key));
-                set(key, numerator.divide(denominator, SCALE, ROUNDING_MODE));
-            }
-        }
-    }
-
-    public void setRatioOf(Count<K> numerators, BigDecimal denominator) {
-        for (K key : numerators.keySet()) {
-                BigDecimal numerator = BigDecimal.valueOf(numerators.get(key));
-                set(key, numerator.divide(denominator, SCALE, ROUNDING_MODE));
-        }
     }
 }

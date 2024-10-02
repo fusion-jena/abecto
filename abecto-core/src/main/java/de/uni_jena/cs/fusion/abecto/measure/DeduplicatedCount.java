@@ -18,33 +18,32 @@
 
 package de.uni_jena.cs.fusion.abecto.measure;
 
-import de.uni_jena.cs.fusion.abecto.Aspect;
-import de.uni_jena.cs.fusion.abecto.Metadata;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.Resource;
+import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
+import de.uni_jena.cs.fusion.abecto.vocabulary.OM;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class PerDatasetCount extends Count<Resource> {
+public class DeduplicatedCount extends PerDatasetLongMeasure {
 
-    public PerDatasetCount(Resource quantity, Resource unit) {
-        super(quantity, unit);
+    public DeduplicatedCount() {
+        super(AV.deduplicatedCount, OM.one);
     }
 
-    public static Map<String, PerDatasetCount> createMapByVariable(Iterable<String> variables, Resource quantity, Resource unit) {
-        Map<String, PerDatasetCount> mapOfCounts = new HashMap<>();
+    public static DeduplicatedCount calculate(Count count, DuplicateCount duplicateCount) {
+        DeduplicatedCount deduplicatedCount = new DeduplicatedCount();
+        deduplicatedCount.setDifferenceOf(count, duplicateCount);
+        return deduplicatedCount;
+    }
+
+    public static Map<String, DeduplicatedCount> createMapByVariable(Iterable<String> variables) {
+        Map<String, DeduplicatedCount> mapOfCounts = new HashMap<>();
         for (String variable : variables) {
-            PerDatasetCount countOfVariable = new PerDatasetCount(quantity, unit);
+            DeduplicatedCount countOfVariable = new DeduplicatedCount();
             countOfVariable.setVariable(variable);
             mapOfCounts.put(variable, countOfVariable);
         }
         return mapOfCounts;
     }
 
-    public void storeInModel(Aspect aspect, Map<Resource, Model> outputModelsMap) {
-        for (Resource dataset : keySet()) {
-            Metadata.addQualityMeasurement(quantity, get(dataset), unit, dataset, variable, aspect.getIri(), outputModelsMap.get(dataset));
-        }
-    }
 }

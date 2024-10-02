@@ -18,26 +18,32 @@
 
 package de.uni_jena.cs.fusion.abecto.measure;
 
-import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
-import de.uni_jena.cs.fusion.abecto.vocabulary.OM;
+import org.apache.jena.rdf.model.Resource;
 
-import java.util.HashMap;
-import java.util.Map;
+public abstract class LongMeasure<K> extends Measure<K, Long> {
 
-public class Count extends PerDatasetLongMeasure {
-
-    public Count() {
-        super(AV.count, OM.one);
+    public LongMeasure(Resource quantity, Resource unit) {
+        super(quantity, unit);
     }
 
-    public static Map<String, Count> createMapByVariable(Iterable<String> variables) {
-        Map<String, Count> mapOfCounts = new HashMap<>();
-        for (String variable : variables) {
-            Count countOfVariable = new Count();
-            countOfVariable.setVariable(variable);
-            mapOfCounts.put(variable, countOfVariable);
+    public void setZero(K key) {
+        values.put(key, 0L);
+    }
+
+    public void incrementByOrSetOne(K key) {
+        incrementByOrSet(key, 1L);
+    }
+
+    public void incrementByOrSet(K key, long increment) {
+        values.merge(key, increment, Long::sum);
+    }
+
+    public void setDifferenceOf(LongMeasure<K> minuend, LongMeasure<K> subtrahend) {
+        for (K key : minuend.keySet()) {
+            if (subtrahend.contains(key)) {
+                set(key, minuend.get(key) - subtrahend.get(key));
+            }
         }
-        return mapOfCounts;
     }
 
 }

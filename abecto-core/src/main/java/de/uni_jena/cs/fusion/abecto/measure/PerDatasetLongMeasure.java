@@ -20,35 +20,20 @@ package de.uni_jena.cs.fusion.abecto.measure;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
 import de.uni_jena.cs.fusion.abecto.Metadata;
-import de.uni_jena.cs.fusion.abecto.ResourcePair;
-import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
-import de.uni_jena.cs.fusion.abecto.vocabulary.OM;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 
-import java.util.HashMap;
 import java.util.Map;
 
-public class AbsoluteCoverage extends LongMeasure<ResourcePair> {
+public abstract class PerDatasetLongMeasure extends LongMeasure<Resource> {
 
-    public AbsoluteCoverage() {
-        super(AV.absoluteCoverage, OM.one);
-    }
-
-    public static Map<String, AbsoluteCoverage> createMapByVariable(Iterable<String> variables) {
-        Map<String, AbsoluteCoverage> mapByVariable = new HashMap<>();
-        for (String variable : variables) {
-            AbsoluteCoverage countOfVariable = new AbsoluteCoverage();
-            countOfVariable.setVariable(variable);
-            mapByVariable.put(variable, countOfVariable);
-        }
-        return mapByVariable;
+    public PerDatasetLongMeasure(Resource quantity, Resource unit) {
+        super(quantity, unit);
     }
 
     public void storeInModel(Aspect aspect, Map<Resource, Model> outputModelsMap) {
-        for (ResourcePair pair : keySet()) {
-            Metadata.addQualityMeasurement(quantity, get(pair), unit, pair.first, variable, pair.second, aspect.getIri(), outputModelsMap.get(pair.first));
-            Metadata.addQualityMeasurement(quantity, get(pair), unit, pair.second, variable, pair.first, aspect.getIri(), outputModelsMap.get(pair.second));
+        for (Resource dataset : keySet()) {
+            Metadata.addQualityMeasurement(quantity, get(dataset), unit, dataset, variable, aspect.getIri(), outputModelsMap.get(dataset));
         }
     }
 }

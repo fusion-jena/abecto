@@ -32,8 +32,6 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 
-import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
-import de.uni_jena.cs.fusion.abecto.vocabulary.OM;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.expr.nodevalue.NodeFunctions;
 
@@ -74,19 +72,11 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
     Set<ResourcePair> datasetPairs;
     Set<ResourceTupel> datasetTupels;
     Map<Resource, Model> outputMetaModelByDataset;
-    /**
-     * Number of covered values of another dataset, per variable.
-     */
+
     Map<String, AbsoluteCoverage> absoluteValueCoverage;
     Map<String, RelativeCoverage> relativeValueCoverage = new HashMap<>();
-    /**
-     * Number of values in this dataset, per variable.
-     */
-    Map<String, PerDatasetCount> nonDistinctValuesCount;
-    /**
-     * Number of distinct values in this dataset, per variable. Index: variable, affectedDataset
-     */
-    Map<String, PerDatasetCount> distinctValuesCount;
+    Map<String, Count> nonDistinctValuesCount;
+    Map<String, DeduplicatedCount> distinctValuesCount;
     Map<String, Completeness> valueCompleteness = new HashMap<>();
 
     Map<Resource, Set<Resource>> unprocessedResourcesByDataset = new HashMap<>();
@@ -102,6 +92,7 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         loadResourcesOfAspect();
         compareValuesOfCorrespondingResources();
         compareValuesOfNotCorrespondingResources();
+        // TODO calculate duplicateCount (after definition of measure IRI)
         calculateRelativeCoverage();
         calculateCompleteness();
         storeMeasures();
@@ -135,14 +126,14 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
     }
 
     protected void initializeMeasures() {
-        nonDistinctValuesCount = PerDatasetCount.createMapByVariable(variables, AV.count, OM.one);
+        nonDistinctValuesCount = Count.createMapByVariable(variables);
         setZeroForVariablesCoveredByDataset(nonDistinctValuesCount);
-        distinctValuesCount = PerDatasetCount.createMapByVariable(variables, AV.deduplicatedCount, OM.one);
+        distinctValuesCount = DeduplicatedCount.createMapByVariable(variables);
         absoluteValueCoverage = AbsoluteCoverage.createMapByVariable(variables);
         setZeroForVariablesCoveredByDatasetPair(absoluteValueCoverage);
     }
 
-    protected <M extends Count<Resource>> void setZeroForVariablesCoveredByDataset(Map<String, M> measures) {
+    protected <M extends LongMeasure<Resource>> void setZeroForVariablesCoveredByDataset(Map<String, M> measures) {
         for (String variable : variables) {
             for (Resource dataset : datasets) {
                 if (theAspect.variableCoveredByDataset(variable, dataset)) {
@@ -152,7 +143,7 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         }
     }
 
-    protected <M extends Count<ResourcePair>> void setZeroForVariablesCoveredByDatasetPair(Map<String, M> measures) {
+    protected <M extends LongMeasure<ResourcePair>> void setZeroForVariablesCoveredByDatasetPair(Map<String, M> measures) {
         for (String variable : variables) {
             for (ResourcePair datasetPair : datasetPairs) {
                 if (theAspect.variableCoveredByDatasets(variable, datasetPair.first, datasetPair.second)) {
@@ -298,7 +289,7 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
     protected void measureNonDistinctValuesCount() {
         for (String variable : variables) {
             Map<Resource, Map<RDFNode, Set<Resource>>> resourcesByNonDistinctValueByDataset = resourcesByNonDistinctValueByDatasetByVariable.get(variable);
-            PerDatasetCount nonDistinctValuesCountOfVariable = nonDistinctValuesCount.get(variable);
+            PerDatasetLongMeasure nonDistinctValuesCountOfVariable = nonDistinctValuesCount.get(variable);
             for (Resource dataset : datasets) {
                 if (theAspect.variableCoveredByDataset(variable, dataset)) {
                     Map<RDFNode, Set<Resource>> resourcesByNonDistinctValue = resourcesByNonDistinctValueByDataset.get(dataset);
@@ -537,7 +528,7 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
     protected void calculateRelativeCoverage() {
         for (String variable : variables) {
             AbsoluteCoverage absoluteCoverageOfVariable = absoluteValueCoverage.get(variable);
-            PerDatasetCount distinctValuesCountOfVariable = distinctValuesCount.get(variable);
+            DeduplicatedCount distinctValuesCountOfVariable = distinctValuesCount.get(variable);
             RelativeCoverage relativeCoverageOfVariable = RelativeCoverage.calculate(absoluteCoverageOfVariable, distinctValuesCountOfVariable);
             relativeCoverageOfVariable.setVariable(variable);
             relativeValueCoverage.put(variable, relativeCoverageOfVariable);
@@ -547,7 +538,7 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
     protected void calculateCompleteness() {
         for (String variable : variables) {
             AbsoluteCoverage absoluteCoverageOfVariable = absoluteValueCoverage.get(variable);
-            PerDatasetCount distinctValuesCountOfVariable = distinctValuesCount.get(variable);
+            DeduplicatedCount distinctValuesCountOfVariable = distinctValuesCount.get(variable);
             Completeness valueCompletenessOfVariable = Completeness.calculate(absoluteCoverageOfVariable, distinctValuesCountOfVariable);
             valueCompletenessOfVariable.setVariable(variable);
             valueCompleteness.put(variable, valueCompletenessOfVariable);
@@ -559,6 +550,7 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         Measure.storeMeasuresByVariableInModel(nonDistinctValuesCount, theAspect, outputMetaModelByDataset);
         // TODO add value exclusion filter description to measurement description
         Measure.storeMeasuresByVariableInModel(distinctValuesCount, theAspect, outputMetaModelByDataset);
+        // TODO store duplicateCount (requires definition of measure IRI)
         // TODO add value exclusion filter description to measurement description
         Measure.storeMeasuresByVariableInModel(absoluteValueCoverage, theAspect, outputMetaModelByDataset);
         // TODO add value exclusion filter description to measurement description

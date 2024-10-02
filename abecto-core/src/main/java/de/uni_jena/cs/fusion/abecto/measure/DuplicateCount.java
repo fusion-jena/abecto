@@ -18,26 +18,18 @@
 
 package de.uni_jena.cs.fusion.abecto.measure;
 
-import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 import de.uni_jena.cs.fusion.abecto.vocabulary.OM;
 
-import java.util.HashMap;
-import java.util.Map;
+public class DuplicateCount extends PerDatasetLongMeasure {
 
-public class Count extends PerDatasetLongMeasure {
-
-    public Count() {
-        super(AV.count, OM.one);
+    public DuplicateCount() {
+        super(null, OM.one); // TODO define measure IRI
     }
 
-    public static Map<String, Count> createMapByVariable(Iterable<String> variables) {
-        Map<String, Count> mapOfCounts = new HashMap<>();
-        for (String variable : variables) {
-            Count countOfVariable = new Count();
-            countOfVariable.setVariable(variable);
-            mapOfCounts.put(variable, countOfVariable);
-        }
-        return mapOfCounts;
+    public static DuplicateCount calculate(Count count, DeduplicatedCount deduplicatedCount) {
+        DuplicateCount duplicateCount = new DuplicateCount();
+        duplicateCount.setDifferenceOf(count, deduplicatedCount);
+        return duplicateCount;
     }
 
 }

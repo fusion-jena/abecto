@@ -18,7 +18,6 @@
 
 package de.uni_jena.cs.fusion.abecto.processor;
 
-import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -27,9 +26,6 @@ import de.uni_jena.cs.fusion.abecto.*;
 import de.uni_jena.cs.fusion.abecto.measure.*;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
-
-import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
-import de.uni_jena.cs.fusion.abecto.vocabulary.OM;
 
 /**
  * Provides measurements for <strong>number of resources</strong>,
@@ -52,22 +48,11 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
     Set<ResourcePair> datasetPairs;
     Set<ResourceTupel> datasetTupels;
     Map<Resource, Model> outputMetaModelByDataset;
-    /**
-     * Number of covered resources of another dataset, excluding duplicates.
-     */
+
     AbsoluteCoverage absoluteCoverage = new AbsoluteCoverage();
-    /**
-     * Number of resources in this dataset including duplicates.
-     */
-    PerDatasetCount count = new PerDatasetCount(AV.count, OM.one);
-    /**
-     * Number of resource duplicates in this dataset.
-     */
-    PerDatasetCount duplicateCount = new PerDatasetCount(null, OM.one);// TODO define measure IRI
-    /**
-     * Number of resources in this dataset excluding duplicates.
-     */
-    PerDatasetCount deduplicatedCount = new PerDatasetCount(AV.deduplicatedCount, OM.one);
+    Count count = new Count();
+    DuplicateCount duplicateCount = new DuplicateCount();
+    DeduplicatedCount deduplicatedCount = new DeduplicatedCount();
     RelativeCoverage relativeCoverage;
     Completeness completeness;
 
@@ -88,7 +73,7 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
 
         measureResourceCounts();
         countAndReportCoverageAndDuplicatesAndOmissions(getCorrespondenceGroups());
-        calculateDeduplicatedCount();
+        deduplicatedCount = DeduplicatedCount.calculate(count, duplicateCount);
         relativeCoverage = RelativeCoverage.calculate(absoluteCoverage, deduplicatedCount);
         completeness = Completeness.calculate(absoluteCoverage, deduplicatedCount);
 
@@ -206,10 +191,6 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
             Set<Resource> coveredResourcesOfDataset = coveredResourcesByDataset.get(dataset);
             unprocessedResourcesOfDataset.removeAll(coveredResourcesOfDataset);
         }
-    }
-
-    private void calculateDeduplicatedCount() {
-        deduplicatedCount.setDifferenceOf(count, duplicateCount);
     }
 
     private void reportOmissionsOfUnprocessedResources() {

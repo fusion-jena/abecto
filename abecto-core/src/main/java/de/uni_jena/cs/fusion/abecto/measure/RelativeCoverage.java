@@ -31,13 +31,13 @@ import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Set;
 
-public class RelativeCoverage extends Ratio<ResourceTupel> {
+public class RelativeCoverage extends BigDecimalMeasure<ResourceTupel> {
 
     public RelativeCoverage() {
         super(AV.relativeCoverage, OM.one);
     }
 
-    public static RelativeCoverage calculate(AbsoluteCoverage absoluteCoverage, PerDatasetCount deduplicatedCount) {
+    public static RelativeCoverage calculate(AbsoluteCoverage absoluteCoverage, DeduplicatedCount deduplicatedCount) {
         RelativeCoverage relativeCoverage = new RelativeCoverage();
         Set<ResourcePair> datasetPairs = getDatasetPairsWithSufficientData(absoluteCoverage, deduplicatedCount);
         for (ResourcePair datasetPair : datasetPairs) {
@@ -48,13 +48,13 @@ public class RelativeCoverage extends Ratio<ResourceTupel> {
         return relativeCoverage;
     }
 
-    private static Set<ResourcePair> getDatasetPairsWithSufficientData(AbsoluteCoverage absoluteCoverage, PerDatasetCount deduplicatedCount) {
+    private static Set<ResourcePair> getDatasetPairsWithSufficientData(AbsoluteCoverage absoluteCoverage, DeduplicatedCount deduplicatedCount) {
         Set<ResourcePair> datasetPairsWithAbsoluteCoverage = absoluteCoverage.keySet();
         Set<Resource> datasetsWithDeduplicatedCount = deduplicatedCount.keySet();
         return ResourcePair.getPairsBothContainedIn(datasetPairsWithAbsoluteCoverage, datasetsWithDeduplicatedCount);
     }
 
-    void setRatioForTupel(BigDecimal numerator, PerDatasetCount denominators, Resource assessedDataset, Resource comparedDataset) {
+    void setRatioForTupel(BigDecimal numerator, DeduplicatedCount denominators, Resource assessedDataset, Resource comparedDataset) {
         BigDecimal denominator = BigDecimal.valueOf(denominators.get(comparedDataset));
         if (!denominator.equals(BigDecimal.ZERO)) {
             BigDecimal value = numerator.divide(denominator, SCALE, ROUNDING_MODE);

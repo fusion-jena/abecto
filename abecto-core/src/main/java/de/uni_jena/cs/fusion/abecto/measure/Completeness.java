@@ -30,13 +30,13 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
 
-public class Completeness extends Ratio<Resource> {
+public class Completeness extends BigDecimalMeasure<Resource> {
 
     public Completeness() {
         super(AV.marCompletenessThomas08, OM.one);
     }
 
-    public static Completeness calculate(AbsoluteCoverage absoluteCoverage, PerDatasetCount deduplicatedCount) {
+    public static Completeness calculate(AbsoluteCoverage absoluteCoverage, DeduplicatedCount deduplicatedCount) {
         Set<ResourcePair> datasetPairs = getDatasetPairsWithSufficientData(absoluteCoverage, deduplicatedCount);
         long totalPairwiseOverlap = calculateTotalPairwiseOverlap(datasetPairs, absoluteCoverage);
         if (totalPairwiseOverlap != 0) {
@@ -47,7 +47,7 @@ public class Completeness extends Ratio<Resource> {
         return new Completeness(); // empty
     }
 
-    private static Set<ResourcePair> getDatasetPairsWithSufficientData(AbsoluteCoverage absoluteCoverage, PerDatasetCount deduplicatedCount) {
+    private static Set<ResourcePair> getDatasetPairsWithSufficientData(AbsoluteCoverage absoluteCoverage, DeduplicatedCount deduplicatedCount) {
         Set<ResourcePair> datasetPairs = absoluteCoverage.keySet();
         Set<Resource> datasetsWithDeduplicatedCount = deduplicatedCount.keySet();
         return ResourcePair.getPairsBothContainedIn(datasetPairs, datasetsWithDeduplicatedCount);
@@ -63,7 +63,7 @@ public class Completeness extends Ratio<Resource> {
         return totalPairwiseOverlap;
     }
 
-    private static BigDecimal calculateEstimatedPopulationSize(Iterable<ResourcePair> datasetPairs, PerDatasetCount deduplicatedCount, long totalPairwiseOverlap) {
+    private static BigDecimal calculateEstimatedPopulationSize(Iterable<ResourcePair> datasetPairs, DeduplicatedCount deduplicatedCount, long totalPairwiseOverlap) {
         BigDecimal estimatedPopulationSize = BigDecimal.ZERO;
         for (ResourcePair datasetPair : datasetPairs) {
             BigDecimal deduplicatedCount1 = BigDecimal.valueOf(deduplicatedCount.get(datasetPair.first));
@@ -75,7 +75,7 @@ public class Completeness extends Ratio<Resource> {
         return estimatedPopulationSize;
     }
 
-    private static Completeness calculateCompleteness(Iterable<Resource> datasets, PerDatasetCount deduplicatedCount, BigDecimal estimatedPopulationSize) {
+    private static Completeness calculateCompleteness(Iterable<Resource> datasets, DeduplicatedCount deduplicatedCount, BigDecimal estimatedPopulationSize) {
         Completeness completeness = new Completeness();
         for (Resource dataset : datasets) {
             BigDecimal numerator = BigDecimal.valueOf(deduplicatedCount.get(dataset));
