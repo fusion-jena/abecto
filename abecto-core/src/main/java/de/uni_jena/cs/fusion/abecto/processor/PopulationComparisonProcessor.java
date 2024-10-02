@@ -55,7 +55,7 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
     /**
      * Number of covered resources of another dataset, excluding duplicates.
      */
-    SymmetricPerDatasetPairCount absoluteCoverage = new SymmetricPerDatasetPairCount(AV.absoluteCoverage, OM.one);
+    AbsoluteCoverage absoluteCoverage = new AbsoluteCoverage();
     /**
      * Number of resources in this dataset including duplicates.
      */
@@ -68,7 +68,7 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
      * Number of resources in this dataset excluding duplicates.
      */
     PerDatasetCount deduplicatedCount = new PerDatasetCount(AV.deduplicatedCount, OM.one);
-    PerDatasetTupelRatio relativeCoverage = new PerDatasetTupelRatio(AV.relativeCoverage, OM.one);
+    RelativeCoverage relativeCoverage;
     Completeness completeness;
 
     Map<Resource, Set<Resource>> unprocessedResourcesByDataset = new HashMap<>();
@@ -89,8 +89,8 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
         measureResourceCounts();
         countAndReportCoverageAndDuplicatesAndOmissions(getCorrespondenceGroups());
         calculateDeduplicatedCount();
+        relativeCoverage = RelativeCoverage.calculate(absoluteCoverage, deduplicatedCount);
         completeness = Completeness.calculate(absoluteCoverage, deduplicatedCount);
-        calculateRelativeCoverages();
 
         count.storeInModel(aspect, outputMetaModelByDataset);
         deduplicatedCount.storeInModel(aspect, outputMetaModelByDataset);
@@ -124,7 +124,6 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
         deduplicatedCount.reset(datasets, 0L);
         duplicateCount.reset(datasets, 0L);
         absoluteCoverage.reset(datasetPairs, 0L);
-        relativeCoverage.reset(datasetTupels, BigDecimal.ZERO);
     }
 
     private void countAndReportCoverageAndDuplicatesAndOmissions(Stream<List<Resource>> correspondenceGroups) {
@@ -225,10 +224,6 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
             Metadata.addResourceOmission(dataset, datasetComparedTo, unprocessedResource, aspect.getIri(),
                     outputMetaModelByDataset.get(dataset));
         }
-    }
-
-    private void calculateRelativeCoverages() {
-        relativeCoverage.setRatioOf(absoluteCoverage,deduplicatedCount);
     }
 
     private void loadResourcesOfAspectAndDataset(Resource dataset) {

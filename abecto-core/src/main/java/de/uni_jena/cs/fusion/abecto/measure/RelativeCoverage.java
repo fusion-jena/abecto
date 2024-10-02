@@ -22,37 +22,36 @@ import de.uni_jena.cs.fusion.abecto.Aspect;
 import de.uni_jena.cs.fusion.abecto.Metadata;
 import de.uni_jena.cs.fusion.abecto.ResourcePair;
 import de.uni_jena.cs.fusion.abecto.ResourceTupel;
+import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
+import de.uni_jena.cs.fusion.abecto.vocabulary.OM;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
-public class PerDatasetTupelRatio extends Ratio<ResourceTupel> {
+public class RelativeCoverage extends Ratio<ResourceTupel> {
 
-    public PerDatasetTupelRatio(Resource quantity, Resource unit) {
-        super(quantity, unit);
+    public RelativeCoverage() {
+        super(AV.relativeCoverage, OM.one);
     }
 
-    public static Map<String, PerDatasetTupelRatio> createMapByVariable(Iterable<String> variables, Resource quantity, Resource unit) {
-        Map<String, PerDatasetTupelRatio> mapByVariable = new HashMap<>();
-        for (String variable : variables) {
-            PerDatasetTupelRatio ratioOfVariable = new PerDatasetTupelRatio(quantity, unit);
-            ratioOfVariable.setVariable(variable);
-            mapByVariable.put(variable, ratioOfVariable);
+    public static RelativeCoverage calculate(AbsoluteCoverage absoluteCoverage, PerDatasetCount deduplicatedCount) {
+        RelativeCoverage relativeCoverage = new RelativeCoverage();
+        Set<ResourcePair> datasetPairs = getDatasetPairsWithSufficientData(absoluteCoverage, deduplicatedCount);
+        for (ResourcePair datasetPair : datasetPairs) {
+            BigDecimal absoluteCoverageOfPair = BigDecimal.valueOf(absoluteCoverage.get(datasetPair));
+            relativeCoverage.setRatioForTupel(absoluteCoverageOfPair, deduplicatedCount, datasetPair.first, datasetPair.second);
+            relativeCoverage.setRatioForTupel(absoluteCoverageOfPair, deduplicatedCount, datasetPair.second, datasetPair.first);
         }
-        return mapByVariable;
+        return relativeCoverage;
     }
 
-    public void setRatioOf(SymmetricPerDatasetPairCount numerators, PerDatasetCount denominators) {
-        for (ResourcePair datasetPair : numerators.keySet()) {
-            if (denominators.contains(datasetPair.first) && denominators.contains(datasetPair.second)) {
-                BigDecimal numerator = BigDecimal.valueOf(numerators.get(datasetPair));
-                setRatioForTupel(numerator, denominators, datasetPair.first, datasetPair.second);
-                setRatioForTupel(numerator, denominators, datasetPair.second, datasetPair.first);
-            }
-        }
+    private static Set<ResourcePair> getDatasetPairsWithSufficientData(AbsoluteCoverage absoluteCoverage, PerDatasetCount deduplicatedCount) {
+        Set<ResourcePair> datasetPairsWithAbsoluteCoverage = absoluteCoverage.keySet();
+        Set<Resource> datasetsWithDeduplicatedCount = deduplicatedCount.keySet();
+        return ResourcePair.getPairsBothContainedIn(datasetPairsWithAbsoluteCoverage, datasetsWithDeduplicatedCount);
     }
 
     void setRatioForTupel(BigDecimal numerator, PerDatasetCount denominators, Resource assessedDataset, Resource comparedDataset) {

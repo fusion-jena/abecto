@@ -20,6 +20,7 @@ package de.uni_jena.cs.fusion.abecto;
 
 import org.apache.jena.rdf.model.Resource;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -59,6 +60,16 @@ public class ResourcePair {
         } else {
             return new ResourcePair(second, first);
         }
+    }
+
+    public static Set<ResourcePair> getPairsBothContainedIn(Collection<ResourcePair> pairs, Collection<Resource> collection) {
+        Set<ResourcePair> datasetPairs = new HashSet<>(pairs);
+        datasetPairs.removeIf(pair -> notBothContainedIn(pair, collection));
+        return datasetPairs;
+    }
+
+    private static boolean notBothContainedIn(ResourcePair pair, Collection<Resource> collection) {
+        return !collection.contains(pair.first) || !collection.contains(pair.second);
     }
 
     private static boolean validOrder(Resource first, Resource second) {

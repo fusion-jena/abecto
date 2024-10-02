@@ -21,22 +21,24 @@ package de.uni_jena.cs.fusion.abecto.measure;
 import de.uni_jena.cs.fusion.abecto.Aspect;
 import de.uni_jena.cs.fusion.abecto.Metadata;
 import de.uni_jena.cs.fusion.abecto.ResourcePair;
+import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
+import de.uni_jena.cs.fusion.abecto.vocabulary.OM;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class SymmetricPerDatasetPairCount extends Count<ResourcePair> {
+public class AbsoluteCoverage extends Count<ResourcePair> {
 
-    public SymmetricPerDatasetPairCount(Resource quantity, Resource unit) {
-        super(quantity, unit);
+    public AbsoluteCoverage() {
+        super(AV.absoluteCoverage, OM.one);
     }
 
-    public static Map<String, SymmetricPerDatasetPairCount> createMapByVariable(Iterable<String> variables, Resource quantity, Resource unit) {
-        Map<String, SymmetricPerDatasetPairCount> mapByVariable = new HashMap<>();
+    public static Map<String, AbsoluteCoverage> createMapByVariable(Iterable<String> variables) {
+        Map<String, AbsoluteCoverage> mapByVariable = new HashMap<>();
         for (String variable : variables) {
-            SymmetricPerDatasetPairCount countOfVariable = new SymmetricPerDatasetPairCount(quantity, unit);
+            AbsoluteCoverage countOfVariable = new AbsoluteCoverage();
             countOfVariable.setVariable(variable);
             mapByVariable.put(variable, countOfVariable);
         }

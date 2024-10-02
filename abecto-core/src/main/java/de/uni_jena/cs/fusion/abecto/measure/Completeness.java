@@ -36,7 +36,7 @@ public class Completeness extends Ratio<Resource> {
         super(AV.marCompletenessThomas08, OM.one);
     }
 
-    public static Completeness calculate(SymmetricPerDatasetPairCount absoluteCoverage, PerDatasetCount deduplicatedCount) {
+    public static Completeness calculate(AbsoluteCoverage absoluteCoverage, PerDatasetCount deduplicatedCount) {
         Set<ResourcePair> datasetPairs = getDatasetPairsWithSufficientData(absoluteCoverage, deduplicatedCount);
         long totalPairwiseOverlap = calculateTotalPairwiseOverlap(datasetPairs, absoluteCoverage);
         if (totalPairwiseOverlap != 0) {
@@ -47,18 +47,13 @@ public class Completeness extends Ratio<Resource> {
         return new Completeness(); // empty
     }
 
-    private static Set<ResourcePair> getDatasetPairsWithSufficientData(SymmetricPerDatasetPairCount absoluteCoverage, PerDatasetCount deduplicatedCount) {
-        Set<ResourcePair> datasetPairs = new HashSet<>(absoluteCoverage.keySet());
+    private static Set<ResourcePair> getDatasetPairsWithSufficientData(AbsoluteCoverage absoluteCoverage, PerDatasetCount deduplicatedCount) {
+        Set<ResourcePair> datasetPairs = absoluteCoverage.keySet();
         Set<Resource> datasetsWithDeduplicatedCount = deduplicatedCount.keySet();
-        datasetPairs.removeIf(pair -> notBothContainedIn(pair, datasetsWithDeduplicatedCount));
-        return datasetPairs;
+        return ResourcePair.getPairsBothContainedIn(datasetPairs, datasetsWithDeduplicatedCount);
     }
 
-    private static boolean notBothContainedIn(ResourcePair pair, Collection<Resource> collection) {
-        return !collection.contains(pair.first) || !collection.contains(pair.second);
-    }
-
-    private static long calculateTotalPairwiseOverlap(Iterable<ResourcePair> datasetPairs, SymmetricPerDatasetPairCount absoluteCoverage) {
+    private static long calculateTotalPairwiseOverlap(Iterable<ResourcePair> datasetPairs, AbsoluteCoverage absoluteCoverage) {
         long totalPairwiseOverlap = 0L;
         for (ResourcePair datasetPair : datasetPairs) {
             if (absoluteCoverage.contains(datasetPair)) {
