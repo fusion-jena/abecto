@@ -87,7 +87,7 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
      * Number of distinct values in this dataset, per variable. Index: variable, affectedDataset
      */
     Map<String, PerDatasetCount> distinctValuesCount;
-    Map<String, PerDatasetRatio> valueCompleteness;
+    Map<String, Completeness> valueCompleteness;
 
     Map<Resource, Set<Resource>> unprocessedResourcesByDataset = new HashMap<>();
     Map<String, Map<Resource, Map<RDFNode, Set<Resource>>>> resourcesByNonDistinctValueByDatasetByVariable = new HashMap<>();
@@ -547,7 +547,7 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
 
     protected void calculateCompleteness() {
         for (String variable : variables) {
-            PerDatasetRatio valueCompletenessOfVariable = calculateCompleteness(datasetPairs, absoluteValueCoverage.get(variable), distinctValuesCount.get(variable));
+            Completeness valueCompletenessOfVariable = Completeness.calculate(absoluteValueCoverage.get(variable), distinctValuesCount.get(variable));
             valueCompletenessOfVariable.setVariable(variable);
             valueCompleteness.put(variable, valueCompletenessOfVariable);
         }
@@ -563,6 +563,6 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         // TODO add value exclusion filter description to measurement description
         Measure.storeMeasuresByVariableInModel(relativeValueCoverage, theAspect, outputMetaModelByDataset);
         // TODO add value exclusion filter description to measurement description
-        PerDatasetRatio.storeMeasuresByVariableInModelAsComparedToAllOtherResources(valueCompleteness, theAspect, outputMetaModelByDataset);
+        Measure.storeMeasuresByVariableInModel(valueCompleteness, theAspect, outputMetaModelByDataset);
     }
 }

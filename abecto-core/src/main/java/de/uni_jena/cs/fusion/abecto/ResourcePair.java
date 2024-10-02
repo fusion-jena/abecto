@@ -32,6 +32,15 @@ public class ResourcePair {
         this.second = second;
     }
 
+    public static Set<Resource> getResourcesOfPairs(Iterable<ResourcePair> pairs) {
+        Set<Resource> resources = new HashSet<>();
+        for (ResourcePair pair : pairs) {
+            resources.add(pair.first);
+            resources.add(pair.second);
+        }
+        return resources;
+    }
+
     public static Set<ResourcePair> getPairsOf(Set<Resource> resources) {
         Set<ResourcePair> pairs = new HashSet<>();
         for (Resource first : resources) {

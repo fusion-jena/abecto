@@ -20,20 +20,12 @@ package de.uni_jena.cs.fusion.abecto.processor;
 
 import com.google.common.collect.Streams;
 import de.uni_jena.cs.fusion.abecto.Aspect;
-import de.uni_jena.cs.fusion.abecto.ResourcePair;
-import de.uni_jena.cs.fusion.abecto.measure.PerDatasetCount;
-import de.uni_jena.cs.fusion.abecto.measure.SymmetricPerDatasetPairCount;
-import de.uni_jena.cs.fusion.abecto.measure.PerDatasetRatio;
-import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
-import de.uni_jena.cs.fusion.abecto.vocabulary.OM;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -95,37 +87,5 @@ public abstract class ComparisonProcessor<P extends Processor<P>> extends Proces
             outputMetaModelByDataset.put(dataset, getOutputMetaModel(dataset));
         }
         return outputMetaModelByDataset;
-    }
-
-    PerDatasetRatio calculateCompleteness(Iterable<ResourcePair> datasetPairs, SymmetricPerDatasetPairCount absoluteCoverage, PerDatasetCount deduplicatedCount) {
-        PerDatasetRatio completeness = new PerDatasetRatio(AV.marCompletenessThomas08, OM.one);
-        long totalPairwiseOverlap = calculateTotalPairwiseOverlap(datasetPairs, absoluteCoverage);
-        if (totalPairwiseOverlap != 0) {
-            BigDecimal estimatedPopulationSize = calculateEstimatedPopulationSize(datasetPairs, deduplicatedCount, totalPairwiseOverlap);
-            completeness.setRatioOf(deduplicatedCount, estimatedPopulationSize);
-        }
-        return completeness;
-    }
-
-    long calculateTotalPairwiseOverlap(Iterable<ResourcePair> datasetPairs, SymmetricPerDatasetPairCount absoluteCoverage) {
-        long totalPairwiseOverlap = 0L;
-        for (ResourcePair datasetPair : datasetPairs) {
-            if (absoluteCoverage.contains(datasetPair)) {
-                totalPairwiseOverlap += absoluteCoverage.get(datasetPair);
-            }
-        }
-        return totalPairwiseOverlap;
-    }
-
-    BigDecimal calculateEstimatedPopulationSize(Iterable<ResourcePair> datasetPairs, PerDatasetCount deduplicatedCount, long totalPairwiseOverlap) {
-        BigDecimal estimatedPopulationSize = BigDecimal.ZERO;
-        for (ResourcePair datasetPair : datasetPairs) {
-            BigDecimal deduplicatedCount1 = BigDecimal.valueOf(deduplicatedCount.get(datasetPair.first));
-            BigDecimal deduplicatedCount2 = BigDecimal.valueOf(deduplicatedCount.get(datasetPair.second));
-            estimatedPopulationSize = estimatedPopulationSize.add(deduplicatedCount1.multiply(deduplicatedCount2));
-        }
-        estimatedPopulationSize = estimatedPopulationSize.divide(BigDecimal.valueOf(totalPairwiseOverlap), SCALE,
-                RoundingMode.HALF_UP);
-        return estimatedPopulationSize;
     }
 }
