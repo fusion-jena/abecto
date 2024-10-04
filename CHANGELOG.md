@@ -5,6 +5,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+* add measure **Absolute Coveredness** measured by `PopulationComparisonProcessor` and `PropertyComparisonProcessor`
+* add measure **Relative Coveredness** measured by `PopulationComparisonProcessor` and `PropertyComparisonProcessor`
+* add measure **Duplicate Count** measured by `PopulationComparisonProcessor` and `PropertyComparisonProcessor`
+* add **value filter condition** to measurement reports by `PopulationComparisonProcessor` and `PropertyComparisonProcessor`
+
+### Changed
+* **Breaking Change**: use [av:ResourceDuplicate](https://fusion-jena.github.io/abecto-vocabulary/index.html#ResourceDuplicate) instead of [av:Issue](https://fusion-jena.github.io/abecto-vocabulary/index.html#Issue) to report duplicated resources
+* upgrade to ABECTO Vocabulary version 1.3.1
+* *code refactoring*
+
 ## [2.2.2]
 
 ### Fixed
@@ -26,7 +37,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [2.1.4] - 2024-03-01
 
-### Add
+### Added
 * add report `deviationsMarkdown`
 
 ### Fixed
