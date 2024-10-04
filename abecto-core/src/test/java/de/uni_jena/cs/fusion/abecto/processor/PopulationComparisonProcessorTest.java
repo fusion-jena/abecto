@@ -26,13 +26,9 @@ import static de.uni_jena.cs.fusion.abecto.TestUtil.dataset;
 import static de.uni_jena.cs.fusion.abecto.TestUtil.object;
 import static de.uni_jena.cs.fusion.abecto.TestUtil.property;
 import static de.uni_jena.cs.fusion.abecto.TestUtil.subject;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecutionFactory;
@@ -40,6 +36,8 @@ import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
@@ -300,6 +298,80 @@ public class PopulationComparisonProcessorTest {
 		return QueryExecutionFactory
 				.create(QueryFactory.create("SELECT (COUNT(*) AS  ?count) {?resource a <" + type + ">}"), model)
 				.execSelect().next().getLiteral("count").getInt();
+	}
+
+	Resource dataset1 = ResourceFactory.createResource("dataset1");
+	Resource dataset2 = ResourceFactory.createResource("dataset2");
+	Resource dataset3 = ResourceFactory.createResource("dataset3");
+	Resource resource1OfD1 = ResourceFactory.createResource("resource1OfD1");
+	Resource resource2OfD1 = ResourceFactory.createResource("resource2OfD1");
+	Resource resource3OfD1 = ResourceFactory.createResource("resource3OfD1");
+	Resource resource1OfD2 = ResourceFactory.createResource("resource1OfD2");
+	Resource resource2OfD2 = ResourceFactory.createResource("resource2OfD2");
+	Resource resource3OfD2 = ResourceFactory.createResource("resource3OfD2");
+	Resource resource1OfD3 = ResourceFactory.createResource("resource1OfD3");
+	Resource resource2OfD3 = ResourceFactory.createResource("resource2OfD3");
+	Resource resource3OfD3 = ResourceFactory.createResource("resource3OfD3");
+
+	PopulationComparisonProcessor processor;
+
+	@BeforeEach
+	public void initProcessor() {
+		processor  = new PopulationComparisonProcessor();
+		processor.datasets = Set.of(dataset1, dataset2, dataset3);
+	}
+
+	@Test
+	public void incrementAbsoluteCoverednessOneEmpty() {
+		processor.incrementAbsoluteCoveredness(Map.of(
+				dataset1, Collections.emptySet(),
+				dataset2, Set.of(resource1OfD2),
+				dataset3, Set.of(resource1OfD3)
+		));
+		assertNull(processor.absoluteCoveredness.get(dataset1));
+		assertEquals(1, processor.absoluteCoveredness.get(dataset2));
+		assertEquals(1, processor.absoluteCoveredness.get(dataset3));
+	}
+
+	@Test
+	public void incrementAbsoluteCoverednessAllOne() {
+		processor.incrementAbsoluteCoveredness(Map.of(
+				dataset1, Set.of(resource1OfD1),
+				dataset2, Set.of(resource1OfD2),
+				dataset3, Set.of(resource1OfD3)
+		));
+		assertEquals(1, processor.absoluteCoveredness.get(dataset1));
+		assertEquals(1, processor.absoluteCoveredness.get(dataset2));
+		assertEquals(1, processor.absoluteCoveredness.get(dataset3));
+	}
+
+	@Test
+	public void incrementAbsoluteCoverednessAllMultiple() {
+		processor.incrementAbsoluteCoveredness(Map.of(
+				dataset1, Set.of(resource1OfD1,resource2OfD1,resource3OfD1),
+				dataset2, Set.of(resource1OfD2,resource2OfD2,resource3OfD2),
+				dataset3, Set.of(resource1OfD3,resource2OfD3,resource3OfD3)
+		));
+		assertEquals(1, processor.absoluteCoveredness.get(dataset1));
+		assertEquals(1, processor.absoluteCoveredness.get(dataset2));
+		assertEquals(1, processor.absoluteCoveredness.get(dataset3));
+	}
+
+	@Test
+	public void incrementAbsoluteCoverednessMultipleInvocations() {
+		processor.incrementAbsoluteCoveredness(Map.of(
+				dataset1, Collections.emptySet(),
+				dataset2, Set.of(resource1OfD2),
+				dataset3, Set.of(resource1OfD3)
+		));
+		processor.incrementAbsoluteCoveredness(Map.of(
+				dataset1, Set.of(resource1OfD1,resource2OfD1,resource3OfD1),
+				dataset2, Collections.emptySet(),
+				dataset3, Set.of(resource1OfD3)
+		));
+		assertEquals(1, processor.absoluteCoveredness.get(dataset1));
+		assertEquals(1, processor.absoluteCoveredness.get(dataset2));
+		assertEquals(2, processor.absoluteCoveredness.get(dataset3));
 	}
 
 }
