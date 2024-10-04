@@ -18,12 +18,13 @@
 
 package de.uni_jena.cs.fusion.abecto.measure;
 
+import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 import de.uni_jena.cs.fusion.abecto.vocabulary.OM;
 
 public class DuplicateCount extends PerDatasetLongMeasure {
 
     public DuplicateCount() {
-        super(null, OM.one); // TODO define measure IRI
+        super(AV.duplicateCount, OM.one);
     }
 
     public static DuplicateCount calculate(Count count, DeduplicatedCount deduplicatedCount) {

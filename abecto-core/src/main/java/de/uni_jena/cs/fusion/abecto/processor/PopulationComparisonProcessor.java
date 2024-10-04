@@ -82,7 +82,7 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
 
         count.storeInModel(aspect, outputMetaModelByDataset);
         deduplicatedCount.storeInModel(aspect, outputMetaModelByDataset);
-        // TODO store duplicateCount (requires definition of measure IRI)
+        duplicateCount.storeInModel(aspect, outputMetaModelByDataset);
         absoluteCoverage.storeInModel(aspect, outputMetaModelByDataset);
         // TODO store absoluteCoveredness (requires definition of measure IRI)
         // TODO store relativeCoveredness (requires definition of measure IRI)
