@@ -33,6 +33,7 @@ public class AV {
 	public static final String namespace = "http://w3id.org/abecto/vocabulary#";
 
 	public static final Resource absoluteCoverage = ResourceFactory.createResource(namespace + "absoluteCoverage");
+	public static final Resource absoluteCoveredness = ResourceFactory.createResource(namespace + "absoluteCoveredness");
 	public static final Property affectedAspect = ResourceFactory.createProperty(namespace, "affectedAspect");
 	public static final Property affectedValue = ResourceFactory.createProperty(namespace, "affectedValue");
 	public static final Property affectedVariableName = ResourceFactory.createProperty(namespace,
@@ -49,12 +50,13 @@ public class AV {
 			"correspondsToResource");
 	public static final Resource count = ResourceFactory.createResource(namespace + "count");
 	public static final Resource deduplicatedCount = ResourceFactory.createResource(namespace + "deduplicatedCount");
+	public static final Resource duplicateCount = ResourceFactory.createResource(namespace + "duplicateCount");
 	public static final Property definingQuery = ResourceFactory.createProperty(namespace, "definingQuery");
 	public static final Resource Deviation = ResourceFactory.createResource(namespace + "Deviation");
 	public static final Property hasParameter = ResourceFactory.createProperty(namespace, "hasParameter");
 	public static final Property hasVariablePath = ResourceFactory.createProperty(namespace, "hasVariablePath");
 	public static final Resource Issue = ResourceFactory.createResource(namespace + "Issue");
-	public static final Property issueType = ResourceFactory.createProperty(namespace, "issueType");;
+	public static final Property issueType = ResourceFactory.createProperty(namespace, "issueType");
 	public static final Property key = ResourceFactory.createProperty(namespace, "key");
 	public static final Property keyVariableName = ResourceFactory.createProperty(namespace, "keyVariableName");
 	public static final Resource marCompletenessThomas08 = ResourceFactory
@@ -72,13 +74,16 @@ public class AV {
 			.createResource(namespace + "QualityAnnotationBody");
 	public static final Resource QualityMeasurement = ResourceFactory.createResource(namespace + "QualityMeasurement");
 	public static final Resource relativeCoverage = ResourceFactory.createResource(namespace + "relativeCoverage");
+	public static final Resource relativeCoveredness = ResourceFactory.createResource(namespace + "relativeCoveredness");
 	@Deprecated
 	public static final Property relevantResource = ResourceFactory.createProperty(namespace, "relevantResource");
+	public static final Resource ResourceDuplicate = ResourceFactory.createResource(namespace + "ResourceDuplicate");
 	public static final Resource ResourceOmission = ResourceFactory.createResource(namespace + "ResourceOmission");
 	public static final Resource Step = ResourceFactory.createResource(namespace + "Step");
 	public static final Resource StepExecution = ResourceFactory.createResource(namespace + "StepExecution");
 	public static final Resource ValueOmission = ResourceFactory.createResource(namespace + "ValueOmission");
 	public static final Property value = ResourceFactory.createProperty(namespace, "value");
+	public static final Property valueFilterCondition = ResourceFactory.createProperty(namespace, "valueFilterCondition");
 	public static final Property variableName = ResourceFactory.createProperty(namespace, "variableName");
 	public static final Resource VariablePath = ResourceFactory.createResource(namespace + "VariablePath");
 	public static final Resource WrongValue = ResourceFactory.createResource(namespace + "WrongValue");
