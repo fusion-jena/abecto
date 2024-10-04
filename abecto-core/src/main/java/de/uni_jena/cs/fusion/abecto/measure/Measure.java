@@ -19,9 +19,13 @@
 package de.uni_jena.cs.fusion.abecto.measure;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
+import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
+import de.uni_jena.cs.fusion.abecto.vocabulary.DQV;
+import de.uni_jena.cs.fusion.abecto.vocabulary.SdmxAttribute;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -32,18 +36,20 @@ public abstract class Measure<K, V extends Number> {
     protected final Resource quantity;
     protected final Resource unit;
     String variable;
+    String valueFilterCondition;
 
     public Measure(Resource quantity, Resource unit) {
         this.quantity = quantity;
         this.unit = unit;
     }
 
-    public static <T extends Measure<?,?>> Map<String, T> createMapByVariable(Iterable<String> variables, Class<T> type) {
+    public static <T extends Measure<?, ?>> Map<String, T> createMapByVariable(Iterable<String> variables, String valueFilterCondition, Class<T> type) {
         Map<String, T> mapOfCounts = new HashMap<>();
         for (String variable : variables) {
             try {
                 T countOfVariable = type.getConstructor().newInstance();
                 countOfVariable.setVariable(variable);
+                countOfVariable.setValueFilterCondition(valueFilterCondition);
                 mapOfCounts.put(variable, countOfVariable);
             } catch (ReflectiveOperationException e) {
                 throw new IllegalArgumentException(e);
@@ -94,6 +100,39 @@ public abstract class Measure<K, V extends Number> {
         this.variable = variable;
     }
 
+    public void setValueFilterCondition(String valueFilterCondition) {
+        this.valueFilterCondition = valueFilterCondition;
+    }
+
     public abstract void storeInModel(Aspect aspect, Map<Resource, Model> outputModelsMap);
+
+    public void storeInModel(Aspect affectedAspect, Resource computedOnDataset,
+                             Number value, Model outputAffectedDatasetMetaModel) {
+        storeInModel(affectedAspect, computedOnDataset, Collections.emptySet(), value, outputAffectedDatasetMetaModel);
+    }
+
+    public void storeInModel(Aspect affectedAspect, Resource computedOnDataset, Resource comparedToDataset,
+                             Number value, Model outputAffectedDatasetMetaModel) {
+        storeInModel(affectedAspect, computedOnDataset, Collections.singleton(comparedToDataset), value, outputAffectedDatasetMetaModel);
+    }
+
+    public void storeInModel(Aspect affectedAspect, Resource computedOnDataset, Iterable<Resource> comparedToDatasets,
+                             Number value, Model outputAffectedDatasetMetaModel) {
+        Resource qualityMeasurement = outputAffectedDatasetMetaModel.createResource(AV.QualityMeasurement);
+        qualityMeasurement.addProperty(DQV.isMeasurementOf, quantity);
+        qualityMeasurement.addProperty(DQV.computedOn, computedOnDataset);
+        qualityMeasurement.addLiteral(DQV.value, value);
+        qualityMeasurement.addProperty(SdmxAttribute.unitMeasure, unit);
+        qualityMeasurement.addProperty(AV.affectedAspect, affectedAspect.getIri());
+        if (variable != null) {
+            qualityMeasurement.addLiteral(AV.affectedVariableName, variable);
+        }
+        if (valueFilterCondition != null) {
+            qualityMeasurement.addLiteral(AV.valueFilterCondition, valueFilterCondition);
+        }
+        for (Resource comparedToDataset : comparedToDatasets) {
+            qualityMeasurement.addProperty(AV.comparedToDataset, comparedToDataset);
+        }
+    }
 
 }

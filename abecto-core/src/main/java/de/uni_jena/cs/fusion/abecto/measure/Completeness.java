@@ -19,7 +19,6 @@
 package de.uni_jena.cs.fusion.abecto.measure;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
-import de.uni_jena.cs.fusion.abecto.Metadata;
 import de.uni_jena.cs.fusion.abecto.ResourcePair;
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 import de.uni_jena.cs.fusion.abecto.vocabulary.OM;
@@ -89,8 +88,7 @@ public class Completeness extends BigDecimalMeasure<Resource> {
         for (Resource dataset : values.keySet()) {
             Collection<Resource> otherDatasets = new HashSet<>(values.keySet());
             otherDatasets.remove(dataset);
-            Metadata.addQualityMeasurement(quantity, get(dataset), unit, dataset, variable,
-                    otherDatasets, aspect.getIri(), outputModelsMap.get(dataset));
+            storeInModel(aspect, dataset, otherDatasets, get(dataset), outputModelsMap.get(dataset));
         }
     }
 }

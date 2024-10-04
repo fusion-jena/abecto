@@ -19,7 +19,6 @@
 package de.uni_jena.cs.fusion.abecto.measure;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
-import de.uni_jena.cs.fusion.abecto.Metadata;
 import de.uni_jena.cs.fusion.abecto.ResourcePair;
 import de.uni_jena.cs.fusion.abecto.ResourceTupel;
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
@@ -64,8 +63,7 @@ public class RelativeCoverage extends BigDecimalMeasure<ResourceTupel> {
 
     public void storeInModel(Aspect aspect, Map<Resource, Model> outputModelsMap) {
         for (ResourceTupel tupel : keySet()) {
-            Metadata.addQualityMeasurement(quantity, get(tupel), unit,
-                    tupel.first, variable, tupel.second, aspect.getIri(), outputModelsMap.get(tupel.first));
+            storeInModel(aspect, tupel.first, tupel.second, get(tupel), outputModelsMap.get(tupel.first));
         }
     }
 }

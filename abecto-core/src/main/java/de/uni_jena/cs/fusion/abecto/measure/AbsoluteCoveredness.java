@@ -19,7 +19,6 @@
 package de.uni_jena.cs.fusion.abecto.measure;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
-import de.uni_jena.cs.fusion.abecto.Metadata;
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 import de.uni_jena.cs.fusion.abecto.vocabulary.OM;
 import org.apache.jena.rdf.model.Model;
@@ -39,8 +38,7 @@ public class AbsoluteCoveredness extends PerDatasetLongMeasure {
         for (Resource dataset : values.keySet()) {
             Collection<Resource> otherDatasets = new HashSet<>(values.keySet());
             otherDatasets.remove(dataset);
-            Metadata.addQualityMeasurement(quantity, get(dataset), unit, dataset, variable,
-                    otherDatasets, aspect.getIri(), outputModelsMap.get(dataset));
+            storeInModel(aspect, dataset, otherDatasets, get(dataset), outputModelsMap.get(dataset));
         }
     }
 

@@ -19,7 +19,6 @@
 package de.uni_jena.cs.fusion.abecto.measure;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
-import de.uni_jena.cs.fusion.abecto.Metadata;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 
@@ -33,7 +32,7 @@ public abstract class PerDatasetLongMeasure extends LongMeasure<Resource> {
 
     public void storeInModel(Aspect aspect, Map<Resource, Model> outputModelsMap) {
         for (Resource dataset : keySet()) {
-            Metadata.addQualityMeasurement(quantity, get(dataset), unit, dataset, variable, aspect.getIri(), outputModelsMap.get(dataset));
+            storeInModel(aspect, dataset, get(dataset), outputModelsMap.get(dataset));
         }
     }
 }

@@ -130,14 +130,22 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
     }
 
     protected void initializeMeasures() {
-        nonDistinctValuesCount = Measure.createMapByVariable(variables, Count.class);
+        String valueFilterCondition = getLanguageFilterCondition();
+        nonDistinctValuesCount = Measure.createMapByVariable(variables, valueFilterCondition, Count.class);
         setZeroForVariablesCoveredByDataset(nonDistinctValuesCount);
-        distinctValuesCount = Measure.createMapByVariable(variables, DeduplicatedCount.class);
-        absoluteValueCoverage = Measure.createMapByVariable(variables, AbsoluteCoverage.class);
+        distinctValuesCount = Measure.createMapByVariable(variables, valueFilterCondition, DeduplicatedCount.class);
+        absoluteValueCoverage = Measure.createMapByVariable(variables, valueFilterCondition, AbsoluteCoverage.class);
         setZeroForVariablesCoveredByDatasetPair(absoluteValueCoverage);
-        absoluteValueCoveredness = Measure.createMapByVariable(variables, AbsoluteCoveredness.class);
+        absoluteValueCoveredness = Measure.createMapByVariable(variables, valueFilterCondition, AbsoluteCoveredness.class);
         setZeroForVariablesCoveredByDataset(absoluteValueCoveredness);
-        relativeValueCoveredness = Measure.createMapByVariable(variables, RelativeCoveredness.class);
+        relativeValueCoveredness = Measure.createMapByVariable(variables, valueFilterCondition, RelativeCoveredness.class);
+    }
+
+    protected String getLanguageFilterCondition() {
+        String prefix = "langMatches(lang(?value), \"";
+        String suffix = "\")";
+        String delimiter = suffix + " || " + prefix;
+        return prefix + String.join(delimiter, languageFilterPatterns) + suffix;
     }
 
     protected <M extends LongMeasure<Resource>> void setZeroForVariablesCoveredByDataset(Map<String, M> measures) {
@@ -575,21 +583,13 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
     }
 
     protected void storeMeasures() {
-        // TODO add value exclusion filter description to measurement description
         Measure.storeMeasuresByVariableInModel(nonDistinctValuesCount, theAspect, outputMetaModelByDataset);
-        // TODO add value exclusion filter description to measurement description
         Measure.storeMeasuresByVariableInModel(distinctValuesCount, theAspect, outputMetaModelByDataset);
-        // TODO add value exclusion filter description to measurement description
         Measure.storeMeasuresByVariableInModel(duplicateValuesCount, theAspect, outputMetaModelByDataset);
-        // TODO add value exclusion filter description to measurement description
         Measure.storeMeasuresByVariableInModel(absoluteValueCoverage, theAspect, outputMetaModelByDataset);
-        // TODO add value exclusion filter description to measurement description
         Measure.storeMeasuresByVariableInModel(relativeValueCoverage, theAspect, outputMetaModelByDataset);
-        // TODO add value exclusion filter description to measurement description
         Measure.storeMeasuresByVariableInModel(absoluteValueCoveredness, theAspect, outputMetaModelByDataset);
-        // TODO add value exclusion filter description to measurement description
         Measure.storeMeasuresByVariableInModel(relativeValueCoveredness, theAspect, outputMetaModelByDataset);
-        // TODO add value exclusion filter description to measurement description
         Measure.storeMeasuresByVariableInModel(valueCompleteness, theAspect, outputMetaModelByDataset);
     }
 }

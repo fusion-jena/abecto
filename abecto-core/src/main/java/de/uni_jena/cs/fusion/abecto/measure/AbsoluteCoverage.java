@@ -19,7 +19,6 @@
 package de.uni_jena.cs.fusion.abecto.measure;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
-import de.uni_jena.cs.fusion.abecto.Metadata;
 import de.uni_jena.cs.fusion.abecto.ResourcePair;
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 import de.uni_jena.cs.fusion.abecto.vocabulary.OM;
@@ -36,8 +35,8 @@ public class AbsoluteCoverage extends LongMeasure<ResourcePair> {
 
     public void storeInModel(Aspect aspect, Map<Resource, Model> outputModelsMap) {
         for (ResourcePair pair : keySet()) {
-            Metadata.addQualityMeasurement(quantity, get(pair), unit, pair.first, variable, pair.second, aspect.getIri(), outputModelsMap.get(pair.first));
-            Metadata.addQualityMeasurement(quantity, get(pair), unit, pair.second, variable, pair.first, aspect.getIri(), outputModelsMap.get(pair.second));
+            storeInModel(aspect, pair.first, pair.second, get(pair), outputModelsMap.get(pair.first));
+            storeInModel(aspect, pair.second, pair.first, get(pair), outputModelsMap.get(pair.second));
         }
     }
 }
