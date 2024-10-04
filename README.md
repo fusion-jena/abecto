@@ -37,11 +37,12 @@ ABECTO is licensed under the [Apache License 2.0](https://www.apache.org/license
 
 In case you use this implementation for your scientific work, please consider to cite the related paper:
 
-* Keil, Jan Martin (2020). **[ABECTO: An ABox Evaluation and Comparison Tool for Ontologies](https://preprints.2020.eswc-conferences.org/posters_demos/paper_298.pdf)**. In: ESWC 2020 Satellite Events: Posters and Demos. [DOI:10.1007/978-3-030-62327-2_24](https://doi.org/10.1007/978-3-030-62327-2_24).
+* Keil, Jan Martin (2024). **Continuous Knowledge Graph Quality Assessment through Comparison using ABECTO**. In: Posters, Demos, Workshops, and Tutorials of the 20th International Conference on Semantic Systems co-located with 20th International Conference on Semantic Systems (SEMANTiCS 2024). [https://ceur-ws.org/Vol-3759/paper5.pdf](https://ceur-ws.org/Vol-3759/paper5.pdf).
 
 Further related publications:
 
-* Keil, Jan Martin (2018). **[Ontology ABox Comparison](https://fusion.cs.uni-jena.de/fusion/publications/ontology-abox-comparison/)**. In: ESWC 2018 Satellite Events: PhD Symposium. [DOI:10.1007/978-3-319-98192-5_43](https://doi.org/10.1007/978-3-319-98192-5_43).
+* Keil, Jan Martin (2020). **ABECTO: An ABox Evaluation and Comparison Tool for Ontologies**. In: ESWC 2020 Satellite Events: Posters and Demos. [DOI: 10.1007/978-3-030-62327-2_24](https://doi.org/10.1007/978-3-030-62327-2_24).
+* Keil, Jan Martin (2018). **Ontology ABox Comparison**. In: ESWC 2018 Satellite Events: PhD Symposium. [DOI: 10.1007/978-3-319-98192-5_43](https://doi.org/10.1007/978-3-319-98192-5_43).
 
 # How to Use ABECTO?
 

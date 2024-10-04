@@ -8,12 +8,12 @@ authors:
 doi: 10.5281/zenodo.3786194
 license: Apache-2.0
 preferred-citation:
-  title: "ABECTO: An ABox Evaluation and Comparison Tool for Ontologies"
+  title: "Continuous Knowledge Graph Quality Assessment through Comparison using ABECTO"
   type: conference-paper
   authors:
   - given-names: Jan Martin
     family-names: Keil
     orcid: 'https://orcid.org/0000-0002-7733-0193'
-  doi: 10.1007/978-3-030-62327-2_24
-  year: 2020
-  booktitle: "The Semantic Web: ESWC 2020 Satellite Events"
+  url: "https://ceur-ws.org/Vol-3759/paper5.pdf"
+  year: 2024
+  booktitle: "Posters, Demos, Workshops, and Tutorials of the 20th International Conference on Semantic Systems co-located with 20th International Conference on Semantic Systems (SEMANTiCS 2024)"
