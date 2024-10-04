@@ -20,6 +20,7 @@ package de.uni_jena.cs.fusion.abecto.measure;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
 import de.uni_jena.cs.fusion.abecto.Metadata;
+import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 import de.uni_jena.cs.fusion.abecto.vocabulary.OM;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
@@ -31,7 +32,7 @@ import java.util.Map;
 public class AbsoluteCoveredness extends PerDatasetLongMeasure {
 
     public AbsoluteCoveredness() {
-        super(null, OM.one); // TODO define measure IRI
+        super(AV.absoluteCoveredness, OM.one);
     }
 
     public void storeInModel(Aspect aspect, Map<Resource, Model> outputModelsMap) {
