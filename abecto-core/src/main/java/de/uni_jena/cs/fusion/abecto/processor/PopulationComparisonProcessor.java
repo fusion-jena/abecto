@@ -50,6 +50,7 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
     Map<Resource, Model> outputMetaModelByDataset;
 
     AbsoluteCoverage absoluteCoverage = new AbsoluteCoverage();
+    AbsoluteCoveredness absoluteCoveredness = new AbsoluteCoveredness();
     Count count = new Count();
     DuplicateCount duplicateCount = new DuplicateCount();
     DeduplicatedCount deduplicatedCount = new DeduplicatedCount();
@@ -81,6 +82,7 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
         deduplicatedCount.storeInModel(aspect, outputMetaModelByDataset);
         // TODO store duplicateCount (requires definition of measure IRI)
         absoluteCoverage.storeInModel(aspect, outputMetaModelByDataset);
+        // TODO store absoluteCoveredness (requires definition of measure IRI)
         relativeCoverage.storeInModel(aspect, outputMetaModelByDataset);
         completeness.storeInModel(aspect, outputMetaModelByDataset);
         reportOmissionsOfUnprocessedResources();
@@ -109,6 +111,7 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
         deduplicatedCount.reset(datasets, 0L);
         duplicateCount.reset(datasets, 0L);
         absoluteCoverage.reset(datasetPairs, 0L);
+        absoluteCoveredness.reset(datasets, 0L);
     }
 
     private void countAndReportCoverageAndDuplicatesAndOmissions(Stream<List<Resource>> correspondenceGroups) {
@@ -118,8 +121,9 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
     private void countAndReportCoverageAndDuplicatesAndOmissions(List<Resource> correspondingResources) {
         Map<Resource, Set<Resource>> correspondingResourcesByDataset = separateByDataset(correspondingResources);
         removeFromUnprocessedResources(correspondingResourcesByDataset);
-        incrementAbsoluteCoverages(correspondingResourcesByDataset);
         incrementDuplicatesCount(correspondingResourcesByDataset);
+        incrementAbsoluteCoverages(correspondingResourcesByDataset);
+        incrementAbsoluteCoveredness(correspondingResourcesByDataset);
         reportOmissions(correspondingResourcesByDataset);
         reportDuplicates(correspondingResourcesByDataset);
     }
@@ -130,6 +134,12 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
                     !correspondingResourcesByDataset.get(datasetPair.second).isEmpty()) {
                 absoluteCoverage.incrementByOrSetOne(datasetPair);
             }
+        }
+    }
+
+    private void incrementAbsoluteCoveredness(Map<Resource, Set<Resource>> correspondingResourcesByDataset) {
+        for (Resource dataset : datasets) {
+            absoluteCoveredness.incrementByOrSet(dataset, correspondingResourcesByDataset.size());
         }
     }
 

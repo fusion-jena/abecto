@@ -77,6 +77,7 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
     Map<String, RelativeCoverage> relativeValueCoverage = new HashMap<>();
     Map<String, Count> nonDistinctValuesCount;
     Map<String, DeduplicatedCount> distinctValuesCount;
+    Map<String, AbsoluteCoveredness> absoluteValueCoveredness;
     Map<String, Completeness> valueCompleteness = new HashMap<>();
 
     Map<Resource, Set<Resource>> unprocessedResourcesByDataset = new HashMap<>();
@@ -131,6 +132,8 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         distinctValuesCount = DeduplicatedCount.createMapByVariable(variables);
         absoluteValueCoverage = AbsoluteCoverage.createMapByVariable(variables);
         setZeroForVariablesCoveredByDatasetPair(absoluteValueCoverage);
+        absoluteValueCoveredness = AbsoluteCoveredness.createMapByVariable(variables);
+        setZeroForVariablesCoveredByDataset(absoluteValueCoveredness);
     }
 
     protected <M extends LongMeasure<Resource>> void setZeroForVariablesCoveredByDataset(Map<String, M> measures) {
@@ -176,7 +179,7 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         calculateDistinctValues();
 
         measureNonDistinctValuesCount();
-        measureDistinctValuesCount();
+        measureDistinctValuesCountAndAbsoluteCoveredness();
         measureAbsoluteCoverage();
         reportDeviationsAndOmissions();
     }
@@ -302,13 +305,15 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         }
     }
 
-    protected void measureDistinctValuesCount() {
+    protected void measureDistinctValuesCountAndAbsoluteCoveredness() {
         for (String variable : variables) {
             Map<Resource, Map<RDFNode, Set<Resource>>> resourcesByDistinctValueByDataset = resourcesByDistinctValueByDatasetByVariable.get(variable);
             for (Resource dataset : datasets) {
                 if (theAspect.variableCoveredByDataset(variable, dataset)) {
                     Map<RDFNode, Set<Resource>> resourcesByDistinctValue = resourcesByDistinctValueByDataset.get(dataset);
-                    distinctValuesCount.get(variable).incrementByOrSet(dataset, resourcesByDistinctValue.size());
+                    int coveredDistinctValuesCountOfDataset = resourcesByDistinctValue.size();
+                    distinctValuesCount.get(variable).incrementByOrSet(dataset, coveredDistinctValuesCountOfDataset);
+                    absoluteValueCoveredness.get(variable).incrementByOrSet(dataset, coveredDistinctValuesCountOfDataset);
                 }
             }
         }
@@ -555,6 +560,7 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         Measure.storeMeasuresByVariableInModel(absoluteValueCoverage, theAspect, outputMetaModelByDataset);
         // TODO add value exclusion filter description to measurement description
         Measure.storeMeasuresByVariableInModel(relativeValueCoverage, theAspect, outputMetaModelByDataset);
+        // TODO store absoluteValueCoveredness (requires definition of measure IRI)
         // TODO add value exclusion filter description to measurement description
         Measure.storeMeasuresByVariableInModel(valueCompleteness, theAspect, outputMetaModelByDataset);
     }
