@@ -587,7 +587,8 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         Measure.storeMeasuresByVariableInModel(relativeValueCoverage, theAspect, outputMetaModelByDataset);
         // TODO add value exclusion filter description to measurement description
         Measure.storeMeasuresByVariableInModel(absoluteValueCoveredness, theAspect, outputMetaModelByDataset);
-        // TODO store relativeValueCoveredness (requires definition of measure IRI)
+        // TODO add value exclusion filter description to measurement description
+        Measure.storeMeasuresByVariableInModel(relativeValueCoveredness, theAspect, outputMetaModelByDataset);
         // TODO add value exclusion filter description to measurement description
         Measure.storeMeasuresByVariableInModel(valueCompleteness, theAspect, outputMetaModelByDataset);
     }
