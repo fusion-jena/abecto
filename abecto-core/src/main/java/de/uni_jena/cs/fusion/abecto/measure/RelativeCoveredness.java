@@ -24,14 +24,28 @@ import de.uni_jena.cs.fusion.abecto.vocabulary.OM;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 
-public class AbsoluteCoveredness extends PerDatasetLongMeasure {
+public class RelativeCoveredness extends BigDecimalMeasure<Resource> {
 
-    public AbsoluteCoveredness() {
+    public RelativeCoveredness() {
         super(null, OM.one); // TODO define measure IRI
+    }
+
+    public static RelativeCoveredness calculate(AbsoluteCoveredness absoluteCoveredness, DeduplicatedCount deduplicatedCount) {
+        RelativeCoveredness relativeCoveredness = new RelativeCoveredness();
+        for (Resource dataset : absoluteCoveredness.keySet()) {
+            if (deduplicatedCount.contains(dataset) && deduplicatedCount.get(dataset) != 0) {
+                BigDecimal absoluteCoverednessOfDataset = BigDecimal.valueOf(absoluteCoveredness.get(dataset));
+                BigDecimal deduplicatedCountOfDataset = BigDecimal.valueOf(deduplicatedCount.get(dataset));
+                BigDecimal relativeCoverednessOfDataset = absoluteCoverednessOfDataset.divide(deduplicatedCountOfDataset, SCALE, ROUNDING_MODE);
+                relativeCoveredness.set(dataset, relativeCoverednessOfDataset);
+            }
+        }
+        return relativeCoveredness;
     }
 
     public void storeInModel(Aspect aspect, Map<Resource, Model> outputModelsMap) {
@@ -42,5 +56,4 @@ public class AbsoluteCoveredness extends PerDatasetLongMeasure {
                     otherDatasets, aspect.getIri(), outputModelsMap.get(dataset));
         }
     }
-
 }

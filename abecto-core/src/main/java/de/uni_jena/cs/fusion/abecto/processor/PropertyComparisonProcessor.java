@@ -78,6 +78,7 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
     Map<String, Count> nonDistinctValuesCount;
     Map<String, DeduplicatedCount> distinctValuesCount;
     Map<String, AbsoluteCoveredness> absoluteValueCoveredness;
+    Map<String, RelativeCoveredness> relativeValueCoveredness;
     Map<String, Completeness> valueCompleteness = new HashMap<>();
 
     Map<Resource, Set<Resource>> unprocessedResourcesByDataset = new HashMap<>();
@@ -94,6 +95,7 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         compareValuesOfCorrespondingResources();
         compareValuesOfNotCorrespondingResources();
         // TODO calculate duplicateCount (after definition of measure IRI)
+        calculateRelativeCoveredness();
         calculateRelativeCoverage();
         calculateCompleteness();
         storeMeasures();
@@ -127,13 +129,14 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
     }
 
     protected void initializeMeasures() {
-        nonDistinctValuesCount = Count.createMapByVariable(variables);
+        nonDistinctValuesCount = Measure.createMapByVariable(variables, Count.class);
         setZeroForVariablesCoveredByDataset(nonDistinctValuesCount);
-        distinctValuesCount = DeduplicatedCount.createMapByVariable(variables);
-        absoluteValueCoverage = AbsoluteCoverage.createMapByVariable(variables);
+        distinctValuesCount = Measure.createMapByVariable(variables, DeduplicatedCount.class);
+        absoluteValueCoverage = Measure.createMapByVariable(variables, AbsoluteCoverage.class);
         setZeroForVariablesCoveredByDatasetPair(absoluteValueCoverage);
-        absoluteValueCoveredness = AbsoluteCoveredness.createMapByVariable(variables);
+        absoluteValueCoveredness = Measure.createMapByVariable(variables, AbsoluteCoveredness.class);
         setZeroForVariablesCoveredByDataset(absoluteValueCoveredness);
+        relativeValueCoveredness = Measure.createMapByVariable(variables, RelativeCoveredness.class);
     }
 
     protected <M extends LongMeasure<Resource>> void setZeroForVariablesCoveredByDataset(Map<String, M> measures) {
@@ -530,6 +533,16 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         return distinctValues.size();
     }
 
+    private void calculateRelativeCoveredness() {
+        for (String variable : variables) {
+            AbsoluteCoveredness absoluteValueCoverednessOfVariable = absoluteValueCoveredness.get(variable);
+            DeduplicatedCount distinctValuesCountOfVariable = distinctValuesCount.get(variable);
+            RelativeCoveredness relativeCoverednessOfVariable = RelativeCoveredness.calculate(absoluteValueCoverednessOfVariable, distinctValuesCountOfVariable);
+            relativeCoverednessOfVariable.setVariable(variable);
+            relativeValueCoveredness.put(variable, relativeCoverednessOfVariable);
+        }
+    }
+
     protected void calculateRelativeCoverage() {
         for (String variable : variables) {
             AbsoluteCoverage absoluteCoverageOfVariable = absoluteValueCoverage.get(variable);
@@ -561,6 +574,7 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         // TODO add value exclusion filter description to measurement description
         Measure.storeMeasuresByVariableInModel(relativeValueCoverage, theAspect, outputMetaModelByDataset);
         // TODO store absoluteValueCoveredness (requires definition of measure IRI)
+        // TODO store relativeValueCoveredness (requires definition of measure IRI)
         // TODO add value exclusion filter description to measurement description
         Measure.storeMeasuresByVariableInModel(valueCompleteness, theAspect, outputMetaModelByDataset);
     }

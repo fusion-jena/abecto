@@ -55,6 +55,7 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
     DuplicateCount duplicateCount = new DuplicateCount();
     DeduplicatedCount deduplicatedCount = new DeduplicatedCount();
     RelativeCoverage relativeCoverage;
+    RelativeCoveredness relativeCoveredness;
     Completeness completeness;
 
     Map<Resource, Set<Resource>> unprocessedResourcesByDataset = new HashMap<>();
@@ -75,6 +76,7 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
         measureResourceCounts();
         countAndReportCoverageAndDuplicatesAndOmissions(getCorrespondenceGroups());
         deduplicatedCount = DeduplicatedCount.calculate(count, duplicateCount);
+        relativeCoveredness = RelativeCoveredness.calculate(absoluteCoveredness, deduplicatedCount);
         relativeCoverage = RelativeCoverage.calculate(absoluteCoverage, deduplicatedCount);
         completeness = Completeness.calculate(absoluteCoverage, deduplicatedCount);
 
@@ -83,6 +85,7 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
         // TODO store duplicateCount (requires definition of measure IRI)
         absoluteCoverage.storeInModel(aspect, outputMetaModelByDataset);
         // TODO store absoluteCoveredness (requires definition of measure IRI)
+        // TODO store relativeCoveredness (requires definition of measure IRI)
         relativeCoverage.storeInModel(aspect, outputMetaModelByDataset);
         completeness.storeInModel(aspect, outputMetaModelByDataset);
         reportOmissionsOfUnprocessedResources();

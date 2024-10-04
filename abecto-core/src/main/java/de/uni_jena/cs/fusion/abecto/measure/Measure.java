@@ -38,6 +38,20 @@ public abstract class Measure<K, V extends Number> {
         this.unit = unit;
     }
 
+    public static <T extends Measure<?,?>> Map<String, T> createMapByVariable(Iterable<String> variables, Class<T> type) {
+        Map<String, T> mapOfCounts = new HashMap<>();
+        for (String variable : variables) {
+            try {
+                T countOfVariable = type.getConstructor().newInstance();
+                countOfVariable.setVariable(variable);
+                mapOfCounts.put(variable, countOfVariable);
+            } catch (ReflectiveOperationException e) {
+                throw new IllegalArgumentException(e);
+            }
+        }
+        return mapOfCounts;
+    }
+
     public static <K, V extends Number, M extends Measure<K, V>> void storeMeasuresByVariableInModel(Map<String, M> measuresByVariable, Aspect aspect, Map<Resource, Model> outputModelsMap) {
         for (M measure : measuresByVariable.values()) {
             measure.storeInModel(aspect, outputModelsMap);

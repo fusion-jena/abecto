@@ -21,9 +21,6 @@ package de.uni_jena.cs.fusion.abecto.measure;
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
 import de.uni_jena.cs.fusion.abecto.vocabulary.OM;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class DeduplicatedCount extends PerDatasetLongMeasure {
 
     public DeduplicatedCount() {
@@ -34,16 +31,6 @@ public class DeduplicatedCount extends PerDatasetLongMeasure {
         DeduplicatedCount deduplicatedCount = new DeduplicatedCount();
         deduplicatedCount.setDifferenceOf(count, duplicateCount);
         return deduplicatedCount;
-    }
-
-    public static Map<String, DeduplicatedCount> createMapByVariable(Iterable<String> variables) {
-        Map<String, DeduplicatedCount> mapOfCounts = new HashMap<>();
-        for (String variable : variables) {
-            DeduplicatedCount countOfVariable = new DeduplicatedCount();
-            countOfVariable.setVariable(variable);
-            mapOfCounts.put(variable, countOfVariable);
-        }
-        return mapOfCounts;
     }
 
 }

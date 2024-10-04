@@ -26,23 +26,12 @@ import de.uni_jena.cs.fusion.abecto.vocabulary.OM;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 
-import java.util.HashMap;
 import java.util.Map;
 
 public class AbsoluteCoverage extends LongMeasure<ResourcePair> {
 
     public AbsoluteCoverage() {
         super(AV.absoluteCoverage, OM.one);
-    }
-
-    public static Map<String, AbsoluteCoverage> createMapByVariable(Iterable<String> variables) {
-        Map<String, AbsoluteCoverage> mapByVariable = new HashMap<>();
-        for (String variable : variables) {
-            AbsoluteCoverage countOfVariable = new AbsoluteCoverage();
-            countOfVariable.setVariable(variable);
-            mapByVariable.put(variable, countOfVariable);
-        }
-        return mapByVariable;
     }
 
     public void storeInModel(Aspect aspect, Map<Resource, Model> outputModelsMap) {
