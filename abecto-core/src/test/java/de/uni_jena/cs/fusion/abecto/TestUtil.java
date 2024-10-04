@@ -122,7 +122,7 @@ public class TestUtil {
 	}
 
 	public static boolean containsResourceOmission(Resource affectedDataset, Resource comparedToDataset,
-			Resource comparedToResource, Resource affectedAspect, Model outputAffectedDatasetMetaModel) {
+												   Resource comparedToResource, Resource affectedAspect, Model outputAffectedDatasetMetaModel) {
 
 		Var resourceOmission = Var.alloc("resourceOmission");
 		Var qualityAnnotation = Var.alloc("qualityAnnotation");
@@ -134,6 +134,23 @@ public class TestUtil {
 		builder.addWhere(resourceOmission, AV.comparedToResource, comparedToResource);
 		builder.addWhere(qualityAnnotation, RDF.type, DQV.QualityAnnotation);
 		builder.addWhere(qualityAnnotation, OA.hasTarget, affectedDataset);
+		builder.addWhere(qualityAnnotation, OA.hasBody, resourceOmission);
+
+		return QueryExecutionFactory.create(builder.build(), outputAffectedDatasetMetaModel).execAsk();
+	}
+
+	public static boolean containsResourceDuplicate(Resource affectedResource, Resource comparedToResource,
+													Resource affectedAspect, Model outputAffectedDatasetMetaModel) {
+
+		Var resourceOmission = Var.alloc("resourceOmission");
+		Var qualityAnnotation = Var.alloc("qualityAnnotation");
+
+		AskBuilder builder = new AskBuilder();
+		builder.addWhere(resourceOmission, RDF.type, AV.ResourceDuplicate);
+		builder.addWhere(resourceOmission, AV.affectedAspect, affectedAspect);
+		builder.addWhere(resourceOmission, AV.comparedToResource, comparedToResource);
+		builder.addWhere(qualityAnnotation, RDF.type, DQV.QualityAnnotation);
+		builder.addWhere(qualityAnnotation, OA.hasTarget, affectedResource);
 		builder.addWhere(qualityAnnotation, OA.hasBody, resourceOmission);
 
 		return QueryExecutionFactory.create(builder.build(), outputAffectedDatasetMetaModel).execAsk();

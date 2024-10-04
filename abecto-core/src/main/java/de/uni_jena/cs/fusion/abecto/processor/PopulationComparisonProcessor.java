@@ -178,9 +178,8 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
                 for (Resource duplicateResource1 : correspondingResourcesByDataset.get(dataset)) {
                     for (Resource duplicateResource2 : correspondingResourcesByDataset.get(dataset)) {
                         if (!duplicateResource1.equals(duplicateResource2)) {
-                            Metadata.addIssue(duplicateResource1, null, null, aspect.getIri(),
-                                    "Duplicated Resource", "of <" + duplicateResource2 + ">",
-                                    outputMetaModelByDataset.get(dataset)); // TODO use dedicated issue IRI
+                            Metadata.addResourceDuplicate(duplicateResource1, duplicateResource2, aspect.getIri(),
+                                    outputMetaModelByDataset.get(dataset));
                         }
                     }
                 }

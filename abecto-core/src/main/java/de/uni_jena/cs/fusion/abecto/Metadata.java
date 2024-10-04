@@ -76,8 +76,18 @@ public class Metadata {
 		qualityAnnotation.addProperty(OA.hasBody, issue);
 	}
 
+	public static void addResourceDuplicate(Resource affectedResource, Resource comparedToResource,
+											Resource affectedAspect, Model outputAffectedDatasetMetaModel) {
+		Resource resourceOmission = outputAffectedDatasetMetaModel.createResource(AV.ResourceDuplicate);
+		resourceOmission.addProperty(AV.affectedAspect, affectedAspect);
+		resourceOmission.addProperty(AV.comparedToResource, comparedToResource);
+		Resource qualityAnnotation = outputAffectedDatasetMetaModel.createResource(DQV.QualityAnnotation);
+		qualityAnnotation.addProperty(OA.hasTarget, affectedResource);
+		qualityAnnotation.addProperty(OA.hasBody, resourceOmission);
+	}
+
 	public static void addResourceOmission(Resource affectedDataset, Resource comparedToDataset,
-			Resource comparedToResource, Resource affectedAspect, Model outputAffectedDatasetMetaModel) {
+										   Resource comparedToResource, Resource affectedAspect, Model outputAffectedDatasetMetaModel) {
 		Resource resourceOmission = outputAffectedDatasetMetaModel.createResource(AV.ResourceOmission);
 		resourceOmission.addProperty(AV.affectedAspect, affectedAspect);
 		resourceOmission.addProperty(AV.comparedToDataset, comparedToDataset);

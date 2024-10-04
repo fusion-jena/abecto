@@ -20,7 +20,7 @@ package de.uni_jena.cs.fusion.abecto.processor;
 
 import static de.uni_jena.cs.fusion.abecto.Metadata.getQualityMeasurement;
 import static de.uni_jena.cs.fusion.abecto.TestUtil.aspect;
-import static de.uni_jena.cs.fusion.abecto.TestUtil.containsIssue;
+import static de.uni_jena.cs.fusion.abecto.TestUtil.containsResourceDuplicate;
 import static de.uni_jena.cs.fusion.abecto.TestUtil.containsResourceOmission;
 import static de.uni_jena.cs.fusion.abecto.TestUtil.dataset;
 import static de.uni_jena.cs.fusion.abecto.TestUtil.object;
@@ -232,14 +232,12 @@ public class PopulationComparisonProcessorTest {
 		assertEquals(15, countResource(AV.ResourceOmission, outputMetaModelDataset3));
 
 		// check duplicates
-		assertTrue(containsIssue(subject(221), null, null, aspect(2), "Duplicated Resource",
-				"of <" + subject(2211) + ">", outputMetaModelDataset2));
-		assertTrue(containsIssue(subject(2211), null, null, aspect(2), "Duplicated Resource",
-				"of <" + subject(221) + ">", outputMetaModelDataset2));
+		assertTrue(containsResourceDuplicate(subject(221), subject(2211), aspect(2), outputMetaModelDataset2));
+		assertTrue(containsResourceDuplicate(subject(2211), subject(221), aspect(2), outputMetaModelDataset2));
 
-		assertEquals(0, countResource(AV.Issue, outputMetaModelDataset1));
-		assertEquals(2, countResource(AV.Issue, outputMetaModelDataset2));
-		assertEquals(0, countResource(AV.Issue, outputMetaModelDataset3));
+		assertEquals(0, countResource(AV.ResourceDuplicate, outputMetaModelDataset1));
+		assertEquals(2, countResource(AV.ResourceDuplicate, outputMetaModelDataset2));
+		assertEquals(0, countResource(AV.ResourceDuplicate, outputMetaModelDataset3));
 
 		// check count
 		assertEquals(4, getQualityMeasurement(AV.deduplicatedCount, dataset(1), null, Collections.emptyList(), aspect(1),
