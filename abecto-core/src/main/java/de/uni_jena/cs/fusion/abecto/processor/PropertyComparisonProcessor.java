@@ -77,7 +77,7 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
     Map<String, RelativeCoverage> relativeValueCoverage = new HashMap<>();
     Map<String, Count> nonDistinctValuesCount;
     Map<String, DeduplicatedCount> distinctValuesCount;
-    Map<String, DuplicateCount> duplicateValuesCount;
+    Map<String, DuplicateCount> duplicateValuesCount = new HashMap<>();
     Map<String, AbsoluteCoveredness> absoluteValueCoveredness;
     Map<String, RelativeCoveredness> relativeValueCoveredness;
     Map<String, Completeness> valueCompleteness = new HashMap<>();
