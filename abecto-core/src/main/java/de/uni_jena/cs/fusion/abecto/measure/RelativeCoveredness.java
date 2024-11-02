@@ -50,7 +50,7 @@ public class RelativeCoveredness extends BigDecimalMeasure<Resource> {
 
     public void storeInModel(Aspect aspect, Map<Resource, Model> outputModelsMap) {
         for (Resource dataset : values.keySet()) {
-            Collection<Resource> otherDatasets = new HashSet<>(values.keySet());
+            Collection<Resource> otherDatasets = new HashSet<>(outputModelsMap.keySet());
             otherDatasets.remove(dataset);
             storeInModel(aspect, dataset, otherDatasets, get(dataset), outputModelsMap.get(dataset));
         }
