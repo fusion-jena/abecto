@@ -54,8 +54,8 @@ public class RelativeCoverage extends BigDecimalMeasure<ResourceTupel> {
     }
 
     void setRatioForTupel(BigDecimal numerator, DeduplicatedCount denominators, Resource assessedDataset, Resource comparedDataset) {
-        BigDecimal denominator = BigDecimal.valueOf(denominators.get(comparedDataset));
-        if (!denominator.equals(BigDecimal.ZERO)) {
+        if (denominators.get(comparedDataset) != 0) {
+            BigDecimal denominator = BigDecimal.valueOf(denominators.get(comparedDataset));
             BigDecimal value = numerator.divide(denominator, SCALE, ROUNDING_MODE);
             set(ResourceTupel.getTupel(assessedDataset, comparedDataset), value);
         }
