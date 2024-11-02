@@ -31,4 +31,9 @@ public abstract class BigDecimalMeasure<K> extends Measure<K, BigDecimal> {
     public BigDecimalMeasure(Resource quantity, Resource unit) {
         super(quantity, unit);
     }
+
+    public void set(K key, BigDecimal value) {
+        value = value.stripTrailingZeros();
+        values.put(key, value);
+    }
 }
