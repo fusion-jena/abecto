@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Fixed
 * fix `PropertyComparisonProcessor`: fix measurement of **Absolute Coveredness**
 
-## [3.0.0]
+## [3.0.0] - 2024-10-04
 
 ### Added
 * add measure **Absolute Coveredness** measured by `PopulationComparisonProcessor` and `PropertyComparisonProcessor`
@@ -21,12 +21,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * upgrade to ABECTO Vocabulary version 1.3.1
 * *code refactoring*
 
-## [2.2.2]
+## [2.2.2] - 2024-06-08
 
 ### Fixed
 * fix reports
 
-## [2.2.1]
+## [2.2.1] - 2024-06-07
 
 ### Changed
 * increase minimum Java version to Java 17
