@@ -38,6 +38,10 @@ public abstract class LongMeasure<K> extends Measure<K, Long> {
         values.merge(key, increment, Long::sum);
     }
 
+    public void decrementByOrSet(K key, long decrement) {
+        incrementByOrSet(key, decrement * -1);
+    }
+
     public void setDifferenceOf(LongMeasure<K> minuend, LongMeasure<K> subtrahend) {
         for (K key : minuend.keySet()) {
             if (subtrahend.contains(key)) {

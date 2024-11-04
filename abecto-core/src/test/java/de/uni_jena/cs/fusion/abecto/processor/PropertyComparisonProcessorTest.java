@@ -19,15 +19,22 @@
 package de.uni_jena.cs.fusion.abecto.processor;
 
 import de.uni_jena.cs.fusion.abecto.Aspect;
+import de.uni_jena.cs.fusion.abecto.TestUtil;
 import de.uni_jena.cs.fusion.abecto.vocabulary.AV;
+import de.uni_jena.cs.fusion.abecto.vocabulary.DQV;
 import de.uni_jena.cs.fusion.abecto.vocabulary.OM;
-import org.apache.jena.datatypes.xsd.XSDDatatype;
-import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryFactory;
+import de.uni_jena.cs.fusion.abecto.vocabulary.SdmxAttribute;
+import org.apache.jena.arq.querybuilder.SelectBuilder;
+import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.*;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.expr.*;
+import org.apache.jena.sparql.expr.nodevalue.NodeValueNode;
+import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sys.JenaSystem;
 import org.apache.jena.vocabulary.RDF;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import javax.annotation.Nullable;
@@ -40,9 +47,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class PropertyComparisonProcessorTest {
 
-    Query pattern = QueryFactory.create("SELECT ?key ?value ?dummy WHERE { ?key <" + property(2)
+    final static Query PATTERN = QueryFactory.create("SELECT ?key ?value ?dummy WHERE { ?key <" + property(2)
             + "> ?dummy OPTIONAL{?key <" + property(1) + "> ?value}}");
-    Aspect aspect1 = new Aspect(aspect(1), "key").setPattern(dataset(1), pattern).setPattern(dataset(2), pattern);
+    Aspect aspect1 = new Aspect(aspect(1), "key").setPattern(dataset(1), PATTERN).setPattern(dataset(2), PATTERN);
     Model mappingModel = ModelFactory.createDefaultModel();
     Model[] outputMetaModels;
 
@@ -182,7 +189,7 @@ public class PropertyComparisonProcessorTest {
 
     void assertNoIndependentMeasurement(Resource measure, int computedOnDatasetNumber) {
         assertFalse(
-                containsMeasurement(measure, null, null, dataset(computedOnDatasetNumber), "value",
+                TestUtil.containsMeasurement(measure, null, null, dataset(computedOnDatasetNumber), "value",
                         Collections.emptySet(), aspect(1), outputMetaModels[computedOnDatasetNumber - 1]),
                 "Unexpected existence of " + measure.getLocalName() + " for dataset " + computedOnDatasetNumber + ".");
     }
@@ -198,7 +205,7 @@ public class PropertyComparisonProcessorTest {
 
     void assertMeasurement(Resource measure, int computedOnDatasetNumber, Collection<Resource> comparedToDatasets, BigDecimal expectedValue) {
         assertEquals(expectedValue.stripTrailingZeros(),
-                getMeasurement(measure, OM.one, dataset(computedOnDatasetNumber), "value",
+                TestUtil.getMeasurement(measure, OM.one, dataset(computedOnDatasetNumber), "value",
                         comparedToDatasets, aspect(1), outputMetaModels[computedOnDatasetNumber - 1]).stripTrailingZeros(),
                 "Wrong " + measure.getLocalName() + " value for dataset " + computedOnDatasetNumber + ".");
     }
@@ -206,7 +213,7 @@ public class PropertyComparisonProcessorTest {
     void assertNoComparativeMeasurement(Resource measure, int computedOnDatasetNumber) {
         Collection<Resource> comparedToDatasets = Collections.singleton(dataset(3 - computedOnDatasetNumber));
         assertFalse(
-                containsMeasurement(measure, null, null, dataset(computedOnDatasetNumber), "value",
+                TestUtil.containsMeasurement(measure, null, null, dataset(computedOnDatasetNumber), "value",
                         comparedToDatasets, aspect(1), outputMetaModels[computedOnDatasetNumber - 1]),
                 "Unexpected existence of " + measure.getLocalName() + " for dataset " + computedOnDatasetNumber + ".");
     }
@@ -1299,7 +1306,7 @@ public class PropertyComparisonProcessorTest {
         // check counts if one variable is covered by only one dataset (dataset 1)
         Query patternWithoutValue = QueryFactory
                 .create("SELECT ?key ?dummy WHERE { ?key <" + property(2) + "> ?dummy}");
-        Aspect aspectWithIncompleteVarCoverage = new Aspect(aspect(1), "key").setPattern(dataset(1), pattern)
+        Aspect aspectWithIncompleteVarCoverage = new Aspect(aspect(1), "key").setPattern(dataset(1), PATTERN)
                 .setPattern(dataset(2), patternWithoutValue);
         outputMetaModels = prepareAndRunComparison(aspectWithIncompleteVarCoverage, List.of("value1"),
                 List.of(), false, List.of(), List.of(), false);
@@ -1550,5 +1557,490 @@ public class PropertyComparisonProcessorTest {
         public boolean equivalentValues(RDFNode value1, RDFNode value2) {
             return Objects.equals(value1, value2);
         }
+    }
+
+    PropertyComparisonProcessor processor;
+    Map<Integer, Model> inputPrimaryModelsByDatasetId;
+    Map<Integer, Model> outputMetaModelsByDatasetId;
+    Model inputMappingModel;
+    final static Resource ASPECT_IRI = aspect(1);
+    final static String VARIABLE = "value";
+    Aspect aspect = new Aspect(ASPECT_IRI, "key");
+    final static int MAX_RESOURCE_LOCAL_ID = 999;
+
+    @Test
+    public void countsOfDatasetWithoutResource() {
+        addDataset(1);
+        runProcessor();
+        assertMeasurement(AV.count, 1, 0);
+        assertMeasurement(AV.duplicateCount, 1, 0);
+        assertMeasurement(AV.deduplicatedCount, 1, 0);
+    }
+
+    @Test
+    public void countsOfDatasetWithoutValue() {
+        addDatasetAndResource(1, 1);
+        runProcessor();
+        assertMeasurement(AV.count, 1, 0);
+        assertMeasurement(AV.duplicateCount, 1, 0);
+        assertMeasurement(AV.deduplicatedCount, 1, 0);
+    }
+
+    @Test
+    public void countsOfDatasetWithoutDuplicates() {
+        addDatasetAndResourceAndValue(1, 1, 1);
+        runProcessor();
+        assertMeasurement(AV.count, 1, 1);
+        assertMeasurement(AV.duplicateCount, 1, 0);
+        assertMeasurement(AV.deduplicatedCount, 1, 1);
+    }
+
+    @Test
+    public void countsOfDatasetWithValueDuplicates() {
+        addDatasetAndResourceAndValue(1, 1, 1);
+        addDatasetAndResourceAndValue(1, 1, 2);
+        addDatasetAndResourceAndValue(1, 1, 1.0);
+        runProcessor();
+        assertMeasurement(AV.count, 1, 3);
+        assertMeasurement(AV.duplicateCount, 1, 1);
+        assertMeasurement(AV.deduplicatedCount, 1, 2);
+    }
+
+    @Test
+    public void countsOfDatasetWithResourceDuplicates() {
+        addDatasetAndResourceAndValue(1, 1, 1);
+        addDatasetAndResourceAndValue(1, 1, 2);
+        addDatasetAndResourceAndValue(1, 2, 1);
+        addCorrespondency(1,1,1,2);
+        runProcessor();
+        assertMeasurement(AV.count, 1, 3);
+        assertMeasurement(AV.duplicateCount, 1, 1);
+        assertMeasurement(AV.deduplicatedCount, 1, 2);
+    }
+
+    @Test
+    public void coverednessOfDatasetComparedToDatasetsWithoutResource() {
+        addDatasetAndResourceAndValue(1,1,1);
+        addDataset(2);
+        addDataset(3);
+        runProcessor();
+        assertMeasurement(AV.absoluteCoveredness, 1, 0, 2, 3);
+        assertMeasurement(AV.relativeCoveredness, 1, 0, 2, 3);
+    }
+
+    @Test
+    public void coverednessOfDatasetWithoutResourceComparedToDatasetsWithCorrespondencies() {
+        addDataset(1);
+        addDatasetAndResourceAndValue(2,1,1);
+        addDatasetAndResourceAndValue(3,1,1);
+        addCorrespondency(1,1,2,1);
+        runProcessor();
+        assertMeasurement(AV.absoluteCoveredness, 1, 0, 2, 3);
+        assertNoMeasurement(AV.relativeCoveredness, 1, 2, 3);
+    }
+
+    @Test
+    public void coverednessOfDatasetWithoutValueComparedToDatasetsWithoutCorrespondencies() {
+        addDatasetAndResource(1, 1);
+        addDatasetAndResourceAndValue(2,1,1);
+        addDatasetAndResourceAndValue(3,1,1);
+        runProcessor();
+        assertMeasurement(AV.absoluteCoveredness, 1, 0, 2, 3);
+        assertNoMeasurement(AV.relativeCoveredness, 1, 2, 3);
+    }
+
+    @Test
+    public void coverednessOfDatasetsWithoutCorrespondencies() {
+        addDatasetAndResourceAndValue(1,1,1);
+        addDatasetAndResourceAndValue(2,1,1);
+        addDatasetAndResourceAndValue(3,1,1);
+        runProcessor();
+        assertMeasurement(AV.absoluteCoveredness, 1, 0, 2, 3);
+        assertMeasurement(AV.relativeCoveredness, 1, 0, 2, 3);
+    }
+
+    @Test
+    public void coverednessOfDatasets() {
+        addDatasetAndResourceAndValue(1,1,1);
+        addDatasetAndResourceAndValue(1,1,2);
+        addDatasetAndResourceAndValue(2,1,1);
+        addDatasetAndResourceAndValue(2,1,2);
+        addDatasetAndResourceAndValue(3,1,1);
+        addDatasetAndResourceAndValue(3,1,2);
+        addCorrespondency(1,1,2,1);
+        runProcessor();
+        assertMeasurement(AV.absoluteCoveredness, 1, 2, 2, 3);
+        assertMeasurement(AV.relativeCoveredness, 1, 1, 2, 3);
+    }
+
+    @Test
+    public void coverednessOfDatasetsWithMultipleCorrespondencies() {
+        addDatasetAndResourceAndValue(1,1,1);
+        addDatasetAndResourceAndValue(1,1,2);
+        addDatasetAndResourceAndValue(2,1,1);
+        addDatasetAndResourceAndValue(2,1,2);
+        addDatasetAndResourceAndValue(3,1,1);
+        addDatasetAndResourceAndValue(3,1,2);
+        addCorrespondency(1,1,2,1);
+        addCorrespondency(1,1,3,1);
+        runProcessor();
+        assertMeasurement(AV.absoluteCoveredness, 1, 2, 2, 3);
+        assertMeasurement(AV.relativeCoveredness, 1, 1, 2, 3);
+    }
+
+    @Test
+    public void coverednessOfDatasetComparedToDatasetsWithDifferentValuesWithCorrespondencies() {
+        addDatasetAndResourceAndValue(1,1,1);
+        addDatasetAndResourceAndValue(2,1,2);
+        addDatasetAndResourceAndValue(3,1,3);
+        addCorrespondency(1,1,2,1);
+        addCorrespondency(1,1,3,1);
+        runProcessor();
+        assertMeasurement(AV.absoluteCoveredness, 1, 0, 2, 3);
+        assertMeasurement(AV.relativeCoveredness, 1, 0, 2, 3);
+    }
+
+    @Test
+    public void coverednessOfDatasetComparedToDatasetsWithoutValuesWithCorrespondencies() {
+        addDatasetAndResourceAndValue(1,1,1);
+        addDatasetAndResource(2,1);
+        addDatasetAndResource(3,1);
+        addCorrespondency(1,1,2,1);
+        addCorrespondency(1,1,3,1);
+        runProcessor();
+        assertMeasurement(AV.absoluteCoveredness, 1, 0, 2, 3);
+        assertMeasurement(AV.relativeCoveredness, 1, 0, 2, 3);
+    }
+
+    @Test
+    public void coverednessOfDatasetsWithValueDuplicate() {
+        addDatasetAndResourceAndValue(1,1,1);
+        addDatasetAndResourceAndValue(1,1,2);
+        addDatasetAndResourceAndValue(1,1,2.0);
+        addDatasetAndResourceAndValue(2,1,1);
+        addDatasetAndResourceAndValue(2,1,2);
+        addDatasetAndResourceAndValue(2,1,2.0);
+        addDatasetAndResourceAndValue(3,1,1);
+        addDatasetAndResourceAndValue(3,1,2);
+        addDatasetAndResourceAndValue(3,1,2.0);
+        addCorrespondency(1,1,2,1);
+        runProcessor();
+        assertMeasurement(AV.absoluteCoveredness, 1, 2, 2, 3);
+        assertMeasurement(AV.relativeCoveredness, 1, 1, 2, 3);
+    }
+
+    @Test
+    public void coverednessOfDatasetsWithResourceDuplicate() {
+        addDatasetAndResourceAndValue(1,1,1);
+        addDatasetAndResourceAndValue(1,1,2);
+        addDatasetAndResourceAndValue(1,2,2);
+        addDatasetAndResourceAndValue(2,1,1);
+        addDatasetAndResourceAndValue(2,1,2);
+        addDatasetAndResourceAndValue(2,2,2);
+        addDatasetAndResourceAndValue(3,1,1);
+        addDatasetAndResourceAndValue(3,1,2);
+        addDatasetAndResourceAndValue(3,2,2);
+        addCorrespondency(1,1,2,1);
+        addCorrespondency(1,2,1,1);
+        addCorrespondency(2,2,2,1);
+        addCorrespondency(3,2,3,1);
+        runProcessor();
+        assertMeasurement(AV.absoluteCoveredness, 1, 2, 2, 3);
+        assertMeasurement(AV.relativeCoveredness, 1, 1, 2, 3);
+    }
+
+    @Test
+    public void coverageOfDatasetComparedToDatasetsWithoutResource() {
+        addDatasetAndResourceAndValue(1,1,1);
+        addDataset(2);
+        addDataset(3);
+        runProcessor();
+        assertMeasurement(AV.absoluteCoverage, 1, 0, 2);
+        assertMeasurement(AV.absoluteCoverage, 1, 0, 3);
+        assertNoMeasurement(AV.relativeCoverage, 1, 2);
+        assertNoMeasurement(AV.relativeCoverage, 1, 3);
+    }
+
+    @Test
+    public void coverageOfDatasetWithoutResource() {
+        addDataset(1);
+        addDatasetAndResourceAndValue(2,1,1);
+        addDatasetAndResourceAndValue(3,1,1);
+        runProcessor();
+        assertMeasurement(AV.absoluteCoverage, 1, 0, 2);
+        assertMeasurement(AV.absoluteCoverage, 1, 0, 3);
+        assertMeasurement(AV.relativeCoverage, 1, 0, 2);
+        assertMeasurement(AV.relativeCoverage, 1, 0, 3);
+    }
+
+    @Test
+    public void coverageOfDatasetsWithoutCorrespondency() {
+        addDatasetAndResourceAndValue(1,1,1);
+        addDatasetAndResourceAndValue(2,1,1);
+        addDatasetAndResourceAndValue(3,1,1);
+        runProcessor();
+        assertMeasurement(AV.absoluteCoverage, 1, 0, 2);
+        assertMeasurement(AV.absoluteCoverage, 1, 0, 3);
+        assertMeasurement(AV.relativeCoverage, 1, 0, 2);
+        assertMeasurement(AV.relativeCoverage, 1, 0, 3);
+    }
+
+    @Test
+    public void coverageOfDatasetsWithPartialResourceCorrespondency() {
+        addDatasetAndResourceAndValue(1,1,1);
+        addDatasetAndResourceAndValue(1,2,1);
+        addDatasetAndResourceAndValue(2,1,1);
+        addDatasetAndResourceAndValue(2,2,1);
+        addDatasetAndResourceAndValue(3,1,1);
+        addDatasetAndResourceAndValue(3,2,1);
+        addCorrespondency(1, 1, 2, 1);
+        addCorrespondency(1, 1, 3, 1);
+        runProcessor();
+        assertMeasurement(AV.absoluteCoverage, 1, 1, 2);
+        assertMeasurement(AV.absoluteCoverage, 1, 1, 3);
+        assertMeasurement(AV.relativeCoverage, 1, 0.5, 2);
+        assertMeasurement(AV.relativeCoverage, 1, 0.5, 3);
+    }
+
+    @Test
+    public void coverageOfDatasetsWithPartialValueCorrespondency() {
+        addDatasetAndResourceAndValue(1,1,1);
+        addDatasetAndResourceAndValue(1,1,2);
+        addDatasetAndResourceAndValue(2,1,1);
+        addDatasetAndResourceAndValue(2,1,3);
+        addDatasetAndResourceAndValue(3,1,1);
+        addDatasetAndResourceAndValue(3,1,4);
+        addCorrespondency(1, 1, 2, 1);
+        addCorrespondency(1, 1, 3, 1);
+        runProcessor();
+        assertMeasurement(AV.absoluteCoverage, 1, 1, 2);
+        assertMeasurement(AV.absoluteCoverage, 1, 1, 3);
+        assertMeasurement(AV.relativeCoverage, 1, 0.5, 2);
+        assertMeasurement(AV.relativeCoverage, 1, 0.5, 3);
+    }
+
+    @Test
+    public void coverageOfDatasetsWithValueDuplicates() {
+        addDatasetAndResourceAndValue(1,1,1);
+        addDatasetAndResourceAndValue(1,1,1.0);
+        addDatasetAndResourceAndValue(2,1,1);
+        addDatasetAndResourceAndValue(2,1,1.0);
+        addDatasetAndResourceAndValue(3,1,1);
+        addDatasetAndResourceAndValue(3,1,1.0);
+        addCorrespondency(1, 1, 2, 1);
+        addCorrespondency(1, 1, 3, 1);
+        runProcessor();
+        assertMeasurement(AV.absoluteCoverage, 1, 1, 2);
+        assertMeasurement(AV.absoluteCoverage, 1, 1, 3);
+        assertMeasurement(AV.relativeCoverage, 1, 1, 2);
+        assertMeasurement(AV.relativeCoverage, 1, 1, 3);
+    }
+
+    @Test
+    public void coverageOfDatasetsWithResourceDuplicates() {
+        addDatasetAndResourceAndValue(1,1,1);
+        addDatasetAndResourceAndValue(2,1,1);
+        addDatasetAndResourceAndValue(3,1,1);
+        addDatasetAndResourceAndValue(1,2,1);
+        addDatasetAndResourceAndValue(2,2,1);
+        addDatasetAndResourceAndValue(3,2,1);
+        addCorrespondency(1, 1, 2, 1);
+        addCorrespondency(1, 1, 3, 1);
+        addCorrespondency(1, 2, 1, 1);
+        addCorrespondency(2, 2, 2, 1);
+        addCorrespondency(3, 2, 3, 1);
+        runProcessor();
+        assertMeasurement(AV.absoluteCoverage, 1, 1, 2);
+        assertMeasurement(AV.absoluteCoverage, 1, 1, 3);
+        assertMeasurement(AV.relativeCoverage, 1, 1, 2);
+        assertMeasurement(AV.relativeCoverage, 1, 1, 3);
+    }
+
+    @Test
+    public void completenessOfDatasetComparedToDatasetsWithoutResource() {
+        addDatasetAndResourceAndValue(1,1,1);
+        addDataset(2);
+        addDataset(3);
+        runProcessor();
+        assertNoMeasurement(AV.marCompletenessThomas08, 1);
+        assertNoMeasurement(AV.marCompletenessThomas08, 1, 2, 3);
+    }
+
+    @Test
+    public void completenessOfDatasetComparedToDatasetsWithoutCorrespondencies() {
+        addDatasetAndResourceAndValue(1, 1, 1);
+        addDatasetAndResourceAndValue(2, 1, 1);
+        addDatasetAndResourceAndValue(3, 1, 1);
+        runProcessor();
+        assertNoMeasurement(AV.marCompletenessThomas08, 1, 2, 3);
+    }
+
+    @Test
+    public void completenessOfDatasetsWithCompleteValues() {
+        addDatasetAndResourceAndValue(1, 1, 1);
+        addDatasetAndResourceAndValue(2, 1, 1);
+        addDatasetAndResourceAndValue(3, 1, 1);
+        addCorrespondency(1,1,2,1);
+        addCorrespondency(1,1,3,1);
+        runProcessor();
+        assertMeasurement(AV.marCompletenessThomas08, 1, 1.0, 2, 3);
+    }
+
+    @Test
+    public void completenessOfDatasetsWithIncompleteValues() {
+        addDatasetAndResourceAndValue(1, 1, 1);
+        addDatasetAndResourceAndValue(2, 1, 1);
+        addDatasetAndResourceAndValue(3, 1, 1);
+        addDatasetAndResourceAndValue(1, 1, 2);
+        addDatasetAndResourceAndValue(2, 1, 3);
+        addDatasetAndResourceAndValue(3, 1, 3);
+        addDatasetAndResourceAndValue(1, 2, 1);
+        addDatasetAndResourceAndValue(2, 2, 1);
+        addDatasetAndResourceAndValue(3, 2, 1);
+        addDatasetAndResourceAndValue(1, 2, 2);
+        addDatasetAndResourceAndValue(2, 2, 3);
+        addDatasetAndResourceAndValue(3, 2, 3);
+        addCorrespondency(1,1,2,1);
+        addCorrespondency(1,1,3,1);
+        addCorrespondency(1,2,2,2);
+        addCorrespondency(1,2,3,2);
+        runProcessor();
+        assertMeasurement(AV.marCompletenessThomas08, 1, 0.6666666666666667, 2, 3);
+    }
+
+    Model getInputPrimaryModels(int datasetId) {
+        return inputPrimaryModelsByDatasetId.get(datasetId);
+    }
+
+    @BeforeEach
+    void initProcessor() {
+        processor = new PropertyComparisonProcessor();
+        processor.variables = Collections.singletonList("value");
+        processor.aspect = ASPECT_IRI;
+        aspect = new Aspect(ASPECT_IRI, "key");
+        processor.addAspects(aspect);
+        inputPrimaryModelsByDatasetId = new HashMap<>();
+        outputMetaModelsByDatasetId = new HashMap<>();
+        inputMappingModel = ModelFactory.createDefaultModel();
+    }
+
+    void runProcessor() {
+        for (int datasetId:inputPrimaryModelsByDatasetId.keySet()) {
+            Resource dataset = dataset(datasetId);
+            Model inputPrimaryModelsOfDataset = getInputPrimaryModels(datasetId);
+            processor.addInputPrimaryModel(dataset,inputPrimaryModelsOfDataset);
+        }
+        processor.addInputMetaModel(null, MappingProcessor.inferTransitiveCorrespondences(mappingModel));
+        processor.run();
+        for (int datasetId: inputPrimaryModelsByDatasetId.keySet()) {
+            Resource dataset = dataset(datasetId);
+            Model outputMetaModelsOfDataset = processor.getOutputMetaModel(dataset);
+            outputMetaModelsByDatasetId.put(datasetId, outputMetaModelsOfDataset);
+        }
+    }
+
+    Resource createResource(int datasetId, int resourceLocalId){
+        assert resourceLocalId <= MAX_RESOURCE_LOCAL_ID;
+        int resourceId=datasetId*(MAX_RESOURCE_LOCAL_ID +1)+ resourceLocalId;
+        return resource(resourceId);
+    }
+
+    void addDatasetAndResourceAndValue(int datasetId, int resourceLocalId, Number value) {
+        Resource resource = addDatasetAndResource(datasetId, resourceLocalId);
+        Literal literal = ResourceFactory.createTypedLiteral(value);
+        Model inputPrimaryModelsOfDataset = getInputPrimaryModels(datasetId);
+        inputPrimaryModelsOfDataset.add(resource, property(1), literal);
+    }
+
+    Resource addDatasetAndResource(int datasetId, int resourceLocalId) {
+        addDataset(datasetId);
+        Resource resource = createResource(datasetId, resourceLocalId);
+        Model inputPrimaryModelsOfDataset = getInputPrimaryModels(datasetId);
+        inputPrimaryModelsOfDataset.add(resource, property(2), resource("alwaysPresent"));
+        return resource;
+    }
+
+    void addDataset(int datasetId) {
+        inputPrimaryModelsByDatasetId.computeIfAbsent(datasetId, id -> ModelFactory.createDefaultModel());
+        Resource dataset = dataset(datasetId);
+        aspect.setPattern(dataset, PATTERN);
+    }
+
+    public void addCorrespondency(int datasetId1, int resourceLocalId1,int datasetId2, int resourceLocalId2) {
+        Resource resource1 = createResource(datasetId1, resourceLocalId1);
+        Resource resource2 = createResource(datasetId2, resourceLocalId2);
+        mappingModel.add(resource1, AV.correspondsToResource, resource2);
+    }
+
+
+    void assertMeasurement(Resource measure, int computedOnDatasetId, double expectedValue, int... comparedToDatasetIds) {
+        BigDecimal expectedValueBD = BigDecimal.valueOf(expectedValue).stripTrailingZeros();
+        BigDecimal actualValue = getMeasurement(measure, computedOnDatasetId, comparedToDatasetIds).get();
+        assertEquals(expectedValueBD, actualValue);
+    }
+
+    void assertNoMeasurement(Resource measure, int computedOnDatasetId, int... comparedToDatasetIds) {
+        assertTrue(getMeasurement(measure, computedOnDatasetId, comparedToDatasetIds).isEmpty());
+    }
+
+    Optional<BigDecimal> getMeasurement(Resource measure, int computedOnDatasetId, int[] comparedToDatasetIds) {
+        Resource computedOnDataset = dataset(computedOnDatasetId);
+        Collection<Resource> comparedToDatasets = new ArrayList<>();
+        for (int comparedToDatasetId: comparedToDatasetIds) {
+            Resource comparedToDataset = dataset(comparedToDatasetId);
+            comparedToDatasets.add(comparedToDataset);
+        }
+        Model outputAffectedDatasetMetaModel = outputMetaModelsByDatasetId.get(computedOnDatasetId);
+
+        Query selectQuery = getMeasurementSelectQuery(measure, computedOnDataset, comparedToDatasets);
+
+        try (QueryExecution selectQueryExecution = QueryExecution.create(selectQuery, outputAffectedDatasetMetaModel)) {
+            ResultSet results = selectQueryExecution.execSelect();
+            if (results.hasNext()) {
+                QuerySolution result = results.next();
+                if (results.hasNext()) {
+                    fail("Multiple values for measurement.");
+                }
+                BigDecimal value = new BigDecimal(result.getLiteral("value").getLexicalForm());
+                return Optional.of(value);
+            } else {
+                return Optional.empty();
+            }
+        }
+    }
+
+    Query getMeasurementSelectQuery(Resource measure, Resource computedOnDataset, Collection<Resource> comparedToDatasets) {
+        SelectBuilder builder = new SelectBuilder();
+        Var qualityMeasurement = Var.alloc("qualityMeasurement");
+        Var value = Var.alloc("value");
+        builder.addVar(value);
+        builder.addWhere(qualityMeasurement, RDF.type, AV.QualityMeasurement);
+        builder.addWhere(qualityMeasurement, DQV.isMeasurementOf, measure);
+        builder.addWhere(qualityMeasurement, DQV.computedOn, computedOnDataset);
+        builder.addWhere(qualityMeasurement, SdmxAttribute.unitMeasure, OM.one);
+        builder.addWhere(qualityMeasurement, AV.affectedAspect, ASPECT_IRI);
+        builder.addWhere(qualityMeasurement, AV.affectedVariableName, VARIABLE);
+        for (Resource comparedToDataset : comparedToDatasets) {
+            builder.addWhere(qualityMeasurement, AV.comparedToDataset, comparedToDataset);
+        }
+        Expr notComparedToOtherDatasets = createNotComparedToOtherDatasetsExpression(qualityMeasurement, comparedToDatasets);
+        builder.addFilter(notComparedToOtherDatasets);
+        builder.addWhere(qualityMeasurement, DQV.value, value);
+        return builder.build();
+    }
+
+    Expr createNotComparedToOtherDatasetsExpression(Var qualityMeasurement, Collection<Resource> comparedToDatasets) {
+        Var comparedToDatasetVar = Var.alloc("comparedToDataset");
+        ExprList comparedToDatasetsList = new ExprList();
+        for (Resource comparedToDataset : comparedToDatasets) {
+            comparedToDatasetsList.add(new NodeValueNode(comparedToDataset.asNode()));
+        }
+        SelectBuilder otherComparedDatasetSelectBuilder = new SelectBuilder();
+        otherComparedDatasetSelectBuilder.addWhere(qualityMeasurement, AV.comparedToDataset.asNode(), comparedToDatasetVar);
+        if (!comparedToDatasets.isEmpty()) {
+            otherComparedDatasetSelectBuilder.addFilter(new E_NotOneOf(new ExprVar(comparedToDatasetVar), comparedToDatasetsList));
+        }
+        Element otherComparedDataset = otherComparedDatasetSelectBuilder.build().getQueryPattern();
+        return (new E_NotExists(otherComparedDataset));
     }
 }

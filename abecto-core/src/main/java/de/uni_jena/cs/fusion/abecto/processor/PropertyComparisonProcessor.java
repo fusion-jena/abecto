@@ -191,8 +191,8 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         calculateDistinctValues();
 
         measureNonDistinctValuesCount();
-        measureDistinctValuesCountAndAbsoluteCoveredness();
-        measureAbsoluteCoverage();
+        measureDistinctValuesCount();
+        measureAbsoluteCoverageAndAbsoluteCoveredness();
         reportDeviationsAndOmissions();
     }
 
@@ -317,7 +317,7 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
         }
     }
 
-    protected void measureDistinctValuesCountAndAbsoluteCoveredness() {
+    protected void measureDistinctValuesCount() {
         for (String variable : variables) {
             Map<Resource, Map<RDFNode, Set<Resource>>> resourcesByDistinctValueByDataset = resourcesByDistinctValueByDatasetByVariable.get(variable);
             for (Resource dataset : datasets) {
@@ -325,28 +325,46 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
                     Map<RDFNode, Set<Resource>> resourcesByDistinctValue = resourcesByDistinctValueByDataset.get(dataset);
                     int coveredDistinctValuesCountOfDataset = resourcesByDistinctValue.size();
                     distinctValuesCount.get(variable).incrementByOrSet(dataset, coveredDistinctValuesCountOfDataset);
-                    absoluteValueCoveredness.get(variable).incrementByOrSet(dataset, coveredDistinctValuesCountOfDataset);
                 }
             }
         }
     }
 
-    protected void measureAbsoluteCoverage() {
+    protected void measureAbsoluteCoverageAndAbsoluteCoveredness() {
         for (String variable : variables) {
             Map<Resource, Map<RDFNode, Set<Resource>>> resourcesByDistinctValueByDataset = resourcesByDistinctValueByDatasetByVariable.get(variable);
             AbsoluteCoverage absoluteCoverageForVariable = absoluteValueCoverage.get(variable);
+            AbsoluteCoveredness absoluteCoverednessForVariable = absoluteValueCoveredness.get(variable);
+            Map<Resource, Set<RDFNode>> uncoveredDistinctValuesByDataset = new HashMap<>();
+            for (Resource dataset: datasets) {
+                if (theAspect.variableCoveredByDataset(variable, dataset)) {
+                    Set<RDFNode> uncoveredDistinctValuesOfDataset = new HashSet<>(resourcesByDistinctValueByDataset.get(dataset).keySet());
+                    uncoveredDistinctValuesByDataset.put(dataset, uncoveredDistinctValuesOfDataset);
+                    absoluteCoverednessForVariable.incrementByOrSet(dataset, uncoveredDistinctValuesOfDataset.size());
+                }
+            }
             for (ResourcePair datasetPair : datasetPairs) {
                 if (theAspect.variableCoveredByDatasets(variable, datasetPair.first, datasetPair.second)) {
                     Set<RDFNode> distinctValuesOfFirstDataset = resourcesByDistinctValueByDataset.get(datasetPair.first).keySet();
                     Set<RDFNode> distinctValuesOfSecondDataset = resourcesByDistinctValueByDataset.get(datasetPair.second).keySet();
+                    Set<RDFNode> uncoveredDistinctValuesOfFirstDataset = uncoveredDistinctValuesByDataset.get(datasetPair.first);
+                    Set<RDFNode> uncoveredDistinctValuesOfSecondDataset = uncoveredDistinctValuesByDataset.get(datasetPair.second);
                     for (RDFNode valueOfFirstDataset : distinctValuesOfFirstDataset) {
                         for (RDFNode valueOfSecondDataset : distinctValuesOfSecondDataset) {
                             if (equivalentValues(valueOfFirstDataset, valueOfSecondDataset)) {
                                 absoluteCoverageForVariable.incrementByOrSetOne(datasetPair);
+                                uncoveredDistinctValuesOfFirstDataset.remove(valueOfFirstDataset);
+                                uncoveredDistinctValuesOfSecondDataset.remove(valueOfSecondDataset);
                                 break;
                             }
                         }
                     }
+                }
+            }
+            for (Resource dataset: datasets) {
+                if (theAspect.variableCoveredByDataset(variable, dataset)) {
+                    Set<RDFNode> uncoveredDistinctValuesOfDataset = uncoveredDistinctValuesByDataset.get(dataset);
+                    absoluteCoverednessForVariable.decrementByOrSet(dataset, uncoveredDistinctValuesOfDataset.size());
                 }
             }
         }
