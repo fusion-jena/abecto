@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>de.uni_jena.cs.fusion</groupId>
 		<artifactId>abecto</artifactId>
-		<version>3.0.0</version>
+		<version>3.0.1</version>
 	</parent>
 
 	<name>ABECTO Benchmark</name>
