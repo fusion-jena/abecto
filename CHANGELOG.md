@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Fixed
+* fix `wdMismatchFinder` report: adjust to [changed mismatches import file format](https://phabricator.wikimedia.org/T313467)
+
+### Added
+* extend `wdMismatchFinder` report: add reporting of value deviations for Wikidata qualifiers
+
 ## [3.0.1] - 2024-11-05
 
 ### Fixed

@@ -21,7 +21,10 @@ PREFIX dqv: <http://www.w3.org/ns/dqv#>
 PREFIX oa: <http://www.w3.org/ns/oa#>
 PREFIX wikibase: <http://wikiba.se/ontology#>
 
-SELECT
+SELECT DISTINCT
+	# TODO: adapt if https://phabricator.wikimedia.org/T313469 (allow reporting of mismatches for labels, descriptions and aliases) is done
+	# TODO: adapt if qualifier omission supported by Mismatch Finder
+
 	# expected format: https://github.com/wmde/wikidata-mismatch-finder/blob/main/docs/UserGuide.md
 
 	(strAfter(str(?internal_url),"http://www.wikidata.org/entity/") AS ?item_id)
@@ -47,19 +50,41 @@ SELECT
 	(STR(?external_urlX) AS ?external_url)
 		# (Optional) A url or uri to the mismatching entity in the external database.
 
+	?type
+		# (Optional) A string that contains either the value 'statement' or the value 'qualifier' to indicate where the mismatch occurs.
+		# If left empty a value of 'statement' will be assumed.
+
 WHERE {
 	BIND (<http://www.wikidata.org/> AS ?dataset)
-	[	a						av:AspectPattern ;
+	[]	a						av:AspectPattern ;
 		av:associatedDataset	?dataset ;
 		av:ofAspect				?aspect ;
-		av:hasVariablePath		[ av:variableName ?variable ; av:propertyPath ?propertyPath ]
-	]
-	BIND (replace(str(?propertyPath),"<http://www.wikidata.org/prop/direct/(P\\d*)>","$1") AS ?property_id)
-	BIND (IRI(CONCAT("http://www.wikidata.org/prop/",?property_id)) AS ?p)
-	BIND (IRI(CONCAT("http://www.wikidata.org/prop/statement/",?property_id)) AS ?ps)
-	BIND (IRI(CONCAT("http://www.wikidata.org/prop/statement/value/",?property_id)) AS ?psv)
+		av:hasVariablePath		[ av:variableName ?variable ; av:propertyPath ?propertyPath ] .
+	BIND (REPLACE(?propertyPath,"^.*/(P\\d*)>$","$1") AS ?property_id)
+	FILTER REGEX(?property_id, "^P\\d*$", "i")
+	BIND (IF(REGEX(?propertyPath, "<http://www.wikidata.org/prop/P\\d*>/<http://www.wikidata.org/prop/qualifier/P\\d*>", "i")
+		    , true
+		    , false
+		    ) AS ?isQualifier)
+	BIND (IF(?isQualifier,"qualifier","statement") AS ?type)
+	BIND (IF(?isQualifier
+	    	, IRI(REPLACE(?propertyPath,"^<(http://www.wikidata.org/prop/P\\d*)>","$1"))
+	    	, IRI(CONCAT("http://www.wikidata.org/prop/",?property_id))
+	    	) AS ?q)
+	BIND (IF(?isQualifier
+	    	, IRI(CONCAT("http://www.wikidata.org/prop/qualifier/",?property_id))
+		    , IRI(CONCAT("http://www.wikidata.org/prop/statement/",?property_id))
+		    ) AS ?ps_OR_pq)
+	BIND (IF(?isQualifier
+		    , IRI(CONCAT("http://www.wikidata.org/prop/qualifier/value/",?property_id))
+		    , IRI(CONCAT("http://www.wikidata.org/prop/statement/value/",?property_id))
+		    ) AS ?psv_OR_pqv)
+
 	?issueGraph av:associatedDataset ?dataset .
-	{
+	?sourceGraph av:associatedDataset ?dataset ;
+		a av:PrimaryDataGraph .
+
+	{ # Case: Deviation
 		GRAPH ?issueGraph {
 			[]	a						av:Deviation ;
 				^oa:hasBody				[ oa:hasTarget ?internal_url ];
@@ -69,23 +94,16 @@ WHERE {
 				av:comparedToValue		?external_valueX ;
 				av:comparedToResource	?external_urlX .
 		}
-# TODO: adapt if https://phabricator.wikimedia.org/T313467 (ability to report mismatches on qualifiers) is done
-# TODO: adapt if https://phabricator.wikimedia.org/T313469 (allow reporting of mismatches for labels, descriptions and aliases) is done
 		GRAPH ?sourceGraph {
-			?internal_url	?p	?statement .
-			
-			# value
-			?statement		?ps	?wikidata_valueX .
-			FILTER(regex(str(?statement),"http://www.wikidata.org/entity/statement/([0-9a-zA-Z]*)-(.*)"))
-			
-			# time value meta data
+			?internal_url ?p ?statement .
+			?statement ?ps_OR_pq ?wikidata_valueX .
 			OPTIONAL {
-				?statement ?psv [ wikibase:timeCalendarModel ?meta_wikidata_valueX ] .
+				?statement ?psv_OR_pqv [ wikibase:timeCalendarModel ?meta_wikidata_valueX ] .
 			}
 		}
-		?sourceGraph a av:PrimaryDataGraph ;
-					 av:associatedDataset ?dataset .
-	} UNION {
+	}
+	UNION
+	{ # Case: Omission
 		GRAPH ?issueGraph {
 			[]	a						av:ValueOmission ;
 				^oa:hasBody				[ oa:hasTarget ?internal_url ];
@@ -95,7 +113,4 @@ WHERE {
 				av:comparedToResource	?external_urlX .
 		}
 	}
-# TODO: adapt if https://phabricator.wikimedia.org/T313467 (ability to report mismatches on qualifiers) is done
-	FILTER REGEX(?property_id, "^P\\d*$", "i")
 }
-ORDER BY ?statement_guid ?property_id
