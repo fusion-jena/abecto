@@ -1588,7 +1588,7 @@ public class PropertyComparisonProcessorTest {
 
     @Test
     public void countsOfDatasetWithoutDuplicates() {
-        addDatasetAndResourceAndValue(1, 1, 1);
+        addDatasetAndResourceAndLiteral(1, 1, 1);
         runProcessor();
         assertMeasurement(AV.count, 1, 1);
         assertMeasurement(AV.duplicateCount, 1, 0);
@@ -1597,9 +1597,9 @@ public class PropertyComparisonProcessorTest {
 
     @Test
     public void countsOfDatasetWithValueDuplicates() {
-        addDatasetAndResourceAndValue(1, 1, 1);
-        addDatasetAndResourceAndValue(1, 1, 2);
-        addDatasetAndResourceAndValue(1, 1, 1.0);
+        addDatasetAndResourceAndLiteral(1, 1, 1);
+        addDatasetAndResourceAndLiteral(1, 1, 2);
+        addDatasetAndResourceAndLiteral(1, 1, 1.0);
         runProcessor();
         assertMeasurement(AV.count, 1, 3);
         assertMeasurement(AV.duplicateCount, 1, 1);
@@ -1608,9 +1608,9 @@ public class PropertyComparisonProcessorTest {
 
     @Test
     public void countsOfDatasetWithResourceDuplicates() {
-        addDatasetAndResourceAndValue(1, 1, 1);
-        addDatasetAndResourceAndValue(1, 1, 2);
-        addDatasetAndResourceAndValue(1, 2, 1);
+        addDatasetAndResourceAndLiteral(1, 1, 1);
+        addDatasetAndResourceAndLiteral(1, 1, 2);
+        addDatasetAndResourceAndLiteral(1, 2, 1);
         addCorrespondency(1,1,1,2);
         runProcessor();
         assertMeasurement(AV.count, 1, 3);
@@ -1620,7 +1620,7 @@ public class PropertyComparisonProcessorTest {
 
     @Test
     public void coverednessOfDatasetComparedToDatasetsWithoutResource() {
-        addDatasetAndResourceAndValue(1,1,1);
+        addDatasetAndResourceAndLiteral(1,1,1);
         addDataset(2);
         addDataset(3);
         runProcessor();
@@ -1631,8 +1631,8 @@ public class PropertyComparisonProcessorTest {
     @Test
     public void coverednessOfDatasetWithoutResourceComparedToDatasetsWithCorrespondencies() {
         addDataset(1);
-        addDatasetAndResourceAndValue(2,1,1);
-        addDatasetAndResourceAndValue(3,1,1);
+        addDatasetAndResourceAndLiteral(2,1,1);
+        addDatasetAndResourceAndLiteral(3,1,1);
         addCorrespondency(1,1,2,1);
         runProcessor();
         assertMeasurement(AV.absoluteCoveredness, 1, 0, 2, 3);
@@ -1642,8 +1642,8 @@ public class PropertyComparisonProcessorTest {
     @Test
     public void coverednessOfDatasetWithoutValueComparedToDatasetsWithoutCorrespondencies() {
         addDatasetAndResource(1, 1);
-        addDatasetAndResourceAndValue(2,1,1);
-        addDatasetAndResourceAndValue(3,1,1);
+        addDatasetAndResourceAndLiteral(2,1,1);
+        addDatasetAndResourceAndLiteral(3,1,1);
         runProcessor();
         assertMeasurement(AV.absoluteCoveredness, 1, 0, 2, 3);
         assertNoMeasurement(AV.relativeCoveredness, 1, 2, 3);
@@ -1651,9 +1651,9 @@ public class PropertyComparisonProcessorTest {
 
     @Test
     public void coverednessOfDatasetsWithoutCorrespondencies() {
-        addDatasetAndResourceAndValue(1,1,1);
-        addDatasetAndResourceAndValue(2,1,1);
-        addDatasetAndResourceAndValue(3,1,1);
+        addDatasetAndResourceAndLiteral(1,1,1);
+        addDatasetAndResourceAndLiteral(2,1,1);
+        addDatasetAndResourceAndLiteral(3,1,1);
         runProcessor();
         assertMeasurement(AV.absoluteCoveredness, 1, 0, 2, 3);
         assertMeasurement(AV.relativeCoveredness, 1, 0, 2, 3);
@@ -1661,12 +1661,12 @@ public class PropertyComparisonProcessorTest {
 
     @Test
     public void coverednessOfDatasets() {
-        addDatasetAndResourceAndValue(1,1,1);
-        addDatasetAndResourceAndValue(1,1,2);
-        addDatasetAndResourceAndValue(2,1,1);
-        addDatasetAndResourceAndValue(2,1,2);
-        addDatasetAndResourceAndValue(3,1,1);
-        addDatasetAndResourceAndValue(3,1,2);
+        addDatasetAndResourceAndLiteral(1,1,1);
+        addDatasetAndResourceAndLiteral(1,1,2);
+        addDatasetAndResourceAndLiteral(2,1,1);
+        addDatasetAndResourceAndLiteral(2,1,2);
+        addDatasetAndResourceAndLiteral(3,1,1);
+        addDatasetAndResourceAndLiteral(3,1,2);
         addCorrespondency(1,1,2,1);
         runProcessor();
         assertMeasurement(AV.absoluteCoveredness, 1, 2, 2, 3);
@@ -1675,12 +1675,12 @@ public class PropertyComparisonProcessorTest {
 
     @Test
     public void coverednessOfDatasetsWithMultipleCorrespondencies() {
-        addDatasetAndResourceAndValue(1,1,1);
-        addDatasetAndResourceAndValue(1,1,2);
-        addDatasetAndResourceAndValue(2,1,1);
-        addDatasetAndResourceAndValue(2,1,2);
-        addDatasetAndResourceAndValue(3,1,1);
-        addDatasetAndResourceAndValue(3,1,2);
+        addDatasetAndResourceAndLiteral(1,1,1);
+        addDatasetAndResourceAndLiteral(1,1,2);
+        addDatasetAndResourceAndLiteral(2,1,1);
+        addDatasetAndResourceAndLiteral(2,1,2);
+        addDatasetAndResourceAndLiteral(3,1,1);
+        addDatasetAndResourceAndLiteral(3,1,2);
         addCorrespondency(1,1,2,1);
         addCorrespondency(1,1,3,1);
         runProcessor();
@@ -1690,9 +1690,9 @@ public class PropertyComparisonProcessorTest {
 
     @Test
     public void coverednessOfDatasetComparedToDatasetsWithDifferentValuesWithCorrespondencies() {
-        addDatasetAndResourceAndValue(1,1,1);
-        addDatasetAndResourceAndValue(2,1,2);
-        addDatasetAndResourceAndValue(3,1,3);
+        addDatasetAndResourceAndLiteral(1,1,1);
+        addDatasetAndResourceAndLiteral(2,1,2);
+        addDatasetAndResourceAndLiteral(3,1,3);
         addCorrespondency(1,1,2,1);
         addCorrespondency(1,1,3,1);
         runProcessor();
@@ -1702,7 +1702,7 @@ public class PropertyComparisonProcessorTest {
 
     @Test
     public void coverednessOfDatasetComparedToDatasetsWithoutValuesWithCorrespondencies() {
-        addDatasetAndResourceAndValue(1,1,1);
+        addDatasetAndResourceAndLiteral(1,1,1);
         addDatasetAndResource(2,1);
         addDatasetAndResource(3,1);
         addCorrespondency(1,1,2,1);
@@ -1714,15 +1714,15 @@ public class PropertyComparisonProcessorTest {
 
     @Test
     public void coverednessOfDatasetsWithValueDuplicate() {
-        addDatasetAndResourceAndValue(1,1,1);
-        addDatasetAndResourceAndValue(1,1,2);
-        addDatasetAndResourceAndValue(1,1,2.0);
-        addDatasetAndResourceAndValue(2,1,1);
-        addDatasetAndResourceAndValue(2,1,2);
-        addDatasetAndResourceAndValue(2,1,2.0);
-        addDatasetAndResourceAndValue(3,1,1);
-        addDatasetAndResourceAndValue(3,1,2);
-        addDatasetAndResourceAndValue(3,1,2.0);
+        addDatasetAndResourceAndLiteral(1,1,1);
+        addDatasetAndResourceAndLiteral(1,1,2);
+        addDatasetAndResourceAndLiteral(1,1,2.0);
+        addDatasetAndResourceAndLiteral(2,1,1);
+        addDatasetAndResourceAndLiteral(2,1,2);
+        addDatasetAndResourceAndLiteral(2,1,2.0);
+        addDatasetAndResourceAndLiteral(3,1,1);
+        addDatasetAndResourceAndLiteral(3,1,2);
+        addDatasetAndResourceAndLiteral(3,1,2.0);
         addCorrespondency(1,1,2,1);
         runProcessor();
         assertMeasurement(AV.absoluteCoveredness, 1, 2, 2, 3);
@@ -1731,15 +1731,15 @@ public class PropertyComparisonProcessorTest {
 
     @Test
     public void coverednessOfDatasetsWithResourceDuplicate() {
-        addDatasetAndResourceAndValue(1,1,1);
-        addDatasetAndResourceAndValue(1,1,2);
-        addDatasetAndResourceAndValue(1,2,2);
-        addDatasetAndResourceAndValue(2,1,1);
-        addDatasetAndResourceAndValue(2,1,2);
-        addDatasetAndResourceAndValue(2,2,2);
-        addDatasetAndResourceAndValue(3,1,1);
-        addDatasetAndResourceAndValue(3,1,2);
-        addDatasetAndResourceAndValue(3,2,2);
+        addDatasetAndResourceAndLiteral(1,1,1);
+        addDatasetAndResourceAndLiteral(1,1,2);
+        addDatasetAndResourceAndLiteral(1,2,2);
+        addDatasetAndResourceAndLiteral(2,1,1);
+        addDatasetAndResourceAndLiteral(2,1,2);
+        addDatasetAndResourceAndLiteral(2,2,2);
+        addDatasetAndResourceAndLiteral(3,1,1);
+        addDatasetAndResourceAndLiteral(3,1,2);
+        addDatasetAndResourceAndLiteral(3,2,2);
         addCorrespondency(1,1,2,1);
         addCorrespondency(1,2,1,1);
         addCorrespondency(2,2,2,1);
@@ -1751,7 +1751,7 @@ public class PropertyComparisonProcessorTest {
 
     @Test
     public void coverageOfDatasetComparedToDatasetsWithoutResource() {
-        addDatasetAndResourceAndValue(1,1,1);
+        addDatasetAndResourceAndLiteral(1,1,1);
         addDataset(2);
         addDataset(3);
         runProcessor();
@@ -1764,8 +1764,8 @@ public class PropertyComparisonProcessorTest {
     @Test
     public void coverageOfDatasetWithoutResource() {
         addDataset(1);
-        addDatasetAndResourceAndValue(2,1,1);
-        addDatasetAndResourceAndValue(3,1,1);
+        addDatasetAndResourceAndLiteral(2,1,1);
+        addDatasetAndResourceAndLiteral(3,1,1);
         runProcessor();
         assertMeasurement(AV.absoluteCoverage, 1, 0, 2);
         assertMeasurement(AV.absoluteCoverage, 1, 0, 3);
@@ -1775,9 +1775,9 @@ public class PropertyComparisonProcessorTest {
 
     @Test
     public void coverageOfDatasetsWithoutCorrespondency() {
-        addDatasetAndResourceAndValue(1,1,1);
-        addDatasetAndResourceAndValue(2,1,1);
-        addDatasetAndResourceAndValue(3,1,1);
+        addDatasetAndResourceAndLiteral(1,1,1);
+        addDatasetAndResourceAndLiteral(2,1,1);
+        addDatasetAndResourceAndLiteral(3,1,1);
         runProcessor();
         assertMeasurement(AV.absoluteCoverage, 1, 0, 2);
         assertMeasurement(AV.absoluteCoverage, 1, 0, 3);
@@ -1787,12 +1787,12 @@ public class PropertyComparisonProcessorTest {
 
     @Test
     public void coverageOfDatasetsWithPartialResourceCorrespondency() {
-        addDatasetAndResourceAndValue(1,1,1);
-        addDatasetAndResourceAndValue(1,2,1);
-        addDatasetAndResourceAndValue(2,1,1);
-        addDatasetAndResourceAndValue(2,2,1);
-        addDatasetAndResourceAndValue(3,1,1);
-        addDatasetAndResourceAndValue(3,2,1);
+        addDatasetAndResourceAndLiteral(1,1,1);
+        addDatasetAndResourceAndLiteral(1,2,1);
+        addDatasetAndResourceAndLiteral(2,1,1);
+        addDatasetAndResourceAndLiteral(2,2,1);
+        addDatasetAndResourceAndLiteral(3,1,1);
+        addDatasetAndResourceAndLiteral(3,2,1);
         addCorrespondency(1, 1, 2, 1);
         addCorrespondency(1, 1, 3, 1);
         runProcessor();
@@ -1804,12 +1804,12 @@ public class PropertyComparisonProcessorTest {
 
     @Test
     public void coverageOfDatasetsWithPartialValueCorrespondency() {
-        addDatasetAndResourceAndValue(1,1,1);
-        addDatasetAndResourceAndValue(1,1,2);
-        addDatasetAndResourceAndValue(2,1,1);
-        addDatasetAndResourceAndValue(2,1,3);
-        addDatasetAndResourceAndValue(3,1,1);
-        addDatasetAndResourceAndValue(3,1,4);
+        addDatasetAndResourceAndLiteral(1,1,1);
+        addDatasetAndResourceAndLiteral(1,1,2);
+        addDatasetAndResourceAndLiteral(2,1,1);
+        addDatasetAndResourceAndLiteral(2,1,3);
+        addDatasetAndResourceAndLiteral(3,1,1);
+        addDatasetAndResourceAndLiteral(3,1,4);
         addCorrespondency(1, 1, 2, 1);
         addCorrespondency(1, 1, 3, 1);
         runProcessor();
@@ -1821,12 +1821,12 @@ public class PropertyComparisonProcessorTest {
 
     @Test
     public void coverageOfDatasetsWithValueDuplicates() {
-        addDatasetAndResourceAndValue(1,1,1);
-        addDatasetAndResourceAndValue(1,1,1.0);
-        addDatasetAndResourceAndValue(2,1,1);
-        addDatasetAndResourceAndValue(2,1,1.0);
-        addDatasetAndResourceAndValue(3,1,1);
-        addDatasetAndResourceAndValue(3,1,1.0);
+        addDatasetAndResourceAndLiteral(1,1,1);
+        addDatasetAndResourceAndLiteral(1,1,1.0);
+        addDatasetAndResourceAndLiteral(2,1,1);
+        addDatasetAndResourceAndLiteral(2,1,1.0);
+        addDatasetAndResourceAndLiteral(3,1,1);
+        addDatasetAndResourceAndLiteral(3,1,1.0);
         addCorrespondency(1, 1, 2, 1);
         addCorrespondency(1, 1, 3, 1);
         runProcessor();
@@ -1838,12 +1838,12 @@ public class PropertyComparisonProcessorTest {
 
     @Test
     public void coverageOfDatasetsWithResourceDuplicates() {
-        addDatasetAndResourceAndValue(1,1,1);
-        addDatasetAndResourceAndValue(2,1,1);
-        addDatasetAndResourceAndValue(3,1,1);
-        addDatasetAndResourceAndValue(1,2,1);
-        addDatasetAndResourceAndValue(2,2,1);
-        addDatasetAndResourceAndValue(3,2,1);
+        addDatasetAndResourceAndLiteral(1,1,1);
+        addDatasetAndResourceAndLiteral(2,1,1);
+        addDatasetAndResourceAndLiteral(3,1,1);
+        addDatasetAndResourceAndLiteral(1,2,1);
+        addDatasetAndResourceAndLiteral(2,2,1);
+        addDatasetAndResourceAndLiteral(3,2,1);
         addCorrespondency(1, 1, 2, 1);
         addCorrespondency(1, 1, 3, 1);
         addCorrespondency(1, 2, 1, 1);
@@ -1858,7 +1858,7 @@ public class PropertyComparisonProcessorTest {
 
     @Test
     public void completenessOfDatasetComparedToDatasetsWithoutResource() {
-        addDatasetAndResourceAndValue(1,1,1);
+        addDatasetAndResourceAndLiteral(1,1,1);
         addDataset(2);
         addDataset(3);
         runProcessor();
@@ -1868,18 +1868,18 @@ public class PropertyComparisonProcessorTest {
 
     @Test
     public void completenessOfDatasetComparedToDatasetsWithoutCorrespondencies() {
-        addDatasetAndResourceAndValue(1, 1, 1);
-        addDatasetAndResourceAndValue(2, 1, 1);
-        addDatasetAndResourceAndValue(3, 1, 1);
+        addDatasetAndResourceAndLiteral(1, 1, 1);
+        addDatasetAndResourceAndLiteral(2, 1, 1);
+        addDatasetAndResourceAndLiteral(3, 1, 1);
         runProcessor();
         assertNoMeasurement(AV.marCompletenessThomas08, 1, 2, 3);
     }
 
     @Test
     public void completenessOfDatasetsWithCompleteValues() {
-        addDatasetAndResourceAndValue(1, 1, 1);
-        addDatasetAndResourceAndValue(2, 1, 1);
-        addDatasetAndResourceAndValue(3, 1, 1);
+        addDatasetAndResourceAndLiteral(1, 1, 1);
+        addDatasetAndResourceAndLiteral(2, 1, 1);
+        addDatasetAndResourceAndLiteral(3, 1, 1);
         addCorrespondency(1,1,2,1);
         addCorrespondency(1,1,3,1);
         runProcessor();
@@ -1888,24 +1888,71 @@ public class PropertyComparisonProcessorTest {
 
     @Test
     public void completenessOfDatasetsWithIncompleteValues() {
-        addDatasetAndResourceAndValue(1, 1, 1);
-        addDatasetAndResourceAndValue(2, 1, 1);
-        addDatasetAndResourceAndValue(3, 1, 1);
-        addDatasetAndResourceAndValue(1, 1, 2);
-        addDatasetAndResourceAndValue(2, 1, 3);
-        addDatasetAndResourceAndValue(3, 1, 3);
-        addDatasetAndResourceAndValue(1, 2, 1);
-        addDatasetAndResourceAndValue(2, 2, 1);
-        addDatasetAndResourceAndValue(3, 2, 1);
-        addDatasetAndResourceAndValue(1, 2, 2);
-        addDatasetAndResourceAndValue(2, 2, 3);
-        addDatasetAndResourceAndValue(3, 2, 3);
+        addDatasetAndResourceAndLiteral(1, 1, 1);
+        addDatasetAndResourceAndLiteral(2, 1, 1);
+        addDatasetAndResourceAndLiteral(3, 1, 1);
+        addDatasetAndResourceAndLiteral(1, 1, 2);
+        addDatasetAndResourceAndLiteral(2, 1, 3);
+        addDatasetAndResourceAndLiteral(3, 1, 3);
+        addDatasetAndResourceAndLiteral(1, 2, 1);
+        addDatasetAndResourceAndLiteral(2, 2, 1);
+        addDatasetAndResourceAndLiteral(3, 2, 1);
+        addDatasetAndResourceAndLiteral(1, 2, 2);
+        addDatasetAndResourceAndLiteral(2, 2, 3);
+        addDatasetAndResourceAndLiteral(3, 2, 3);
         addCorrespondency(1,1,2,1);
         addCorrespondency(1,1,3,1);
         addCorrespondency(1,2,2,2);
         addCorrespondency(1,2,3,2);
         runProcessor();
         assertMeasurement(AV.marCompletenessThomas08, 1, 0.6666666666666667, 2, 3);
+    }
+    @Test
+    public void coverageOfResourceValuesOfDatasetsWithResourceDuplicates() {
+        addDatasetAndResourceAndLiteral(1,1,1);
+        addDatasetAndResourceAndLiteral(2,1,1);
+        addDatasetAndResourceAndLiteral(3,1,1);
+        addDatasetAndResourceAndLiteral(1,2,1);
+        addDatasetAndResourceAndLiteral(2,2,1);
+        addDatasetAndResourceAndLiteral(3,2,1);
+        addCorrespondency(1, 1, 2, 1);
+        addCorrespondency(1, 1, 3, 1);
+        addCorrespondency(1, 2, 1, 1);
+        addCorrespondency(2, 2, 2, 1);
+        addCorrespondency(3, 2, 3, 1);
+        runProcessor();
+        assertMeasurement(AV.absoluteCoverage, 1, 1, 2);
+        assertMeasurement(AV.absoluteCoverage, 1, 1, 3);
+        assertMeasurement(AV.relativeCoverage, 1, 1, 2);
+        assertMeasurement(AV.relativeCoverage, 1, 1, 3);
+    }
+
+    @Test
+    public void deviationOfIriValues() {
+        addDatasetAndResourceAndIri(1,1,2);
+        addDatasetAndResourceAndIri(2,1,2);
+        addDatasetAndResourceAndIri(1,1,3);
+        addDatasetAndResourceAndIri(2,1,3);
+        addCorrespondency(1, 1, 2, 1);
+        addCorrespondency(1, 2, 2, 2);
+        runProcessor();
+        assertNoIriDeviation(1,1,2,2,1,2);
+        assertNoIriDeviation(1,1,2,2,1,3);
+        assertNoIriDeviation(1,1,3,2,1,2);
+        assertIriDeviation(1,1,3,2,1,3);
+    }
+
+    @Test
+    public void omissionOfIriValues() {
+        addDatasetAndResourceAndIri(1,1,2);
+        addDatasetAndResourceAndIri(2,1,2);
+        addDatasetAndResourceAndIri(1,1,3);
+        addCorrespondency(1, 1, 2, 1);
+        addCorrespondency(1, 2, 2, 2);
+        runProcessor();
+        assertNoIriValueOmission(1,1,2,1,2);
+        assertNoIriValueOmission(2,1,1,1,2);
+        assertIriValueOmission(2,1,1,1,3);
     }
 
     Model getInputPrimaryModels(int datasetId) {
@@ -1945,11 +1992,20 @@ public class PropertyComparisonProcessorTest {
         return resource(resourceId);
     }
 
-    void addDatasetAndResourceAndValue(int datasetId, int resourceLocalId, Number value) {
+    void addDatasetAndResourceAndLiteral(int datasetId, int resourceLocalId, Number value) {
+        Literal literalValue = ResourceFactory.createTypedLiteral(value);
+        addDatasetAndResourceAndLiteral(datasetId, resourceLocalId, literalValue);
+    }
+
+    void addDatasetAndResourceAndIri(int datasetId, int resourceLocalId, int valueIriLocalId) {
+        Resource iriValue = createResource(datasetId, valueIriLocalId);
+        addDatasetAndResourceAndLiteral(datasetId, resourceLocalId, iriValue);
+    }
+
+    void addDatasetAndResourceAndLiteral(int datasetId, int resourceLocalId, RDFNode value) {
         Resource resource = addDatasetAndResource(datasetId, resourceLocalId);
-        Literal literal = ResourceFactory.createTypedLiteral(value);
         Model inputPrimaryModelsOfDataset = getInputPrimaryModels(datasetId);
-        inputPrimaryModelsOfDataset.add(resource, property(1), literal);
+        inputPrimaryModelsOfDataset.add(resource, property(1), value);
     }
 
     Resource addDatasetAndResource(int datasetId, int resourceLocalId) {
@@ -1971,7 +2027,6 @@ public class PropertyComparisonProcessorTest {
         Resource resource2 = createResource(datasetId2, resourceLocalId2);
         mappingModel.add(resource1, AV.correspondsToResource, resource2);
     }
-
 
     void assertMeasurement(Resource measure, int computedOnDatasetId, double expectedValue, int... comparedToDatasetIds) {
         BigDecimal expectedValueBD = BigDecimal.valueOf(expectedValue).stripTrailingZeros();
@@ -2042,5 +2097,81 @@ public class PropertyComparisonProcessorTest {
         }
         Element otherComparedDataset = otherComparedDatasetSelectBuilder.build().getQueryPattern();
         return (new E_NotExists(otherComparedDataset));
+    }
+
+    public void assertIriDeviation(int computedOnDatasetId, int affectedResourceLocalId, int affectedValueLocalId,
+                                   int comparedToDatasetId, int comparedToResourceLocalId, int comparedToValueLocalId) {
+        Resource affectedValue = createResource(computedOnDatasetId, affectedValueLocalId);
+        Resource comparedToValue = createResource(comparedToDatasetId, comparedToValueLocalId);
+        assertValueDeviation(computedOnDatasetId, affectedResourceLocalId, affectedValue, comparedToDatasetId,
+                comparedToResourceLocalId, comparedToValue);
+    }
+
+    public void assertNoIriDeviation(int computedOnDatasetId, int affectedResourceLocalId, int affectedValueLocalId,
+                                   int comparedToDatasetId, int comparedToResourceLocalId, int comparedToValueLocalId) {
+        Resource affectedValue = createResource(computedOnDatasetId, affectedValueLocalId);
+        Resource comparedToValue = createResource(comparedToDatasetId, comparedToValueLocalId);
+        assertNoValueDeviation(computedOnDatasetId, affectedResourceLocalId, affectedValue, comparedToDatasetId,
+                comparedToResourceLocalId, comparedToValue);
+    }
+
+    public void assertValueDeviation(int computedOnDatasetId, int affectedResourceLocalId, RDFNode affectedValue,
+                                   int comparedToDatasetId, int comparedToResourceLocalId, RDFNode comparedToValue) {
+        assertTrue(containsIriDeviation(computedOnDatasetId, affectedResourceLocalId, affectedValue,
+                comparedToDatasetId, comparedToResourceLocalId,comparedToValue));
+    }
+
+    public void assertNoValueDeviation(int computedOnDatasetId, int affectedResourceLocalId, RDFNode affectedValue,
+                                     int comparedToDatasetId, int comparedToResourceLocalId, RDFNode comparedToValue) {
+        assertFalse(containsIriDeviation(computedOnDatasetId, affectedResourceLocalId, affectedValue,
+                comparedToDatasetId, comparedToResourceLocalId,comparedToValue));
+    }
+
+    public boolean containsIriDeviation(int computedOnDatasetId, int affectedResourceLocalId, RDFNode affectedValue,
+                                        int comparedToDatasetId, int comparedToResourceLocalId, RDFNode comparedToValue) {
+        Resource comparedToDataset = dataset(comparedToDatasetId);
+        Resource affectedResource = createResource(computedOnDatasetId, affectedResourceLocalId);
+        Resource comparedToResource = createResource(comparedToDatasetId, comparedToResourceLocalId);
+        Model outputAffectedDatasetMetaModel = outputMetaModelsByDatasetId.get(computedOnDatasetId);
+
+        return containsDeviation(affectedResource, VARIABLE, affectedValue, comparedToDataset,
+                comparedToResource, comparedToValue, ASPECT_IRI, outputAffectedDatasetMetaModel);
+    }
+
+    public void assertIriValueOmission(int computedOnDatasetId, int affectedResourceLocalId, int comparedToDatasetId,
+                                       int comparedToResourceLocalId, int comparedToValueLocalId) {
+        Resource comparedToValue = createResource(comparedToDatasetId, comparedToValueLocalId);
+        assertValueOmission(computedOnDatasetId, affectedResourceLocalId, comparedToDatasetId, comparedToResourceLocalId,
+                comparedToValue);
+    }
+
+    public void assertNoIriValueOmission(int computedOnDatasetId, int affectedResourceLocalId, int comparedToDatasetId,
+                                       int comparedToResourceLocalId, int comparedToValueLocalId) {
+        Resource comparedToValue = createResource(comparedToDatasetId, comparedToValueLocalId);
+        assertNoValueOmission(computedOnDatasetId, affectedResourceLocalId, comparedToDatasetId, comparedToResourceLocalId,
+                comparedToValue);
+    }
+
+    public void assertValueOmission(int computedOnDatasetId, int affectedResourceLocalId, int comparedToDatasetId,
+                                       int comparedToResourceLocalId,RDFNode comparedToValue) {
+        assertTrue(containsIriValueOmission(computedOnDatasetId, affectedResourceLocalId, comparedToDatasetId,
+                comparedToResourceLocalId, comparedToValue));
+    }
+
+    public void assertNoValueOmission(int computedOnDatasetId, int affectedResourceLocalId, int comparedToDatasetId,
+                                         int comparedToResourceLocalId,RDFNode comparedToValue) {
+        assertFalse(containsIriValueOmission(computedOnDatasetId, affectedResourceLocalId, comparedToDatasetId,
+                comparedToResourceLocalId, comparedToValue));
+    }
+
+    public boolean containsIriValueOmission(int computedOnDatasetId, int affectedResourceLocalId, int comparedToDatasetId,
+                                            int comparedToResourceLocalId,RDFNode comparedToValue) {
+        Resource comparedToDataset = dataset(comparedToDatasetId);
+        Resource affectedResource = createResource(computedOnDatasetId, affectedResourceLocalId);
+        Resource comparedToResource = createResource(comparedToDatasetId, comparedToResourceLocalId);
+        Model outputAffectedDatasetMetaModel = outputMetaModelsByDatasetId.get(computedOnDatasetId);
+
+        return containsValuesOmission(affectedResource, VARIABLE, comparedToDataset, comparedToResource,
+                comparedToValue, ASPECT_IRI, outputAffectedDatasetMetaModel);
     }
 }
