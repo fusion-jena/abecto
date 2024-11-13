@@ -113,4 +113,5 @@ WHERE {
 				av:comparedToResource	?external_urlX .
 		}
 	}
+	FILTER (STR(?external_valueX) != "")
 }
