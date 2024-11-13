@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [3.1.1] - 2024-11-13
+
 ### Fixed
 * fix `wdMismatchFinder` report: suppress empty strings as external value
 
@@ -354,7 +356,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * add `ManualCategoryProcessor`: Enables users to manually define resource categories and their properties.
 * add `ResourceDeviationProcessor`: Detects deviations between the resource references of mapped resources as defined in the categories.
 
-[Unreleased]: https://github.com/fusion-jena/abecto/compare/v3.1.0...HEAD
+[Unreleased]: https://github.com/fusion-jena/abecto/compare/v3.1.1...HEAD
+[3.0.1]: https://github.com/fusion-jena/abecto/compare/v3.1.0...v3.1.1
 [3.0.1]: https://github.com/fusion-jena/abecto/compare/v3.0.1...v3.1.0
 [3.0.1]: https://github.com/fusion-jena/abecto/compare/v3.0.0...v3.0.1
 [3.0.0]: https://github.com/fusion-jena/abecto/compare/v2.2.2...v3.0.0
