@@ -374,4 +374,16 @@ public class PopulationComparisonProcessorTest {
 		assertEquals(2, processor.absoluteCoveredness.get(dataset3));
 	}
 
+	@Test
+	public void incrementAbsoluteCoverednessOnlyOneDuplicate() {
+		processor.incrementAbsoluteCoveredness(Map.of(
+				dataset1, Set.of(resource1OfD1,resource2OfD1),
+				dataset2, Collections.emptySet(),
+				dataset3, Collections.emptySet()
+		));
+		assertNull(processor.absoluteCoveredness.get(dataset1));
+		assertNull(processor.absoluteCoveredness.get(dataset2));
+		assertNull(processor.absoluteCoveredness.get(dataset3));
+	}
+
 }
