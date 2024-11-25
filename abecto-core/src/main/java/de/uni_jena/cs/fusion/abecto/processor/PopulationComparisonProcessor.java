@@ -46,7 +46,6 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
     Aspect aspect;
     Set<Resource> datasets;
     Set<ResourcePair> datasetPairs;
-    Set<ResourceTupel> datasetTupels;
     Map<Resource, Model> outputMetaModelByDataset;
 
     AbsoluteCoverage absoluteCoverage = new AbsoluteCoverage();
@@ -98,7 +97,6 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
     private void setAspectDatasets() {
         datasets = aspect.getDatasets();
         datasetPairs = ResourcePair.getPairsOf(datasets);
-        datasetTupels = ResourceTupel.getTupelsOf(datasets);
         outputMetaModelByDataset = getOutputMetaModels(datasets);
     }
 

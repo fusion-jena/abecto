@@ -20,9 +20,6 @@ package de.uni_jena.cs.fusion.abecto;
 
 import org.apache.jena.rdf.model.Resource;
 
-import java.util.HashSet;
-import java.util.Set;
-
 public class ResourceTupel {
     public final Resource first;
     public final Resource second;
@@ -30,18 +27,6 @@ public class ResourceTupel {
     private ResourceTupel(Resource first, Resource second) {
         this.first = first;
         this.second = second;
-    }
-
-    public static Set<ResourceTupel> getTupelsOf(Set<Resource> resources) {
-        Set<ResourceTupel> tupels = new HashSet<>();
-        for (Resource first : resources) {
-            for (Resource second : resources) {
-                if (!first.equals(second)) {
-                    tupels.add(new ResourceTupel(first, second));
-                }
-            }
-        }
-        return tupels;
     }
 
     public static ResourceTupel getTupel(Resource first, Resource second) {

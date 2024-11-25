@@ -70,7 +70,6 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
     Aspect theAspect; // TODO rename to `aspect` after renaming the aspect parameter variable into `aspectIri`
     Set<Resource> datasets;
     Set<ResourcePair> datasetPairs;
-    Set<ResourceTupel> datasetTupels;
     Map<Resource, Model> outputMetaModelByDataset;
 
     Map<String, AbsoluteCoverage> absoluteValueCoverage;
@@ -109,7 +108,6 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
     protected void setAspectDatasets() {
         datasets = theAspect.getDatasets();
         datasetPairs = ResourcePair.getPairsOf(datasets);
-        datasetTupels = ResourceTupel.getTupelsOf(datasets);
         outputMetaModelByDataset = getOutputMetaModels(datasets);
         resourcesByNonDistinctValueByDatasetByVariable = createMapOfResourcesByValueByDatasetByVariable();
         resourcesByDistinctValueByDatasetByVariable = createMapOfResourcesByValueByDatasetByVariable();
