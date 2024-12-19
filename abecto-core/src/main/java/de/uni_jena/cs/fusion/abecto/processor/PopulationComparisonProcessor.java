@@ -139,13 +139,16 @@ public class PopulationComparisonProcessor extends ComparisonProcessor<Populatio
     }
 
     void incrementAbsoluteCoveredness(Map<Resource, Set<Resource>> correspondingResourcesByDataset) {
+        int correspondingResourcesOriginsCount = 0;
         for (Resource dataset : datasets) {
             if (!correspondingResourcesByDataset.get(dataset).isEmpty()) {
-                for (Resource otherDataset : datasets) {
-                    if (dataset != otherDataset && !correspondingResourcesByDataset.get(otherDataset).isEmpty()) {
-                        absoluteCoveredness.incrementByOrSetOne(dataset);
-                        break;
-                    }
+                correspondingResourcesOriginsCount++;
+            }
+        }
+        if (correspondingResourcesOriginsCount >= 2) {
+            for (Resource dataset : datasets) {
+                if (!correspondingResourcesByDataset.get(dataset).isEmpty()) {
+                    absoluteCoveredness.incrementByOrSetOne(dataset);
                 }
             }
         }
