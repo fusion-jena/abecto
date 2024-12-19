@@ -6,7 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 
 ### Fixed
-* fix `PopulationComparisonProcessor`: fix measurement of **Absolute Coveredness** to not increase in case of a duplicated resource in one dataset without a corresponding resource in any other dataset  
+* fix `PopulationComparisonProcessor`: fix measurement of **Absolute Coveredness** to not increase in case of a duplicated resource in one dataset without a corresponding resource in any other dataset
+
+### Changed
+* changed `PropertyComparisonProcessor`: use deduplicated values for determining deviations and omissions to avoid duplicated reporting
 
 ## [3.1.1] - 2024-11-13
 

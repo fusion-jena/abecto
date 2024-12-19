@@ -380,16 +380,16 @@ public class PropertyComparisonProcessor extends ComparisonProcessor<PropertyCom
 
     protected void reportDeviationsAndOmissionsForDatasetPair(ResourcePair datasetPair) {
         for (String variable : variables) {
-            Map<Resource, Map<RDFNode, Set<Resource>>> resourcesByNonDistinctValueByDataset = resourcesByNonDistinctValueByDatasetByVariable.get(variable);
+            Map<Resource, Map<RDFNode, Set<Resource>>> resourcesByDistinctValueByDataset = resourcesByDistinctValueByDatasetByVariable.get(variable);
             if (theAspect.variableCoveredByDatasets(variable, datasetPair.first, datasetPair.second)) {
-                Map<RDFNode, Set<Resource>> resourceByNonDistinctValuesOfFirstDataset = resourcesByNonDistinctValueByDataset.get(datasetPair.first);
-                Map<RDFNode, Set<Resource>> resourceByNonDistinctValuesOfSecondDataset = resourcesByNonDistinctValueByDataset.get(datasetPair.second);
+                Map<RDFNode, Set<Resource>> resourceByDistinctValuesOfFirstDataset = resourcesByDistinctValueByDataset.get(datasetPair.first);
+                Map<RDFNode, Set<Resource>> resourceByDistinctValuesOfSecondDataset = resourcesByDistinctValueByDataset.get(datasetPair.second);
                 for (Resource firstResource : correspondingResourcesByDataset.get(datasetPair.first)) {
                     for (Resource secondResource : correspondingResourcesByDataset.get(datasetPair.second)) {
                         Set<RDFNode> uncoveredValuesOfFirstResource =
-                                getUncoveredValuesOfResource(firstResource, secondResource, resourceByNonDistinctValuesOfFirstDataset, resourceByNonDistinctValuesOfSecondDataset);
+                                getUncoveredValuesOfResource(firstResource, secondResource, resourceByDistinctValuesOfFirstDataset, resourceByDistinctValuesOfSecondDataset);
                         Set<RDFNode> uncoveredValuesOfSecondResource =
-                                getUncoveredValuesOfResource(secondResource, firstResource, resourceByNonDistinctValuesOfSecondDataset, resourceByNonDistinctValuesOfFirstDataset);
+                                getUncoveredValuesOfResource(secondResource, firstResource, resourceByDistinctValuesOfSecondDataset, resourceByDistinctValuesOfFirstDataset);
 
                         // deviation: a pair of resources with each having a value not present in the
                         // other resource
