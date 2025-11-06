@@ -446,7 +446,9 @@ On the other hand, it provides per knowledge graph measurements of
 * the count ([av:count](http://w3id.org/abecto/vocabulary#count)) of resources of an aspect,
 * the duplicate-free count ([av:deduplicatedCount](http://w3id.org/abecto/vocabulary#deduplicatedCount)) of resources of an aspect,
 * the absolute coverage ([av:absoluteCoverage](http://w3id.org/abecto/vocabulary#absoluteCoverage)) of resources of an aspect in another knowledge graph,
-* the relative coverage ([av:relativeCoverage](http://w3id.org/abecto/vocabulary#relativeCoverage)) of resources of an aspect in another knowledge graph, and
+* the relative coverage ([av:relativeCoverage](http://w3id.org/abecto/vocabulary#relativeCoverage)) of resources of an aspect in another knowledge graph,
+* the absolute coveredness ([av:absoluteCoveredness](http://w3id.org/abecto/vocabulary#absoluteCoveredness)) of resources of an aspect by any other knowledge graph,
+* the relative coveredness ([av:relativeCoveredness](http://w3id.org/abecto/vocabulary#relativeCoveredness)) of resources of an aspect by any other knowledge graph, and
 * the estimated completeness ([av:marCompletenessThomas08](http://w3id.org/abecto/vocabulary#marCompletenessThomas08)) of resources of an aspect.
 
 The estimated completeness is determined by a mark and recapture method as proposed by Razniewski et al. (see [But What Do We Actually Know?](http://doi.org/10.18653/v1/W16-1308)) and using the mark and recapture method defined by Thomas (see [Generalising multiple capture-recapture to non-uniform sample sizes](http://doi.org/10.1145/1390334.1390531)), which permits multiple samples of different sample sizes.
@@ -459,11 +461,13 @@ The processor has the following parameter:
 The **[Property Comparison Processor](abecto-core/src/main/java/de/uni_jena/cs/fusion/abecto/processor/PropertyComparisonProcessor.java)** (`abecto:PropertyComparisonProcessor`) provides [av:Deviation](http://w3id.org/abecto/vocabulary#Deviation), [av:ValuesOmission](http://w3id.org/abecto/vocabulary#ValuesOmission), and [av:Issue](http://w3id.org/abecto/vocabulary#Issue) annotations on property values for one variable of corresponding resources.
 On the other hand, it provides per knowledge graph measurements of
 
-* the count ([av:count](http://w3id.org/abecto/vocabulary#count)) of resources of an aspect,
-* the duplicate-free count ([av:deduplicatedCount](http://w3id.org/abecto/vocabulary#deduplicatedCount)) of resources of an aspect,
-* the absolute coverage ([av:absoluteCoverage](http://w3id.org/abecto/vocabulary#absoluteCoverage)) of resources of an aspect in another knowledge graph,
-* the relative coverage ([av:relativeCoverage](http://w3id.org/abecto/vocabulary#relativeCoverage)) of resources of an aspect in another knowledge graph, and
-* the estimated completeness ([av:marCompletenessThomas08](http://w3id.org/abecto/vocabulary#marCompletenessThomas08)) of resources of an aspect.
+* the count ([av:count](http://w3id.org/abecto/vocabulary#count)) of values for a variable of an aspect,
+* the duplicate-free count ([av:deduplicatedCount](http://w3id.org/abecto/vocabulary#deduplicatedCount)) of values for a variable of an aspect,
+* the absolute coverage ([av:absoluteCoverage](http://w3id.org/abecto/vocabulary#absoluteCoverage)) of values for a variable of an aspect in another knowledge graph,
+* the relative coverage ([av:relativeCoverage](http://w3id.org/abecto/vocabulary#relativeCoverage)) of values for a variable of an aspect in another knowledge graph,
+* the absolute coveredness ([av:absoluteCoveredness](http://w3id.org/abecto/vocabulary#absoluteCoveredness)) of values for a variable of an aspect by any other knowledge graph,
+* the relative coveredness ([av:relativeCoveredness](http://w3id.org/abecto/vocabulary#relativeCoveredness)) of values for a variable of an aspect by any other knowledge graph, and
+* the estimated completeness ([av:marCompletenessThomas08](http://w3id.org/abecto/vocabulary#marCompletenessThomas08)) of values for a variable of an aspect.
 
 The estimated completeness is determined by a mark and recapture method as proposed by Razniewski et al. (see [But What Do We Actually Know?](http://doi.org/10.18653/v1/W16-1308)) and using the mark and recapture method defined by Thomas (see [Generalising multiple capture-recapture to non-uniform sample sizes](http://doi.org/10.1145/1390334.1390531)), which permits multiple samples of different sample sizes.
 
