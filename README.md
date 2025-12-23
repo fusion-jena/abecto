@@ -440,10 +440,11 @@ The processor has the following parameters:
 Comparison processors compare the primary data of the knowledge graphs using the correspondences provided by the mapping processors.
 They provide annotations on specific values, resources, and knowledge graphs or determine measurements on the knowledge graphs.
 
-The **[Population Comparison Processor](abecto-core/src/main/java/de/uni_jena/cs/fusion/abecto/processor/PopulationComparisonProcessor.java)** (`abecto:PopulationComparisonProcessor`) provides on the one hand [av:Issue](http://w3id.org/abecto/vocabulary#Issue) annotations for resource duplicates and [av:ResourceOmission](http://w3id.org/abecto/vocabulary#ResourceOmission) annotations.
+The **[Population Comparison Processor](abecto-core/src/main/java/de/uni_jena/cs/fusion/abecto/processor/PopulationComparisonProcessor.java)** (`abecto:PopulationComparisonProcessor`) provides on the one hand [av:ResourceDuplicate](http://w3id.org/abecto/vocabulary#ResourceDuplicate), and [av:ResourceOmission](http://w3id.org/abecto/vocabulary#ResourceOmission) annotations.
 On the other hand, it provides per knowledge graph measurements of
 
 * the count ([av:count](http://w3id.org/abecto/vocabulary#count)) of resources of an aspect,
+* the duplicate count ([av:duplicateCount](http://w3id.org/abecto/vocabulary#duplicateCount)) of resources of an aspect,
 * the duplicate-free count ([av:deduplicatedCount](http://w3id.org/abecto/vocabulary#deduplicatedCount)) of resources of an aspect,
 * the absolute coverage ([av:absoluteCoverage](http://w3id.org/abecto/vocabulary#absoluteCoverage)) of resources of an aspect in another knowledge graph,
 * the relative coverage ([av:relativeCoverage](http://w3id.org/abecto/vocabulary#relativeCoverage)) of resources of an aspect in another knowledge graph,
@@ -458,10 +459,11 @@ The processor has the following parameter:
 |---------|-----------------------------------------------------------------------------------|---------|
 | aspects | One or multiple aspects for which measurements and annotations will be generated. |         |
 
-The **[Property Comparison Processor](abecto-core/src/main/java/de/uni_jena/cs/fusion/abecto/processor/PropertyComparisonProcessor.java)** (`abecto:PropertyComparisonProcessor`) provides [av:Deviation](http://w3id.org/abecto/vocabulary#Deviation), [av:ValuesOmission](http://w3id.org/abecto/vocabulary#ValuesOmission), and [av:Issue](http://w3id.org/abecto/vocabulary#Issue) annotations on property values for one variable of corresponding resources.
+The **[Property Comparison Processor](abecto-core/src/main/java/de/uni_jena/cs/fusion/abecto/processor/PropertyComparisonProcessor.java)** (`abecto:PropertyComparisonProcessor`) provides [av:Deviation](http://w3id.org/abecto/vocabulary#Deviation), and [av:ValuesOmission](http://w3id.org/abecto/vocabulary#ValuesOmission) annotations on property values for one variable of corresponding resources.
 On the other hand, it provides per knowledge graph measurements of
 
 * the count ([av:count](http://w3id.org/abecto/vocabulary#count)) of values for a variable of an aspect,
+* the duplicate count ([av:duplicateCount](http://w3id.org/abecto/vocabulary#duplicateCount)) of values for a variable of an aspect,
 * the duplicate-free count ([av:deduplicatedCount](http://w3id.org/abecto/vocabulary#deduplicatedCount)) of values for a variable of an aspect,
 * the absolute coverage ([av:absoluteCoverage](http://w3id.org/abecto/vocabulary#absoluteCoverage)) of values for a variable of an aspect in another knowledge graph,
 * the relative coverage ([av:relativeCoverage](http://w3id.org/abecto/vocabulary#relativeCoverage)) of values for a variable of an aspect in another knowledge graph,
