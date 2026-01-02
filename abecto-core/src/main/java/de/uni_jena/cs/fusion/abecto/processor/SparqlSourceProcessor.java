@@ -41,6 +41,7 @@ import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingFactory;
+import org.apache.jena.sparql.engine.http.QueryExceptionHTTP;
 import org.apache.jena.sparql.expr.E_NotOneOf;
 import org.apache.jena.sparql.expr.ExprList;
 import org.apache.jena.sparql.expr.ExprVar;
@@ -264,9 +265,21 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 						// increase chunk size if less than chunkSize
 						currentChunkSize = Math.min(this.chunkSize,
 								(int) (currentChunkSize * this.chunkSizeIncreaseFactor));
-
 					} catch (Throwable e) {
-						if (this.maxRetries > 0) {
+						log.warn(
+								String.format("Request failed: %s\n%s", e.getMessage(), queryToExecute.toString()));
+						if (e instanceof QueryExceptionHTTP && ((QueryExceptionHTTP) e).getStatusCode() == 429) {
+							// TODO consider Retry-After header, once https://github.com/apache/jena/issues/3679 is solved
+							int millisecondsToWait = 60 * 1000; // 1 minute; best-effort due to lack of information
+							log.warn(String.format("Continue after %s seconds.", millisecondsToWait/1000));
+							try {
+								synchronized (this) {
+									wait(millisecondsToWait);
+								}
+							} catch (InterruptedException ex) {
+								throw new RuntimeException(ex);
+							}
+						} else if (this.maxRetries > 0) {
 							// reduce left over retries
 							this.maxRetries--;
 							// reduce chunk size
@@ -275,8 +288,6 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 								// redo resources of current chunk
 								resourcesToLoadIterator.previous();
 							}
-							log.warn(
-									String.format("Request failed: %s\n%s", e.getMessage(), queryToExecute.toString()));
 							log.warn(String.format("Continue with reduced chunk size: %d Left retries: %s",
 									currentChunkSize, this.maxRetries));
 						} else {

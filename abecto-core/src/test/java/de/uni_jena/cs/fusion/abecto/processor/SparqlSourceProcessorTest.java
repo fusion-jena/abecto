@@ -21,9 +21,12 @@ package de.uni_jena.cs.fusion.abecto.processor;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Optional;
 
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
 import org.apache.jena.atlas.logging.LogCtl;
 import org.apache.jena.fuseki.Fuseki;
 import org.apache.jena.fuseki.main.FusekiServer;
@@ -246,6 +249,34 @@ public class SparqlSourceProcessorTest {
 			}
 		}
 
-		fuseki.stop();
-	}
+        fuseki.stop();
+    }
+
+    @Test
+    public void rateLimitHandling() throws IOException {
+        try (MockWebServer mockWebServer = new MockWebServer()) {
+            Resource service = ResourceFactory.createResource(mockWebServer.url("/").toString());
+            String content = "<http://example.org/a> <http://example.org/a> <http://example.org/a> .";
+            Property resource = ResourceFactory.createProperty("http://example.org/a");
+            // respond with 429 (Too Many Requests)
+            mockWebServer.enqueue(new MockResponse()
+                    .setResponseCode(429));
+            // respond with proper response
+            mockWebServer.enqueue(new MockResponse()
+                    .addHeader("Content-Type", "text/turtle")
+                    .setBody(content)
+                    .setResponseCode(200));
+
+            SparqlSourceProcessor processor = new SparqlSourceProcessor();
+            processor.setAssociatedDataset(TestUtil.dataset(1));
+            processor.service = service;
+            processor.list = Collections.singletonList(resource);
+
+            long start = System.currentTimeMillis();
+            processor.run();
+            long finish = System.currentTimeMillis();
+            long timeElapsed = finish - start;
+            assertTrue(timeElapsed >= 60 * 1000);
+        }
+    }
 }
