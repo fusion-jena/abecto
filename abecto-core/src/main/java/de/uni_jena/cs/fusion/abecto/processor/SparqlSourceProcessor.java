@@ -80,7 +80,7 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 	 * @see #maxRetries
 	 */
 	@Parameter
-	private Double chunkSizeDecreaseFactor = 0.5;
+	public Double chunkSizeDecreaseFactor = 0.5;
 	/**
 	 * Factor to increase the {@link #chunkSize} after successful request to the
 	 * source SPARQL endpoint until the initial value got restores. Default: 1.5
@@ -88,7 +88,7 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 	 * @see #maxRetries
 	 */
 	@Parameter
-	private Double chunkSizeIncreaseFactor = 1.5;
+	public Double chunkSizeIncreaseFactor = 1.5;
 	/**
 	 * SELECT query to retrieve a list of the relevant resources. All variables will
 	 * be taken into account. None IRI values will be ignored. ORDER BY, LIMIT and
