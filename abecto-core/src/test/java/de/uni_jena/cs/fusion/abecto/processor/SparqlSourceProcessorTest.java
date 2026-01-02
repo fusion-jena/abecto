@@ -63,13 +63,13 @@ public class SparqlSourceProcessorTest {
 		inputGraph.add(Triple.create(//
 				NodeFactory.createURI(namespace + "association"), //
 				RDFS.label.asNode(), //
-				NodeFactory.createLiteral("label")));
+				NodeFactory.createLiteralString("label")));
 
 		// individual
 		inputGraph.add(Triple.create(//
 				NodeFactory.createURI(namespace + "individual"), //
 				RDFS.label.asNode(), //
-				NodeFactory.createLiteral("label")));
+				NodeFactory.createLiteralString("label")));
 		inputGraph.add(Triple.create(//
 				NodeFactory.createURI(namespace + "individual"), //
 				association.asNode(), //
@@ -86,11 +86,11 @@ public class SparqlSourceProcessorTest {
 		inputGraph.add(Triple.create(//
 				NodeFactory.createURI(namespace + "individual"), //
 				RDFS.label.asNode(), //
-				NodeFactory.createLiteral("label", "en")));
+				NodeFactory.createLiteralLang("label", "en")));
 		inputGraph.add(Triple.create(//
 				NodeFactory.createURI(namespace + "individual"), //
 				RDFS.label.asNode(), //
-				NodeFactory.createLiteral("label", "de")));
+				NodeFactory.createLiteralLang("label", "de")));
 
 		// followUnlimited
 		for (
@@ -103,7 +103,7 @@ public class SparqlSourceProcessorTest {
 			inputGraph.add(Triple.create(//
 					NodeFactory.createURI(namespace + "followUnlimited" + followUnlimitedDistance), //
 					RDFS.label.asNode(), //
-					NodeFactory.createLiteral("label")));
+					NodeFactory.createLiteralString("label")));
 			inputGraph.add(Triple.create(//
 					NodeFactory.createURI(namespace + "followUnlimited" + followUnlimitedDistance), //
 					association.asNode(), //
@@ -116,7 +116,7 @@ public class SparqlSourceProcessorTest {
 			inputGraph.add(Triple.create(//
 					NodeFactory.createURI(namespace + "followUnlimited" + followUnlimitedDistance + "Sibling"), //
 					RDFS.label.asNode(), //
-					NodeFactory.createLiteral("label")));
+					NodeFactory.createLiteralString("label")));
 			inputGraph.add(Triple.create(//
 					NodeFactory.createURI(namespace + "followUnlimited" + followUnlimitedDistance + "Sibling"), //
 					association.asNode(), //
@@ -133,7 +133,7 @@ public class SparqlSourceProcessorTest {
 			inputGraph.add(Triple.create(//
 					NodeFactory.createURI(namespace + "association" + distance), //
 					RDFS.label.asNode(), //
-					NodeFactory.createLiteral("label")));
+					NodeFactory.createLiteralString("label")));
 
 			inputGraph.add(Triple.create(//
 					NodeFactory.createURI(namespace + "inverseAssociation" + (distance + 1)), //
@@ -142,7 +142,7 @@ public class SparqlSourceProcessorTest {
 			inputGraph.add(Triple.create(//
 					NodeFactory.createURI(namespace + "inverseAssociation" + distance), //
 					RDFS.label.asNode(), //
-					NodeFactory.createLiteral("label")));
+					NodeFactory.createLiteralString("label")));
 		}
 
 		// disable processor logging
@@ -174,7 +174,7 @@ public class SparqlSourceProcessorTest {
 			assertTrue(outputModel.getGraph().contains(Triple.create(//
 					NodeFactory.createURI(namespace + "individual"), //
 					RDFS.label.asNode(), //
-					NodeFactory.createLiteral("label"))));
+					NodeFactory.createLiteralString("label"))));
 			assertTrue(outputModel.getGraph().contains(Triple.create(//
 					NodeFactory.createURI(namespace + "individual"), //
 					RDFS.subClassOf.asNode(), //
@@ -197,7 +197,7 @@ public class SparqlSourceProcessorTest {
 				assertTrue(outputModel.getGraph().contains(Triple.create(//
 						NodeFactory.createURI(namespace + "followUnlimited" + 1), //
 						RDFS.label.asNode(), //
-						NodeFactory.createLiteral("label"))));
+						NodeFactory.createLiteralString("label"))));
 				assertTrue(outputModel.getGraph().contains(Triple.create(//
 						NodeFactory.createURI(namespace + "followUnlimited" + followUnlimitedDistance), //
 						association.asNode(), //
@@ -212,7 +212,7 @@ public class SparqlSourceProcessorTest {
 				assertFalse(outputModel.getGraph().contains(Triple.create(//
 						NodeFactory.createURI(namespace + "followUnlimited" + followUnlimitedDistance + "Sibling"), //
 						RDFS.label.asNode(), //
-						NodeFactory.createLiteral("label"))),
+								NodeFactory.createLiteralString("label"))),
 						"followUnlimitedDistance=" + followUnlimitedDistance + " maxDistance=" + maxDistance);
 				assertFalse(outputModel.getGraph().contains(Triple.create(//
 						NodeFactory.createURI(namespace + "followUnlimited" + followUnlimitedDistance + "Sibling"), //
@@ -234,7 +234,7 @@ public class SparqlSourceProcessorTest {
 						outputModel.getGraph().contains(Triple.create(//
 								NodeFactory.createURI(namespace + "association" + distance), //
 								RDFS.label.asNode(), //
-								NodeFactory.createLiteral("label"))));
+								NodeFactory.createLiteralString("label"))));
 
 				assertTrue(distance > maxDistance ^ //
 						outputModel.getGraph().contains(Triple.create(//
@@ -245,7 +245,7 @@ public class SparqlSourceProcessorTest {
 						outputModel.getGraph().contains(Triple.create(//
 								NodeFactory.createURI(namespace + "inverseAssociation" + distance), //
 								RDFS.label.asNode(), //
-								NodeFactory.createLiteral("label"))));
+								NodeFactory.createLiteralString("label"))));
 			}
 		}
 

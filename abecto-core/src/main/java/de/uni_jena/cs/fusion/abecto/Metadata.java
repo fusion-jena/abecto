@@ -220,7 +220,7 @@ public class Metadata {
 			Resource affectedAspect, Model inputAffectedDatasetMetaModel) {
 		Query query = AskBuilder.rewrite(IS_WRONG_VALUE_QUERY.cloneQuery(),
 				Map.of(AFFECTED_RESOURCE, affectedResource.asNode(), //
-						AFFECTED_VARIABLE_NAME, NodeFactory.createLiteral(affectedVariableName), //
+						AFFECTED_VARIABLE_NAME, NodeFactory.createLiteralString(affectedVariableName), //
 						AFFECTED_VALUE, affectedValue.asNode(), //
 						AFFECTED_ASPECT, affectedAspect.asNode()));
 		return QueryExecutionFactory.create(query, inputAffectedDatasetMetaModel).execAsk();
