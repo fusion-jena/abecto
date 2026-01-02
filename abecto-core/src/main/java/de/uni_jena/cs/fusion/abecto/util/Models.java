@@ -39,8 +39,6 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 import org.apache.jena.graph.compose.MultiUnion;
-import org.apache.jena.ontology.OntModel;
-import org.apache.jena.ontology.OntModelSpec;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.riot.Lang;
@@ -58,10 +56,6 @@ public class Models {
 	 * @see BufferedInputStream#MAX_BUFFER_SIZE
 	 */
 	private static final int MAX_BUFFER_SIZE = Integer.MAX_VALUE - 8;
-
-	public static OntModel getEmptyOntModel() {
-		return ModelFactory.createOntologyModel(OntModelSpec.OWL_MEM);
-	}
 
 	public static final Collection<Lang> supportedLanguages = Arrays.asList(Lang.RDFXML, Lang.TRIG, Lang.NQ,
 			Lang.JSONLD, Lang.RDFJSON, Lang.RDFTHRIFT, Lang.TRIX, Lang.SHACLC);

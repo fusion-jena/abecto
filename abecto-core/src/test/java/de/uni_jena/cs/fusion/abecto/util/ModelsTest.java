@@ -71,9 +71,4 @@ public class ModelsTest {
                 .contains(resource,resource,resource));
     }
 
-	@Test
-	public void testGetEmptyOntModel() {
-		assertFalse(Models.getEmptyOntModel().listStatements().hasNext());
-	}
-
 }

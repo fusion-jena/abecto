@@ -62,8 +62,8 @@ public class Aspect {
     private final String keyVariableName;
     private final Var keyVariable;
     private final Map<Resource, Query> patternByDataset = new HashMap<>();
-    Map<Resource, Collection<String>> coveredVariablesByDataset = new HashMap();
-    private Map<Resource, Map<String, Path>> variablePathsByDataset = new HashMap<>();
+    private final Map<Resource, Collection<String>> coveredVariablesByDataset = new HashMap<>();
+    private final Map<Resource, Map<String, Path>> variablePathsByDataset = new HashMap<>();
 
     public Aspect(Resource iri, String keyVariableName) {
         this.iri = iri;

@@ -63,12 +63,12 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 	private static final Var RESOURCE_1 = Var.alloc("resource1");
 	private static final Var RESOURCE_2 = Var.alloc("resource2");
 	private static final Var RESOURCE_3 = Var.alloc("resource3");
-	private static ExprFactory exprFactory = new ExprFactory();
-	private Map<Resource, Collection<Model>> inputMetaModelsByDataset = new HashMap<>();
+	private static final ExprFactory exprFactory = new ExprFactory();
+	private final Map<Resource, Collection<Model>> inputMetaModelsByDataset = new HashMap<>();
 
-	private Map<Resource, Collection<Model>> inputPrimaryModelsByDataset = new HashMap<>();
+	private final Map<Resource, Collection<Model>> inputPrimaryModelsByDataset = new HashMap<>();
 
-	private Map<Resource, Model> outputMetaModelsByDataset = new HashMap<>();
+	private final Map<Resource, Model> outputMetaModelsByDataset = new HashMap<>();
 
 	private Optional<Resource> associatedDataset = Optional.empty();
 
@@ -77,11 +77,11 @@ public abstract class Processor<P extends Processor<P>> implements Runnable {
 	 * during processing using {@link #replaceOutputPrimaryModel(Model)}.
 	 */
 	private Optional<Model> outputPrimaryModel = Optional.empty();
-	private Map<Resource, Aspect> aspects = new HashMap<>();
+	private final Map<Resource, Aspect> aspects = new HashMap<>();
 
-	private Map<Resource, Model> cachedInputMetaModelUnionByDataset = new HashMap<>();
+	private final Map<Resource, Model> cachedInputMetaModelUnionByDataset = new HashMap<>();
 
-	private Map<Resource, Model> cachedInputPrimaryModelUnionByDataset = new HashMap<>();
+	private final Map<Resource, Model> cachedInputPrimaryModelUnionByDataset = new HashMap<>();
 
 	private File relativeBasePath;
 

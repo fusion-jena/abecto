@@ -116,7 +116,7 @@ public class Abecto implements Callable<Integer> {
 	@Parameters(index = "0", paramLabel = "FILE", description = "RDF dataset file containing the plan configuration and optionally plan execution results (see --loadOnly).")
 	File planFile;
 
-	private Dataset datasetForExecution = DatasetFactory.createGeneral();
+	private final Dataset datasetForExecution = DatasetFactory.createGeneral();
 	private Dataset datasetForReporting;
 	private File relativePathBase;
 	private Configuration freemarker;

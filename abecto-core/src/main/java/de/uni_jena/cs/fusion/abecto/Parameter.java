@@ -33,5 +33,5 @@ import de.uni_jena.cs.fusion.abecto.processor.Processor;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface Parameter {
-	public Class<? extends Converter> converter() default NoConverter.class;
+	Class<? extends Converter> converter() default NoConverter.class;
 }
