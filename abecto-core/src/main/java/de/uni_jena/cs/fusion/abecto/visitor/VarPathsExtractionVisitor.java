@@ -59,6 +59,10 @@ public class VarPathsExtractionVisitor implements ElementVisitor {
     }
 
     @Override
+    public void visit(ElementUnfold el) {
+    }
+
+    @Override
     public void visit(ElementData el) {
     }
 
@@ -84,6 +88,15 @@ public class VarPathsExtractionVisitor implements ElementVisitor {
     @Override
     public void visit(ElementLateral el) {
         el.getLateralElement().visit(this);
+    }
+
+    @Override
+    public void visit(ElementSemiJoin el) {
+        el.getSubElement().visit(this);
+    }
+
+    @Override
+    public void visit(ElementAntiJoin el) {
     }
 
     @Override

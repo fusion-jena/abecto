@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 * fix `SparqlSourceProcessor`: fix rudimentary to not skip resources
+* 
+### Changed
+* upgrade Apache Jena to v5.6.0
 
 ## [3.1.3] - 2026-01-02
 
