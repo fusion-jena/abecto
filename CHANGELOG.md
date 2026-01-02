@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Fixed
+* fix `SparqlSourceProcessor`: fix rudimentary to not skip resources
+
 ## [3.1.3] - 2026-01-02
 
 ### Fixed

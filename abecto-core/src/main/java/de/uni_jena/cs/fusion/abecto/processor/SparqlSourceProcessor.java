@@ -256,30 +256,17 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 				// execute chunk if necessary
 				if (currentChunk.size() == currentChunkSize || // chunk full or
 						!resourcesToLoadIterator.hasNext()) { // last resource
-					try {
-
-						// reuse prefixes returned by the service to shorten query
-						queryToExecute.setPrefixMapping(resultModel);
-						log.debug(String.format("Fetching %d resources: %s", currentChunk.size(), queryToExecute));
-						service.query(queryToExecute).build().execConstruct(resultModel);
-						// increase chunk size if less than chunkSize
-						currentChunkSize = Math.min(this.chunkSize,
-								(int) (currentChunkSize * this.chunkSizeIncreaseFactor));
-					} catch (Throwable e) {
-						log.warn(
-								String.format("Request failed: %s\n%s", e.getMessage(), queryToExecute.toString()));
-						if (e instanceof QueryExceptionHTTP && ((QueryExceptionHTTP) e).getStatusCode() == 429) {
-							// TODO consider Retry-After header, once https://github.com/apache/jena/issues/3679 is solved
-							int millisecondsToWait = 60 * 1000; // 1 minute; best-effort due to lack of information
-							log.warn(String.format("Continue after %s seconds.", millisecondsToWait/1000));
-							try {
-								synchronized (this) {
-									wait(millisecondsToWait);
-								}
-							} catch (InterruptedException ex) {
-								throw new RuntimeException(ex);
-							}
-						} else if (this.maxRetries > 0) {
+					// reuse prefixes returned by the service to shorten query
+					queryToExecute.setPrefixMapping(resultModel);
+					log.debug(String.format("Fetching %d resources: %s", currentChunk.size(), queryToExecute));
+					try (QueryExecution queryExecution = service.query(queryToExecute).build()) {
+						queryExecution.execConstruct(resultModel);
+						// increase current chunk size if less than chunkSize
+						currentChunkSize = Math.min(chunkSize, (int) (currentChunkSize * chunkSizeIncreaseFactor));
+					} catch (Throwable t) {
+						if (this.maxRetries > 0) {
+							log.warn(String.format("Request failed: %s\n%s", t.getMessage(), queryToExecute));
+							waitIfTooManyRequest(t);
 							// reduce left over retries
 							this.maxRetries--;
 							// reduce chunk size
@@ -291,13 +278,26 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 							log.warn(String.format("Continue with reduced chunk size: %d Left retries: %s",
 									currentChunkSize, this.maxRetries));
 						} else {
-							throw e;
+							throw t;
 						}
 					} finally {
 						// reset chunk
 						currentChunk.clear();
 					}
 				}
+			}
+		}
+	}
+
+	private synchronized void waitIfTooManyRequest(Throwable t) {
+		if (t instanceof QueryExceptionHTTP && ((QueryExceptionHTTP) t).getStatusCode() == 429) {
+			// TODO consider Retry-After header, once https://github.com/apache/jena/issues/3679 is solved
+			int millisecondsToWait = 60 * 1000; // 1 minute; best-effort due to lack of information
+			log.warn(String.format("Continue after %s seconds.", millisecondsToWait/1000));
+			try {
+				wait(millisecondsToWait);
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
 			}
 		}
 	}

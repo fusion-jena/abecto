@@ -257,15 +257,19 @@ public class SparqlSourceProcessorTest {
         try (MockWebServer mockWebServer = new MockWebServer()) {
             Resource service = ResourceFactory.createResource(mockWebServer.url("/").toString());
             String content = "<http://example.org/a> <http://example.org/a> <http://example.org/a> .";
-            Property resource = ResourceFactory.createProperty("http://example.org/a");
+			Property resource = ResourceFactory.createProperty("http://example.org/a");
             // respond with 429 (Too Many Requests)
             mockWebServer.enqueue(new MockResponse()
                     .setResponseCode(429));
             // respond with proper response
-            mockWebServer.enqueue(new MockResponse()
-                    .addHeader("Content-Type", "text/turtle")
-                    .setBody(content)
-                    .setResponseCode(200));
+			mockWebServer.enqueue(new MockResponse()
+					.addHeader("Content-Type", "text/turtle")
+					.setBody(content)
+					.setResponseCode(200));
+			mockWebServer.enqueue(new MockResponse()
+					.addHeader("Content-Type", "text/turtle")
+					.setBody(content)
+					.setResponseCode(200));
 
             SparqlSourceProcessor processor = new SparqlSourceProcessor();
             processor.setAssociatedDataset(TestUtil.dataset(1));
@@ -277,6 +281,9 @@ public class SparqlSourceProcessorTest {
             long finish = System.currentTimeMillis();
             long timeElapsed = finish - start;
             assertTrue(timeElapsed >= 60 * 1000);
+
+			Model outputModel = processor.getOutputPrimaryModel().get();
+			assertTrue(outputModel.contains(resource, resource, resource));
         }
     }
 }
