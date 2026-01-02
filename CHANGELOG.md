@@ -11,7 +11,7 @@ fix `SparqlSourceProcessor`: enable parameters `chunkSizeDecreaseFactor` and `ch
 ## [3.1.4] - 2026-01-02
 
 ### Fixed
-* fix `SparqlSourceProcessor`: fix rudimentary to not skip resources
+* fix `SparqlSourceProcessor`: fix rudimentary rate limit handling to not skip resources
 
 ### Changed
 * upgrade Apache Jena to v5.6.0
