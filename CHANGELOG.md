@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [3.1.3] - 2026-01-02
+
 ### Fixed
 * improved `SparqlSourceProcessor`: add rudimentary rate limit handling
 
@@ -367,7 +369,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * add `ManualCategoryProcessor`: Enables users to manually define resource categories and their properties.
 * add `ResourceDeviationProcessor`: Detects deviations between the resource references of mapped resources as defined in the categories.
 
-[Unreleased]: https://github.com/fusion-jena/abecto/compare/v3.1.2...HEAD
+[Unreleased]: https://github.com/fusion-jena/abecto/compare/v3.1.3...HEAD
+[3.1.3]: https://github.com/fusion-jena/abecto/compare/v3.1.3...v3.1.3
 [3.1.2]: https://github.com/fusion-jena/abecto/compare/v3.1.1...v3.1.2
 [3.1.1]: https://github.com/fusion-jena/abecto/compare/v3.1.0...v3.1.1
 [3.1.0]: https://github.com/fusion-jena/abecto/compare/v3.0.1...v3.1.0
