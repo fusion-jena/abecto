@@ -5,9 +5,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [3.1.4] - 2026-01-02
+
 ### Fixed
 * fix `SparqlSourceProcessor`: fix rudimentary to not skip resources
-* 
+
 ### Changed
 * upgrade Apache Jena to v5.6.0
 
@@ -375,8 +377,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * add `ManualCategoryProcessor`: Enables users to manually define resource categories and their properties.
 * add `ResourceDeviationProcessor`: Detects deviations between the resource references of mapped resources as defined in the categories.
 
-[Unreleased]: https://github.com/fusion-jena/abecto/compare/v3.1.3...HEAD
-[3.1.3]: https://github.com/fusion-jena/abecto/compare/v3.1.3...v3.1.3
+[Unreleased]: https://github.com/fusion-jena/abecto/compare/v3.1.4...HEAD
+[3.1.4]: https://github.com/fusion-jena/abecto/compare/v3.1.3...v3.1.4
+[3.1.3]: https://github.com/fusion-jena/abecto/compare/v3.1.2...v3.1.3
 [3.1.2]: https://github.com/fusion-jena/abecto/compare/v3.1.1...v3.1.2
 [3.1.1]: https://github.com/fusion-jena/abecto/compare/v3.1.0...v3.1.1
 [3.1.0]: https://github.com/fusion-jena/abecto/compare/v3.0.1...v3.1.0
