@@ -252,6 +252,32 @@ public class SparqlSourceProcessorTest {
         fuseki.stop();
     }
 
+	@Test
+	public void userAgent() throws IOException, InterruptedException {
+		try (MockWebServer mockWebServer = new MockWebServer()) {
+			Resource service = ResourceFactory.createResource(mockWebServer.url("/").toString());
+			String content = "<http://example.org/a> <http://example.org/a> <http://example.org/a> .";
+			Property resource = ResourceFactory.createProperty("http://example.org/a");
+			mockWebServer.enqueue(new MockResponse()
+					.addHeader("Content-Type", "text/turtle")
+					.setBody(content)
+					.setResponseCode(200));
+			mockWebServer.enqueue(new MockResponse()
+					.addHeader("Content-Type", "text/turtle")
+					.setBody(content)
+					.setResponseCode(200));
+
+			SparqlSourceProcessor processor = new SparqlSourceProcessor();
+			processor.setAssociatedDataset(TestUtil.dataset(1));
+			processor.service = service;
+			processor.list = Collections.singletonList(resource);
+
+			processor.run();
+
+			assertTrue(mockWebServer.takeRequest().getHeader("User-Agent").startsWith("ABECTO/"));
+		}
+	}
+
     @Test
     public void rateLimitHandling() throws IOException {
         try (MockWebServer mockWebServer = new MockWebServer()) {

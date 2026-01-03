@@ -331,8 +331,8 @@ public class Abecto implements Callable<Integer> {
 		// HttpEnv.setDftHttpClient(dftHttpClient);
 	}
 
-	static class ManifestVersionProvider implements IVersionProvider {
-		public String[] getVersion() throws Exception {
+	public static String getVersion() {
+		try {
 			Enumeration<URL> resources = ManifestVersionProvider.class.getClassLoader()
 					.getResources("META-INF/MANIFEST.MF");
 			while (resources.hasMoreElements()) {
@@ -341,10 +341,29 @@ public class Abecto implements Callable<Integer> {
 				if ("ABECTO".equals(title)) {
 					String version = (String) manifest.getMainAttributes()
 							.get(new Attributes.Name("Implementation-Version"));
-					return new String[] { title + " " + version };
+					return version;
 				}
 			}
-			return new String[0];
+		} catch (Throwable e) {
+			// ignore
+		}
+		return null;
+	}
+
+	public static String getUserAgent() {
+		String version = getVersion();
+		version = Objects.requireNonNullElse(version,"0.0");
+		return String.format("ABECTO/%s (https://github.com/fusion-jena/abecto)", version);
+	}
+
+	static class ManifestVersionProvider implements IVersionProvider {
+		public String[] getVersion() {
+			String version = Abecto.getVersion();
+			if (version!=null) {
+				return new String[] { "ABECTO" + " " + version };
+			}else {
+				return new String[0];
+			}
 		}
 	}
 }

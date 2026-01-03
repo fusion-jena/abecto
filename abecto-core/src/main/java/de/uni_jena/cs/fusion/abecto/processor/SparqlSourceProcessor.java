@@ -42,6 +42,7 @@ import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingFactory;
 import org.apache.jena.sparql.engine.http.QueryExceptionHTTP;
+import org.apache.jena.sparql.exec.http.QueryExecutionHTTPBuilder;
 import org.apache.jena.sparql.expr.E_NotOneOf;
 import org.apache.jena.sparql.expr.ExprList;
 import org.apache.jena.sparql.expr.ExprVar;
@@ -58,6 +59,7 @@ import org.apache.jena.vocabulary.RDFS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.uni_jena.cs.fusion.abecto.Abecto;
 import de.uni_jena.cs.fusion.abecto.Parameter;
 import de.uni_jena.cs.fusion.abecto.converter.StringToQueryConverter;
 
@@ -150,7 +152,9 @@ public class SparqlSourceProcessor extends Processor<SparqlSourceProcessor> {
 
 	@Override
 	public void run() {
-		extract(this.getOutputPrimaryModel().get(), QueryExecution.service(this.service.getURI()), this.query,
+		QueryExecutionHTTPBuilder service = QueryExecution.service(this.service.getURI());
+		service.httpHeader("User-Agent", Abecto.getUserAgent());
+		extract(this.getOutputPrimaryModel().get(), service, this.query,
 				this.list,
 				this.followInverse.stream().map(r -> ResourceFactory.createProperty(r.getURI()))
 						.collect(Collectors.toList()),

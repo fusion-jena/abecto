@@ -6,7 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 
 ### Fixed
-fix `SparqlSourceProcessor`: enable parameters `chunkSizeDecreaseFactor` and `chunkSizeIncreaseFactor`
+* fix `SparqlSourceProcessor`: enable parameters `chunkSizeDecreaseFactor` and `chunkSizeIncreaseFactor`
+* fix `SparqlSourceProcessor`: add User-Agent to HTTP requests
+* fix `UrlSourceProcessor`: add User-Agent to HTTP requests
 
 ## [3.1.4] - 2026-01-02
 

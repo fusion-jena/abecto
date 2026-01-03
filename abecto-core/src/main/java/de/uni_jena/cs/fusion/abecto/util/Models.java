@@ -38,6 +38,7 @@ import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 
+import de.uni_jena.cs.fusion.abecto.Abecto;
 import org.apache.jena.graph.compose.MultiUnion;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -91,7 +92,10 @@ public class Models {
 	public static Model read(Model model, URI uri) throws IllegalArgumentException, IOException, InterruptedException {
 		try {
 			// using the content type or file extension for language detection
-			RDFParser.source(uri.toString()).errorHandler(ErrorHandlerFactory.errorHandlerNoLogging).parse(model);
+			RDFParser.source(uri.toString())
+					.httpHeader("User-Agent", Abecto.getUserAgent())
+					.errorHandler(ErrorHandlerFactory.errorHandlerNoLogging)
+					.parse(model);
 			return model;
 		} catch (Exception e) {
 			// try again using brute force language detection
@@ -100,10 +104,10 @@ public class Models {
 			var client = HttpClient.newBuilder().followRedirects(Redirect.NORMAL).build();
 
 			// create a request
+			String accepted = supportedLanguages.stream().map(Lang::getHeaderString).collect(Collectors.joining(", "));
 			var request = HttpRequest.newBuilder(uri)
-					.header("accept",
-							supportedLanguages.stream().map(Lang::getHeaderString).collect(Collectors.joining(", "))
-									+ ", */*;q=0.8")
+					.header("Accept", accepted + ", */*;q=0.8")
+					.header("User-Agent", Abecto.getUserAgent())
 					.build();
 
 			return read(model, client.send(request, BodyHandlers.ofInputStream()).body());
