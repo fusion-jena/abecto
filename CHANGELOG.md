@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [3.1.5] - 2026-01-03
+
 ### Fixed
 * fix `SparqlSourceProcessor`: enable parameters `chunkSizeDecreaseFactor` and `chunkSizeIncreaseFactor`
 * fix `SparqlSourceProcessor`: add User-Agent to HTTP requests
@@ -382,7 +384,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * add `ManualCategoryProcessor`: Enables users to manually define resource categories and their properties.
 * add `ResourceDeviationProcessor`: Detects deviations between the resource references of mapped resources as defined in the categories.
 
-[Unreleased]: https://github.com/fusion-jena/abecto/compare/v3.1.4...HEAD
+[Unreleased]: https://github.com/fusion-jena/abecto/compare/v3.1.5...HEAD
+[3.1.5]: https://github.com/fusion-jena/abecto/compare/v3.1.4...v3.1.5
 [3.1.4]: https://github.com/fusion-jena/abecto/compare/v3.1.3...v3.1.4
 [3.1.3]: https://github.com/fusion-jena/abecto/compare/v3.1.2...v3.1.3
 [3.1.2]: https://github.com/fusion-jena/abecto/compare/v3.1.1...v3.1.2
